@@ -467,7 +467,7 @@
             : Math.round(synthSample * rp.syntheticTargetShare);
           distributedSample += shareSample;
           st.affiliations[rp.id] = (Number(st.affiliations[rp.id]) || 0) + shareSample;
-          const partyVotersInState = shareSample * 100;
+          const partyVotersInState = isOneToOne ? shareSample : shareSample * 100;
           robotTotalsByParty[rp.id] += partyVotersInState;
 
           // Split 50/50 across the Robot Party's 2 core factions
@@ -482,7 +482,8 @@
       game.voterModel.humanRepresentedVoters = humanTotalVoters;
       game.voterModel.syntheticRepresentedVoters = SYNTHETIC_ELECTORATE_VOTERS;
       game.voterModel.representedVoters = humanTotalVoters + SYNTHETIC_ELECTORATE_VOTERS;
-      game.voterModel.sampleVoters = Math.round(game.voterModel.representedVoters / 100);
+      const _rob1to1 = (game.voterModel.voterScale === '1:1' || Number(game.voterModel.sampleVoters || 0) >= 10_000_000);
+      game.voterModel.sampleVoters = _rob1to1 ? game.voterModel.representedVoters : Math.round(game.voterModel.representedVoters / 100);
       game.voterModel.representedMillions = round(game.voterModel.representedVoters / 1_000_000, 2);
       totalAfterExpansion = game.voterModel.representedVoters;
 

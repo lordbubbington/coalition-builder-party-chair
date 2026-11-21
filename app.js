@@ -1866,7 +1866,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.2</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.2</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -3635,15 +3635,15 @@ function step4WorkMarkup() {
             : `Select 1 appointed Party Leader for +25 Fame, +8 faction confidence, and +2.0 turnout across their home overlapping region.`}</p>
           <div class="inline-controls">
             ${partyLeaderPool.length ? `
-              <select id="keynote-speaker">
+              <select id="keynote-speaker-2" data-dup-id="keynote-speaker">
                 ${partyLeaderPool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.region)}</option>`).join('')}
               </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
+              <button type="button" class="button button-small button-gold" id="select-keynote-3" data-dup-id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
             ` : `
-              <select id="keynote-speaker" disabled>
+              <select id="keynote-speaker-4" data-dup-id="keynote-speaker" disabled>
                 <option>[ Appoint Party Leaders in Leadership Menu to Select Keynote ]</option>
               </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote" disabled>Name Keynote</button>
+              <button type="button" class="button button-small button-gold" id="select-keynote-5" data-dup-id="select-keynote" disabled>Name Keynote</button>
             `}
           </div>
         </div>
@@ -3664,11 +3664,11 @@ function step4WorkMarkup() {
           <p>Deploy an appointed party leader to a specific state (+1–2 state chapters, +3 Fame, +memberships).</p>
           <div class="inline-controls">
             ${partyLeaderPool.length ? `
-              <select id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
+              <select id="tour-member-6" data-dup-id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
               <select id="tour-state">${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('tour-state', mapState) ? 'selected' : ''}>${s.id} · ${safe(s.name)}</option>`).join('')}</select>
               <button type="button" class="button button-small" data-action="tour" ${disabled ? 'disabled' : ''}>Deploy</button>
             ` : `
-              <select id="tour-member" disabled><option>[ Appoint Party Leaders in Leadership Menu to Deploy Tours ]</option></select>
+              <select id="tour-member-7" data-dup-id="tour-member" disabled><option>[ Appoint Party Leaders in Leadership Menu to Deploy Tours ]</option></select>
               <button type="button" class="button button-small" data-action="tour" disabled>Deploy</button>
             `}
           </div>
@@ -5439,7 +5439,7 @@ function v0180CampaignWarRoomMarkup() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Persuasion Efficiency: <b>${Math.round(eff.persuasion * 100)}%</b> · Turnout Efficiency: <b>${Math.round(eff.turnout * 100)}%</b></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span class="badge" style="background:rgba(148,163,184,0.16);color:#cbd5e1;padding:4px 10px;border-radius:999px;font-size:11px;">Airwaves (${safe(defaultState)}): <b>${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}%)</b></span>
+          <span data-v0182-sat-badge class="badge" style="background:rgba(148,163,184,0.16);color:#cbd5e1;padding:4px 10px;border-radius:999px;font-size:11px;">Airwaves (${safe(defaultState)}): <b>${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}%)</b></span>
           <span class="badge" style="background:rgba(226,189,112,0.18);color:#e2bd70;padding:4px 10px;border-radius:999px;font-weight:700;">Actions Remaining: ${actionsLeft} / ${maxActs}</span>
         </div>
       </div>
@@ -6825,7 +6825,8 @@ function statesTabMarkup() {
   return `
     <section class="panel section-panel">
       <div class="section-heading">
-        <div><div class="eyebrow">Fullscreen 50-State Directory</div><h2>States, Chapters & Sitting Officials</h2></div>
+        <div><div class="eyebrow">Fullscreen 50-State Directory</div><h2>States, Chapters & Sitting Officials</h2>
+${Object.values(game?.chapters || {}).reduce((a, b) => a + (Number(b) || 0), 0) === 0 ? '<div style="font-size:12px;color:#fcd34d;margin:6px 0;">Tip: Establish your first state chapter to unlock recurring chapter fundraising and 3-cycle turnout cushions.</div>' : ''}</div>
         <span class="turnout-chip">${totalPlayerStateChapters().toLocaleString()} Total Player Chapters</span>
       </div>
 
@@ -7563,7 +7564,7 @@ function factionsTabMarkup() {
         </div>
       </section>
 
-      <!-- Active Coalition Compacts Widget (SUM-04 & SUM-06) -->
+      <!-- Active Coalition Compacts Widget -->
       ${activeCompactsWidgetMarkup()}
 
       <!-- Demographic Voting-Bloc Representation Disclaimer -->
@@ -7843,7 +7844,7 @@ function getMorningWireHeadline(game) {
   const year = game.year || 2028;
   const isCamp = Boolean(game.campaign?.active);
   const actionsRem = game.organizingActionsRemaining ?? 20;
-  const phaseLabel = isCamp ? `CAMPAIGN MONTH ${game.campaign.week}/5 · ${game.campaign.weeklyActionsLeft ?? 5}/5 ACTIONS REMAINING` : `ORGANIZING PHASE · ${actionsRem} ACTIONS REMAINING`;
+  const phaseLabel = isCamp ? `CAMPAIGN MONTH ${game.campaign.month || game.campaign.week}/5 · ${game.campaign.monthlyActionsLeft ?? game.campaign.weeklyActionsLeft ?? 8}/${game.campaign.maxMonthlyActions || 8} ACTIONS REMAINING` : `ORGANIZING PHASE · ${actionsRem} ACTIONS REMAINING`;
   const presLead = (game.phase === 'complete')
     ? (game.lastElection?.presidential ? `${game.lastElection.presidential.winnerName || 'Winner'} claims Electoral College victory` : 'Election concluded')
     : (game.forecasters?.cooked?.rating || 'Ossoff-Vance battleground remains tight across Sunbelt and Rust Belt');
@@ -8800,8 +8801,8 @@ function campaignMarkup() {
         <span class="status-divider"></span>
         <span>${game.phase === 'organizing' ? `${game?.year || 2028} · THE RECRUITMENT PHASE (${game.organizingActionsRemaining ?? 20} Actions Remaining)` : game.campaign?.active ? `${game?.year || 2028} · CAMPAIGN MONTH ${game.campaign.week}/5` : `${game?.year || 2028} · ELECTION COMPLETE`}</span>
         ${window.PartySystemsUI ? window.PartySystemsUI.renderTopBarEraBadge(game) : ''}
-        <button type="button" class="text-button" id="open-primary-archive">Primary Archive</button>
-        <button type="button" class="text-button" id="open-save-slots">Saves (5 Slots)</button>
+        <button type="button" class="text-button" id="open-primary-archive-8" data-dup-id="open-primary-archive">Primary Archive</button>
+        <button type="button" class="text-button" id="open-save-slots-9" data-dup-id="open-save-slots">Saves (5 Slots)</button>
         <button type="button" class="text-button" id="new-game">New party</button>
       </div>
     </header>
@@ -8824,7 +8825,7 @@ function campaignMarkup() {
           ${window.PartySystemsUI?.renderCoalitionStabilityHud ? window.PartySystemsUI.renderCoalitionStabilityHud(game) : ''}
           <span class="v07-happiness-pill">Sitting Member Happiness: <b>${Math.round(game.sittingMemberHappiness ?? 70)}/100</b></span>
           ${game.campaign?.active
-            ? `<span class="v07-happiness-pill">Campaign Actions: <b>${game.campaign.weeklyActionsLeft ?? 5}/5</b></span>
+            ? `<span class="v07-happiness-pill">Campaign Actions: <b>${game.campaign.monthlyActionsLeft ?? game.campaign.weeklyActionsLeft ?? 8}/${game.campaign.maxMonthlyActions || 8}</b></span>
                <span class="v07-happiness-pill">Wave Momentum: <b>${game.campaign.waveMomentum >= 0 ? 'D' : 'R'}+${Math.abs(game.campaign.waveMomentum || 0).toFixed(1)}</b></span>`
             : `<span class="v07-happiness-pill">Recruitment Actions Remaining: <b>${game.organizingActionsRemaining ?? 20}/20</b></span>`}
         </div>
@@ -8915,6 +8916,41 @@ function syncGameSessionState() {
 // ============================================================================
 
 let electionNightInterval = null;
+let primaryAutoPlayInterval = null;
+
+function stopPrimaryAutoPlayback() {
+  if (primaryAutoPlayInterval) {
+    clearInterval(primaryAutoPlayInterval);
+    primaryAutoPlayInterval = null;
+  }
+}
+
+function ensurePrimaryAutoPlayback() {
+  const p = game?.activePresidentialPrimary;
+  if (!game || game.phase !== 'presidential-primary' || !p || p.stage === 'complete' || p.paused || p.autoPlay === false) {
+    stopPrimaryAutoPlayback();
+    return;
+  }
+  const speed = [1, 2, 4].includes(Number(p.speed)) ? Number(p.speed) : 1;
+  const stepMs = Math.max(1200, Math.round((Number(p.intervalMs) || 8000) / speed));
+  if (primaryAutoPlayInterval && primaryAutoPlayInterval._stepMs === stepMs) return;
+  stopPrimaryAutoPlayback();
+  const handle = setInterval(() => {
+    const curP = game?.activePresidentialPrimary;
+    if (!game || game.phase !== 'presidential-primary' || !curP || curP.stage === 'complete' || curP.paused || curP.autoPlay === false) {
+      stopPrimaryAutoPlayback();
+      return;
+    }
+    game = window.PartyChairEngine.takeAction(game, 'advance-primary-day', {});
+    if (typeof saveGame === 'function') saveGame(game);
+    if (typeof render === 'function') render();
+    if (!game?.activePresidentialPrimary || game.activePresidentialPrimary.stage === 'complete') {
+      stopPrimaryAutoPlayback();
+    }
+  }, stepMs);
+  handle._stepMs = stepMs;
+  primaryAutoPlayInterval = handle;
+}
 
 function buildElectionHoverTooltipHtml(race, snapEval) {
   if (!race) return '';
@@ -9024,12 +9060,18 @@ function patchElectionNightLiveDOM() {
   const hseRep = document.querySelector('[data-en-house="heritage"]');
   if (hseDem && sb.house) hseDem.textContent = String(sb.house.people || 0);
   if (hseRep && sb.house) hseRep.textContent = String(sb.house.heritage || 0);
-  const forecastEl = document.querySelector('[data-en-sallow-forecast]');
-  if (forecastEl && snap.forecast) {
-    const fc = snap.forecast;
-    forecastEl.textContent = fc.medianEvDem !== undefined
-      ? `${fc.medianEvDem} EV (80%: ${fc.range80Dem?.[0] ?? ''}–${fc.range80Dem?.[1] ?? ''})`
-      : (fc.medianSeatsDem !== undefined ? `${fc.medianSeatsDem} seats` : forecastEl.textContent);
+  const presOddsEl = document.querySelector('[data-en-sallow-forecast="president"]');
+  if (presOddsEl && snap.forecast?.presidentialWinOdds) {
+    const o = snap.forecast.presidentialWinOdds;
+    const dEl = presOddsEl.querySelector('[data-en-odds-dem]');
+    const rEl = presOddsEl.querySelector('[data-en-odds-rep]');
+    if (dEl) dEl.textContent = `Democrat: ${o.people || 0}%`;
+    if (rEl) rEl.textContent = `Republican: ${o.heritage || 0}%`;
+  } else {
+    const forecastEl = document.querySelector('[data-en-sallow-forecast]');
+    if (forecastEl && snap.forecast?.medianSeatsDem !== undefined) {
+      forecastEl.textContent = `${snap.forecast.medianSeatsDem} seats`;
+    }
   }
   const tickerEl = document.querySelector('[data-en-call-ticker]');
   if (tickerEl && Array.isArray(snap.calls) && snap.calls.length > 0) {
@@ -9062,11 +9104,20 @@ function patchElectionNightLiveDOM() {
     }
   });
 
-  // 3. Patch "The Count" race rows in-place without touching scroll position
-  (snap.theCountRaces || []).forEach((r) => {
-    const row = document.querySelector(`.the-count-row[data-race-id="${r.id}"]`);
-    if (!row) return;
+  // 3 (#35): Patch existing "The Count" race rows AND append newly opened states in-place without wiping scroll
+  const countContainer = document.querySelector('.the-count-list');
+  (snap.theCountRaces || []).filter((r) => r.raceKind === activeTab).forEach((r) => {
+    let row = document.querySelector(`.the-count-row[data-race-id="${r.id}"]`);
     const col = getElectionPartyColor(r.liveLeader);
+    if (!row && countContainer) {
+      const div = document.createElement('div');
+      div.className = 'the-count-row';
+      div.setAttribute('data-race-id', r.id);
+      div.innerHTML = `<span class="count-code">${safe(r.code)}</span><span class="count-name">${safe(r.name)}</span><span class="count-lead" style="color:${col}">${safe(getElectionPartyShort(r.liveLeader))} +${Math.abs(r.liveLead).toFixed(1)}</span><span class="count-progress"><span class="count-progress-fill" style="width:${Math.round(r.pct)}%;background:${col}"></span></span><span class="count-status ${r.isCalled ? 'called' : 'pct'}">${r.isCalled ? 'CALLED' : `${Math.round(r.pct)}%`}</span>`;
+      countContainer.appendChild(div);
+      return;
+    }
+    if (!row) return;
     const leadEl = row.querySelector('.count-lead');
     const fillEl = row.querySelector('.count-progress-fill');
     const statEl = row.querySelector('.count-status');
@@ -9074,6 +9125,32 @@ function patchElectionNightLiveDOM() {
     if (fillEl) { fillEl.style.width = `${Math.round(r.pct)}%`; fillEl.style.background = col; }
     if (statEl) { statEl.textContent = r.isCalled ? 'CALLED' : `${Math.round(r.pct)}%`; statEl.className = `count-status ${r.isCalled ? 'called' : 'pct'}`; }
   });
+
+  // 4 (#34): Prepend newly called races into the "Just Called" feed in-place
+  const calledFeed = document.querySelector('.just-called-feed');
+  if (calledFeed && Array.isArray(snap.calls)) {
+    snap.calls.slice(0, 20).reverse().forEach((c) => {
+      if (calledFeed.querySelector(`.just-called-item[data-call-id="${c.id}"]`)) return;
+      const qn = calledFeed.querySelector('.quiet-note');
+      if (qn) qn.remove();
+      const item = document.createElement('div');
+      item.className = 'just-called-item';
+      item.setAttribute('data-call-id', c.id);
+      const pCol = getElectionPartyColor(c.winnerPartyId);
+      const pSh = getElectionPartyShort(c.winnerPartyId);
+      item.innerHTML = `<div class="just-called-row"><div class="just-called-left"><span class="just-called-badge">${safe(String(c.raceKind || '').toUpperCase().slice(0, 4))}</span><span class="just-called-name">${safe(c.name)}</span></div><div class="just-called-right"><span class="just-called-party-pill" style="background:${pCol}">${safe(pSh)}${c.electoralVotes ? ` · ${c.electoralVotes} EV` : ''}</span><span class="just-called-time">${safe(c.timestampLabel || '')}</span></div></div>`;
+      calledFeed.prepend(item);
+    });
+  }
+
+  // 5 (#36): Update Breaking Call banner in-place when a clinch occurs mid-broadcast
+  const breakHost = document.querySelector('[data-en-breaking-host]');
+  if (breakHost && snap.breakingCall && !game.electionNight.breakingBannerDismissed) {
+    if (breakHost.getAttribute('data-breaking-key') !== snap.breakingCall.headline) {
+      breakHost.setAttribute('data-breaking-key', snap.breakingCall.headline);
+      breakHost.innerHTML = `<div class="breaking-call-banner" style="margin:8px 0;padding:10px 14px;border-radius:8px;background:rgba(226,189,112,0.16);border:1px solid #e2bd70;font-weight:700;">★ ${safe(snap.breakingCall.stamp || 'BREAKING')}: ${safe(snap.breakingCall.headline)}</div>`;
+    }
+  }
 }
 
 function ensureElectionNightPlayback() {
@@ -9195,7 +9272,7 @@ function renderElectionNightScreen() {
     { id: 'senate', label: 'Senate' },
     { id: 'house', label: 'House' },
     { id: 'governors', label: 'Governors' },
-    { id: 'statewide', label: 'Statewide Exec' },
+    { id: 'statewide_executive', label: 'Statewide Exec' },
     { id: 'state_leg', label: 'State Legislatures' },
   ];
 
@@ -9254,7 +9331,7 @@ function renderElectionNightScreen() {
   const mapSvg = `<svg class="desk-map-svg" viewBox="${MAPS.viewBox}" role="img" aria-label="Election Night Live Results Map">${mapGeometry}${mapLabels}</svg>`;
 
   // 5. "The Count" Live Closest-First Table for Active Tab
-  const seoNightResults = (activeTab === 'statewide')
+  const seoNightResults = (activeTab === 'statewide' || activeTab === 'statewide_executive')
     ? (game.statewideOfficesHistory?.[game.year] || (window.ElectionNightEngine?.resolveStatewideOffices ? window.ElectionNightEngine.resolveStatewideOffices(game, game.year).results : []))
     : [];
   const activeTabRaces = snapshot.theCountRaces.filter((r) => r.raceKind === activeTab);
@@ -9303,7 +9380,7 @@ function renderElectionNightScreen() {
   if (activeTab === 'senate') { thresholdLabel = '51 to win'; totalCap = 100; tabTitle = 'The U.S. Senate'; }
   else if (activeTab === 'house') { thresholdLabel = '218 to win'; totalCap = 435; tabTitle = 'The U.S. House'; }
   else if (activeTab === 'governors') { thresholdLabel = 'Governor Control'; totalCap = 50; tabTitle = 'The Governorships'; }
-  else if (activeTab === 'statewide') {
+  else if (activeTab === 'statewide' || activeTab === 'statewide_executive') {
     const seoDem = seoNightResults.filter((r) => r.winner === 'people').length;
     const seoRep = seoNightResults.filter((r) => r.winner === 'heritage').length;
     tabScore.people = seoDem;
@@ -9332,9 +9409,9 @@ function renderElectionNightScreen() {
           <span>Projections, not calls</span>
         </div>
         <div class="forecast-grid">
-          <div class="forecast-odds-row">
-            <span style="color:#3b82f6;font-weight:700">Democrat: ${demOdd}%</span>
-            <span style="color:#ef4444;font-weight:700">Republican: ${repOdd}%</span>
+          <div class="forecast-odds-row" data-en-sallow-forecast="president">
+            <span style="color:#3b82f6;font-weight:700" data-en-odds-dem>Democrat: ${demOdd}%</span>
+            <span style="color:#ef4444;font-weight:700" data-en-odds-rep>Republican: ${repOdd}%</span>
           </div>
           <div class="forecast-bar">
             <div class="forecast-fill" style="width:${demOdd}%;background:#3b82f6"></div>
@@ -9397,7 +9474,15 @@ function renderElectionNightScreen() {
   const completionMarkup = snapshot.isFinished ? `
     <div class="final-decision-card">
       <div class="final-eyebrow">ALL RETURNS COUNTED</div>
-      <div class="final-headline">${timeline.isPresidential ? `${safe(timeline.races.find(r => r.raceKind === 'president')?.finalWinner === 'people' ? 'Democrats' : 'Republicans')} Win the White House` : 'Midterm Election Resolution Complete'}</div>
+      <div class="final-headline">${timeline.isPresidential ? (() => {
+        const demEv = snapshot.scoreboard?.president?.people || 0;
+        const repEv = snapshot.scoreboard?.president?.heritage || 0;
+        const thirdEv = snapshot.scoreboard?.president?.third || 0;
+        if (demEv >= 270) return 'Democrats Win the White House';
+        if (repEv >= 270) return 'Republicans Win the White House';
+        if (thirdEv >= 270) return `${safe(game?.player?.name || 'Third Party')} Wins the White House`;
+        return 'Electoral College Deadlock — 12th Amendment Contingent Election';
+      })() : 'Midterm Election Resolution Complete'}</div>
       <div class="final-summary">
         ${timeline.isPresidential ? `Final Electoral College: ${snapshot.scoreboard.president.people} Dem · ${snapshot.scoreboard.president.heritage} GOP` : `Senate: ${snapshot.scoreboard.senate.people} Dem · ${snapshot.scoreboard.senate.heritage} GOP | House: ${snapshot.scoreboard.house.people} Dem · ${snapshot.scoreboard.house.heritage} GOP`}
       </div>
@@ -9436,6 +9521,7 @@ ${en.completed ? v0180PollingMissBannerMarkup() : ''}
           </div>
         </div>
       </header>
+      <div data-en-breaking-host></div>
 
       ${breakingMarkup}
 
@@ -9610,6 +9696,22 @@ function renderPrimarySvgMap(stateResults = {}) {
 function renderPresidentialPrimaryScreen() {
   const p = game?.activePresidentialPrimary;
   if (!p) return '';
+  const _autoBar = p.stage !== 'complete' ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;margin-bottom:12px;border-radius:10px;background:rgba(15,23,42,0.85);border:1px solid rgba(226,189,112,0.4);">
+      <div style="font-size:12.5px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.paused ? '#f59e0b' : '#22c55e'};margin-right:6px;"></span>
+        <b>${p.paused ? 'PRIMARY BROADCAST PAUSED' : 'AUTO-PLAYING PRESIDENTIAL PRIMARY'}</b>
+        <span style="opacity:0.8;margin-left:8px;">Sit back and watch the primaries unfold (~2–3 min at 1×), or pause anytime.</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="button button-secondary" style="font-size:11.5px;padding:4px 10px;" data-v0182-primary="primary-toggle-pause">${p.paused ? '▶ Resume' : '⏸ Pause'}</button>
+        <button type="button" class="button ${(p.speed || 1) === 1 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="1">1×</button>
+        <button type="button" class="button ${p.speed === 2 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="2">2×</button>
+        <button type="button" class="button ${p.speed === 4 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="4">4×</button>
+        <button type="button" class="button button-secondary" style="font-size:11.5px;padding:4px 10px;" data-v0182-primary="primary-skip-to-end">Skip to Nominee ⏭</button>
+      </div>
+    </div>
+  ` : '';
   const activeCands = (p.candidates || []).slice().sort((a, b) => Number(b.delegates || 0) - Number(a.delegates || 0) || Number(b.nationalPoll || 0) - Number(a.nationalPoll || 0));
   const curDay = p.schedule?.[p.scheduleIndex] || null;
   const statesToday = curDay?.states || [];
@@ -9758,11 +9860,11 @@ function renderPresidentialPrimaryScreen() {
       <div class="topbar-actions">
         <span style="--party:${game.player.color}" class="status-party">${safe(game.player.name)}</span>
         <span>${p.year} · PRESIDENTIAL PRIMARY (${p.interventionsCount === 0 ? 'Neutral' : `${p.interventionsCount} Interventions`})</span>
-        <button type="button" class="text-button" id="open-primary-archive">Primary Archive</button>
-        <button type="button" class="text-button" id="open-save-slots">Saves (5 Slots)</button>
+        <button type="button" class="text-button" id="open-primary-archive-10" data-dup-id="open-primary-archive">Primary Archive</button>
+        <button type="button" class="text-button" id="open-save-slots-11" data-dup-id="open-save-slots">Saves (5 Slots)</button>
       </div>
     </header>
-    <main class="screen campaign-screen">
+    <main class="screen campaign-screen">${_autoBar}
       ${stagePanel}
       <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:14px;align-items:start">
         <section class="panel section-panel">
@@ -9863,6 +9965,7 @@ function renderSaveSlotsModalMarkup() {
 
 function render() {
   if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip) _tip.style.display = 'none'; }
+  if (typeof ensurePrimaryAutoPlayback === 'function') ensurePrimaryAutoPlayback();
   syncGameSessionState();
   if (game && V07 && (!game.sittingMembers?.length || !game.trust || !game.leadershipRoles)) {
     game = V07.hydrateV07GameState(game);
@@ -10391,8 +10494,8 @@ function bind() {
   });
 
   // Step 4: Keynote Speaker, Recruit Bridge & Actions
-  document.querySelector('#select-keynote')?.addEventListener('click', () => {
-    const memberId = document.querySelector('#keynote-speaker')?.value;
+  document.querySelector('[data-dup-id="select-keynote"]')?.addEventListener('click', () => {
+    const memberId = document.querySelector('[data-dup-id="keynote-speaker"]')?.value;
     if (memberId) {
       dispatchAction('select-keynote-speaker', { memberId });
       render();
@@ -10431,7 +10534,7 @@ function bind() {
     }
     if (action === 'endorse-bill') payload.factionId = document.querySelector('#bill-endorser')?.value;
     if (action === 'tour') {
-      payload.memberId = document.querySelector('#tour-member')?.value;
+      payload.memberId = document.querySelector('[data-dup-id="tour-member"]')?.value;
       payload.stateId = document.querySelector('#tour-state')?.value;
       payload.actionId = 'member-tour';
     }
@@ -10534,7 +10637,7 @@ function bind() {
       });
       game.roster = [...new Set([...(game.roster || []), payload.targetId])];
       game.recruited = [...new Set([...(game.recruited || game.roster || []), payload.targetId])];
-      game.lastNote = `Courted lawmaker ${payload.targetId} to defect to ${game.player?.name || 'your party'}.`;
+      game.lastNote = `Courted lawmaker ${payload.targetId} to defect to ${safe(game.player?.name || 'your party')}.`;
     }
     render();
   }));
@@ -11383,6 +11486,7 @@ function bind() {
     }
     if (btn) btn.dataset.confirmArmed = '';
     if (typeof stopElectionNightPlayback === 'function') stopElectionNightPlayback();
+    if (typeof stopPrimaryAutoPlayback === 'function') stopPrimaryAutoPlayback();
     {
       Object.keys(localStorage).filter((k) => k.startsWith('partyChairGame.save.')).forEach((k) => localStorage.removeItem(k));
       game = null;
@@ -11398,7 +11502,7 @@ function bind() {
       render();
     }
   });
-  document.querySelector('#open-primary-archive')?.addEventListener('click', () => {
+  document.querySelector('[data-dup-id="open-primary-archive"]')?.addEventListener('click', () => {
     primaryArchiveOpen = true;
     render();
   });
@@ -11441,7 +11545,7 @@ function bind() {
     else if (act === 'finish') dispatchAction('finish-presidential-primary', {});
     render();
   }));
-  document.querySelector('#open-save-slots')?.addEventListener('click', async () => {
+  document.querySelector('[data-dup-id="open-save-slots"]')?.addEventListener('click', async () => {
     saveSlotsModalOpen = true;
     if (window.PartyChairEngine?.listSaveSlotsAsync) {
       cachedSaveSlots = await window.PartyChairEngine.listSaveSlotsAsync();
@@ -11603,7 +11707,13 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
   document.addEventListener('change', (e) => {
     if (e.target?.id === 'v0180-state-select') {
       window.__v0181SelectedState = e.target.value;
-      if (typeof render === 'function') render();
+      const satBadge = document.querySelector('[data-v0182-sat-badge]');
+      const CO = window.CampaignOverhaul;
+      if (satBadge && CO && game?.campaign) {
+        const stId = e.target.value;
+        const tier = CO.getSaturationTier ? CO.getSaturationTier(Number(game.campaign.stateSaturation?.[stId] || 0)) : { label: 'Fresh', effMult: 1 };
+        satBadge.innerHTML = `Airwaves (${safe(stId)}): <b>${safe(tier.label)} (${Math.round((tier.effMult || 1) * 100)}%)</b>`;
+      }
     } else if (e.target?.id === 'v0180-rival-select') {
       window.__v0181SelectedRival = e.target.value;
     } else if (e.target?.id === 'v0180-faction-select') {
@@ -11611,6 +11721,15 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
     }
   });
   document.addEventListener('click', (e) => {
+    const primCtrlBtn = e.target?.closest?.('[data-v0182-primary]');
+    if (primCtrlBtn && game) {
+      const pAct = primCtrlBtn.getAttribute('data-v0182-primary');
+      const spd = primCtrlBtn.getAttribute('data-speed');
+      game = window.PartyChairEngine.takeAction(game, pAct, spd ? { speed: Number(spd) } : {});
+      if (typeof saveGame === 'function') saveGame(game);
+      if (typeof render === 'function') render();
+      return;
+    }
     const primStateBtn = e.target?.closest?.('[data-primary-state]');
     if (primStateBtn && game?.activePresidentialPrimary) {
       primaryFilterStatePick = primStateBtn.getAttribute('data-primary-state');

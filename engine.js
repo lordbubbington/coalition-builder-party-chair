@@ -173,6 +173,26 @@ function stateSlateCost(stateEv) {
 }
 
 function initializeVoterModelBaselines(voterModel) {
+  if (voterModel && Array.isArray(voterModel.states)) {
+    voterModel.states.forEach((st) => {
+      if (!st || !st.affiliations || !st.sampleVoters) return;
+      const keys = Object.keys(st.affiliations).filter((k) => k !== 'thirdParty');
+      const sum = keys.reduce((s, k) => s + (Number(st.affiliations[k]) || 0), 0);
+      const excess = sum - Number(st.sampleVoters || 0);
+      if (excess > 0) {
+        const deductOther = Math.min(Number(st.affiliations.other || 0), excess);
+        if (deductOther > 0) {
+          st.affiliations.other = Math.max(0, Number(st.affiliations.other || 0) - deductOther);
+        }
+        const rem = excess - deductOther;
+        if (rem > 0 && Number(st.affiliations.independent || 0) >= rem) {
+          st.affiliations.independent = Math.max(0, Number(st.affiliations.independent || 0) - rem);
+        }
+        const tpKeys = Object.keys(st.affiliations).filter((k) => !['people', 'heritage', 'independent', 'thirdParty', 'player'].includes(k));
+        st.affiliations.thirdParty = tpKeys.reduce((s, k) => s + (Number(st.affiliations[k]) || 0), 0);
+      }
+    });
+  }
   if (!voterModel) return voterModel;
   const stateMatrix = getFactionsStateMatrix();
   const natTotals = getFactionsNationalTotals();
@@ -263,6 +283,26 @@ function initializeVoterModelBaselines(voterModel) {
     if (voterModel.affiliations.thirdParty.byParty.constitution === undefined) voterModel.affiliations.thirdParty.byParty.constitution = 2300;
     if (voterModel.affiliations.thirdParty.byParty.socialist === undefined) voterModel.affiliations.thirdParty.byParty.socialist = 2300;
     if (voterModel.affiliations.thirdParty.byParty.liberty === undefined) voterModel.affiliations.thirdParty.byParty.liberty = 11479;
+  }
+  
+  // v0.18.2 (#9): Reconcile state affiliations so constitution/socialist are deducted from other and never double-counted
+  if (voterModel && Array.isArray(voterModel.states)) {
+    voterModel.states.forEach((st) => {
+      if (!st || !st.affiliations || !st.sampleVoters) return;
+      const keys = Object.keys(st.affiliations).filter((k) => k !== "thirdParty");
+      const sum = keys.reduce((s, k) => s + (Number(st.affiliations[k]) || 0), 0);
+      const excess = sum - Number(st.sampleVoters || 0);
+      if (excess > 0) {
+        const deductOther = Math.min(Number(st.affiliations.other || 0), excess);
+        if (deductOther > 0) st.affiliations.other = Math.max(0, Number(st.affiliations.other || 0) - deductOther);
+        const rem = excess - deductOther;
+        if (rem > 0 && Number(st.affiliations.independent || 0) >= rem) {
+          st.affiliations.independent = Math.max(0, Number(st.affiliations.independent || 0) - rem);
+        }
+        const tpKeys = Object.keys(st.affiliations).filter((k) => !["people", "heritage", "independent", "thirdParty", "player"].includes(k));
+        st.affiliations.thirdParty = tpKeys.reduce((s, k) => s + (Number(st.affiliations[k]) || 0), 0);
+      }
+    });
   }
   return voterModel;
 }
@@ -956,8 +996,9 @@ function boltFaction(game, factionId) {
     });
 
     // Reconcile national party totals
-    const statePlayerSum = vm.states.reduce((sum, s) => sum + (s.affiliations[playerPartyId] || 0), 0) * 100;
-    const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations.independent || 0), 0) * 100;
+  const _bfMult = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+  const statePlayerSum = vm.states.reduce((sum, s) => sum + (s.affiliations[playerPartyId] || 0), 0) * _bfMult;
+  const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations.independent || 0), 0) * _bfMult;
     if (vm.affiliations[playerPartyId]) vm.affiliations[playerPartyId].representedVoters = statePlayerSum;
     if (vm.affiliations.independent) vm.affiliations.independent.representedVoters = stateIndSum;
   }
@@ -1390,8 +1431,9 @@ function signCoalitionAccord(game, factionId, demands = null) {
     });
 
     // Reconcile national party totals
-    const statePlayerSum = vm.states.reduce((sum, s) => sum + (s.affiliations[playerPartyId] || 0), 0) * 100;
-    const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations.independent || 0), 0) * 100;
+  const _caMult = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+  const statePlayerSum = vm.states.reduce((sum, s) => sum + (s.affiliations[playerPartyId] || 0), 0) * _caMult;
+  const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations.independent || 0), 0) * _caMult;
     if (vm.affiliations[playerPartyId]) vm.affiliations[playerPartyId].representedVoters = statePlayerSum;
     if (vm.affiliations.independent) vm.affiliations.independent.representedVoters = stateIndSum;
   }
@@ -2293,7 +2335,8 @@ function getHighestVoterShareStateForParty(game, partyId = 'player') {
       const fMap = vmSt?.factions || stateMatrix[st.id] || {};
       partyVoters = partyFactionIds.reduce((sum, fid) => sum + Number(fMap[fid] || 0), 0);
     } else if (vmSt?.affiliations && vmSt.affiliations[pid] !== undefined) {
-      partyVoters = Number(vmSt.affiliations[pid] || 0) * 100;
+            const _hsMult = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+      partyVoters = Number(vmSt.affiliations[pid] || 0) * _hsMult;
     }
 
     const share = (partyVoters / totalVoters) * 100;
@@ -4369,7 +4412,7 @@ function createGame(options = {}) {
     organizingActionsRemaining: 20,
     voterModel: initializeVoterModelBaselines(JSON.parse(JSON.stringify(window.PartyChairData.VERSION_05_VOTER_MODEL))),
     electionNight: null,
-    lastNote: 'Your coalition headquarters is open for the 2028 cycle.',
+    lastNote: `Your coalition headquarters is open for the ${opts?.year || 2028} cycle.`,
   };
 
   // REQ-147 & REQ-151: Initialize Dual Faction Metrics and Designations
@@ -4702,7 +4745,8 @@ function createGame(options = {}) {
             st.factions = st.factions || {};
             const count = st.factions[fid] || 0;
             if (count > 0) {
-              const countSample = Math.round(count / 100);
+              const _c1to1 = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
+              const countSample = _c1to1 ? Math.round(count) : Math.round(count / 100);
               if (origParty && st.affiliations[origParty] !== undefined) {
                 st.affiliations[origParty] = Math.max(0, (st.affiliations[origParty] || 0) - countSample);
               }
@@ -4714,9 +4758,10 @@ function createGame(options = {}) {
 
         // REQ-245 Part 2: Initialize player national affiliation with transferred voters
         if (!game.voterModel.affiliations) game.voterModel.affiliations = {};
+        const _c1to1Nat = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
         game.voterModel.affiliations.player = {
           name: player.name,
-          sampleVoters: Math.round(totalVotersTransferred / 100),
+          sampleVoters: _c1to1Nat ? Math.round(totalVotersTransferred) : Math.round(totalVotersTransferred / 100),
           representedVoters: totalVotersTransferred,
         };
 
@@ -4852,8 +4897,9 @@ function createGame(options = {}) {
       const stB = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === b.id);
       const totA = Number(stA?.representedVoters || 1);
       const totB = Number(stB?.representedVoters || 1);
-      const shA = (Number(stA?.affiliations?.player || 0) * 100) / totA;
-      const shB = (Number(stB?.affiliations?.player || 0) * 100) / totB;
+    const _shMult = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+    const shA = (Number(stA?.affiliations?.player || 0) * _shMult) / totA;
+    const shB = (Number(stB?.affiliations?.player || 0) * _shMult) / totB;
       return shB - shA;
     });
     const grantedDownballotStates = startTier >= 5
@@ -8500,9 +8546,10 @@ function realignVotingBlocksBetweenElections(game, outcome) {
     : JSON.parse(JSON.stringify(window.PartyChairData.VERSION_05_VOTER_MODEL));
 
   const aff = voterModel.affiliations || {};
-  const rawOther = aff.thirdParty?.byParty?.other ? aff.thirdParty.byParty.other * 100 : (aff.other?.representedVoters || 3_602_200);
-  const conInit = aff.thirdParty?.byParty?.constitution ? aff.thirdParty.byParty.constitution * 100 : (aff.constitution?.representedVoters || 230_000);
-  const socInit = aff.thirdParty?.byParty?.socialist ? aff.thirdParty.byParty.socialist * 100 : (aff.socialist?.representedVoters || 230_000);
+  const _preScale = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+  const rawOther = aff.thirdParty?.byParty?.other ? aff.thirdParty.byParty.other * _preScale : (aff.other?.representedVoters || 3_602_200);
+  const conInit = aff.thirdParty?.byParty?.constitution ? aff.thirdParty.byParty.constitution * _preScale : (aff.constitution?.representedVoters || 230_000);
+  const socInit = aff.thirdParty?.byParty?.socialist ? aff.thirdParty.byParty.socialist * _preScale : (aff.socialist?.representedVoters || 230_000);
 
   const countPartyFactionsNational = (pid) => {
     return catalog.filter((f) => f.partyId === pid).reduce((sum, f) => {
@@ -8772,14 +8819,15 @@ function realignVotingBlocksBetweenElections(game, outcome) {
   if (!voterModel.affiliations.thirdParty) voterModel.affiliations.thirdParty = { name: 'Third party', byParty: {} };
   if (!voterModel.affiliations.thirdParty.byParty) voterModel.affiliations.thirdParty.byParty = {};
 
+  const _realignScale = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10_000_000 || Number(totals.people || 0) >= 10_000_000) ? 1 : 100;
   voterModel.affiliations.people.sampleVoters = totals.people;
-  voterModel.affiliations.people.representedVoters = totals.people * 100;
+  voterModel.affiliations.people.representedVoters = totals.people * _realignScale;
 
   voterModel.affiliations.heritage.sampleVoters = totals.heritage;
-  voterModel.affiliations.heritage.representedVoters = totals.heritage * 100;
+  voterModel.affiliations.heritage.representedVoters = totals.heritage * _realignScale;
 
   voterModel.affiliations.independent.sampleVoters = totals.independent;
-  voterModel.affiliations.independent.representedVoters = totals.independent * 100;
+  voterModel.affiliations.independent.representedVoters = totals.independent * _realignScale;
 
   voterModel.affiliations.thirdParty.byParty.liberty = totals.liberty;
   voterModel.affiliations.thirdParty.byParty.green = totals.green;
@@ -8789,12 +8837,12 @@ function realignVotingBlocksBetweenElections(game, outcome) {
 
   const thirdSample = totals.liberty + totals.green + totals.constitution + totals.socialist + totals.other;
   voterModel.affiliations.thirdParty.sampleVoters = thirdSample;
-  voterModel.affiliations.thirdParty.representedVoters = thirdSample * 100;
+  voterModel.affiliations.thirdParty.representedVoters = thirdSample * _realignScale;
 
   ['liberty', 'green', 'constitution', 'socialist', 'other'].forEach((pid) => {
     if (voterModel.affiliations[pid]) {
       voterModel.affiliations[pid].sampleVoters = totals[pid];
-      voterModel.affiliations[pid].representedVoters = totals[pid] * 100;
+      voterModel.affiliations[pid].representedVoters = totals[pid] * _realignScale;
     }
   });
 
@@ -8803,7 +8851,7 @@ function realignVotingBlocksBetweenElections(game, outcome) {
       voterModel.affiliations.player = { name: game?.player?.name || 'Custom Party' };
     }
     voterModel.affiliations.player.sampleVoters = totals.player;
-    voterModel.affiliations.player.representedVoters = totals.player * 100;
+    voterModel.affiliations.player.representedVoters = totals.player * _realignScale;
   }
 
   const realignmentReport = [];
@@ -8823,7 +8871,7 @@ function realignVotingBlocksBetweenElections(game, outcome) {
     const oldVoters = partyVotersBefore[id] || 0;
     const newVoters = (id === 'people') ? voterModel.affiliations.people.representedVoters
       : (id === 'heritage') ? voterModel.affiliations.heritage.representedVoters
-      : (voterModel.affiliations.thirdParty.byParty[id] || 0) * 100;
+      : (voterModel.affiliations.thirdParty.byParty[id] || 0) * _realignScale;
     const deltaVoters = newVoters - oldVoters;
     const expectedShare = totalNonIndOld > 0 ? (oldVoters / totalNonIndOld) * 100 : 16;
     const actualShare = rawNatVote[id] !== undefined ? Number(rawNatVote[id]) : expectedShare;
@@ -8864,7 +8912,7 @@ function realignVotingBlocksBetweenElections(game, outcome) {
       parties: realignmentReport,
       independentChange: 0,
       newIndependentVoters: voterModel.affiliations.independent.representedVoters,
-      totalNonIndVoters: totalNonIndNew * 100,
+      totalNonIndVoters: totalNonIndNew * _realignScale,
     },
   };
 }
@@ -10170,7 +10218,7 @@ function reallocateStateHouseSeatCounts(currentCounts, oldControls, newControls,
           const totV = Number(vmSt?.representedVoters || 0);
           const facV = (vmSt?.factions && pFids.length)
             ? pFids.reduce((s, fid) => s + Number(vmSt.factions[fid] || 0), 0)
-            : (Number(vmSt?.affiliations?.[id] || 0) * 100);
+                    : (Number(vmSt?.affiliations?.[id] || 0) * ((game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100));
           const baseFactionPct = totV > 0 ? (facV / totV) * 100 : 0;
           const grassrootsPotential = Math.max(share, baseFactionPct);
           adjustedShare = Math.min(tierSpec.voteCap, grassrootsPotential * tierSpec.effectiveTurnout);
@@ -11824,7 +11872,7 @@ function allocatePrimaryStateDelegates(partyId, stateId, sharesMap, ruleOverride
       delegates: rule ? rule.allocate(sharesMap, info.total) : {},
     };
   }
-  const tpTotal = (data.RNC_MASTER_DELEGATES_2028?.[stateId]?.total) || 20;
+  const tpTotal = Math.max(4, Math.round(((data.RNC_MASTER_DELEGATES_2028?.[stateId]?.total) || 20) * 0.22));
   const rule = rules[ruleOverride || 'convention_caucus'] || rules.pure_proportional;
   return {
     total: tpTotal,
@@ -11899,7 +11947,8 @@ function computePrimaryClinchTarget(partyId, schedule) {
   let total = 0;
   states.forEach((st) => {
     if (partyId === 'people') total += Number(data.DNC_MASTER_DELEGATES_2028?.[st]?.pledged || 25);
-    else total += Number(data.RNC_MASTER_DELEGATES_2028?.[st]?.total || 20);
+    else if (partyId === 'heritage') total += Number(data.RNC_MASTER_DELEGATES_2028?.[st]?.total || 20);
+    else total += Math.max(4, Math.round(Number(data.RNC_MASTER_DELEGATES_2028?.[st]?.total || 20) * 0.22));
   });
   return Math.floor(Math.max(2, total) / 2) + 1;
 }
@@ -12010,7 +12059,9 @@ function simulateFullPrimaryForParty(game, partyId) {
 
 function startPresidentialPrimary(game) {
   const year = game?.year || 2028;
-  if (year % 4 !== 0) return game;
+  if (year % 4 !== 0) {
+    return { ...game, lastNote: 'Presidential Primaries only run during presidential election years (every 4 years).' };
+  }
   const rawBaseId = game?.player?.baseTemplateId || 'people';
   const playerPartyId = (game?.player?.custom && !String(rawBaseId).startsWith('robot_') && !String(rawBaseId).startsWith('pair_') && !String(rawBaseId).startsWith('solo_'))
     ? 'player'
@@ -12049,7 +12100,11 @@ function startPresidentialPrimary(game) {
     activePresidentialPrimary: {
       partyId: playerPartyId,
       year,
-      stage: 'order', // 'order' -> 'debates' (1..5) -> 'voting' (0..schedule.length-1) -> 'complete'
+      stage: 'debates', // Auto-play starts directly into Debates -> Voting -> Complete
+      autoPlay: true,
+      paused: false,
+      speed: 1,
+      intervalMs: 8000, // ~2-3 minutes at 1x speed across 16-18 primary days
       debateDay: 1,
       maxDebateDays: 5,
       scheduleIndex: 0,
@@ -12059,9 +12114,10 @@ function startPresidentialPrimary(game) {
       stateResults: {},
       interventionsCount: 0,
       neutralityBonusAwarded: false,
+      brokeredConvention: false,
       nomineeId: null,
       nomineeName: null,
-      log: [`Opened ${year} Presidential Primary (${candidates.length} faction candidates).`],
+      log: [`Auto-playing ${year} Presidential Primary broadcast (${candidates.length} candidates · Clinch target: ${clinchTarget} delegates).`,],
     },
     lastNote: `Entered the ${year} Presidential Primary! Customize your Primary Order or proceed to Debate Day 1.`,
   };
@@ -12290,6 +12346,14 @@ function filterPrimarySupport(game, candidateId, options = null) {
 function finalizePresidentialPrimary(game, nextP) {
   const sorted = nextP.candidates.slice().sort((a, b) => Number(b.delegates || 0) - Number(a.delegates || 0));
   const nominee = sorted[0] || nextP.candidates[0];
+  if (nominee && Number(nominee.delegates || 0) < Number(nextP.clinchTarget || 1)) {
+    nextP.brokeredConvention = true;
+    const needed = Math.max(0, Number(nextP.clinchTarget || 1) - Number(nominee.delegates || 0));
+    nominee.delegates = Number(nominee.delegates || 0) + needed;
+    nextP.log.push(`BROKERED CONVENTION: No candidate reached ${nextP.clinchTarget} delegates on the first ballot — delegates coalesced behind ${nominee.name} on the second ballot!`);
+  }
+  nextP.autoPlay = false;
+  nextP.paused = true;
   nextP.stage = 'complete';
   nextP.nomineeId = nominee?.id || null;
   nextP.nomineeName = nominee?.name || 'Nominee';
@@ -12592,6 +12656,9 @@ function computeFundingPollingLift(dollarsMillions) {
 }
 
 function allocateCandidateFunds(game, raceKey, amount = null) {
+  if (amount !== null && amount !== undefined && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
+    return { ...game, lastNote: 'Funding allocation must be greater than $0M.' };
+  }
   let entry = game.candidateFunding?.[raceKey];
   const isStatewide = raceKey.startsWith('statewide:') || entry?.kind === 'Statewide Executive';
   if (!entry) {
@@ -12610,7 +12677,7 @@ function allocateCandidateFunds(game, raceKey, amount = null) {
   }
   const defaultSpend = (isStatewide || entry.kind === 'House' || raceKey.startsWith('house:')) ? 1.0 : 2.0;
   const spend = amount != null ? Math.max(0.1, Number(amount)) : defaultSpend;
-  if ((game.treasury || 0) < spend) return game;
+  if ((game.treasury || 0) < spend) return { ...game, lastNote: `Insufficient treasury (${spend.toFixed(1)}M required) to fund ${raceKey}.` };
   // MAS-01 Era #26 (Post-Citizens United): Squeaky Clean candidates gain +25% public matching funds
   const pseFund = getPartySystemsEngine();
   const matchedCand = (game.sittingMembers || []).find((p) => p.raceId === raceKey || p.name === entry.candidateName || p.id === entry.candidateId)
@@ -12653,9 +12720,14 @@ function allocateCandidateFunds(game, raceKey, amount = null) {
     candidateFunding: { ...(game.candidateFunding || {}), [raceKey]: nextEntry },
     lastNote: `Allocated +$${spend}M to ${entry.candidateName} (${raceKey}), boosting campaign readiness (+${lift.toFixed(1)}% in polls).`,
   };
+  const _spendStateId = String(raceKey || "").split(":")[1]?.split("-")[0] || "PA";
+  const _nextSpendCamp = game.campaign?.active
+    ? { ...game.campaign, playerStateSpendLastMonth: { ...(game.campaign.playerStateSpendLastMonth || {}), [_spendStateId]: round((game.campaign.playerStateSpendLastMonth?.[_spendStateId] || 0) + spend, 2) } }
+    : game.campaign;
   return {
     ...withAlloc,
     forecasters: buildForecasters(withAlloc),
+      ...(game.campaign?.active ? { campaign: _nextSpendCamp } : {}),
   };
 }
 
@@ -13475,6 +13547,9 @@ function startNextCycle(game) {
 }
 
 function startNextCycleInternal(game) {
+  if (game && game.pollingMissReport) {
+    game = { ...game, pollingMissReport: null };
+  }
   if (game.phase !== 'complete') return game;
   const nextYear = (game.year || 2028) + 2;
   const nextCycleType = (nextYear % 4 === 0) ? 'presidential' : 'midterm';
@@ -13516,7 +13591,8 @@ function startNextCycleInternal(game) {
     voterModel.states.forEach((st) => {
       const stRep = st.representedVoters || st.sampleVoters || 0;
       totRep += stRep;
-      totSample += (st.sampleVoters || Math.round(stRep / 100));
+      const _cyc1to1 = (voterModel.voterScale === '1:1' || stRep >= 100_000);
+      totSample += (st.sampleVoters || (_cyc1to1 ? stRep : Math.round(stRep / 100)));
     });
     if (totRep > 0) {
       voterModel.representedVoters = totRep;
@@ -13534,10 +13610,11 @@ function startNextCycleInternal(game) {
           });
           const sumF = (pid) => cat.filter((f) => f.partyId === pid).reduce((s, f) => s + (st.factions[f.id] || 0), 0);
           st.affiliations = st.affiliations || {};
-          st.affiliations.socialist = Math.round(sumF('socialist') / 100);
-          st.affiliations.constitution = Math.round(sumF('constitution') / 100);
-          st.affiliations.liberty = Math.round(sumF('liberty') / 100);
-          st.affiliations.green = Math.round(sumF('green') / 100);
+          const _sDiv = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+          st.affiliations.socialist = Math.round(sumF('socialist') / _sDiv);
+          st.affiliations.constitution = Math.round(sumF('constitution') / _sDiv);
+          st.affiliations.liberty = Math.round(sumF('liberty') / _sDiv);
+          st.affiliations.green = Math.round(sumF('green') / _sDiv);
         }
       });
       voterModel.factions = natFactions;
@@ -14508,7 +14585,7 @@ function resolveVersion01GeneralElection(game) {
       speed: 1,
       paused: false,
       activeTab: isPresidential ? 'president' : 'senate',
-      mapMode: 'winner',
+      mapMode: 'called',
       breakingBannerDismissed: false,
       completed: false,
       calls: [],
@@ -14523,8 +14600,27 @@ function resolveVersion01GeneralElection(game) {
   return finalElectionState;
 }
 
+const V0182_SILENT_ACTION_FEEDBACK = new Set([
+  'build-chapter', 'fundraise', 'register-voters', 'pass-bill', 'commission-poll',
+  'endorse-candidate', 'vet-candidate', 'allocate-candidate-funds', 'launch-ballot-petition',
+  'recruit-member', 'court-politician', 'respond-pac-demand', 'commission-race-poll',
+]);
 function takeAction(game, actionId, payload = {}) {
-  return enforceGameTrustCaps(takeActionInternal(game, actionId, payload));
+  const res = enforceGameTrustCaps(takeActionInternal(game, actionId, payload));
+  const resolvedAct = (typeof actionId === 'object' && actionId !== null) ? (actionId.id || actionId.actionId || actionId.type) : actionId;
+  const _noChange = res && game && res.lastNote === game.lastNote && res.treasury === game.treasury && ((res.actionsLeft ?? 0) >= (game.actionsLeft ?? 0)) && ((res.campaign?.monthlyActionsLeft ?? 0) >= (game.campaign?.monthlyActionsLeft ?? 0));
+  if (_noChange && V0182_SILENT_ACTION_FEEDBACK.has(resolvedAct)) {
+    const availActs = game?.phase === 'campaign'
+      ? (game?.campaign?.monthlyActionsLeft ?? game?.campaign?.weeklyActionsLeft ?? 0)
+      : (game?.actionsLeft ?? 0);
+    const reason = availActs <= 0
+      ? `Cannot run "${resolvedAct}": no actions remaining this turn.`
+      : ((game?.treasury || 0) <= 0
+        ? `Cannot run "${resolvedAct}": insufficient treasury funds.`
+        : `Cannot run "${resolvedAct}" right now (requirements not met).`);
+    return { ...game, lastNote: reason };
+  }
+  return res;
 }
 
 function takeActionInternal(game, actionId, payload = {}) {
@@ -15011,6 +15107,35 @@ function takeActionInternal(game, actionId, payload = {}) {
   if (actionId === 'start-presidential-primary') {
     return startPresidentialPrimary(game);
   }
+  if (actionId === 'primary-toggle-pause') {
+    const p = game.activePresidentialPrimary;
+    if (!p || p.stage === 'complete') return game;
+    const nextPaused = !p.paused;
+    return {
+      ...game,
+      activePresidentialPrimary: { ...p, paused: nextPaused, autoPlay: !nextPaused },
+      lastNote: nextPaused ? 'Presidential Primary broadcast paused.' : 'Presidential Primary broadcast resumed.',
+    };
+  }
+  if (actionId === 'primary-set-speed') {
+    const p = game.activePresidentialPrimary;
+    if (!p || p.stage === 'complete') return game;
+    const spd = [1, 2, 4].includes(Number(payload?.speed)) ? Number(payload.speed) : 1;
+    return {
+      ...game,
+      activePresidentialPrimary: { ...p, speed: spd, paused: false, autoPlay: true },
+      lastNote: `Presidential Primary broadcast speed set to ${spd}x.`,
+    };
+  }
+  if (actionId === 'primary-skip-to-end') {
+    let cur = game;
+    let guard = 0;
+    while (cur.activePresidentialPrimary && cur.activePresidentialPrimary.stage !== 'complete' && guard < 80) {
+      cur = advancePrimaryCalendar(cur, {});
+      guard += 1;
+    }
+    return cur;
+  }
   if (actionId === 'reorder-primary-state') {
     const p = payload?.payload ? payload.payload : payload;
     return reorderPrimaryState(game, p?.stateId, p?.direction || 'earlier');
@@ -15330,7 +15455,14 @@ function takeActionInternal(game, actionId, payload = {}) {
   // CAMPAIGN & COALITION GRAND-STRATEGY ACTIONS
   // ============================================================================
   if (actionId === 'start-next-cycle') return startNextCycle(game);
-  if (actionId === 'start-campaign-phase') return startCampaignPhase(game);
+  if (actionId === 'start-campaign' || actionId === 'start-campaign-phase') {
+    const yr = Number(game?.year || 2028);
+    const pKey = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
+    if (yr % 4 === 0 && !game.primariesResolved && !game.simulatedPrimaries?.[yr]?.[pKey]?.nomineeId && game.phase !== 'presidential-primary') {
+      return startPresidentialPrimary(game);
+    }
+    return startCampaignPhase(game);
+  }
   if (actionId === 'advance-campaign-week' || actionId === 'advance-campaign-month') return advanceCampaignWeek(game);
   // v0.18.2: Campaign Phase Overhaul actions
   if (typeof window !== 'undefined' && window.CampaignOverhaul) {
@@ -17402,6 +17534,11 @@ function advanceChairTurn(game) {
   if (nextTurn >= 20) {
     // After Turn 20 confirmation, resolve primaries and enter the 15-Week Grand-Strategy Campaign
     const resolvedPrimaries = advanceToPrimaries({ ...next, actionsLeft: 0 });
+    const _orgYr = Number(resolvedPrimaries?.year || 2028);
+    const _orgPid = resolvedPrimaries?.player?.custom ? 'player' : (resolvedPrimaries?.player?.baseTemplateId || 'people');
+    if (_orgYr % 4 === 0 && !resolvedPrimaries.simulatedPrimaries?.[_orgYr]?.[_orgPid]?.nomineeId) {
+      return startPresidentialPrimary({ ...resolvedPrimaries, primariesResolved: false });
+    }
     return startCampaignPhase(resolvedPrimaries);
   }
   return refreshOffers(next, nextSeed);
@@ -17861,16 +17998,18 @@ function normalizeGame(parsed) {
     if (repVoters === 0 && ready.voterModel.states) {
       const statesList = Array.isArray(ready.voterModel.states) ? ready.voterModel.states : Object.values(ready.voterModel.states);
       const sampleSum = statesList.reduce((sum, st) => sum + (st.affiliations?.player || 0), 0);
+      const _n1to1 = (ready.voterModel?.voterScale === '1:1' || Number(ready.voterModel?.sampleVoters || 0) >= 10_000_000);
       if (sampleSum > 0) {
-        repVoters = sampleSum * 100;
+        repVoters = _n1to1 ? sampleSum : sampleSum * 100;
       }
     }
     if (repVoters === 0) {
       repVoters = 100000;
     }
+    const _n1to1Out = (ready.voterModel?.voterScale === '1:1' || Number(ready.voterModel?.sampleVoters || 0) >= 10_000_000);
     ready.voterModel.affiliations.player = {
       name: ready.player.name || 'Custom Party',
-      sampleVoters: Math.round(repVoters / 100),
+      sampleVoters: _n1to1Out ? Math.round(repVoters) : Math.round(repVoters / 100),
       representedVoters: repVoters,
     };
   }

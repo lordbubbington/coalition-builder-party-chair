@@ -211,7 +211,7 @@ function check(label, cond, detail = '') {
   const drawerIdx = appSrc.indexOf('function renderStatewideExecutiveDrawerMarkup');
   const drawerSlice = appSrc.slice(drawerIdx, drawerIdx + 3500);
   check('App renders Statewide Executive drawer & Election Night tab with zero REQ- leaks',
-    drawerIdx > 0 && appSrc.includes("{ id: 'statewide', label: 'Statewide Exec' }") && !/REQ-\d+/i.test(drawerSlice));
+    drawerIdx > 0 && appSrc.includes("{ id: 'statewide_executive', label: 'Statewide Exec' }") && !/REQ-\d+/i.test(drawerSlice));
 
 
   // --- SUITE 4: v0.16.8 Polish Verification ---
