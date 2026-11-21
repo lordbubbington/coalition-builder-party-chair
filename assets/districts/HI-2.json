@@ -1,0 +1,67 @@
+{
+  "stateId": "HI",
+  "name": "Hawaii",
+  "districtCount": 2,
+  "totalPopulation": 1445235,
+  "citizenPopulation": 1343686,
+  "cvap": 1054556,
+  "representationRatio": {
+    "citizenPerDistrict": 671843,
+    "populationPerDistrict": 722618,
+    "cvapPerDistrict": 527278
+  },
+  "boundingBox": {
+    "minX": 182,
+    "maxX": 300,
+    "minY": 511.4,
+    "maxY": 586.6,
+    "width": 118,
+    "height": 75.2
+  },
+  "districts": [
+    {
+      "id": "HI-1",
+      "stateId": "HI",
+      "districtNumber": 1,
+      "q": "wlDcmJfAVRb@MhBpAlD}@z@o@lA`@v@It@iAa@!y_D{oIy@_AeAZyCiAV_A|C_@`@LBlApAP^l@s@p@!_zCimIn@m@lB?a@p@{BC!qkCifIs@mBZy@bBM`A~By@BsAp@!auBs~Hy@CUq@L_Ax@m@pCv@OhAyB`@",
+      "cx": 247.4,
+      "cy": 546.8,
+      "path": "M278,585.8L274.4,584.6L273.4,582.8L274.1,577.5L270,568.8L273.1,565.8L275.5,561.9L273.8,559.1L274.3,556.4L278,558.1ZM257.3,539L260.2,542.2L263.7,540.8L271.4,544.5L270.2,547.7L262.3,549.3L260.6,548.6L260.4,544.7L256.3,543.8L254.7,541.5L257.3,539ZM248,534.9L245.6,537.2L240.1,537.2L241.8,534.7L248,534.9ZM224.9,523.7L227.5,529.2L226.1,532.1L221.1,532.8L217.8,526.4L220.7,526.2L224.9,523.7ZM188.9,511.4L191.8,511.6L192.9,514.1L192.2,517.3L189.3,519.6L182,516.8L182.8,513.1L188.9,511.4Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 671843,
+      "totalPopulation": 722618,
+      "cvap": 527278,
+      "name": "Hawaii 1",
+      "bbox": {
+        "minX": 182,
+        "maxX": 278,
+        "minY": 511.4,
+        "maxY": 585.8,
+        "width": 96,
+        "height": 74.4
+      }
+    },
+    {
+      "id": "HI-2",
+      "stateId": "HI",
+      "districtNumber": 2,
+      "q": "gnDsmJn@N?hP{@[yCq@yAcAA{@eCcBnAoAxCc@bBaAx@qA",
+      "cx": 285.8,
+      "cy": 571.8,
+      "path": "M280.4,586.6L278,585.8L278,558.1L281,559.5L288.7,562L293.2,565.4L293.3,568.4L300,573.4L296,577.4L288.3,579.2L283.3,582.5L280.4,586.6Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 671843,
+      "totalPopulation": 722618,
+      "cvap": 527278,
+      "name": "Hawaii 2",
+      "bbox": {
+        "minX": 278,
+        "maxX": 300,
+        "minY": 558.1,
+        "maxY": 586.6,
+        "width": 22,
+        "height": 28.5
+      }
+    }
+  ]
+}

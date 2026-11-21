@@ -1,0 +1,45 @@
+{
+  "stateId": "SD",
+  "name": "South Dakota",
+  "districtCount": 1,
+  "totalPopulation": 907423,
+  "citizenPopulation": 886929,
+  "cvap": 669733,
+  "representationRatio": {
+    "citizenPerDistrict": 886929,
+    "populationPerDistrict": 907423,
+    "cvapPerDistrict": 669733
+  },
+  "boundingBox": {
+    "minX": 356.6,
+    "maxX": 479.9,
+    "minY": 103.9,
+    "maxY": 170,
+    "width": 123.3,
+    "height": 66.1
+  },
+  "districts": [
+    {
+      "id": "SD-1",
+      "stateId": "SD",
+      "districtNumber": 1,
+      "q": "q`F}_AghAmBFe@vAkAw@cAgAe@@yRh@EO[H_Ai@c@XWHcA\\s@y@oAx@JRp@jD`AvC@l@Hd@a@fDbAHPr^j@bPb@hFRw@|TE?WfI",
+      "cx": 419.5,
+      "cy": 133.5,
+      "path": "M360.9,103.9L478.1,109.4L477.7,111.3L473.3,115.1L476.1,118.5L479.7,120.4L479.6,152.1L477.5,152.4L478.3,153.8L477.8,157L479.9,158.8L478.6,160L478.1,163.4L476.6,166L479.5,170L476.6,169.4L475.6,166.9L467,163.6L459.4,163.5L457.1,163L455.2,164.7L446.8,161.3L446.3,160.4L395.7,158.2L368.3,156.4L356.6,155.4L359.4,120.3L359.7,120.3L360.9,103.9Z",
+      "areaRatio": 1,
+      "citizenPopulation": 886929,
+      "totalPopulation": 907423,
+      "cvap": 669733,
+      "name": "South Dakota 1",
+      "bbox": {
+        "minX": 356.6,
+        "maxX": 479.9,
+        "minY": 103.9,
+        "maxY": 170,
+        "width": 123.3,
+        "height": 66.1
+      }
+    }
+  ]
+}

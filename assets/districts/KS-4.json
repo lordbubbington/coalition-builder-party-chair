@@ -1,0 +1,111 @@
+{
+  "stateId": "KS",
+  "name": "Kansas",
+  "districtCount": 4,
+  "totalPopulation": 2947198,
+  "citizenPopulation": 2823582,
+  "cvap": 2134491,
+  "representationRatio": {
+    "citizenPerDistrict": 705896,
+    "populationPerDistrict": 736800,
+    "cvapPerDistrict": 533623
+  },
+  "boundingBox": {
+    "minX": 382.2,
+    "maxX": 510.8,
+    "minY": 211.2,
+    "maxY": 268.2,
+    "width": 128.6,
+    "height": 57
+  },
+  "districts": [
+    {
+      "id": "KS-1",
+      "stateId": "KS",
+      "districtNumber": 1,
+      "q": "kqFacC}OO?ea@lS\\aAx`@m@A",
+      "cx": 399.4,
+      "cy": 239.3,
+      "path": "M387.8,211.3L414.9,212.1L414.9,266.8L382.2,265.3L385.5,211.2L387.8,211.3Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 705896,
+      "totalPopulation": 736800,
+      "cvap": 533623,
+      "name": "Kansas 1",
+      "bbox": {
+        "minX": 382.2,
+        "maxX": 414.9,
+        "minY": 211.2,
+        "maxY": 266.8,
+        "width": 32.7,
+        "height": 55.6
+      }
+    },
+    {
+      "id": "KS-2",
+      "stateId": "KS",
+      "districtNumber": 2,
+      "q": "ibGqcCkRO?_a@tQFT@",
+      "cx": 430.4,
+      "cy": 239.8,
+      "path": "M414.9,212.1L445.9,212.9L445.9,267.3L416,266.9L414.9,266.8Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 705896,
+      "totalPopulation": 736800,
+      "cvap": 533623,
+      "name": "Kansas 2",
+      "bbox": {
+        "minX": 414.9,
+        "maxX": 445.9,
+        "minY": 212.1,
+        "maxY": 267.3,
+        "width": 31,
+        "height": 55.3
+      }
+    },
+    {
+      "id": "KS-3",
+      "stateId": "KS",
+      "districtNumber": 3,
+      "q": "uuGadCqRQ?u`@pRF",
+      "cx": 461.6,
+      "cy": 240.4,
+      "path": "M445.9,212.9L477.2,213.8L477.2,267.7L445.9,267.3Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 705896,
+      "totalPopulation": 736800,
+      "cvap": 533623,
+      "name": "Kansas 3",
+      "bbox": {
+        "minX": 445.9,
+        "maxX": 477.2,
+        "minY": 212.9,
+        "maxY": 267.7,
+        "width": 31.3,
+        "height": 54.8
+      }
+    },
+    {
+      "id": "KS-4",
+      "stateId": "KS",
+      "districtNumber": 4,
+      "q": "giHsdCgLKa@_@oBYlAiBk@c@w@qAgAOGiW~SH",
+      "cx": 493.1,
+      "cy": 242.3,
+      "path": "M477.2,213.8L498.4,214.4L500.1,216L505.7,217.3L501.8,222.6L504,224.4L506.8,228.5L510.4,229.3L510.8,268.2L477.2,267.7Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 705896,
+      "totalPopulation": 736800,
+      "cvap": 533623,
+      "name": "Kansas 4",
+      "bbox": {
+        "minX": 477.2,
+        "maxX": 510.8,
+        "minY": 213.8,
+        "maxY": 268.2,
+        "width": 33.6,
+        "height": 54.4
+      }
+    }
+  ]
+}

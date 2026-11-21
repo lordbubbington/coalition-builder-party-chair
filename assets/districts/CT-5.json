@@ -1,0 +1,90 @@
+{
+  "stateId": "CT",
+  "stateName": "Connecticut",
+  "districtCount": 5,
+  "citizenRepresentation": 673774,
+  "totalPopulationRepresentation": 724902,
+  "cvapRepresentation": 532672,
+  "legislativeSeats": 151,
+  "legislativeRatio": 1.5,
+  "boundingBox": {
+    "minX": 852.1,
+    "maxX": 881.8,
+    "minY": 128.1,
+    "maxY": 153.4,
+    "width": 29.7,
+    "height": 25.3
+  },
+  "districts": [
+    {
+      "id": "CT-1",
+      "stateId": "CT",
+      "districtNumber": 1,
+      "q": "gzOgwA?{BTUhAc@rA}@^`@gAx@\\TT`C",
+      "cx": 857.8,
+      "cy": 145.9,
+      "path": "M862.8,141.2L862.8,147.4L861.7,148.5L858,150.3L853.8,153.4L852.2,151.7L855.8,148.8L854.3,147.7L853.2,141.2Z",
+      "areaRatio": 0.2,
+      "citizenPopulation": 673774,
+      "totalPopulation": 724902,
+      "cvap": 532672,
+      "name": "Connecticut 1"
+    },
+    {
+      "id": "CT-2",
+      "stateId": "CT",
+      "districtNumber": 2,
+      "q": "_xO_rAgAN?wD~D?ThCmC\\",
+      "cx": 857.9,
+      "cy": 137.1,
+      "path": "M859.2,132.8L862.8,132L862.8,141.2L853.2,141.2L852.1,134.3L859.2,132.8Z",
+      "areaRatio": 0.2,
+      "citizenPopulation": 673774,
+      "totalPopulation": 724902,
+      "cvap": 532672,
+      "name": "Connecticut 2"
+    },
+    {
+      "id": "CT-3",
+      "stateId": "CT",
+      "districtNumber": 3,
+      "q": "gzOesA{C??{DtBYd@g@",
+      "cx": 866.5,
+      "cy": 140,
+      "path": "M862.8,134.7L870.6,134.7L870.6,144.1L864.7,145.4L862.8,147.4Z",
+      "areaRatio": 0.2,
+      "citizenPopulation": 673774,
+      "totalPopulation": 724902,
+      "cvap": 532672,
+      "name": "Connecticut 3"
+    },
+    {
+      "id": "CT-4",
+      "stateId": "CT",
+      "districtNumber": 4,
+      "q": "gzOesA?t@eIlAAC_@_C",
+      "cx": 872.6,
+      "cy": 132.2,
+      "path": "M862.8,134.7L862.8,132L879.1,128.1L879.2,128.3L880.8,134.7Z",
+      "areaRatio": 0.2,
+      "citizenPopulation": 673774,
+      "totalPopulation": 724902,
+      "cvap": 532672,
+      "name": "Connecticut 4"
+    },
+    {
+      "id": "CT-5",
+      "stateId": "CT",
+      "districtNumber": 5,
+      "q": "c_PesAkE?SmAHc@\\AdC}@p@I",
+      "cx": 875.4,
+      "cy": 138.6,
+      "path": "M870.6,134.7L880.8,134.7L881.8,138.6L881.3,140.4L879.8,140.5L873.1,143.6L870.6,144.1Z",
+      "areaRatio": 0.2,
+      "citizenPopulation": 673774,
+      "totalPopulation": 724902,
+      "cvap": 532672,
+      "name": "Connecticut 5"
+    }
+  ]
+}

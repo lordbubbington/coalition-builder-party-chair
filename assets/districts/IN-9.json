@@ -1,0 +1,221 @@
+{
+  "stateId": "IN",
+  "name": "Indiana",
+  "districtCount": 9,
+  "totalPopulation": 6851072,
+  "citizenPopulation": 6597269,
+  "cvap": 5030938,
+  "representationRatio": {
+    "citizenPerDistrict": 733030,
+    "populationPerDistrict": 761230,
+    "cvapPerDistrict": 558993
+  },
+  "boundingBox": {
+    "minX": 623,
+    "maxX": 676.6,
+    "minY": 172.1,
+    "maxY": 248.2,
+    "width": 53.6,
+    "height": 76.1
+  },
+  "districts": [
+    {
+      "id": "IN-1",
+      "stateId": "IN",
+      "districtNumber": 1,
+      "q": "{uKsuB|M?RrF_@UeBF}Ar@mGZ",
+      "cx": 639.6,
+      "cy": 182.9,
+      "path": "M651,189.8L627.1,189.8L626.1,177.6L627.7,178.7L632.8,178.3L637.5,175.7L651,174.3Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 1",
+      "bbox": {
+        "minX": 626.1,
+        "maxX": 651,
+        "minY": 174.3,
+        "maxY": 189.8,
+        "width": 24.9,
+        "height": 15.5
+      }
+    },
+    {
+      "id": "IN-2",
+      "stateId": "IN",
+      "districtNumber": 2,
+      "q": "{uK}kBaKj@CYg@{HlL??hH??",
+      "cx": 661.4,
+      "cy": 181.3,
+      "path": "M651,174.3L670.3,172.1L670.5,173.4L672.5,189.2L651,189.2L651,174.3L651,174.3Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 2",
+      "bbox": {
+        "minX": 651,
+        "maxX": 672.5,
+        "minY": 172.1,
+        "maxY": 189.2,
+        "width": 21.5,
+        "height": 17.1
+      }
+    },
+    {
+      "id": "IN-3",
+      "stateId": "IN",
+      "districtNumber": 3,
+      "q": "{uKsuB?{GbM?XzG",
+      "cx": 639.4,
+      "cy": 196.8,
+      "path": "M651,189.8L651,204L628.4,204L627.1,189.8Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 3",
+      "bbox": {
+        "minX": 627.1,
+        "maxX": 651,
+        "minY": 189.8,
+        "maxY": 204,
+        "width": 23.8,
+        "height": 14.2
+      }
+    },
+    {
+      "id": "IN-4",
+      "stateId": "IN",
+      "districtNumber": 4,
+      "q": "icLguBKiBS}DlM??fH",
+      "cx": 662.1,
+      "cy": 196.7,
+      "path": "M672.5,189.2L673.1,194.5L674.1,204L651,204L651,189.2Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 4",
+      "bbox": {
+        "minX": 651,
+        "maxX": 674.1,
+        "minY": 189.2,
+        "maxY": 204,
+        "width": 23.1,
+        "height": 14.7
+      }
+    },
+    {
+      "id": "IN-5",
+      "stateId": "IN",
+      "districtNumber": 5,
+      "q": "sqKo~B?qLzG?d@r@_@bAXxH",
+      "cx": 636.6,
+      "cy": 214.7,
+      "path": "M644.2,204L644.2,225.7L630,225.7L628.1,223.1L629.7,219.7L628.4,204Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 5",
+      "bbox": {
+        "minX": 628.1,
+        "maxX": 644.2,
+        "minY": 204,
+        "maxY": 225.7,
+        "width": 16.1,
+        "height": 21.7
+      }
+    },
+    {
+      "id": "IN-6",
+      "stateId": "IN",
+      "districtNumber": 6,
+      "q": "sqKgeC?vEuQ?UwE",
+      "cx": 659.4,
+      "cy": 209.4,
+      "path": "M644.2,214.8L644.2,204L674.1,204L675.2,214.8Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 6",
+      "bbox": {
+        "minX": 644.2,
+        "maxX": 675.2,
+        "minY": 204,
+        "maxY": 214.8,
+        "width": 31,
+        "height": 10.8
+      }
+    },
+    {
+      "id": "IN-7",
+      "stateId": "IN",
+      "districtNumber": 7,
+      "q": "eyKgeCyJ?I{ATQg@}A|@Iv@e@xABKgAt@a@Rm@v@WR_Bd@YTD",
+      "cx": 664.1,
+      "cy": 224.3,
+      "path": "M656.3,214.8L675.2,214.8L675.7,219.4L674.6,220.3L676.6,225L673.5,225.5L670.7,227.4L666.2,227.2L666.8,230.8L664.1,232.5L663.1,234.8L660.3,236L659.3,240.8L657.4,242.1L656.3,241.8Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 7",
+      "bbox": {
+        "minX": 656.3,
+        "maxX": 676.6,
+        "minY": 214.8,
+        "maxY": 242.1,
+        "width": 20.3,
+        "height": 27.3
+      }
+    },
+    {
+      "id": "IN-8",
+      "stateId": "IN",
+      "districtNumber": 8,
+      "q": "sqKalC?yInAi@Ve@xAl@h@S`@XV]tAK^a@JVMrAYRLl@c@Du@tAIn@c@r@F`ALP",
+      "cx": 635.4,
+      "cy": 236.6,
+      "path": "M644.2,225.7L644.2,243L640.2,245.1L639,247L634.5,244.7L632.4,245.7L630.7,244.4L629.5,245.9L625.2,246.5L623.6,248.2L623,247L623.7,242.8L625,241.8L624.3,239.5L626.1,239.2L628.8,234.9L629.3,232.5L631.1,229.9L630.7,226.6L630,225.7Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 8",
+      "bbox": {
+        "minX": 623,
+        "maxX": 644.2,
+        "minY": 225.7,
+        "maxY": 248.2,
+        "width": 21.2,
+        "height": 22.5
+      }
+    },
+    {
+      "id": "IN-9",
+      "stateId": "IN",
+      "districtNumber": 9,
+      "q": "sqKgeCqF??{Ox@PPh@dAu@Kg@lAUZ`@@A",
+      "cx": 650.1,
+      "cy": 228.4,
+      "path": "M644.2,214.8L656.3,214.8L656.3,241.8L653.4,240.9L652.5,238.8L649,241.5L649.6,243.5L645.7,244.6L644.3,242.9L644.2,243Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 733030,
+      "totalPopulation": 761230,
+      "cvap": 558993,
+      "name": "Indiana 9",
+      "bbox": {
+        "minX": 644.2,
+        "maxX": 656.3,
+        "minY": 214.8,
+        "maxY": 244.6,
+        "width": 12.1,
+        "height": 29.8
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "stateId": "RI",
+  "stateName": "Rhode Island",
+  "districtCount": 2,
+  "citizenRepresentation": 512345,
+  "totalPopulationRepresentation": 550901,
+  "cvapRepresentation": 413312,
+  "legislativeSeats": 75,
+  "legislativeRatio": 0.8,
+  "boundingBox": {
+    "minX": 879.2,
+    "maxX": 892.3,
+    "minY": 126.4,
+    "maxY": 140.4,
+    "width": 13.1,
+    "height": 14
+  },
+  "districts": [
+    {
+      "id": "RI-1",
+      "stateId": "RI",
+      "districtNumber": 1,
+      "q": "kkPeqAQWV?EV!cgPknAo@Je@mAg@Mf@CH]hC?TvAsAX",
+      "cx": 883.8,
+      "cy": 130,
+      "path": "M890.2,131.5L891.1,132.7L889.9,132.7L890.2,131.5ZM883.4,127L885.8,126.4L887.7,130.3L889.7,131L887.7,131.2L887.2,132.7L880.3,132.7L879.2,128.3L883.4,127Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 512345,
+      "totalPopulation": 550901,
+      "cvap": 413312,
+      "name": "Rhode Island 1"
+    },
+    {
+      "id": "RI-2",
+      "stateId": "RI",
+      "districtNumber": 2,
+      "q": "}kP}qAW]|@[Mx@!oiP}qAH]GkArBo@Ib@\\tB",
+      "cx": 884.6,
+      "cy": 135.6,
+      "path": "M891.1,132.7L892.3,134.2L889.2,135.6L889.9,132.7ZM887.2,132.7L886.7,134.2L887.1,138L881.3,140.4L881.8,138.6L880.3,132.7Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 512345,
+      "totalPopulation": 550901,
+      "cvap": 413312,
+      "name": "Rhode Island 2"
+    }
+  ]
+}

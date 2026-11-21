@@ -1,0 +1,155 @@
+{
+  "stateId": "OR",
+  "name": "Oregon",
+  "districtCount": 6,
+  "totalPopulation": 4254295,
+  "citizenPopulation": 4043492,
+  "cvap": 3211655,
+  "representationRatio": {
+    "citizenPerDistrict": 673915,
+    "populationPerDistrict": 709049,
+    "cvapPerDistrict": 535276
+  },
+  "boundingBox": {
+    "minX": 29.5,
+    "maxX": 167.7,
+    "minY": 41.8,
+    "maxY": 140.7,
+    "width": 138.2,
+    "height": 98.9
+  },
+  "districts": [
+    {
+      "id": "OR-1",
+      "stateId": "OR",
+      "districtNumber": 1,
+      "q": "ii@a[[?w@w@Mo@LiBoCoAsCNsAO{Am@E[i@@?cI`b@?qB`GCd@cArBaAhDK`B]t@eCLk@u@q@G",
+      "cx": 69.5,
+      "cy": 65.5,
+      "path": "M67.7,44.9L69.1,44.9L71.9,47.7L72.6,50.1L71.9,55.4L79.1,59.4L86.5,58.6L90.7,59.4L95.3,61.7L95.6,63.1L97.7,63L97.7,79.2L41.6,79.2L47.3,66.3L47.5,64.4L50.9,58.6L54.2,50.1L54.8,45.2L56.3,42.5L63,41.8L65.2,44.5L67.7,44.9Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 1",
+      "bbox": {
+        "minX": 41.6,
+        "maxX": 97.7,
+        "minY": 41.8,
+        "maxY": 79.2,
+        "width": 56.1,
+        "height": 37.4
+      }
+    },
+    {
+      "id": "OR-2",
+      "stateId": "OR",
+      "districtNumber": 2,
+      "q": "a|@_u@?rMeCDc@[}AMsAHiCA{BWo@LuRwC]cA_Ag@Qq@tAwAP_@",
+      "cx": 128.5,
+      "cy": 76.3,
+      "path": "M97.7,86.4L97.7,63L104.4,62.7L106.2,64.1L110.9,64.8L115.1,64.3L122,64.4L128.2,65.6L130.6,64.9L162.1,72.5L163.6,75.9L166.8,77.9L167.7,80.4L163.4,84.8L162.5,86.4Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 2",
+      "bbox": {
+        "minX": 97.7,
+        "maxX": 167.7,
+        "minY": 62.7,
+        "maxY": 86.4,
+        "width": 70,
+        "height": 23.7
+      }
+    },
+    {
+      "id": "OR-3",
+      "stateId": "OR",
+      "districtNumber": 3,
+      "q": "cj@op@?kYpDp@jGlAtHvA`@v@KrBYfAThAo@j@q@tAiArAm@lAGP",
+      "cx": 51.8,
+      "cy": 98.6,
+      "path": "M69,79.2L69,121.4L60.1,118.9L46.7,115L31.2,110.6L29.5,107.8L30.1,102L31.4,98.4L30.3,94.7L32.7,92.5L35.2,88.2L38.9,84L41.2,80.1L41.6,79.2Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 3",
+      "bbox": {
+        "minX": 29.5,
+        "maxX": 69,
+        "minY": 79.2,
+        "maxY": 121.4,
+        "width": 39.5,
+        "height": 42.3
+      }
+    },
+    {
+      "id": "OR-4",
+      "stateId": "OR",
+      "districtNumber": 4,
+      "q": "cj@op@}P??i^??hIvArFdA",
+      "cx": 83.8,
+      "cy": 102.4,
+      "path": "M69,79.2L97.7,79.2L97.7,129.3L97.7,129.3L81.2,124.9L69,121.4Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 4",
+      "bbox": {
+        "minX": 69,
+        "maxX": 97.7,
+        "minY": 79.2,
+        "maxY": 129.3,
+        "width": 28.7,
+        "height": 50.1
+      }
+    },
+    {
+      "id": "OR-5",
+      "stateId": "OR",
+      "districtNumber": 5,
+      "q": "a|@_u@yP??g^|Cb@zKhB",
+      "cx": 112.3,
+      "cy": 109.7,
+      "path": "M97.7,86.4L126.2,86.4L126.2,136.4L118.3,134.6L97.7,129.3Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 5",
+      "bbox": {
+        "minX": 97.7,
+        "maxX": 126.2,
+        "minY": 86.4,
+        "maxY": 136.4,
+        "width": 28.5,
+        "height": 50
+      }
+    },
+    {
+      "id": "OR-6",
+      "stateId": "OR",
+      "districtNumber": 6,
+      "q": "{mA_u@uU?LYl@_@@_@h@k@b@CxAkBKq@w@SSa@`AgBlCwRvJtA",
+      "cx": 139.3,
+      "cy": 110.2,
+      "path": "M126.2,86.4L162.5,86.4L161.8,87.7L159.5,89.3L159.4,90.9L157.3,93.1L155.5,93.3L151,98.7L151.6,101.2L154.4,102.2L155.4,103.9L152.1,109.1L145,140.7L126.2,136.4Z",
+      "areaRatio": 0.1667,
+      "citizenPopulation": 673915,
+      "totalPopulation": 709049,
+      "cvap": 535276,
+      "name": "Oregon 6",
+      "bbox": {
+        "minX": 126.2,
+        "maxX": 162.5,
+        "minY": 86.4,
+        "maxY": 140.7,
+        "width": 36.3,
+        "height": 54.3
+      }
+    }
+  ]
+}

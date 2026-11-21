@@ -1,0 +1,221 @@
+{
+  "stateId": "AZ",
+  "name": "Arizona",
+  "districtCount": 9,
+  "totalPopulation": 7378841,
+  "citizenPopulation": 6885409,
+  "cvap": 5324115,
+  "representationRatio": {
+    "citizenPerDistrict": 765045,
+    "populationPerDistrict": 819871,
+    "cvapPerDistrict": 591568
+  },
+  "boundingBox": {
+    "minX": 146.6,
+    "maxX": 261.5,
+    "minY": 238.8,
+    "maxY": 354.9,
+    "width": 114.9,
+    "height": 116.1
+  },
+  "districts": [
+    {
+      "id": "AZ-1",
+      "stateId": "AZ",
+      "districtNumber": 1,
+      "q": "{`C{eDn\\??BLjASpEaCIa@q@a@Cm@t@u@zG_SkB",
+      "cx": 186.3,
+      "cy": 255.3,
+      "path": "M207.8,267L160.6,267L160.6,266.8L159.9,263L160.9,252.5L167.4,253L169.1,255.5L170.8,255.7L173.1,253L175.8,238.8L207.8,244.2Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 1",
+      "bbox": {
+        "minX": 159.9,
+        "maxX": 207.8,
+        "minY": 238.8,
+        "maxY": 267,
+        "width": 47.9,
+        "height": 28.2
+      }
+    },
+    {
+      "id": "AZ-2",
+      "stateId": "AZ",
+      "districtNumber": 2,
+      "q": "{`C{eD?}Lj]?ED{@Js@f@x@~@\\dBj@fAGh@_@l@A|@",
+      "cx": 184.4,
+      "cy": 278,
+      "path": "M207.8,267L207.8,289.3L159.2,289.3L159.5,289L162.5,288.4L165.1,286.4L162.2,283.2L160.7,278.1L158.5,274.5L158.9,272.4L160.5,270.1L160.6,267Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 2",
+      "bbox": {
+        "minX": 158.5,
+        "maxX": 207.8,
+        "minY": 267,
+        "maxY": 289.3,
+        "width": 49.3,
+        "height": 22.3
+      }
+    },
+    {
+      "id": "AZ-3",
+      "stateId": "AZ",
+      "districtNumber": 3,
+      "q": "apCysDdN??d[eNsA",
+      "cx": 219.8,
+      "cy": 267.8,
+      "path": "M232.1,289.3L207.8,289.3L207.8,244.2L232.1,248.4Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 3",
+      "bbox": {
+        "minX": 207.8,
+        "maxX": 232.1,
+        "minY": 244.2,
+        "maxY": 289.3,
+        "width": 24.3,
+        "height": 45.1
+      }
+    },
+    {
+      "id": "AZ-4",
+      "stateId": "AZ",
+      "districtNumber": 4,
+      "q": "mbDa}CdBwUdN??pXwAMsNkA",
+      "cx": 245.3,
+      "cy": 269.3,
+      "path": "M261.5,252.9L256.4,289.3L232.1,289.3L232.1,248.4L236.5,249.1L261.5,252.9Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 4",
+      "bbox": {
+        "minX": 232.1,
+        "maxX": 261.5,
+        "minY": 248.4,
+        "maxY": 289.3,
+        "width": 29.4,
+        "height": 41
+      }
+    },
+    {
+      "id": "AZ-5",
+      "stateId": "AZ",
+      "districtNumber": 5,
+      "q": "}|BysD?{Lt\\?A@BdAp@HAjCsAb@Qr@ArAq@p@",
+      "cx": 177.8,
+      "cy": 300.6,
+      "path": "M201.5,289.3L201.5,311.5L154,311.5L154.1,311.4L153.9,307.9L151.4,307.4L151.5,300.4L155.7,298.6L156.6,296L156.7,291.8L159.2,289.3Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 5",
+      "bbox": {
+        "minX": 151.4,
+        "maxX": 201.5,
+        "minY": 289.3,
+        "maxY": 311.5,
+        "width": 50.1,
+        "height": 22.1
+      }
+    },
+    {
+      "id": "AZ-6",
+      "stateId": "AZ",
+      "districtNumber": 6,
+      "q": "}|B_`E?dKia@?t@eK",
+      "cx": 228.3,
+      "cy": 299,
+      "path": "M201.5,308.8L201.5,289.3L256.4,289.3L253.7,308.8Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 6",
+      "bbox": {
+        "minX": 201.5,
+        "maxX": 256.4,
+        "minY": 289.3,
+        "maxY": 308.8,
+        "width": 54.9,
+        "height": 19.5
+      }
+    },
+    {
+      "id": "AZ-7",
+      "stateId": "AZ",
+      "districtNumber": 7,
+      "q": "}|BuaE?{S`FpBfZfMs@hAiA?UV",
+      "cx": 181.2,
+      "cy": 323,
+      "path": "M201.5,311.5L201.5,344.9L190.2,339.2L146.6,316.4L149.2,312.7L152.9,312.7L154,311.5Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 7",
+      "bbox": {
+        "minX": 146.6,
+        "maxX": 201.5,
+        "minY": 311.5,
+        "maxY": 344.9,
+        "width": 54.9,
+        "height": 33.4
+      }
+    },
+    {
+      "id": "AZ-8",
+      "stateId": "AZ",
+      "districtNumber": 8,
+      "q": "}|B_`EaO??}YlIp@rDxA",
+      "cx": 214.7,
+      "cy": 329.2,
+      "path": "M201.5,308.8L227.2,308.8L227.2,351.9L210.5,349.4L201.5,344.9Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 8",
+      "bbox": {
+        "minX": 201.5,
+        "maxX": 227.2,
+        "minY": 308.8,
+        "maxY": 351.9,
+        "width": 25.7,
+        "height": 43.1
+      }
+    },
+    {
+      "id": "AZ-9",
+      "stateId": "AZ",
+      "districtNumber": 9,
+      "q": "_mC_`EqO?~By[pKz@",
+      "cx": 239.1,
+      "cy": 330.1,
+      "path": "M227.2,308.8L253.7,308.8L247.3,354.9L227.2,351.9Z",
+      "areaRatio": 0.11109999999999999,
+      "citizenPopulation": 765045,
+      "totalPopulation": 819871,
+      "cvap": 591568,
+      "name": "Arizona 9",
+      "bbox": {
+        "minX": 227.2,
+        "maxX": 253.7,
+        "minY": 308.8,
+        "maxY": 354.9,
+        "width": 26.5,
+        "height": 46.1
+      }
+    }
+  ]
+}

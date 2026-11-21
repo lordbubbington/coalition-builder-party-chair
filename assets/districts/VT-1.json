@@ -1,0 +1,34 @@
+{
+  "stateId": "VT",
+  "stateName": "Vermont",
+  "districtCount": 1,
+  "citizenRepresentation": 637160,
+  "totalPopulationRepresentation": 647102,
+  "cvapRepresentation": 521797,
+  "legislativeSeats": 150,
+  "legislativeRatio": 1.5,
+  "boundingBox": {
+    "minX": 842.2,
+    "maxX": 871.7,
+    "minY": 75.8,
+    "maxY": 121.4,
+    "width": 29.5,
+    "height": 45.6
+  },
+  "districts": [
+    {
+      "id": "VT-1",
+      "stateId": "VT",
+      "districtNumber": 1,
+      "q": "__Pkn@Ka@Z_Ai@o@`@eA|A}@UoARe@DqAf@sAKuCOm@R[Go@_@U~Fw@HXn@nF|@n@I\\r@tASnADbAl@t@C`ARdA{HjAwFbA",
+      "cx": 856.6,
+      "cy": 96.5,
+      "path": "M870.4,75.8L871,77.5L869.6,80.7L871.7,83.1L870,86.6L865.3,89.7L866.4,93.7L865.4,95.6L865.1,99.7L863.1,103.9L863.7,111.4L864.5,113.7L863.5,115.1L863.9,117.5L865.5,118.6L852.7,121.4L852.2,120.1L849.8,108.1L846.7,105.7L847.2,104.2L844.6,99.9L845.6,95.9L845.3,92.5L843,89.8L843.2,86.5L842.2,83L858,79.2L870.4,75.8Z",
+      "areaRatio": 1,
+      "citizenPopulation": 637160,
+      "totalPopulation": 647102,
+      "cvap": 521797,
+      "name": "Vermont 1"
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "stateId": "MN",
+  "name": "Minnesota",
+  "districtCount": 8,
+  "totalPopulation": 5739447,
+  "citizenPopulation": 5534868,
+  "cvap": 4247053,
+  "representationRatio": {
+    "citizenPerDistrict": 691859,
+    "populationPerDistrict": 717431,
+    "cvapPerDistrict": 530882
+  },
+  "boundingBox": {
+    "minX": 468.3,
+    "maxX": 584.3,
+    "minY": 50,
+    "maxY": 152.1,
+    "width": 116,
+    "height": 102.1
+  },
+  "districts": [
+    {
+      "id": "MN-1",
+      "stateId": "MN",
+      "districtNumber": 1,
+      "q": "w~H_o@xW?Tn@V`AFjCSj@d@lBsRA@`Cy@Ai@Wi@oD]ScAC",
+      "cx": 490.6,
+      "cy": 66.3,
+      "path": "M511.6,76.8L471.9,76.8L470.8,74.4L469.6,71.1L469.2,64.1L470.2,61.9L468.3,56.4L499.7,56.5L499.6,50L502.5,50.1L504.6,51.3L506.7,60.1L508.2,61.1L511.6,61.3Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 1",
+      "bbox": {
+        "minX": 468.3,
+        "maxX": 511.6,
+        "minY": 50,
+        "maxY": 76.8,
+        "width": 43.3,
+        "height": 26.8
+      }
+    },
+    {
+      "id": "MN-2",
+      "stateId": "MN",
+      "districtNumber": 2,
+      "q": "w~H_o@?iMrU?Rz@CxAFPJzE`@dA",
+      "cx": 492.8,
+      "cy": 88.2,
+      "path": "M511.6,76.8L511.6,99.7L475.4,99.7L474.4,96.7L474.6,92.2L474.2,91.3L473.6,80.3L471.9,76.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 2",
+      "bbox": {
+        "minX": 471.9,
+        "maxX": 511.6,
+        "minY": 76.8,
+        "maxY": 99.7,
+        "width": 39.6,
+        "height": 22.9
+      }
+    },
+    {
+      "id": "MN-3",
+      "stateId": "MN",
+      "districtNumber": 3,
+      "q": "ylI_~@`M??tW_@AKOsBEOc@aBJ@LoAReAE[I",
+      "cx": 522.8,
+      "cy": 81.7,
+      "path": "M534.1,100.8L511.6,100.8L511.6,61.3L513.2,61.4L513.8,62.2L519.6,62.5L520.4,64.3L525.3,63.7L525.2,63L529.2,62L532.7,62.3L534.1,62.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 3",
+      "bbox": {
+        "minX": 511.6,
+        "maxX": 534.1,
+        "minY": 61.3,
+        "maxY": 100.8,
+        "width": 22.6,
+        "height": 39.5
+      }
+    },
+    {
+      "id": "MN-4",
+      "stateId": "MN",
+      "districtNumber": 4,
+      "q": "}uIcz@VJ|@]CiBpE??vVo@MUa@m@Dm@mASb@iANM]{ASA_@k@U}APs@d@gAV_@q@q@L}@GgAJuAc@kAJDS`Bo@lCk@xAg@|B_Bv@y@rAaAfCyAYY",
+      "cx": 549.5,
+      "cy": 80,
+      "path": "M548.7,94.6L547.5,94L544.4,95.5L544.6,100.8L534.1,100.8L534.1,62.8L536.5,63.5L537.6,65.2L539.9,64.9L542.2,68.8L543.2,67L546.9,66.2L547.6,67.7L552.2,68.7L552.3,70.3L554.5,71.4L559.2,70.5L561.8,68.6L565.4,67.4L567,69.9L569.5,69.2L572.6,69.6L576.2,69L580.5,70.8L584.3,70.2L584,71.2L579.1,73.6L572,75.8L567.5,77.8L561.2,82.6L558.4,85.5L554.2,88.8L547.4,93.3L548.7,94.6Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 4",
+      "bbox": {
+        "minX": 534.1,
+        "maxX": 584.3,
+        "minY": 62.8,
+        "maxY": 100.8,
+        "width": 50.2,
+        "height": 38.1
+      }
+    },
+    {
+      "id": "MN-5",
+      "stateId": "MN",
+      "districtNumber": 5,
+      "q": "w~Hi}@?uN|R??vAfAd@v@bAwAjAGd@JhCd@f@BN",
+      "cx": 494.3,
+      "cy": 112.2,
+      "path": "M511.6,99.7L511.6,124.8L479.7,124.8L479.7,120.4L476.1,118.5L473.3,115.1L477.7,111.3L478.1,109.4L477.5,102.5L475.6,100.5L475.4,99.7Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 5",
+      "bbox": {
+        "minX": 473.3,
+        "maxX": 511.6,
+        "minY": 99.7,
+        "maxY": 124.8,
+        "width": 38.3,
+        "height": 25.1
+      }
+    },
+    {
+      "id": "MN-6",
+      "stateId": "MN",
+      "districtNumber": 6,
+      "q": "miI_~@?k^tIG?r^",
+      "cx": 520.1,
+      "cy": 126,
+      "path": "M528.7,100.8L528.7,151L511.6,151.4L511.6,100.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 6",
+      "bbox": {
+        "minX": 511.6,
+        "maxX": 528.7,
+        "minY": 100.8,
+        "maxY": 151.4,
+        "width": 17.1,
+        "height": 50.6
+      }
+    },
+    {
+      "id": "MN-7",
+      "stateId": "MN",
+      "districtNumber": 7,
+      "q": "w~H_mA?sO~RMA`P",
+      "cx": 495.5,
+      "cy": 138.3,
+      "path": "M511.6,124.8L511.6,151.4L479.6,152.1L479.7,124.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 7",
+      "bbox": {
+        "minX": 479.6,
+        "maxX": 511.6,
+        "minY": 124.8,
+        "maxY": 152.1,
+        "width": 32,
+        "height": 27.3
+      }
+    },
+    {
+      "id": "MN-8",
+      "stateId": "MN",
+      "districtNumber": 8,
+      "q": "miI_~@}H?CaBPUxAa@bAkADq@e@Ak@k@b@u@Gy@PaCsA{@cAEc@c@aBc@Qk@}Aw@s@K_AeADy@Qi@n@AlSM",
+      "cx": 539.8,
+      "cy": 131.7,
+      "path": "M528.7,100.8L544.6,100.8L544.8,105.7L543.9,106.8L539.4,108.5L536,112.3L535.7,114.8L537.6,114.9L539.8,117.1L538,119.8L538.4,122.7L537.5,129.2L541.7,132.2L545.1,132.5L546.9,134.3L551.8,136.1L552.7,138.3L557.4,141.1L560,141.7L563.2,145.2L562.9,148.1L563.8,150.2L561.4,150.3L528.7,151Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 691859,
+      "totalPopulation": 717431,
+      "cvap": 530882,
+      "name": "Minnesota 8",
+      "bbox": {
+        "minX": 528.7,
+        "maxX": 563.8,
+        "minY": 100.8,
+        "maxY": 151,
+        "width": 35.1,
+        "height": 50.2
+      }
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "stateId": "UT",
+  "name": "Utah",
+  "districtCount": 4,
+  "totalPopulation": 3392334,
+  "citizenPopulation": 3217631,
+  "cvap": 2291434,
+  "representationRatio": {
+    "citizenPerDistrict": 804408,
+    "populationPerDistrict": 848084,
+    "cvapPerDistrict": 572859
+  },
+  "boundingBox": {
+    "minX": 175.8,
+    "maxX": 271.2,
+    "minY": 150.7,
+    "maxY": 252.9,
+    "width": 95.4,
+    "height": 102.2
+  },
+  "districts": [
+    {
+      "id": "UT-1",
+      "stateId": "UT",
+      "districtNumber": 1,
+      "q": "uhCu_CxV?uEna@cPcB",
+      "cx": 203.5,
+      "cy": 180.9,
+      "path": "M220.3,205.9L182.2,205.9L192.9,150.7L220.3,155.7Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 804408,
+      "totalPopulation": 848084,
+      "cvap": 572859,
+      "name": "Utah 1",
+      "bbox": {
+        "minX": 182.2,
+        "maxX": 220.3,
+        "minY": 150.7,
+        "maxY": 205.9,
+        "width": 38.1,
+        "height": 55.2
+      }
+    },
+    {
+      "id": "UT-2",
+      "stateId": "UT",
+      "districtNumber": 2,
+      "q": "qjCs`BeJ{@v@_JoSaBbAcNt\\??j^{@I",
+      "cx": 241,
+      "cy": 186.4,
+      "path": "M223.3,156.2L241.2,159.2L238.4,176.8L271.2,181.7L267.8,205.9L220.3,205.9L220.3,155.7L223.3,156.2Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 804408,
+      "totalPopulation": 848084,
+      "cvap": 572859,
+      "name": "Utah 2",
+      "bbox": {
+        "minX": 220.3,
+        "maxX": 271.2,
+        "minY": 155.7,
+        "maxY": 205.9,
+        "width": 50.9,
+        "height": 50.2
+      }
+    },
+    {
+      "id": "UT-3",
+      "stateId": "UT",
+      "districtNumber": 3,
+      "q": "}kCu_C?yX`^fD_CpS",
+      "cx": 203,
+      "cy": 225,
+      "path": "M225.5,205.9L225.5,247.2L175.8,238.8L182.2,205.9Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 804408,
+      "totalPopulation": 848084,
+      "cvap": 572859,
+      "name": "Utah 3",
+      "bbox": {
+        "minX": 175.8,
+        "maxX": 225.5,
+        "minY": 205.9,
+        "maxY": 247.2,
+        "width": 49.7,
+        "height": 41.3
+      }
+    },
+    {
+      "id": "UT-4",
+      "stateId": "UT",
+      "districtNumber": 4,
+      "q": "}kCu_CmY?VsDl@mHAg@x@aLrNjAzEd@",
+      "cx": 245.5,
+      "cy": 227.5,
+      "path": "M225.5,205.9L267.8,205.9L266.6,214.9L264.3,230L264.4,232L261.5,252.9L236.5,249.1L225.5,247.2Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 804408,
+      "totalPopulation": 848084,
+      "cvap": 572859,
+      "name": "Utah 4",
+      "bbox": {
+        "minX": 225.5,
+        "maxX": 267.8,
+        "minY": 205.9,
+        "maxY": 252.9,
+        "width": 42.3,
+        "height": 47
+      }
+    }
+  ]
+}

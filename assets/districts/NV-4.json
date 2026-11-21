@@ -1,0 +1,111 @@
+{
+  "stateId": "NV",
+  "name": "Nevada",
+  "districtCount": 4,
+  "totalPopulation": 3184611,
+  "citizenPopulation": 2900170,
+  "cvap": 2223535,
+  "representationRatio": {
+    "citizenPerDistrict": 725043,
+    "populationPerDistrict": 796153,
+    "cvapPerDistrict": 555884
+  },
+  "boundingBox": {
+    "minX": 84.2,
+    "maxX": 192.9,
+    "minY": 129.3,
+    "maxY": 272.4,
+    "width": 108.7,
+    "height": 143.1
+  },
+  "districts": [
+    {
+      "id": "NV-1",
+      "stateId": "NV",
+      "districtNumber": 1,
+      "q": "{rAwrBd\\?`AlAqBtL{CxQ{KiB}HgA",
+      "cx": 111.5,
+      "cy": 160.7,
+      "path": "M134.2,185.2L87.5,185.2L84.2,181.3L89.9,159.4L97.7,129.3L118.3,134.6L134.2,138.2Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 725043,
+      "totalPopulation": 796153,
+      "cvap": 555884,
+      "name": "Nevada 1",
+      "bbox": {
+        "minX": 84.2,
+        "maxX": 134.2,
+        "minY": 129.3,
+        "maxY": 185.2,
+        "width": 50,
+        "height": 55.9
+      }
+    },
+    {
+      "id": "NV-2",
+      "stateId": "NV",
+      "districtNumber": 2,
+      "q": "syA}vA}\\gEdCqTn_@??j\\wEq@",
+      "cx": 160.6,
+      "cy": 164.3,
+      "path": "M145,140.7L192.9,150.7L186.2,185.2L134.2,185.2L134.2,138.2L145,140.7Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 725043,
+      "totalPopulation": 796153,
+      "cvap": 555884,
+      "name": "Nevada 2",
+      "bbox": {
+        "minX": 134.2,
+        "maxX": 192.9,
+        "minY": 138.2,
+        "maxY": 185.2,
+        "width": 58.7,
+        "height": 47
+      }
+    },
+    {
+      "id": "NV-3",
+      "stateId": "NV",
+      "districtNumber": 3,
+      "q": "{{AwrB?qm@nCpDbElFjGdIjItKxGtI",
+      "cx": 128.3,
+      "cy": 210,
+      "path": "M148.6,185.2L148.6,259.7L141.4,250.8L131.6,238.9L118.2,222.6L101.6,202.3L87.5,185.2Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 725043,
+      "totalPopulation": 796153,
+      "cvap": 555884,
+      "name": "Nevada 3",
+      "bbox": {
+        "minX": 87.5,
+        "maxX": 148.6,
+        "minY": 185.2,
+        "maxY": 259.7,
+        "width": 61.2,
+        "height": 74.5
+      }
+    },
+    {
+      "id": "NV-4",
+      "stateId": "NV",
+      "districtNumber": 4,
+      "q": "{{AwrBoV?nEo`@t@{Gl@u@`@B`@p@`CHRqEMkA@aA^m@lE|F",
+      "cx": 163.7,
+      "cy": 220,
+      "path": "M148.6,185.2L186.2,185.2L175.8,238.8L173.1,253L170.8,255.7L169.1,255.5L167.4,253L160.9,252.5L159.9,263L160.6,266.8L160.5,270.1L158.9,272.4L148.6,259.7Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 725043,
+      "totalPopulation": 796153,
+      "cvap": 555884,
+      "name": "Nevada 4",
+      "bbox": {
+        "minX": 148.6,
+        "maxX": 186.2,
+        "minY": 185.2,
+        "maxY": 272.4,
+        "width": 37.6,
+        "height": 87.2
+      }
+    }
+  ]
+}

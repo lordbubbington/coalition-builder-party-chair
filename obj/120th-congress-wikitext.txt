@@ -1,0 +1,885 @@
+{{Short description|2027–2029 U.S. legislative term}}
+{{Infobox legislative term
+| name = 120th United States Congress
+| before = [[119th United States Congress|119th]]
+| after = [[121st United States Congress|121st]]
+| body = [[United States Congress]]
+| country = United States
+| term_start = January 3, 2027
+| term_end = January 3, 2029
+| chamber1 = [[United States Senate|Senate]]
+| membership1 = 100
+| control1 = <!-- | sessionnumber1 = 1st
+| sessionstart1  = January 3, 2027
+| sessionend1    = January 3, 2028
+| sessionnumber2 = 2nd
+| sessionstart2  = January 3, 2028
+| sessionend2    = January 3, 2029 -->
+[[Democratic Party (United States)|Democratic]]
+| chamber1_leader1_type = President
+| chamber1_leader1 = [[JD Vance]] ([[Republican Party (United States)|R]])
+| chamber2 = [[United States House of Representatives|House of Representatives]]
+| membership2 = 435 representatives<br />6 non-voting delegates
+| chamber2_leader1_type = Speaker
+| chamber2_leader1 = [[2027 Speaker of the United States House of Representatives election|TBD]]
+| control2 = [[Democratic Party (United States)|Democratic]]
+| image = Capitol Building Full View.jpg
+}}
+
+The '''120th United States Congress''' is the upcoming meeting of the [[United States Congress|legislative branch of the United States federal government]], composed of the [[United States Senate]] and the [[United States House of Representatives]]. It will convene on January 3, 2027, during the final two years of [[Donald Trump]]'s [[Second presidency of Donald Trump|second presidency]].
+
+The [[Democratic Party (United States)|Democratic Party]] won a majority in both chambers in the [[2026 United States elections|November 3, 2026 midterm elections]].<ref>{{Cite news |last=Browning |first=Kellen |last2=Griffin |first2=Anna |last3=Klavens |first3=Alex |last4=Harmon |first4=Amy |last5=Yoon |first5=John |last6=Adelson |first6=Jeff |last7=Govindarao |first7=Sejal |last8=Browning |first8=Kellen |last9=Zhang |first9=Christine |date=2026-11-03 |title=Democrats Seize Control of Congress as Voters Rebuke Trump |url=https://www.nytimes.com/live/2026/11/03/us/midterms-2026-election-day-trump |access-date=2026-11-04 |work=The New York Times |language=en-US |issn=0362-4331}}</ref>
+
+==Leadership==
+'''Note:''' [[Democratic Party (United States)|Democrats]] refer to themselves as a "caucus"; [[Republican Party (United States)|Republicans]] refer to themselves as a "conference".
+
+===Senate leadership===
+[[File:March 2026 Official Vice Presidential Portrait of JD Vance (cropped).jpg|x175px|thumb|{{center|'''Senate President''' <br/>[[JD Vance]] (R)}}]]
+
+====Senate presiding officers====
+*[[President of the United States Senate|President of the Senate]]: [[JD Vance]] (R)
+*[[President pro tempore of the United States Senate|President pro tempore]]: TBD
+
+====Senate majority (Democratic) leadership====
+{{see also|2026 Senate Democratic Caucus leadership election}}
+*[[Party leaders of the United States Senate|Majority Leader]] and [[Senate Democratic Caucus#Chairs of the Senate Democratic Caucus|Chair]] of the [[Senate Democratic Caucus]]: [[2026 Senate Democratic Caucus leadership election|TBD]]
+
+====Senate minority (Republican) leadership====
+*[[Party leaders of the United States Senate|Minority Leader]]: [[John Thune]] ([[List of United States senators from South Dakota|SD]])
+*[[Party leaders of the United States Senate|Minority Whip]]: TBD
+*[[Senate Republican Conference#List of conference chairmen and chairwomen|Chair]] of the [[Senate Republican Conference]]: [[Tom Cotton]] ([[AR]])
+*[[National Republican Senatorial Committee#List of chairmen|Chair]] of the [[National Republican Senatorial Committee]]: [[Bernie Moreno]] ([[List of United States senators from Ohio|OH]])
+
+===House leadership===
+
+====House presiding officer====
+*[[Speaker of the United States House of Representatives|Speaker]]: [[2027 Speaker of the United States House of Representatives election|TBD]]
+
+====House majority (Democratic) leadership====
+*[[Party leaders of the United States House of Representatives|Majority Leader]] and Chair of the [[Steering and Policy Committees of the United States House of Representatives#House Democratic Steering and Policy Committee|House Democratic Steering and Policy Committee]]: TBD
+*[[Party leaders of the United States House of Representatives|Majority Whip]]: TBD
+*[[House Democratic Caucus#List of chairs|Chair]] of the [[House Democratic Caucus]]: TBD
+*[[Party leaders of the United States House of Representatives#Party Whips and Assistant Party Leaders|Assistant Democratic Leader]]: TBD
+*[[House Democratic Caucus#List of vice-chairs|Vice Chair]] of the [[House Democratic Caucus]]: TBD
+*[[Democratic Congressional Campaign Committee#List of chairs|Chair]] of the [[Democratic Congressional Campaign Committee]]: TBD
+
+====House minority (Republican) leadership====
+{{see also|2026 House Republican Conference leadership election}}
+*[[Party leaders of the United States House of Representatives|Minority Leader]]: [[Jim Jordan]] ({{ushr|OH|4|B}})
+*[[Party leaders of the United States House of Representatives|Minority Whip]]: [[Tom Emmer]] ({{ushr|MN|6|B}})
+*[[House Republican Conference#Conference chairs|Chair]] of the [[House Republican Conference]]: [[Lisa McClain]] ({{ushr|MI|9|B}})
+*[[National Republican Congressional Committee#List of chairs|Chair]] of the [[National Republican Congressional Committee]]: [[Brian Jack]] ({{ushr|GA|3|B}})
+
+{{TOC limit|3}}
+
+== Members ==
+{{see also|List of new members of the 120th United States Congress}}
+=== Senate ===
+{{For|year of birth, when first took office, prior background, and education|List of current United States senators}}
+{{TOC US states}}
+
+The numbers refer to their [[Classes of United States senators|Senate classes]]. All class 2 seats were contested in the [[2026 United States Senate elections|November 2026 elections]]. In this Congress, class 2 means their term will commence in the current Congress, requiring re-election in 2032; class 3 means their term ends with this Congress, requiring [[2028 United States Senate elections|re-election in 2028]]; and class 1 means their term began in the last Congress, requiring [[2030 United States Senate elections|re-election in 2030]].
+
+{{col-begin}}
+{{col-break}}
+
+==== [[List of United States senators from Alabama|Alabama]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Barry Moore (American politician)|Barry Moore]] (R)<ref>{{Cite web |url=https://thehill.com/homenews/campaign/6137514-moore-wins-alabama-senate-race/ |title=Moore wins Alabama Senate race to succeed Tuberville |date=November 3, 2026 |last=Davis |first=Elliott |work=[[The Hill (newspaper)|The Hill]] |access-date=November 3, 2026}}</ref>
+: {{Party stripe|Republican Party (United States)}}3. [[Katie Britt]] (R)
+
+==== [[List of United States senators from Alaska|Alaska]] ====
+: {{Party stripe|Unknown}}2. [[2026 United States Senate election in Alaska|TBD]]
+: {{Party stripe|Republican Party (United States)}}3. [[Lisa Murkowski]] (R)
+
+==== [[List of United States senators from Arizona|Arizona]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Ruben Gallego]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Mark Kelly]] (D)
+
+==== [[List of United States senators from Arkansas|Arkansas]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Tom Cotton]] (R)<ref>{{Cite web |url=https://www.wsj.com/livecoverage/midterm-election-results-2026-latest-updates/card/tom-cotton-r-wins-arkansas-senate-race-8EUKb3ByEFDE7pW9Ifbx |title=Tom Cotton (R) Wins Arkansas Senate Race |date=November 3, 2026 |work=[[The Wall Street Journal]] |access-date=November 3, 2026}}</ref>
+: {{Party stripe|Republican Party (United States)}}3. [[John Boozman]] (R)
+
+==== [[List of United States senators from California|California]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Adam Schiff]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Alex Padilla]] (D)
+
+==== [[List of United States senators from Colorado|Colorado]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[John Hickenlooper]] (D)<ref>{{Cite web |url=https://www.axios.com/local/denver/2026/11/04/john-hickenlooper-colorado-us-senate-race-results-2026 |title=John Hickenlooper triumphs in Colorado's U.S. Senate race |date=November 3, 2026 |last=Frank |first=John |work=[[Axios (website)|Axios]] |access-date=November 3, 2026}}</ref>
+: {{Party stripe|Democratic Party (United States)}}3. [[Michael Bennet]] (D)
+
+==== [[List of United States senators from Connecticut|Connecticut]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Chris Murphy]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Richard Blumenthal]] (D)
+
+==== [[List of United States senators from Delaware|Delaware]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Lisa Blunt Rochester]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Chris Coons]] (D)
+
+==== [[List of United States senators from Florida|Florida]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Rick Scott]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Ashley Moody]] (R)
+
+==== [[List of United States senators from Georgia|Georgia]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Jon Ossoff]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Raphael Warnock]] (D)
+
+==== [[List of United States senators from Hawaii|Hawaii]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Mazie Hirono]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Brian Schatz]] (D)
+
+==== [[List of United States senators from Idaho|Idaho]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Jim Risch]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Mike Crapo]] (R)
+
+==== [[List of United States senators from Illinois|Illinois]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Juliana Stratton]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Tammy Duckworth]] (D)
+
+==== [[List of United States senators from Indiana|Indiana]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Jim Banks]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Todd Young]] (R)
+
+==== [[List of United States senators from Iowa|Iowa]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Josh Turek]] (D)
+: {{Party stripe|Republican Party (United States)}}3. [[Chuck Grassley]] (R)
+
+==== [[List of United States senators from Kansas|Kansas]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Adam Hamilton (American politician)|Adam Hamilton]] (D)
+: {{Party stripe|Republican Party (United States)}}3. [[Jerry Moran]] (R)
+
+==== [[List of United States senators from Kentucky|Kentucky]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Andy Barr]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Rand Paul]] (R)
+
+==== [[List of United States senators from Louisiana|Louisiana]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Julia Letlow]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[John Kennedy (Louisiana politician)|John Kennedy]] (R)
+
+==== [[List of United States senators from Maine|Maine]] ====
+: {{Party stripe|Independent politician}}1. [[Angus King]] (I)
+: {{Party stripe|Democratic Party (United States)}}2. [[Troy Jackson]] (D)
+
+==== [[List of United States senators from Maryland|Maryland]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Angela Alsobrooks]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Chris Van Hollen]] (D)
+
+==== [[List of United States senators from Massachusetts|Massachusetts]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Elizabeth Warren]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Ed Markey]] (D)
+
+==== [[List of United States senators from Michigan|Michigan]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Elissa Slotkin]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Abdul El-Sayed]] (D)
+
+==== [[List of United States senators from Minnesota|Minnesota]] ====
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}1. [[Amy Klobuchar]] (DFL){{efn|name=DFL|The [[Minnesota Democratic–Farmer–Labor Party]] (DFL) is the Minnesota affiliate of the [[Democratic Party (United States)|U.S. Democratic Party]] and its members are counted as Democrats.}}{{efn|Amy Klobuchar won the [[2026 Minnesota gubernatorial election|gubernatorial election]] and plans to resign from the Senate. The governor of Minnesota will appoint an interim replacement until a [[2027 United States Senate special election in Minnesota|2027 special election]].}}
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}2. [[Peggy Flanagan]] (DFL)<ref>{{efn|name=DFL}}{{Cite web |url=https://www.nytimes.com/interactive/2026/11/03/us/elections/results-minnesota-us-senate.html |title=Minnesota U.S. Senate Election Results}}</ref>
+
+==== [[List of United States senators from Mississippi|Mississippi]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Roger Wicker]] (R)
+: {{Party stripe|Unknown}}2. [[2026 United States Senate election in Mississippi|TBD]]
+
+==== [[List of United States senators from Missouri|Missouri]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Josh Hawley]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Eric Schmitt]] (R)
+
+{{col-break}}
+
+==== [[List of United States senators from Montana|Montana]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Tim Sheehy]] (R)
+: {{Party stripe|Republican Party (United States)}}2. [[Kurt Alme]] (R)
+
+==== [[List of United States senators from Nebraska|Nebraska]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Deb Fischer]] (R)
+: {{Party stripe|Republican Party (United States)}}2. [[Pete Ricketts]] (R)
+
+==== [[List of United States senators from Nevada|Nevada]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Jacky Rosen]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Catherine Cortez Masto]] (D)
+
+==== [[List of United States senators from New Hampshire|New Hampshire]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Chris Pappas (American politician)|Chris Pappas]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Maggie Hassan]] (D)
+
+==== [[List of United States senators from New Jersey|New Jersey]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Andy Kim]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Cory Booker]] (D)
+
+==== [[List of United States senators from New Mexico|New Mexico]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Martin Heinrich]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Ben Ray Luján]] (D)
+
+==== [[List of United States senators from New York|New York]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Kirsten Gillibrand]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Chuck Schumer]] (D)
+
+==== [[List of United States senators from North Carolina|North Carolina]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Roy Cooper]] (D)
+: {{Party stripe|Republican Party (United States)}}3. [[Ted Budd]] (R)
+
+==== [[List of United States senators from North Dakota|North Dakota]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Kevin Cramer]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[John Hoeven]] (R)
+
+==== [[List of United States senators from Ohio|Ohio]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Bernie Moreno]] (R)
+: {{Party stripe|Democratic Party (United States)}}3. [[Sherrod Brown]] (D)
+
+==== [[List of United States senators from Oklahoma|Oklahoma]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Kevin Hern]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[James Lankford]] (R)
+
+==== [[List of United States senators from Oregon|Oregon]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Jeff Merkley]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Ron Wyden]] (D)
+
+==== [[List of United States senators from Pennsylvania|Pennsylvania]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Dave McCormick]] (R)
+: {{Party stripe|Democratic Party (United States)}}3. [[John Fetterman]] (D)
+
+==== [[List of United States senators from Rhode Island|Rhode Island]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Sheldon Whitehouse]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Jack Reed (Rhode Island politician)|Jack Reed]] (D)
+
+==== [[List of United States senators from South Carolina|South Carolina]] ====
+: {{Party stripe|Democratic Party (United States)}}2. [[Annie Andrews]] (D)
+: {{Party stripe|Republican Party (United States)}}3. [[Tim Scott]] (R)
+
+==== [[List of United States senators from South Dakota|South Dakota]] ====
+: {{Party stripe|Republican Party (United States)}}2. [[Mike Rounds]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[John Thune]] (R)
+
+==== [[List of United States senators from Tennessee|Tennessee]] ====
+: {{Party stripe|Republican Party (US)}}1. [[Marsha Blackburn]] (R){{efn|[[Marsha Blackburn]] won the [[2026 Tennessee gubernatorial election|gubernatorial election]] and plans to resign from the Senate. The governor of Tennessee will appoint an interim replacement until a [[2028 United States Senate special election in Tennessee|2028 special election]].}}
+: {{Party stripe|Republican Party (United States)}}2. [[Bill Hagerty]] (R)
+
+==== [[List of United States senators from Texas|Texas]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Ted Cruz]] (R)
+: {{Party stripe|Democratic Party (United States)}}2. [[James Talarico]] (D)
+
+==== [[List of United States senators from Utah|Utah]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[John Curtis]] (R)
+: {{Party stripe|Republican Party (United States)}}3. [[Mike Lee]] (R)
+
+==== [[List of United States senators from Vermont|Vermont]] ====
+: {{Party stripe|Independent politician}}1. [[Bernie Sanders]] (I)
+: {{Party stripe|Democratic Party (United States)}}3. [[Peter Welch]] (D)
+
+==== [[List of United States senators from Virginia|Virginia]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Tim Kaine]] (D)
+: {{Party stripe|Democratic Party (United States)}}2. [[Mark Warner]] (D)
+
+==== [[List of United States senators from Washington|Washington]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Maria Cantwell]] (D)
+: {{Party stripe|Democratic Party (United States)}}3. [[Patty Murray]] (D)
+
+==== [[List of United States senators from West Virginia|West Virginia]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[Jim Justice]] (R)
+: {{Party stripe|Republican Party (United States)}}2. [[Shelley Moore Capito]] (R)
+
+==== [[List of United States senators from Wisconsin|Wisconsin]] ====
+: {{Party stripe|Democratic Party (United States)}}1. [[Tammy Baldwin]] (D)
+: {{Party stripe|Republican Party (United States)}}3. [[Ron Johnson]] (R)
+
+==== [[List of United States senators from Wyoming|Wyoming]] ====
+: {{Party stripe|Republican Party (United States)}}1. [[John Barrasso]] (R)
+: {{Party stripe|Republican Party (United States)}}2. [[Harriet Hageman]] (R)
+{{col-break}}
+[[File:120th United States Congress Senators.svg|alt=Map of the Senate composition by state and party, as of November 4, 2026|thumb|upright=1.5|
+<!-- Use#FFB6B6 for Independent who caucuses with the Republicans, #33FF33 for Independent & #888888 for Vacant-->
+{{legend|#3333FF|2 [[Democratic Party (United States)|Democrats]]}}(21 states) <!--Need .svg updated-->
+{{Legend striped|#B0CEFF|#3333FF|1 [[Democratic Party (United States)|Democrat]] and 1 Independent who caucuses with [[Democratic Party (United States)|Democrats]]}}(2 states)
+{{legend|#8E2791|1 [[Democratic Party (United States)|Democrat]] and 1 [[Republican Party (United States)|Republican]]}}(8 states)
+{{Legend striped|#888888|#E81B23|1 [[Republican Party (United States)|Republican]] and 1 uncalled race}}(2 states)
+{{legend|#E81B23|2 [[Republican Party (United States)|Republicans]]}}(17 states)]]
+{{col-end}}
+
+===Representatives===
+{{Further|List of current United States representatives}}
+
+All seats were filled by [[2026 United States House of Representatives elections|election in November 2026]].
+
+{{TOC US states|_2|after=[[#Non-voting members|Non-voting members]]}}
+
+{{col-begin}}
+{{col-break}}
+
+====[[List of United States representatives from Alabama|Alabama]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Alabama|1|E}}. [[Jerry Carl]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Alabama|2|E}}. [[Shomari Figures]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Alabama|3|E}}. [[Mike Rogers (Alabama politician)|Mike Rogers]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Alabama|4|E}}. [[Robert Aderholt]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Alabama|5|E}}. [[Dale Strong]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Alabama|6|E}}. [[Gary Palmer (politician)|Gary Palmer]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Alabama|7|E}}. [[Terri Sewell]] (D)
+
+====[[List of United States representatives from Alaska|Alaska]]====
+: {{Party stripe|Unknown}}{{ushr|Alaska|AL|E}}. TBD
+
+====[[List of United States representatives from Arizona|Arizona]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Arizona|1|E}}. [[Amish Shah]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arizona|2|E}}. [[Eli Crane]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Arizona|3|E}}. [[Yassamin Ansari]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Arizona|4|E}}. [[Greg Stanton]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arizona|5|E}}. [[Mark Lamb (sheriff)|Mark Lamb]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Arizona|6|E}}. [[JoAnna Mendoza]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Arizona|7|E}}. [[Adelita Grijalva]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arizona|8|E}}. [[Abraham Hamadeh]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arizona|9|E}}. [[Paul Gosar]] (R)
+
+====[[List of United States representatives from Arkansas|Arkansas]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arkansas|1|E}}. [[Rick Crawford (politician)|Rick Crawford]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arkansas|2|E}}. [[French Hill (politician)|French Hill]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arkansas|3|E}}. [[Steve Womack]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Arkansas|4|E}}. [[Bruce Westerman]] (R)
+
+====[[List of United States representatives from California|California]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|1|E}}. [[Mike McGuire (politician)|Mike McGuire]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|2|E}}. [[Jared Huffman]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|3|E}}. [[Ami Bera]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|4|E}}. TBD (D){{efn|name=npp|Party affiliation reflects the outcome of a [[non-partisan primary]].}}
+: {{Party stripe|Republican Party (United States)}}{{ushr|California|5|E}}. [[Tom McClintock]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|6|E}}. [[Richard Pan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|7|E}}. [[Doris Matsui]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|8|E}}. [[John Garamendi]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|9|E}}. [[Josh Harder]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|10|E}}. [[Mark DeSaulnier]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|11|E}}. [[Scott Wiener]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|12|E}}. [[Lateefah Simon]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|13|E}}. [[Adam Gray]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|14|E}}. [[Aisha Wahab]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|15|E}}. [[Kevin Mullin]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|16|E}}. [[Sam Liccardo]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|17|E}}. [[Ro Khanna]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|18|E}}. [[Zoe Lofgren]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|19|E}}. [[Jimmy Panetta]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|California|20|E}}. [[Vince Fong]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|21|E}}. [[Jim Costa]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|22|E}}. [[Randy Villegas]] (D)
+: {{Party stripe|Unknown}}{{ushr|California|23|E}}. TBD
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|24|E}}. [[Salud Carbajal]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|25|E}}. [[Raul Ruiz (politician)|Raul Ruiz]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|26|E}}. [[Jacqui Irwin]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|27|E}}. [[George T. Whitesides]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|28|E}}. [[Judy Chu]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|29|E}}. [[Luz Maria Rivas]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|30|E}}. [[Laura Friedman]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|31|E}}. [[Gil Cisneros]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|32|E}}. [[Brad Sherman]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|33|E}}. [[Pete Aguilar]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|34|E}}. [[Angela Gonzales-Torres]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|35|E}}. [[Norma Torres]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|36|E}}. [[Ted Lieu]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|37|E}}. [[Sydney Kamlager-Dove]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|38|E}}. [[Hilda Solis]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|39|E}}. [[Mark Takano]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|California|40|E}}. [[Ken Calvert]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|41|E}}. [[Linda Sánchez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|42|E}}. [[Robert Garcia (California congressman)|Robert Garcia]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|43|E}}. [[Maxine Waters]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|44|E}}. [[Nanette Barragán]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|45|E}}. [[Derek Tran]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|46|E}}. [[Lou Correa]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|47|E}}. [[Dave Min]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|48|E}}. [[Marni von Wilpert]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|49|E}}. [[Mike Levin]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|50|E}}. [[Scott Peters (politician)|Scott Peters]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|51|E}}. [[Sara Jacobs]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|California|52|E}}. [[Juan Vargas]] (D)
+
+====[[List of United States representatives from Colorado|Colorado]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|1|E}}. [[Melat Kiros]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|2|E}}. [[Joe Neguse]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Colorado|3|E}}. [[Jeff Hurd]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|4|E}}. [[Eileen Laubacher]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|5|E}}. [[Jessica Killin]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|6|E}}. [[Jason Crow]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|7|E}}. [[Brittany Pettersen]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Colorado|8|E}}. [[Manny Rutinel]] (D)
+
+====[[List of United States representatives from Connecticut|Connecticut]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Connecticut|1|E}}. [[Luke Bronin]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Connecticut|2|E}}. [[Joe Courtney (politician)|Joe Courtney]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Connecticut|3|E}}. [[Rosa DeLauro]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Connecticut|4|E}}. [[Jim Himes]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Connecticut|5|E}}. [[Jahana Hayes]] (D)
+
+====[[List of United States representatives from Delaware|Delaware]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Delaware|AL|E}}. [[Sarah McBride]] (D)
+
+====[[List of United States representatives from Florida|Florida]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|1|E}}. [[Jimmy Patronis]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|2|E}}. [[Austin Rogers (politician)|Austin Rogers]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|3|E}}. [[Kat Cammack]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|4|E}}. [[Aaron Bean]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|5|E}}. [[John Rutherford (Florida politician)|John Rutherford]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|6|E}}. [[Randy Fine]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|7|E}}. [[Ryan Elijah]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|8|E}}. [[Mike Haridopolos]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|9|E}}. [[Darren Soto]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|10|E}}. [[Maxwell Frost]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|11|E}}. [[Joe Strada]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|12|E}}. [[Gus Bilirakis]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|13|E}}. [[Anna Paulina Luna]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|14|E}}. [[Kathy Castor]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|15|E}}. [[Laurel Lee]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|16|E}}. [[Sydney Gruters]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|17|E}}. [[Greg Steube]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|18|E}}. [[Scott Franklin (politician)|Scott Franklin]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|19|E}}. [[Jim Schwartzel]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|20|E}}. [[Debbie Wasserman Schultz]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|21|E}}. [[Brian Mast]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|22|E}}. [[Pia Dandiya]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|23|E}}. [[Lois Frankel]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|24|E}}. [[Oliver Gilbert]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Florida|25|E}}. [[Jared Moskowitz]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|26|E}}. [[Mario Díaz-Balart]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|27|E}}. [[Maria Elvira Salazar]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Florida|28|E}}. [[Carlos A. Giménez]] (R)
+
+====[[List of United States representatives from Georgia|Georgia]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|1|E}}. [[Jim Kingston]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Georgia|2|E}}. [[Sanford Bishop]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|3|E}}. [[Brian Jack]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Georgia|4|E}}. [[Hank Johnson]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Georgia|5|E}}. [[Nikema Williams]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Georgia|6|E}}. [[Lucy McBath]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|7|E}}. [[Rich McCormick]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|8|E}}. [[Austin Scott (politician)|Austin Scott]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|9|E}}. [[Andrew Clyde]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|10|E}}. [[Houston Gaines]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|11|E}}. [[John Cowan (Georgia politician)|John Cowan]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|12|E}}. [[Rick Allen (politician)|Rick Allen]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Georgia|13|E}}. [[Jasmine Clark]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Georgia|14|E}}. [[Clay Fuller]] (R)
+
+====[[List of United States representatives from Hawaii|Hawaii]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Hawaii|1|E}}. [[Ed Case]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Hawaii|2|E}}. [[Jill Tokuda]] (D)
+
+====[[List of United States representatives from Idaho|Idaho]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Idaho|1|E}}. [[Russ Fulcher]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Idaho|2|E}}. [[Mike Simpson]] (R)
+
+====[[List of United States representatives from Illinois|Illinois]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|1|E}}. [[Jonathan Jackson (Illinois politician)|Jonathan Jackson]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|2|E}}. [[Donna Miller]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|3|E}}. [[Delia Ramirez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|4|E}}. [[Patty García]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|5|E}}. [[Mike Quigley]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|6|E}}. [[Sean Casten]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|7|E}}. [[La Shawn K. Ford]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|8|E}}. [[Melissa Bean]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|9|E}}. [[Daniel Biss]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|10|E}}. [[Brad Schneider]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|11|E}}. [[Bill Foster (politician)|Bill Foster]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Illinois|12|E}}. [[Mike Bost]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|13|E}}. [[Nikki Budzinski]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|14|E}}. [[Lauren Underwood]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Illinois|15|E}}. [[Mary Miller (politician)|Mary Miller]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Illinois|16|E}}. [[Darin LaHood]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Illinois|17|E}}. [[Eric Sorensen (politician)|Eric Sorensen]] (D)
+
+====[[List of United States representatives from Indiana|Indiana]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Indiana|1|E}}. [[Frank J. Mrvan]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|2|E}}. [[Rudy Yakym]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|3|E}}. [[Marlin Stutzman]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|4|E}}. [[Jim Baird (politician)|Jim Baird]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Indiana|5|E}}. [[J.D. Ford]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|6|E}}. [[Jefferson Shreve]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Indiana|7|E}}. [[André Carson]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|8|E}}. [[Mark Messmer]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Indiana|9|E}}. [[Erin Houchin]] (R)
+
+====[[List of United States representatives from Iowa|Iowa]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Iowa|1|E}}. [[Christina Bohannan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Iowa|2|E}}. [[Lindsay James (politician)|Lindsay James]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Iowa|3|E}}. [[Sarah Trone Garriott]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Iowa|4|E}}. [[Chris McGowan]] (R)
+
+====[[List of United States representatives from Kansas|Kansas]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kansas|1|E}}. [[Tracey Mann]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kansas|2|E}}. [[Derek Schmidt]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Kansas|3|E}}. [[Sharice Davids]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kansas|4|E}}. [[Ron Estes]] (R)
+
+====[[List of United States representatives from Kentucky|Kentucky]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kentucky|1|E}}. [[James Comer]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kentucky|2|E}}. [[Brett Guthrie]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Kentucky|3|E}}. [[Morgan McGarvey]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kentucky|4|E}}. [[Ed Gallrein]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Kentucky|5|E}}. [[Hal Rogers]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Kentucky|6|E}}. [[Zach Dembo]] (D)
+
+====[[List of United States representatives from Louisiana|Louisiana]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Louisiana|1|E}}. [[Steve Scalise]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Louisiana|2|E}}. [[Troy Carter (politician)|Troy Carter]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Louisiana|3|E}}. [[Clay Higgins]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Louisiana|4|E}}. [[Mike Johnson]] (R)
+: {{Party stripe|Unknown}}{{ushr|Louisiana|5|E}}. TBD
+: {{Party stripe|Unknown}}{{ushr|Louisiana|6|E}}. TBD
+
+====[[List of United States representatives from Maine|Maine]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maine|1|E}}. [[Chellie Pingree]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Maine|2|E}}. [[Paul LePage]] (R)
+
+====[[List of United States representatives from Maryland|Maryland]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Maryland|1|E}}. [[Andy Harris (politician)|Andy Harris]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|2|E}}. [[Johnny Olszewski]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|3|E}}. [[Sarah Elfreth]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|4|E}}. [[Glenn Ivey]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|5|E}}. [[Adrian Boafo]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|6|E}}. [[April McClain Delaney]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|7|E}}. [[Kweisi Mfume]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Maryland|8|E}}. [[Jamie Raskin]] (D)
+
+====[[List of United States representatives from Massachusetts|Massachusetts]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|1|E}}. [[Richard Neal]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|2|E}}. [[Jim McGovern (American politician)|Jim McGovern]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|3|E}}. [[Lori Trahan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|4|E}}. [[Jake Auchincloss]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|5|E}}. [[Katherine Clark]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|6|E}}. [[Dan Koh]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|7|E}}. [[Ayanna Pressley]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|8|E}}. [[Stephen Lynch (politician)|Stephen Lynch]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Massachusetts|9|E}}. [[Bill Keating (politician)|Bill Keating]] (D)
+
+====[[List of United States representatives from Michigan|Michigan]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Michigan|1|E}}. [[Jack Bergman]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Michigan|2|E}}. [[John Moolenaar]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|3|E}}. [[Hillary Scholten]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|4|E}}. [[Sean McCann (politician)|Sean McCann]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Michigan|5|E}}. [[Tim Walberg]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|6|E}}. [[Debbie Dingell]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|7|E}}. [[William Lawrence (activist)|William Lawrence]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|8|E}}. [[Kristen McDonald Rivet]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Michigan|9|E}}. [[Lisa McClain]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|10|E}}. [[Christina Hines]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|11|E}}. [[Jeremy Moss]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|12|E}}. [[Rashida Tlaib]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Michigan|13|E}}. [[Donavan McKinney]] (D)
+
+====[[List of United States representatives from Minnesota|Minnesota]]====
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}{{ushr|Minnesota|1|E}}. [[Jake Johnson (Minnesota politician)|Jake Johnson]] (DFL){{efn|name=DFL}}
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}{{ushr|Minnesota|2|E}}. [[Matt Little]] (DFL){{efn|name=DFL}}
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}{{ushr|Minnesota|3|E}}. [[Kelly Morrison]] (DFL){{efn|name=DFL}}
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}{{ushr|Minnesota|4|E}}. [[Betty McCollum]] (DFL){{efn|name=DFL}}
+: {{Party stripe|Minnesota Democratic–Farmer–Labor Party}}{{ushr|Minnesota|5|E}}. [[Ilhan Omar]] (DFL){{efn|name=DFL}}
+: {{Party stripe|Republican Party (United States)}}{{ushr|Minnesota|6|E}}. [[Tom Emmer]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Minnesota|7|E}}. [[Michelle Fischbach]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Minnesota|8|E}}. [[Pete Stauber]] (R)
+
+====[[List of United States representatives from Mississippi|Mississippi]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Mississippi|1|E}}. [[Trent Kelly]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Mississippi|2|E}}. [[Bennie Thompson]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Mississippi|3|E}}. [[Michael Guest (politician)|Michael Guest]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Mississippi|4|E}}. [[Mike Ezell]] (R)
+{{col-break}}
+
+====[[List of United States representatives from Missouri|Missouri]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Missouri|1|E}}. [[Wesley Bell]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Missouri|2|E}}. [[Fred Wellman]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Missouri|3|E}}. [[Bob Onder]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Missouri|4|E}}. [[Mark Alford (politician)|Mark Alford]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Missouri|5|E}}. [[Emanuel Cleaver]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Missouri|6|E}}. [[Chris Stigall]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Missouri|7|E}}. [[Eric Burlison]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Missouri|8|E}}. [[Jason Smith (American politician)|Jason Smith]] (R)
+
+====[[List of United States representatives from Montana|Montana]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Montana|1|E}}. [[Sam Forstag]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Montana|2|E}}. [[Troy Downing]] (R)
+
+====[[List of United States representatives from Nebraska|Nebraska]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Nebraska|1|E}}. [[Mike Flood (politician)|Mike Flood]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Nebraska|2|E}}. [[Denise Powell]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Nebraska|3|E}}. [[Adrian Smith (politician)|Adrian Smith]] (R)
+
+====[[List of United States representatives from Nevada|Nevada]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Nevada|1|E}}. [[Dina Titus]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Nevada|2|E}}. [[Teresa Benitez-Thompson]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Nevada|3|E}}. [[Susie Lee]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Nevada|4|E}}. [[Steven Horsford]] (D)
+
+====[[List of United States representatives from New Hampshire|New Hampshire]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Hampshire|1|E}}. [[Stefany Shaheen]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Hampshire|2|E}}. [[Maggie Goodlander]] (D)
+
+====[[List of United States representatives from New Jersey|New Jersey]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|1|E}}. [[Donald Norcross]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|2|E}}. [[Zack Mullock]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|3|E}}. [[Herb Conaway]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New Jersey|4|E}}. [[Chris Smith (New Jersey politician)|Chris Smith]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|5|E}}. [[Josh Gottheimer]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|6|E}}. [[Frank Pallone]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|7|E}}. [[Rebecca Bennett (politician)|Rebecca Bennett]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|8|E}}. [[Rob Menendez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|9|E}}. [[Nellie Pou]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|10|E}}. [[LaMonica McIver]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|11|E}}. [[Analilia Mejia]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Jersey|12|E}}. [[Adam Hamawy]] (D)
+
+====[[List of United States representatives from New Mexico|New Mexico]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Mexico|1|E}}. [[Melanie Stansbury]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Mexico|2|E}}. [[Gabe Vasquez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New Mexico|3|E}}. [[Teresa Leger Fernandez]] (D)
+
+====[[List of United States representatives from New York|New York]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|1|E}}. [[Nick LaLota]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|2|E}}. [[Andrew Garbarino]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|3|E}}. [[Tom Suozzi]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|4|E}}. [[Laura Gillen]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|5|E}}. [[Gregory Meeks]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|6|E}}. [[Grace Meng]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|7|E}}. [[Claire Valdez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|8|E}}. [[Hakeem Jeffries]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|9|E}}. [[Yvette Clarke]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|10|E}}. [[Brad Lander]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|11|E}}. [[Nicole Malliotakis]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|12|E}}. [[Micah Lasher]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|13|E}}. [[Darializa Avila Chevalier]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|14|E}}. [[Alexandria Ocasio-Cortez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|15|E}}. [[Ritchie Torres]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|16|E}}. [[George Latimer (New York politician)|George Latimer]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|17|E}}. [[Cait Conley]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|18|E}}. [[Pat Ryan (politician)|Pat Ryan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|19|E}}. [[Josh Riley]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|20|E}}. [[Paul Tonko]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|21|E}}. [[Anthony Constantino (politician)|Anthony Constantino]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|22|E}}. [[John Mannion (American politician)|John Mannion]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|23|E}}. [[Nick Langworthy]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|New York|24|E}}. [[Claudia Tenney]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|25|E}}. [[Joseph Morelle]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|New York|26|E}}. [[Tim Kennedy (politician)|Tim Kennedy]] (D)
+
+====[[List of United States representatives from North Carolina|North Carolina]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|1|E}}. [[Don Davis (North Carolina politician)|Don Davis]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|2|E}}. [[Deborah Ross (politician)|Deborah Ross]] (D)
+: {{Party stripe|Unknown}}{{ushr|North Carolina|3|E}}. TBD
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|4|E}}. [[Valerie Foushee]] (D)
+: {{Party stripe|Unknown}}{{ushr|North Carolina|5|E}}. TBD
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|6|E}}. [[Cyril Jefferson]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|North Carolina|7|E}}. [[David Rouzer]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|North Carolina|8|E}}. [[Mark Harris (North Carolina politician)|Mark Harris]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|9|E}}. [[Richard Ojeda]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|North Carolina|10|E}}. [[Pat Harrigan]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|11|E}}. [[Jamie Ager]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|12|E}}. [[Alma Adams]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|13|E}}. [[Paul Barringer (attorney)|Paul Barringer]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|North Carolina|14|E}}. [[LaKesha Womack]] (D)
+
+====[[List of United States representatives from North Dakota|North Dakota]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|North Dakota|AL|E}}. [[Julie Fedorchak]] (R)
+
+====[[List of United States representatives from Ohio|Ohio]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|1|E}}. [[Greg Landsman]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|2|E}}. [[David Taylor (Ohio politician)|David Taylor]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|3|E}}. [[Joyce Beatty]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|4|E}}. [[Jim Jordan]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|5|E}}. [[Bob Latta]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|6|E}}. [[Michael Rulli]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|7|E}}. [[Brian Poindexter]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|8|E}}. [[Warren Davidson]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|9|E}}. [[Marcy Kaptur]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|10|E}}. [[Kristina Knickerbocker]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|11|E}}. [[Shontel Brown]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|12|E}}. [[Troy Balderson]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|13|E}}. [[Emilia Sykes]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Ohio|14|E}}. [[David Joyce (politician)|David Joyce]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Ohio|15|E}}. [[Don Leonard (politician)|Don Leonard]] (D)
+
+====[[List of United States representatives from Oklahoma|Oklahoma]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oklahoma|1|E}}. [[Mark Tedford]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oklahoma|2|E}}. [[Josh Brecheen]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oklahoma|3|E}}. [[Frank Lucas (Oklahoma politician)|Frank Lucas]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oklahoma|4|E}}. [[Tom Cole]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oklahoma|5|E}}. [[Stephanie Bice]] (R)
+
+====[[List of United States representatives from Oregon|Oregon]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Oregon|1|E}}. [[Suzanne Bonamici]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Oregon|2|E}}. [[Cliff Bentz]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Oregon|3|E}}. [[Maxine Dexter]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Oregon|4|E}}. [[Val Hoyle]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Oregon|5|E}}. [[Janelle Bynum]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Oregon|6|E}}. [[Andrea Salinas]] (D)
+
+====[[List of United States representatives from Pennsylvania|Pennsylvania]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|1|E}}. [[Bob Harvie (politician)|Bob Harvie]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|2|E}}. [[Brendan Boyle]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|3|E}}. [[Chris Rabb]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|4|E}}. [[Madeleine Dean]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|5|E}}. [[Mary Gay Scanlon]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|6|E}}. [[Chrissy Houlahan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|7|E}}. [[Bob Brooks (Pennsylvania politician)|Bob Brooks]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|8|E}}. [[Paige Cognetti]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|9|E}}. [[Dan Meuser]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|10|E}}. [[Janelle Stelson]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|11|E}}. [[Lloyd Smucker]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|12|E}}. [[Summer Lee]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|13|E}}. [[John Joyce (American politician)|John Joyce]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|14|E}}. [[Guy Reschenthaler]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|15|E}}. [[Glenn Thompson (politician)|Glenn Thompson]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Pennsylvania|16|E}}. [[Mike Kelly (Pennsylvania politician)|Mike Kelly]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Pennsylvania|17|E}}. [[Chris Deluzio]] (D)
+
+====[[List of United States representatives from Rhode Island|Rhode Island]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Rhode Island|1|E}}. [[Gabe Amo]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Rhode Island|2|E}}. [[Seth Magaziner]] (D)
+
+====[[List of United States representatives from South Carolina|South Carolina]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|South Carolina|1|E}}. [[Nancy Lacore]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Carolina|2|E}}. [[Joe Wilson]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Carolina|3|E}}. [[Sheri Biggs]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Carolina|4|E}}. [[William Timmons (politician)|William Timmons]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Carolina|5|E}}. [[Wes Climer]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|South Carolina|6|E}}. [[Jim Clyburn]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Carolina|7|E}}. [[Russell Fry (politician)|Russell Fry]] (R)
+
+====[[List of United States representatives from South Dakota|South Dakota]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|South Dakota|AL|E}}. [[Marty Jackley]] (R)
+
+====[[List of United States representatives from Tennessee|Tennessee]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|1|E}}. [[Diana Harshbarger]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|2|E}}. [[Tim Burchett]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|3|E}}. [[Chuck Fleischmann]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Tennessee|4|E}}. [[Victoria Broderick]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|5|E}}. [[Charlie Hatcher]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|6|E}}. [[Johnny Garrett (politician)|Johnny Garrett]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|7|E}}. [[Matt Van Epps]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|8|E}}. [[David Kustoff]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Tennessee|9|E}}. [[Brent Taylor (Tennessee politician)|Brent Taylor]] (R)
+
+====[[List of United States representatives from Texas|Texas]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|1|E}}. [[Nathaniel Moran]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|2|E}}. [[Steve Toth]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|3|E}}. [[Keith Self]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|4|E}}. [[Pat Fallon]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|5|E}}. [[Lance Gooden]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|6|E}}. [[Jake Ellzey]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|7|E}}. [[Lizzie Fletcher]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|8|E}}. [[Jessica Hart Steinmann]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|9|E}}. [[Leticia Gutierrez]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|10|E}}. [[Chris Gober]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|11|E}}. [[August Pfluger]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|12|E}}. [[Craig Goldman]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|13|E}}. [[Ronny Jackson]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|14|E}}. [[Randy Weber]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|15|E}}. [[Bobby Pulido]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|16|E}}. [[Veronica Escobar]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|17|E}}. [[Pete Sessions]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|18|E}}. [[Christian Menefee]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|19|E}}. [[Tom Sell]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|20|E}}. [[Joaquin Castro]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|21|E}}. [[Mark Teixeira]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|22|E}}. [[Trever Nehls]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|23|E}}. [[Katy Padilla Stout]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|24|E}}. [[Beth Van Duyne]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|25|E}}. [[Roger Williams (Texas politician)|Roger Williams]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|26|E}}. [[Brandon Gill]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|27|E}}. [[Michael Cloud]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|28|E}}. [[Henry Cuellar]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|29|E}}. [[Sylvia Garcia]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|30|E}}. [[Frederick Haynes III]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|31|E}}. [[John Carter (Texas politician)|John Carter]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|32|E}}. [[Jace Yarbrough]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|33|E}}. [[Colin Allred]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|34|E}}. [[Vicente Gonzalez (American politician)|Vicente Gonzalez]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|35|E}}. [[Johnny Garcia (politician)|Johnny Garcia]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|36|E}}. [[Brian Babin]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Texas|37|E}}. [[Greg Casar]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Texas|38|E}}. [[Jon Bonck]] (R)
+
+====[[List of United States representatives from Utah|Utah]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Utah|1|E}}. [[Ben McAdams]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Utah|2|E}}. [[Blake Moore]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Utah|3|E}}. [[Celeste Maloy]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Utah|4|E}}. [[Mike Kennedy]] (R)
+
+====[[List of United States representatives from Vermont|Vermont]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Vermont|AL|E}}. [[Becca Balint]] (D)
+
+====[[List of United States representatives from Virginia|Virginia]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|1|E}}. [[Shannon Taylor (attorney)|Shannon Taylor]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|2|E}}. [[Elaine Luria]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|3|E}}. [[Bobby Scott (politician)|Bobby Scott]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|4|E}}. [[Jennifer McClellan]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Virginia|5|E}}. [[John McGuire (Virginia politician)|John McGuire]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Virginia|6|E}}. [[Ben Cline]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|7|E}}. [[Eugene Vindman]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|8|E}}. [[Don Beyer]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Virginia|9|E}}. [[Morgan Griffith]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|10|E}}. [[Suhas Subramanyam]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Virginia|11|E}}. [[James Walkinshaw]] (D)
+
+====[[List of United States representatives from Washington|Washington]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|1|E}}. [[Suzan DelBene]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|2|E}}. [[Rick Larsen]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|3|E}}. [[Marie Gluesenkamp Perez]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Washington|4|E}}. [[Amanda McKinney]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Washington|5|E}}. [[Michael Baumgartner]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|6|E}}. [[Emily Randall]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|7|E}}. [[Pramila Jayapal]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|8|E}}. [[Kim Schrier]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|9|E}}. [[Adam Smith (Washington politician)|Adam Smith]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Washington|10|E}}. [[Marilyn Strickland]] (D)
+
+====[[List of United States representatives from West Virginia|West Virginia]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|West Virginia|1|E}}. [[Carol Miller (politician)|Carol Miller]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|West Virginia|2|E}}. [[Riley Moore]] (R)
+
+====[[List of United States representatives from Wisconsin|Wisconsin]]====
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Wisconsin|1|E}}. [[Mitchell Berman (politician)|Mitchell Berman]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Wisconsin|2|E}}. [[Mark Pocan]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Wisconsin|3|E}}. [[Rebecca Cooke (politician)|Rebecca Cooke]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Wisconsin|4|E}}. [[Gwen Moore]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Wisconsin|5|E}}. [[Scott Fitzgerald (politician)|Scott Fitzgerald]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Wisconsin|6|E}}. [[Glenn Grothman]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Wisconsin|7|E}}. [[Michael Alfonso (politician)|Michael Alfonso]] (R)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Wisconsin|8|E}}. [[Tony Wied]] (R)
+
+====[[List of United States representatives from Wyoming|Wyoming]]====
+: {{Party stripe|Republican Party (United States)}}{{ushr|Wyoming|AL|E}}. [[Chuck Gray (Wyoming politician)|Chuck Gray]] (R)
+
+====Non-voting members====
+: {{Party stripe|Republican Party (United States)}}{{ushr|American Samoa|AL|American Samoa}}: [[Amata Coleman Radewagen]] (R)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|District of Columbia|AL|District of Columbia}}: [[Robert White (Washington, D.C. politician)|Robert White]] (D)
+: {{Party stripe|Democratic Party (United States)}}{{ushr|Guam|AL|Guam}}: [[Alicia Limtiaco]] (D)
+: {{Party stripe|Republican Party (United States)}}{{ushr|Northern Mariana Islands|AL|Northern Mariana Islands}}: [[Kimberlyn King-Hinds]] (R)
+: {{Party stripe|Popular Democratic Party (Puerto Rico)}}{{Party stripe|Democratic Party (United States)}}{{ushr|Puerto Rico|AL|Puerto Rico}}: [[Pablo Hernández Rivera]] (PPD/D){{efn|Puerto Rico's non-voting member, the [[Resident commissioner of Puerto Rico|Resident Commissioner]], is elected every four years. This is the only member of the House to serve four-year terms.}}
+: {{Party stripe|Democratic Party (United States)}}{{ushr|United States Virgin Islands|AL|United States Virgin Islands}}: [[Janelle Sarauw]] (D)
+{{col-break}}
+{{col-end}}
+
+==Changes in membership==
+===Senate membership changes===
+{{See also|List of special elections to the United States Senate}}
+{{Ordinal US Congress change|Senate}}
+|-
+![[List of United States senators from Minnesota|Minnesota]]<br>(1)
+|{{Party shading/DFL}} |{{sortname|Amy|Klobuchar}}<br>(DFL)
+|data-sort-value="January 2027" |Incumbent resigning January 2027 after being [[2026 Minnesota gubernatorial election|elected]] [[Governor of Minnesota]].<ref name=KlobucharBlackburn>{{cite news |title=Who will replace Marsha Blackburn and Amy Klobuchar in the Senate? Both seats go to appointees first |website=Nacionale |date=November 4, 2026 |access-date=November 4, 2026 |url=https://www.nacionale.com/en/articles/who-will-replace-marsha-blackburn-amy-klobuchar-senate-seat-appointment}}</ref><br/>Successor will be appointed until a [[2027 United States Senate special election in Minnesota|special election]] in November 2027.
+|colspan=2 align=center |TBD
+|-
+![[List of United States senators from Tennessee|Tennessee]]<br>(1)
+|{{Party shading/Republican}} |{{sortname|Marsha|Blackburn}}<br>(R)
+|data-sort-value="January 2027" |Incumbent resigning January 2027 after being [[2026 Tennessee gubernatorial election|elected]] [[Governor of Tennessee]].<ref name=KlobucharBlackburn /><br/>Successor will be appointed until a [[2028 United States Senate special election in Tennessee|special election]] in November 2028.
+|colspan=2 align=center |TBD
+|}
+
+== See also ==
+* [[2028 United States elections]]
+** [[2028 United States Senate elections]]
+** [[2028 United States House of Representatives elections]]
+
+== Notes ==
+{{Notelist}}
+
+== References ==
+{{reflist}}
+
+{{United States Congress}}
+{{United States Congresses}}
+
+[[Category:120th United States Congress| ]]
+[[Category:2020s in American politics]]
+[[Category:2027 establishments in the United States]]

@@ -1,0 +1,89 @@
+{
+  "stateId": "NM",
+  "name": "New Mexico",
+  "districtCount": 3,
+  "totalPopulation": 2120247,
+  "citizenPopulation": 2007306,
+  "cvap": 1553239,
+  "representationRatio": {
+    "citizenPerDistrict": 669102,
+    "populationPerDistrict": 706749,
+    "cvapPerDistrict": 517746
+  },
+  "boundingBox": {
+    "minX": 247.3,
+    "maxX": 365.6,
+    "minY": 252.9,
+    "maxY": 356.9,
+    "width": 118.3,
+    "height": 104
+  },
+  "districts": [
+    {
+      "id": "NM-1",
+      "stateId": "NM",
+      "districtNumber": 1,
+      "q": "{sDi_D{DYgZyAoMa@LsDL@p@}Rvl@??f]QA",
+      "cx": 324.9,
+      "cy": 282.4,
+      "path": "M289.4,256.5L298.8,257.8L342.4,262.3L365.6,264L364.9,273L364.2,272.9L361.7,304.8L288.5,304.8L288.5,256.4L289.4,256.5Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 669102,
+      "totalPopulation": 706749,
+      "cvap": 517746,
+      "name": "New Mexico 1",
+      "bbox": {
+        "minX": 288.5,
+        "maxX": 365.6,
+        "minY": 256.4,
+        "maxY": 304.8,
+        "width": 77.1,
+        "height": 48.4
+      }
+    },
+    {
+      "id": "NM-2",
+      "stateId": "NM",
+      "districtNumber": 2,
+      "q": "isDwzEnNz@TeDpHf@{Gv~@{OeA",
+      "cx": 270.9,
+      "cy": 306.8,
+      "path": "M288.5,351.6L263.7,348.6L262.6,356.9L247.3,354.9L261.5,252.9L288.5,256.4Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 669102,
+      "totalPopulation": 706749,
+      "cvap": 517746,
+      "name": "New Mexico 2",
+      "bbox": {
+        "minX": 247.3,
+        "maxX": 288.5,
+        "minY": 252.9,
+        "maxY": 356.9,
+        "width": 41.2,
+        "height": 104
+      }
+    },
+    {
+      "id": "NM-3",
+      "stateId": "NM",
+      "districtNumber": 3,
+      "q": "aaFo}DRaG`@qJXiJlg@vBHc@a@k@pBL?f\\",
+      "cx": 324.7,
+      "cy": 327.9,
+      "path": "M361.7,304.8L360.7,317.7L359,336.2L357.7,354.3L293,348.3L292.5,350.1L294.2,352.3L288.5,351.6L288.5,304.8Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 669102,
+      "totalPopulation": 706749,
+      "cvap": 517746,
+      "name": "New Mexico 3",
+      "bbox": {
+        "minX": 288.5,
+        "maxX": 361.7,
+        "minY": 304.8,
+        "maxY": 354.3,
+        "width": 73.3,
+        "height": 49.5
+      }
+    }
+  ]
+}

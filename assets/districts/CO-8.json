@@ -1,0 +1,199 @@
+{
+  "stateId": "CO",
+  "name": "Colorado",
+  "districtCount": 8,
+  "totalPopulation": 5862187,
+  "citizenPopulation": 5560222,
+  "cvap": 4355173,
+  "representationRatio": {
+    "citizenPerDistrict": 695028,
+    "populationPerDistrict": 732773,
+    "cvapPerDistrict": 544397
+  },
+  "boundingBox": {
+    "minX": 261.5,
+    "maxX": 386.6,
+    "minY": 181.7,
+    "maxY": 265.3,
+    "width": 125.1,
+    "height": 83.6
+  },
+  "districts": [
+    {
+      "id": "CO-1",
+      "stateId": "CO",
+      "districtNumber": 1,
+      "q": "ctDarBqBM?oVvQ?UtC{AvSsJo@",
+      "cx": 281.7,
+      "cy": 203.5,
+      "path": "M289.8,184.1L295.5,184.8L295.5,222.4L265.5,222.4L266.6,214.9L271.2,181.7L289.8,184.1Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 1",
+      "bbox": {
+        "minX": 265.5,
+        "maxX": 295.5,
+        "minY": 181.7,
+        "maxY": 222.4,
+        "width": 30.1,
+        "height": 40.7
+      }
+    },
+    {
+      "id": "CO-2",
+      "stateId": "CO",
+      "districtNumber": 2,
+      "q": "uwDorBsQcA?kTrQ?",
+      "cx": 310.2,
+      "cy": 204.5,
+      "path": "M295.5,184.8L325.3,188.2L325.3,222.4L295.5,222.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 2",
+      "bbox": {
+        "minX": 295.5,
+        "maxX": 325.3,
+        "minY": 184.8,
+        "maxY": 222.4,
+        "width": 29.7,
+        "height": 37.7
+      }
+    },
+    {
+      "id": "CO-3",
+      "stateId": "CO",
+      "districtNumber": 3,
+      "q": "o|EmlCdQ??xVIAkPs@OA",
+      "cx": 339.6,
+      "cy": 208,
+      "path": "M354.4,226.3L325.3,226.3L325.3,188.2L325.8,188.3L353.6,190.9L354.4,191Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 3",
+      "bbox": {
+        "minX": 325.3,
+        "maxX": 354.4,
+        "minY": 188.2,
+        "maxY": 226.3,
+        "width": 29.1,
+        "height": 38.1
+      }
+    },
+    {
+      "id": "CO-4",
+      "stateId": "CO",
+      "districtNumber": 4,
+      "q": "o|EmlC?`UcSm@TeJPmH",
+      "cx": 369.8,
+      "cy": 209,
+      "path": "M354.4,226.3L354.4,191L386.6,193.3L385.5,211.2L384.6,226.3Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 4",
+      "bbox": {
+        "minX": 354.4,
+        "maxX": 386.6,
+        "minY": 191,
+        "maxY": 226.3,
+        "width": 32.2,
+        "height": 35.4
+      }
+    },
+    {
+      "id": "CO-5",
+      "stateId": "CO",
+      "districtNumber": 5,
+      "q": "axD_jC?{TdCPlPfAy@`L@f@WvC",
+      "cx": 280.1,
+      "cy": 239.2,
+      "path": "M296.1,222.4L296.1,257.4L289.4,256.5L261.5,252.9L264.4,232L264.3,230L265.5,222.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 5",
+      "bbox": {
+        "minX": 261.5,
+        "maxX": 296.1,
+        "minY": 222.4,
+        "maxY": 257.4,
+        "width": 34.6,
+        "height": 35
+      }
+    },
+    {
+      "id": "CO-6",
+      "stateId": "CO",
+      "districtNumber": 6,
+      "q": "axD_jCgQ??yVpOt@t@F",
+      "cx": 310.9,
+      "cy": 240.7,
+      "path": "M296.1,222.4L325.3,222.4L325.3,260.5L298.8,257.8L296.1,257.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 6",
+      "bbox": {
+        "minX": 296.1,
+        "maxX": 325.3,
+        "minY": 222.4,
+        "maxY": 260.5,
+        "width": 29.2,
+        "height": 38.1
+      }
+    },
+    {
+      "id": "CO-7",
+      "stateId": "CO",
+      "districtNumber": 7,
+      "q": "ijEmlCuQ??aV~FPtIb@",
+      "cx": 340.4,
+      "cy": 244.2,
+      "path": "M325.3,226.3L355.2,226.3L355.2,263.2L342.4,262.3L325.3,260.5Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 7",
+      "bbox": {
+        "minX": 325.3,
+        "maxX": 355.2,
+        "minY": 226.3,
+        "maxY": 263.2,
+        "width": 30,
+        "height": 36.9
+      }
+    },
+    {
+      "id": "CO-8",
+      "stateId": "CO",
+      "districtNumber": 8,
+      "q": "_}EmlCkQ?n@kWjIXnEN",
+      "cx": 369.5,
+      "cy": 245,
+      "path": "M355.2,226.3L384.6,226.3L382.2,265.3L365.6,264L355.2,263.2Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 695028,
+      "totalPopulation": 732773,
+      "cvap": 544397,
+      "name": "Colorado 8",
+      "bbox": {
+        "minX": 355.2,
+        "maxX": 384.6,
+        "minY": 226.3,
+        "maxY": 265.3,
+        "width": 29.3,
+        "height": 39
+      }
+    }
+  ]
+}

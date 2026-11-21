@@ -1,0 +1,199 @@
+{
+  "stateId": "WI",
+  "name": "Wisconsin",
+  "districtCount": 8,
+  "totalPopulation": 5914871,
+  "citizenPopulation": 5754425,
+  "cvap": 4505014,
+  "representationRatio": {
+    "citizenPerDistrict": 719303,
+    "populationPerDistrict": 739359,
+    "cvapPerDistrict": 563127
+  },
+  "boundingBox": {
+    "minX": 535.7,
+    "maxX": 628.3,
+    "minY": 89.4,
+    "maxY": 167.2,
+    "width": 92.6,
+    "height": 77.8
+  },
+  "districts": [
+    {
+      "id": "WI-1",
+      "stateId": "WI",
+      "districtNumber": 1,
+      "q": "y}IokAhM?Fr@c@t@j@j@d@@Ep@cAjAyA`@QTFjE}@\\WKeACuDz@",
+      "cx": 551,
+      "cy": 109.3,
+      "path": "M561.3,122.4L538.4,122.4L538,119.8L539.8,117.1L537.6,114.9L535.7,114.8L536,112.3L539.4,108.5L543.9,106.8L544.8,105.7L544.4,95.5L547.5,94L548.7,94.6L552.2,94.8L561.3,91.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 1",
+      "bbox": {
+        "minX": 535.7,
+        "maxX": 561.3,
+        "minY": 91.8,
+        "maxY": 122.4,
+        "width": 25.6,
+        "height": 30.6
+      }
+    },
+    {
+      "id": "WI-2",
+      "stateId": "WI",
+      "districtNumber": 2,
+      "q": "meJ{z@{@Oe@y@mAK?}LbL??bR_@HiAd@]Uf@s@gBs@k@A",
+      "cx": 571.1,
+      "cy": 108.6,
+      "path": "M573.5,95.8L576.5,96.6L578.4,99.5L582.3,100.1L582.3,122.4L561.3,122.4L561.3,91.8L562.9,91.3L566.6,89.4L568.1,90.5L566.1,93.1L571.3,95.7L573.5,95.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 2",
+      "bbox": {
+        "minX": 561.3,
+        "maxX": 582.3,
+        "minY": 89.4,
+        "maxY": 122.4,
+        "width": 21.1,
+        "height": 33
+      }
+    },
+    {
+      "id": "WI-3",
+      "stateId": "WI",
+      "districtNumber": 3,
+      "q": "{uJ_sA|I??lTwFc@eB]",
+      "cx": 590.9,
+      "cy": 118,
+      "path": "M599.8,134.4L582.3,134.4L582.3,100.1L594.7,101.9L599.8,103.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 3",
+      "bbox": {
+        "minX": 582.3,
+        "maxX": 599.8,
+        "minY": 100.1,
+        "maxY": 134.4,
+        "width": 17.4,
+        "height": 34.4
+      }
+    },
+    {
+      "id": "WI-4",
+      "stateId": "WI",
+      "districtNumber": 4,
+      "q": "{uJ_sA?jRc@Kg@LgCWe@e@eAc@A_AZq@kAAVq@s@_@Hm@x@Kj@sALy@a@Cm@d@m@jAaA\\i@~A_AT@m@f@m@jAyCPqAGw@@?",
+      "cx": 609.9,
+      "cy": 120.5,
+      "path": "M599.8,134.4L599.8,103.4L601.6,104L603.6,103.3L610.4,104.5L612.3,106.4L615.8,108.2L615.9,111.4L614.5,113.9L618.3,114L617.1,116.5L619.7,118.1L619.2,120.4L616.3,121L614.1,125.2L613.4,128.1L615.1,128.3L617.4,126.4L619.7,122.6L623,121.1L625.1,116.3L628.3,115.2L628.2,117.5L626.2,119.8L622.4,127.5L621.5,131.6L621.9,134.4L621.8,134.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 4",
+      "bbox": {
+        "minX": 599.8,
+        "maxX": 628.3,
+        "minY": 103.3,
+        "maxY": 134.4,
+        "width": 28.5,
+        "height": 31.1
+      }
+    },
+    {
+      "id": "WI-5",
+      "stateId": "WI",
+      "districtNumber": 5,
+      "q": "wbJokA?}Xl@JXv@NjAc@l@l@^Hr@Ph@Ex@~@dAr@J|Av@Pj@`Bb@b@b@bADrAz@Q`C?D",
+      "cx": 557.9,
+      "cy": 134.3,
+      "path": "M569.2,122.4L569.2,163.9L566.9,163.3L565.6,160.5L564.8,156.7L566.6,154.4L564.3,152.8L563.8,150.2L562.9,148.1L563.2,145.2L560,141.7L557.4,141.1L552.7,138.3L551.8,136.1L546.9,134.3L545.1,132.5L541.7,132.2L537.5,129.2L538.4,122.7L538.4,122.4Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 5",
+      "bbox": {
+        "minX": 537.5,
+        "maxX": 569.2,
+        "minY": 122.4,
+        "maxY": 163.9,
+        "width": 31.7,
+        "height": 41.5
+      }
+    },
+    {
+      "id": "WI-6",
+      "stateId": "WI",
+      "districtNumber": 6,
+      "q": "wbJokAeG??uZbDIVl@hAR",
+      "cx": 575.8,
+      "cy": 144.3,
+      "path": "M569.2,122.4L582.3,122.4L582.3,166.7L574.1,167.2L572.9,164.9L569.2,163.9Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 6",
+      "bbox": {
+        "minX": 569.2,
+        "maxX": 582.3,
+        "minY": 122.4,
+        "maxY": 167.2,
+        "width": 13.2,
+        "height": 44.8
+      }
+    },
+    {
+      "id": "WI-7",
+      "stateId": "WI",
+      "districtNumber": 7,
+      "q": "}jJ_sAiJ??qRhJS",
+      "cx": 591.3,
+      "cy": 150.3,
+      "path": "M582.3,134.4L600.4,134.4L600.4,165.7L582.3,166.7Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 7",
+      "bbox": {
+        "minX": 582.3,
+        "maxX": 600.4,
+        "minY": 134.4,
+        "maxY": 166.7,
+        "width": 18.1,
+        "height": 32.3
+      }
+    },
+    {
+      "id": "WI-8",
+      "stateId": "WI",
+      "districtNumber": 8,
+      "q": "gvJ_sAkL?ZWVoAQaAXo@ZqBMuAo@iABgB`IYjAC",
+      "cx": 609.8,
+      "cy": 149.7,
+      "path": "M600.4,134.4L621.8,134.4L620.4,135.6L619.2,139.6L620.1,142.9L618.8,145.3L617.4,151L618.1,155.3L620.5,159L620.3,164.2L604.2,165.5L600.4,165.7Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 719303,
+      "totalPopulation": 739359,
+      "cvap": 563127,
+      "name": "Wisconsin 8",
+      "bbox": {
+        "minX": 600.4,
+        "maxX": 621.8,
+        "minY": 134.4,
+        "maxY": 165.7,
+        "width": 21.4,
+        "height": 31.3
+      }
+    }
+  ]
+}

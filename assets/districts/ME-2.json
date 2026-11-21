@@ -1,0 +1,48 @@
+{
+  "stateId": "ME",
+  "stateName": "Maine",
+  "districtCount": 2,
+  "citizenRepresentation": 680441,
+  "totalPopulationRepresentation": 693908,
+  "cvapRepresentation": 557101,
+  "legislativeSeats": 151,
+  "legislativeRatio": 1.5,
+  "boundingBox": {
+    "minX": 875.5,
+    "maxX": 940.2,
+    "minY": 22.6,
+    "maxY": 105.7,
+    "width": 64.7,
+    "height": 83.1
+  },
+  "districts": [
+    {
+      "id": "ME-1",
+      "stateId": "ME",
+      "districtNumber": 1,
+      "q": "ofPyd@_@^NPg@h@\\t@C`Be@j@F|A{C`I{@DS}@k@GsA~@{@Pc@b@cB[{@[uBwJSwAmBDBi@g@[Jg@y@e@u@Z{AeBLU",
+      "cx": 906.4,
+      "cy": 45.4,
+      "path": "M882.4,60.5L884,58.9L883.2,58L885.2,55.9L883.7,53.2L883.9,48.3L885.8,46.1L885.4,41.4L893.2,25.3L896.2,25L897.2,28.1L899.4,28.5L903.6,25.3L906.6,24.4L908.4,22.6L913.4,24L916.4,25.4L922.3,44.2L923.3,48.6L928.8,48.3L928.6,50.4L930.6,51.8L930,53.8L932.9,55.7L935.6,54.3L940.2,59.4L939.5,60.5Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 680441,
+      "totalPopulation": 693908,
+      "cvap": 557101,
+      "name": "Maine 1"
+    },
+    {
+      "id": "ME-2",
+      "stateId": "ME",
+      "districtNumber": 2,
+      "q": "ilPaaAj@LDb@z@VjCzLhArEuBpAZPc@~@KHub@?`@q@h@HPm@l@GC_@v@KdAcBb@j@^C_@q@|@o@^d@Xa@nAWNr@h@WOc@RuAMQl@y@z@@Tu@n@UXk@r@ET`@r@mA[_@n@[C_@n@w@PeB",
+      "cx": 899.9,
+      "cy": 75.2,
+      "path": "M891.7,105.7L889.5,105L889.2,103.2L886.2,102L879.2,79.8L875.5,69.2L881.4,65.1L880,64.2L881.8,61L882.4,60.5L939.5,60.5L937.8,63L935.7,62.5L934.8,64.8L932.5,65.2L932.7,66.8L929.9,67.4L926.4,72.4L924.6,70.2L923,70.4L924.6,72.9L921.5,75.3L919.9,73.4L918.6,75.1L914.6,76.3L913.8,73.7L911.7,74.9L912.5,76.7L911.5,81L912.2,81.9L909.9,84.8L906.9,84.7L905.8,87.4L903.4,88.5L902.1,90.7L899.5,91L898.4,89.3L895.8,93.2L897.2,94.8L894.8,96.2L895,97.8L892.6,100.6L891.7,105.7Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 680441,
+      "totalPopulation": 693908,
+      "cvap": 557101,
+      "name": "Maine 2"
+    }
+  ]
+}

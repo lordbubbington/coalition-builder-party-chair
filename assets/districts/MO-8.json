@@ -1,0 +1,199 @@
+{
+  "stateId": "MO",
+  "name": "Missouri",
+  "districtCount": 8,
+  "totalPopulation": 6191816,
+  "citizenPopulation": 6054630,
+  "cvap": 4685988,
+  "representationRatio": {
+    "citizenPerDistrict": 756829,
+    "populationPerDistrict": 773977,
+    "cvapPerDistrict": 585749
+  },
+  "boundingBox": {
+    "minX": 490.7,
+    "maxX": 605.8,
+    "minY": 201.7,
+    "maxY": 283.6,
+    "width": 115.1,
+    "height": 81.9
+  },
+  "districts": [
+    {
+      "id": "MO-1",
+      "stateId": "MO",
+      "districtNumber": 1,
+      "q": "sfIqrCpG?@fCfANv@pAj@b@mAhBnBX`@^nA|AhAtB{JCaHF",
+      "cx": 512.3,
+      "cy": 217.4,
+      "path": "M524.2,236.1L510.5,236.1L510.4,229.3L506.8,228.5L504,224.4L501.8,222.6L505.7,217.3L500.1,216L498.4,214.4L494.4,209.7L490.7,203.8L509.7,204L524.2,203.6Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 1",
+      "bbox": {
+        "minX": 490.7,
+        "maxX": 524.2,
+        "minY": 203.6,
+        "maxY": 236.1,
+        "width": 33.5,
+        "height": 32.5
+      }
+    },
+    {
+      "id": "MO-2",
+      "stateId": "MO",
+      "districtNumber": 2,
+      "q": "ctIqrCnL??hSeDBiGN",
+      "cx": 535.1,
+      "cy": 219.6,
+      "path": "M545.8,236.1L524.2,236.1L524.2,203.6L532.5,203.4L545.8,202.6Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 2",
+      "bbox": {
+        "minX": 524.2,
+        "maxX": 545.8,
+        "minY": 202.6,
+        "maxY": 236.1,
+        "width": 21.7,
+        "height": 33.5
+      }
+    },
+    {
+      "id": "MO-3",
+      "stateId": "MO",
+      "districtNumber": 3,
+      "q": "szIg}Ba@Ds@u@?a\\dH??d]oEJ",
+      "cx": 553.2,
+      "cy": 226.7,
+      "path": "M556.2,202L557.9,201.7L560.5,204.4L560.5,250.9L545.8,250.9L545.8,202.6L556.2,202Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 3",
+      "bbox": {
+        "minX": 545.8,
+        "maxX": 560.5,
+        "minY": 201.7,
+        "maxY": 250.9,
+        "width": 14.7,
+        "height": 49.2
+      }
+    },
+    {
+      "id": "MO-4",
+      "stateId": "MO",
+      "districtNumber": 4,
+      "q": "ctIqrC?sK|T?BrK",
+      "cx": 528.2,
+      "cy": 246.2,
+      "path": "M545.8,236.1L545.8,256.3L510.7,256.3L510.5,236.1Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 4",
+      "bbox": {
+        "minX": 510.5,
+        "maxX": 545.8,
+        "minY": 236.1,
+        "maxY": 256.3,
+        "width": 35.4,
+        "height": 20.2
+      }
+    },
+    {
+      "id": "MO-5",
+      "stateId": "MO",
+      "districtNumber": 5,
+      "q": "i}Iw~BQQe@IZq@IkAm@gBkBwAsBeA]uBWSg@b@kAIo@W^k@Mc@t@_B?u@kBeAg@k@e@HiAk@hU?",
+      "cx": 571.7,
+      "cy": 236.5,
+      "path": "M560.5,204.4L561.4,205.3L563.3,205.8L561.9,208.3L562.4,212.1L564.7,217.3L570.1,221.7L575.9,225.2L577.4,231.1L578.6,232.1L580.6,230.3L584.4,230.8L586.8,232L585.2,234.2L585.9,236L583.2,240.8L583.2,243.5L588.6,247L590.6,249.2L592.5,248.7L596.2,250.9L560.5,250.9Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 5",
+      "bbox": {
+        "minX": 560.5,
+        "maxX": 596.2,
+        "minY": 204.4,
+        "maxY": 250.9,
+        "width": 35.6,
+        "height": 46.5
+      }
+    },
+    {
+      "id": "MO-6",
+      "stateId": "MO",
+      "districtNumber": 6,
+      "q": "ctIe_D?iKdSWr@A@tD@lF",
+      "cx": 528.1,
+      "cy": 266.5,
+      "path": "M545.8,256.3L545.8,276L513.5,277.2L510.9,277.3L510.8,268.2L510.7,256.3Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 6",
+      "bbox": {
+        "minX": 510.7,
+        "maxX": 545.8,
+        "minY": 256.3,
+        "maxY": 277.3,
+        "width": 35.2,
+        "height": 21
+      }
+    },
+    {
+      "id": "MO-7",
+      "stateId": "MO",
+      "districtNumber": 7,
+      "q": "kfJy{C?}MfQW?tN",
+      "cx": 560.3,
+      "cy": 263.2,
+      "path": "M575,250.9L575,274.8L545.8,276L545.8,250.9Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 7",
+      "bbox": {
+        "minX": 545.8,
+        "maxX": 575,
+        "minY": 250.9,
+        "maxY": 276,
+        "width": 29.1,
+        "height": 25
+      }
+    },
+    {
+      "id": "MO-8",
+      "stateId": "MO",
+      "districtNumber": 8,
+      "q": "kfJy{CgL?g@YCu@_@aAXYwAcBu@?RqCp@HPk@RAT?IyA~@_B`FMs@bAs@n@b@dApGI",
+      "cx": 589,
+      "cy": 265.2,
+      "path": "M575,250.9L596.2,250.9L598.2,252.2L598.4,254.9L600,258.2L598.7,259.5L603.1,264.5L605.8,264.5L604.8,271.8L602.3,271.3L601.4,273.5L600.4,273.6L599.3,273.6L599.8,278.1L596.6,282.9L585.3,283.6L587.9,280.2L590.5,277.8L588.7,274.3L575,274.8Z",
+      "areaRatio": 0.125,
+      "citizenPopulation": 756829,
+      "totalPopulation": 773977,
+      "cvap": 585749,
+      "name": "Missouri 8",
+      "bbox": {
+        "minX": 575,
+        "maxX": 605.8,
+        "minY": 250.9,
+        "maxY": 283.6,
+        "width": 30.8,
+        "height": 32.7
+      }
+    }
+  ]
+}

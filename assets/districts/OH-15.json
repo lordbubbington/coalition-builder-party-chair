@@ -1,0 +1,353 @@
+{
+  "stateId": "OH",
+  "name": "Ohio",
+  "districtCount": 15,
+  "totalPopulation": 11810292,
+  "citizenPopulation": 11520625,
+  "cvap": 8956209,
+  "representationRatio": {
+    "citizenPerDistrict": 768042,
+    "populationPerDistrict": 787353,
+    "cvapPerDistrict": 597081
+  },
+  "boundingBox": {
+    "minX": 670.5,
+    "maxX": 743.4,
+    "minY": 158.4,
+    "maxY": 226.7,
+    "width": 72.9,
+    "height": 68.3
+  },
+  "districts": [
+    {
+      "id": "OH-1",
+      "stateId": "OH",
+      "districtNumber": 1,
+      "q": "{iLawBjE?l@tJyFf@",
+      "cx": 677.4,
+      "cy": 181.9,
+      "path": "M683,192.1L672.8,192.1L670.5,173.4L683,171.4Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 1",
+      "bbox": {
+        "minX": 670.5,
+        "maxX": 683,
+        "minY": 171.4,
+        "maxY": 192.1,
+        "width": 12.5,
+        "height": 20.7
+      }
+    },
+    {
+      "id": "OH-2",
+      "stateId": "OH",
+      "districtNumber": 2,
+      "q": "ewLmpBhL??hE_E\\aC[q@YW^]Q",
+      "cx": 693.5,
+      "cy": 176.2,
+      "path": "M704.3,181.5L683,181.5L683,171.4L692.6,169.9L699.1,171.3L701.6,172.6L702.8,171L704.3,171.9Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 2",
+      "bbox": {
+        "minX": 683,
+        "maxX": 704.3,
+        "minY": 169.9,
+        "maxY": 181.5,
+        "width": 21.3,
+        "height": 11.6
+      }
+    },
+    {
+      "id": "OH-3",
+      "stateId": "OH",
+      "districtNumber": 3,
+      "q": "ewLmpB?sEhL??rE",
+      "cx": 693.7,
+      "cy": 186.8,
+      "path": "M704.3,181.5L704.3,192.1L683,192.1L683,181.5Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 3",
+      "bbox": {
+        "minX": 683,
+        "maxX": 704.3,
+        "minY": 181.5,
+        "maxY": 192.1,
+        "width": 21.3,
+        "height": 10.6
+      }
+    },
+    {
+      "id": "OH-4",
+      "stateId": "OH",
+      "districtNumber": 4,
+      "q": "ceMcpB?iE|L??hE",
+      "cx": 715.5,
+      "cy": 186.1,
+      "path": "M726.6,181L726.6,191.1L704.3,191.1L704.3,181Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 4",
+      "bbox": {
+        "minX": 704.3,
+        "maxX": 726.6,
+        "minY": 181,
+        "maxY": 191.1,
+        "width": 22.3,
+        "height": 10.1
+      }
+    },
+    {
+      "id": "OH-5",
+      "stateId": "OH",
+      "districtNumber": 5,
+      "q": "ceMcpB|L??tDq@[o@KsCbAwADwAnAWN",
+      "cx": 716.8,
+      "cy": 175.7,
+      "path": "M726.6,181L704.3,181L704.3,171.9L706.8,173.3L709.2,173.9L716.6,170.5L721,170.2L725.4,166.2L726.6,165.4Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 5",
+      "bbox": {
+        "minX": 704.3,
+        "maxX": 726.6,
+        "minY": 165.4,
+        "maxY": 181,
+        "width": 22.3,
+        "height": 15.6
+      }
+    },
+    {
+      "id": "OH-6",
+      "stateId": "OH",
+      "districtNumber": 6,
+      "q": "emM_bB}@sJ~H??fFiBbAwCfA??",
+      "cx": 734.4,
+      "cy": 169.4,
+      "path": "M739.5,158.4L742.6,177L726.6,177L726.6,165.4L731.9,162L739.5,158.4L739.5,158.4Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 6",
+      "bbox": {
+        "minX": 726.6,
+        "maxX": 742.6,
+        "minY": 158.4,
+        "maxY": 177,
+        "width": 15.9,
+        "height": 18.6
+      }
+    },
+    {
+      "id": "OH-7",
+      "stateId": "OH",
+      "districtNumber": 7,
+      "q": "w_Mq|B?bE}M?H[HgCZ_@",
+      "cx": 729.5,
+      "cy": 196,
+      "path": "M718,200.9L718,191.1L741.9,191.1L741.4,192.5L740.9,199.3L739.5,200.9Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 7",
+      "bbox": {
+        "minX": 718,
+        "maxX": 741.9,
+        "minY": 191.1,
+        "maxY": 200.9,
+        "width": 23.9,
+        "height": 9.8
+      }
+    },
+    {
+      "id": "OH-8",
+      "stateId": "OH",
+      "districtNumber": 8,
+      "q": "coMsmBOcBl@][a@Iu@T_ApH??xG",
+      "cx": 734.6,
+      "cy": 184,
+      "path": "M742.6,177L743.4,182L741.1,183.5L742.5,185.2L743,187.9L741.9,191.1L726.6,191.1L726.6,177Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 8",
+      "bbox": {
+        "minX": 726.6,
+        "maxX": 743.4,
+        "minY": 177,
+        "maxY": 191.1,
+        "width": 16.8,
+        "height": 14.2
+      }
+    },
+    {
+      "id": "OH-9",
+      "stateId": "OH",
+      "districtNumber": 9,
+      "q": "smLawB?eHbH?XtFDn@",
+      "cx": 681.3,
+      "cy": 199.4,
+      "path": "M689,192.1L689,206.8L674.4,206.8L673.1,194.5L672.8,192.1Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 9",
+      "bbox": {
+        "minX": 672.8,
+        "maxX": 689,
+        "minY": 192.1,
+        "maxY": 206.8,
+        "width": 16.2,
+        "height": 14.7
+      }
+    },
+    {
+      "id": "OH-10",
+      "stateId": "OH",
+      "districtNumber": 10,
+      "q": "smLawBqH??eHpH?",
+      "cx": 696.7,
+      "cy": 199.5,
+      "path": "M689,192.1L704.3,192.1L704.3,206.8L689,206.8Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 10",
+      "bbox": {
+        "minX": 689,
+        "maxX": 704.3,
+        "minY": 192.1,
+        "maxY": 206.8,
+        "width": 15.4,
+        "height": 14.7
+      }
+    },
+    {
+      "id": "OH-11",
+      "stateId": "OH",
+      "districtNumber": 11,
+      "q": "w_MmvB?kIpG??jI",
+      "cx": 711.2,
+      "cy": 199.4,
+      "path": "M718,191.1L718,207.7L704.3,207.7L704.3,191.1Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 11",
+      "bbox": {
+        "minX": 704.3,
+        "maxX": 718,
+        "minY": 191.1,
+        "maxY": 207.7,
+        "width": 13.6,
+        "height": 16.6
+      }
+    },
+    {
+      "id": "OH-12",
+      "stateId": "OH",
+      "districtNumber": 12,
+      "q": "aoLg`C?kI~A?F^jA~@bCOXzF",
+      "cx": 683.8,
+      "cy": 213.8,
+      "path": "M691.3,206.8L691.3,223.4L686.5,223.4L686.1,221.8L682.3,218.6L675.7,219.4L674.4,206.8Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 12",
+      "bbox": {
+        "minX": 674.4,
+        "maxX": 691.3,
+        "minY": 206.8,
+        "maxY": 223.4,
+        "width": 17,
+        "height": 16.6
+      }
+    },
+    {
+      "id": "OH-13",
+      "stateId": "OH",
+      "districtNumber": 13,
+      "q": "aoLg`CcG??{IrBFp@_@nAf@L?",
+      "cx": 697.8,
+      "cy": 215.5,
+      "path": "M691.3,206.8L704.3,206.8L704.3,224.2L698.5,223.8L696,225.4L692,223.4L691.3,223.4Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 13",
+      "bbox": {
+        "minX": 691.3,
+        "maxX": 704.3,
+        "minY": 206.8,
+        "maxY": 225.4,
+        "width": 13,
+        "height": 18.6
+      }
+    },
+    {
+      "id": "OH-14",
+      "stateId": "OH",
+      "districtNumber": 14,
+      "q": "w_My`C?iJ|@Qt@j@h@BTz@l@Q^g@N??hI",
+      "cx": 711.5,
+      "cy": 216.1,
+      "path": "M718,207.7L718,225.8L714.9,226.7L712.2,224.5L710.1,224.3L709,221.3L706.7,222.2L705.1,224.2L704.3,224.2L704.3,207.7Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 14",
+      "bbox": {
+        "minX": 704.3,
+        "maxX": 718,
+        "minY": 207.7,
+        "maxY": 226.7,
+        "width": 13.6,
+        "height": 19
+      }
+    },
+    {
+      "id": "OH-15",
+      "stateId": "OH",
+      "districtNumber": 15,
+      "q": "w_Mq|BmL?rAeBf@Wf@P\\u@f@E\\iAOe@^g@x@n@n@}AYu@d@WFo@VE",
+      "cx": 724.9,
+      "cy": 208.4,
+      "path": "M718,200.9L739.5,200.9L735.3,206L733.3,207.2L731.3,206.3L729.8,209L727.8,209.3L726.3,213L727.1,214.9L725.5,216.9L722.6,214.5L720.2,219.2L721.5,221.9L719.6,223.1L719.2,225.5L718,225.8Z",
+      "areaRatio": 0.06670000000000001,
+      "citizenPopulation": 768042,
+      "totalPopulation": 787353,
+      "cvap": 597081,
+      "name": "Ohio 15",
+      "bbox": {
+        "minX": 718,
+        "maxX": 739.5,
+        "minY": 200.9,
+        "maxY": 225.8,
+        "width": 21.6,
+        "height": 24.9
+      }
+    }
+  ]
+}

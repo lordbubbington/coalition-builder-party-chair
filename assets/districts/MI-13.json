@@ -1,0 +1,309 @@
+{
+  "stateId": "MI",
+  "name": "Michigan",
+  "districtCount": 13,
+  "totalPopulation": 10077764,
+  "citizenPopulation": 9761379,
+  "cvap": 7653711,
+  "representationRatio": {
+    "citizenPerDistrict": 750875,
+    "populationPerDistrict": 775213,
+    "cvapPerDistrict": 588747
+  },
+  "boundingBox": {
+    "minX": 573.5,
+    "maxX": 706.3,
+    "minY": 66.3,
+    "maxY": 175.7,
+    "width": 132.8,
+    "height": 109.4
+  },
+  "districts": [
+    {
+      "id": "MI-1",
+      "stateId": "MI",
+      "districtNumber": 1,
+      "q": "cxJs_AVGX?zBd@dIn@d@x@z@NwBh@s@l@gCXqAx@g@D_@d@yAx@m@l@??!}sJsj@hAq@f@IAd@yDzA`@w@f@M",
+      "cx": 593.2,
+      "cy": 93.2,
+      "path": "M603.4,103.4L602.2,103.8L600.9,103.8L594.7,101.9L578.4,99.5L576.5,96.6L573.5,95.8L579.5,93.7L582.1,91.4L588.9,90.1L593,87.2L595,86.9L596.6,85L601.1,82.1L603.4,79.8L603.4,79.8ZM596.7,69.8L593,72.3L591,72.8L591.1,70.9L600.4,66.3L598.7,69.1L596.7,69.8Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 1",
+      "bbox": {
+        "minX": 573.5,
+        "maxX": 603.4,
+        "minY": 66.3,
+        "maxY": 103.8,
+        "width": 29.9,
+        "height": 37.5
+      }
+    },
+    {
+      "id": "MI-2",
+      "stateId": "MI",
+      "districtNumber": 2,
+      "q": "egK{_AdL?v@HBA?vMgAb@eAUnBoBVg@C}@w@r@kB@uA[qAuAi@MkATUS??",
+      "cx": 613.8,
+      "cy": 95.3,
+      "path": "M627.5,103.8L606.4,103.8L603.6,103.3L603.4,103.4L603.4,79.8L607,78L610.5,79.1L604.9,84.7L603.7,86.7L603.9,89.8L606.7,87.2L612.1,87.1L616.4,88.5L620.5,92.8L622.6,93.5L626.4,92.4L627.5,93.4L627.5,93.4Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 2",
+      "bbox": {
+        "minX": 603.4,
+        "maxX": 627.5,
+        "minY": 78,
+        "maxY": 103.8,
+        "width": 24.1,
+        "height": 25.8
+      }
+    },
+    {
+      "id": "MI-3",
+      "stateId": "MI",
+      "districtNumber": 3,
+      "q": "iuK{_AAFOG!egK{_A?nEmAA}C~AuANsBHiA^{@HU}A]C?cDFDfBNp@Aj@s@nAUzA@^UDa@zB?J@?A",
+      "cx": 643,
+      "cy": 95,
+      "path": "M650.1,103.8L650.2,103.4L651,103.8ZM627.5,103.8L627.5,93.4L631.4,93.5L639.3,88.7L643.6,87.9L649.4,87.4L653.1,85.8L656.1,85.3L657.2,90L658.7,90.2L658.7,98.4L658.3,98.1L653.1,97.3L650.6,97.4L648.4,100L644.4,101.1L639.8,101L638.2,102.1L637.9,103.8L631.7,103.8L631.1,103.7L631.1,103.8Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 3",
+      "bbox": {
+        "minX": 627.5,
+        "maxX": 658.7,
+        "minY": 85.3,
+        "maxY": 103.8,
+        "width": 31.2,
+        "height": 18.5
+      }
+    },
+    {
+      "id": "MI-4",
+      "stateId": "MI",
+      "districtNumber": 4,
+      "q": "uzKoeA?~@MBLX?nAYb@gAJqA_@kADk@o@{@BeB_@a@F_AeAb@k@MM!uzKkw@_@C{@X[Uc@^yATQwBm@o@_ACA`@y@Fc@]R_@lD@nAY|A\\Rg@O]h@@v@b@",
+      "cx": 669.3,
+      "cy": 102.9,
+      "path": "M658.7,112.8L658.7,109.6L659.4,109.4L658.7,108.1L658.7,104.1L660,102.3L663.6,101.7L667.7,103.3L671.5,103L673.7,105.4L676.7,105.2L681.8,106.8L683.5,106.4L686.7,109.9L684.9,112.1L685.6,112.8ZM658.7,90.2L660.3,90.4L663.3,89.1L664.7,90.2L666.5,88.6L671,87.5L671.9,93.5L674.2,95.9L677.4,96.1L677.5,94.4L680.4,94L682.2,95.5L681.2,97.1L672.5,97L668.5,98.3L663.8,96.8L662.8,98.8L663.6,100.3L661.5,100.2L658.7,98.4Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 4",
+      "bbox": {
+        "minX": 658.7,
+        "maxX": 686.7,
+        "minY": 87.5,
+        "maxY": 112.8,
+        "width": 28,
+        "height": 25.3
+      }
+    },
+    {
+      "id": "MI-5",
+      "stateId": "MI",
+      "districtNumber": 5,
+      "q": "uzKipAzI?INGpALf@o@T?x@qAXw@bAE}Bc@Aa@`AJjBUZgAV?\\Tl@U`@!_vK}_AIg@f@KGt@Q?CA!ibKyhAr@^Wp@jA@[p@@~@dAb@d@d@nALrA?JCLBcV??CzAm@@l@\\BJ?Lk@fAIZWj@wAlAoBGG",
+      "cx": 640,
+      "cy": 117,
+      "path": "M658.7,130.1L641.3,130.1L641.8,129.3L642.2,125.2L641.5,123.2L643.9,122.1L643.9,119.2L648,117.9L650.8,114.5L651.1,120.8L652.9,120.9L654.6,117.6L654,112.2L655.1,110.8L658.7,109.6L658.7,108.1L657.6,105.8L658.7,104.1ZM651.2,103.9L651.7,105.9L649.7,106.5L650.1,103.8L651,103.8L651.2,103.9ZM619.7,118.1L617.1,116.5L618.3,114L614.5,113.9L615.9,111.4L615.8,108.2L612.3,106.4L610.4,104.5L606.4,103.8L602.2,103.8L601.6,104L600.9,103.8L637.9,103.8L637.9,104L633.3,106.3L633.2,104L631.7,103.8L631.1,103.8L630.4,106L626.8,106.5L625.4,107.7L623.2,112.1L619.3,117.7L619.7,118.1Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 5",
+      "bbox": {
+        "minX": 600.9,
+        "maxX": 658.7,
+        "minY": 103.8,
+        "maxY": 130.1,
+        "width": 57.8,
+        "height": 26.3
+      }
+    },
+    {
+      "id": "MI-6",
+      "stateId": "MI",
+      "districtNumber": 6,
+      "q": "idLmtArH??|MsH?",
+      "cx": 666.4,
+      "cy": 124.7,
+      "path": "M674.1,136.7L658.7,136.7L658.7,112.8L674.1,112.8Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 6",
+      "bbox": {
+        "minX": 658.7,
+        "maxX": 674.1,
+        "minY": 112.8,
+        "maxY": 136.7,
+        "width": 15.3,
+        "height": 23.9
+      }
+    },
+    {
+      "id": "MI-7",
+      "stateId": "MI",
+      "districtNumber": 7,
+      "q": "idLmtA?|MeF?a@_@Wy@@aC|@g@FgAfA_@^uAS[eB?a@\\y@dBeBn@y@Si@k@k@sB",
+      "cx": 684.1,
+      "cy": 125.7,
+      "path": "M674.1,136.7L674.1,112.8L685.6,112.8L687.3,114.4L688.5,117.3L688.4,123.8L685.3,125.8L684.9,129.4L681.3,131L679.7,135.3L680.7,136.7L685.8,136.7L687.5,135.2L690.4,130.1L695.5,127.7L698.4,128.7L700.5,130.9L702.7,136.7Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 7",
+      "bbox": {
+        "minX": 674.1,
+        "maxX": 702.7,
+        "minY": 112.8,
+        "maxY": 136.7,
+        "width": 28.6,
+        "height": 23.9
+      }
+    },
+    {
+      "id": "MI-8",
+      "stateId": "MI",
+      "districtNumber": 8,
+      "q": "uzKipA?iKvH?pAhCWnA^zAu@rA",
+      "cx": 649.4,
+      "cy": 139.8,
+      "path": "M658.7,130.1L658.7,149.8L643.1,149.8L639,142.9L640.2,138.9L638.6,134.3L641.3,130.1Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 8",
+      "bbox": {
+        "minX": 638.6,
+        "maxX": 658.7,
+        "minY": 130.1,
+        "maxY": 149.8,
+        "width": 20.1,
+        "height": 19.7
+      }
+    },
+    {
+      "id": "MI-9",
+      "stateId": "MI",
+      "districtNumber": 9,
+      "q": "mgLu_BvK??fJwK?",
+      "cx": 668.9,
+      "cy": 145.7,
+      "path": "M679.1,154.7L658.7,154.7L658.7,136.7L679.1,136.7Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 9",
+      "bbox": {
+        "minX": 658.7,
+        "maxX": 679.1,
+        "minY": 136.7,
+        "maxY": 154.7,
+        "width": 20.3,
+        "height": 18
+      }
+    },
+    {
+      "id": "MI-10",
+      "stateId": "MI",
+      "districtNumber": 10,
+      "q": "mgLk}A?|G_@???oAQUPqI?GUOgAo@sAJkB",
+      "cx": 692,
+      "cy": 144,
+      "path": "M679.1,151L679.1,136.7L680.7,136.7L680.7,136.7L684.7,137.6L685.8,136.7L702.7,136.7L703.1,137.8L703.9,141.4L706.3,145.6L705.7,151Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 10",
+      "bbox": {
+        "minX": 679.1,
+        "maxX": 706.3,
+        "minY": 136.7,
+        "maxY": 151,
+        "width": 27.2,
+        "height": 14.3
+      }
+    },
+    {
+      "id": "MI-11",
+      "stateId": "MI",
+      "districtNumber": 11,
+      "q": "uzKs|A?wMxCQlG[{@t@e@rAa@p@YfAEbBPdB`@v@",
+      "cx": 651,
+      "cy": 162.8,
+      "path": "M658.7,149.8L658.7,173.4L651,174.3L637.5,175.7L640.5,173L642.4,168.8L644.1,166.3L645.4,162.7L645.7,157.7L644.8,152.6L643.1,149.8Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 11",
+      "bbox": {
+        "minX": 637.5,
+        "maxX": 658.7,
+        "minY": 149.8,
+        "maxY": 175.7,
+        "width": 21.2,
+        "height": 25.9
+      }
+    },
+    {
+      "id": "MI-12",
+      "stateId": "MI",
+      "districtNumber": 12,
+      "q": "mgLu_B?yIjD[BXfFY?tJ",
+      "cx": 668.8,
+      "cy": 163.7,
+      "path": "M679.1,154.7L679.1,172L670.5,173.4L670.3,172.1L658.7,173.4L658.7,154.7Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 12",
+      "bbox": {
+        "minX": 658.7,
+        "maxX": 679.1,
+        "minY": 154.7,
+        "maxY": 173.4,
+        "width": 20.3,
+        "height": 18.7
+      }
+    },
+    {
+      "id": "MI-13",
+      "stateId": "MI",
+      "districtNumber": 13,
+      "q": "{oLeiBlGi@?bLsO?BYp@YFl@`@QVoB|@o@HsAfAqAA[",
+      "cx": 688.5,
+      "cy": 159.9,
+      "path": "M692.6,169.9L679.1,172L679.1,151L705.7,151L705.5,152.3L703,153.6L702.6,151.3L700.9,152.2L699.7,157.8L696.6,160.2L696.1,164.4L692.5,168.5L692.6,169.9Z",
+      "areaRatio": 0.07690000000000001,
+      "citizenPopulation": 750875,
+      "totalPopulation": 775213,
+      "cvap": 588747,
+      "name": "Michigan 13",
+      "bbox": {
+        "minX": 679.1,
+        "maxX": 705.7,
+        "minY": 151,
+        "maxY": 172,
+        "width": 26.6,
+        "height": 21.1
+      }
+    }
+  ]
+}

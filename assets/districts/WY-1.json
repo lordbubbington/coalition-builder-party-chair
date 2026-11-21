@@ -1,0 +1,45 @@
+{
+  "stateId": "WY",
+  "name": "Wyoming",
+  "districtCount": 1,
+  "totalPopulation": 582396,
+  "citizenPopulation": 571065,
+  "cvap": 440292,
+  "representationRatio": {
+    "citizenPerDistrict": 571065,
+    "populationPerDistrict": 582396,
+    "cvapPerDistrict": 440292
+  },
+  "boundingBox": {
+    "minX": 238.4,
+    "maxX": 359.4,
+    "minY": 106.9,
+    "maxY": 190.9,
+    "width": 121,
+    "height": 84
+  },
+  "districts": [
+    {
+      "id": "WY-1",
+      "stateId": "WY",
+      "districtNumber": 1,
+      "q": "gnDudAa^wBiQw@v@}Tz@eUjPr@nUrArJn@nS`Bw@~IiC`Z]rDgR{A",
+      "cx": 300.2,
+      "cy": 149.6,
+      "path": "M280.4,111.5L330.1,117.5L359.4,120.3L356.6,155.4L353.6,190.9L325.8,188.3L289.8,184.1L271.2,181.7L238.4,176.8L241.2,159.2L248.1,115.9L249.6,106.9L280.4,111.5Z",
+      "areaRatio": 1,
+      "citizenPopulation": 571065,
+      "totalPopulation": 582396,
+      "cvap": 440292,
+      "name": "Wyoming 1",
+      "bbox": {
+        "minX": 238.4,
+        "maxX": 359.4,
+        "minY": 106.9,
+        "maxY": 190.9,
+        "width": 121,
+        "height": 84
+      }
+    }
+  ]
+}

@@ -1,0 +1,436 @@
+District_ID,State_Name,State_Abbr,District_Number,In_Game_District_Lean_Raw,Partisan_Lean_Formatted,Party_Advantage,Rating_Classification,Statewide_Baseline_Lean,District_vs_State_Delta,Incumbent_Representative,Incumbent_Party,Incumbent_vs_Lean_Alignment,Region,Subregion
+AL-1,Alabama,AL,1,-34.00,R+34.0,Republican,Safe Republican,R+29.1,R+4.9,Jerry Carl,Republican,Party Alignment,South,Deep South
+AL-2,Alabama,AL,2,-14.00,R+14.0,Republican,Safe Republican,R+29.1,D+15.1,Shomari Figures,Democratic,Crossover / Split Seat,South,Deep South
+AL-3,Alabama,AL,3,-46.00,R+46.0,Republican,Safe Republican,R+29.1,R+16.9,Mike Rogers,Republican,Party Alignment,South,Deep South
+AL-4,Alabama,AL,4,-66.00,R+66.0,Republican,Safe Republican,R+29.1,R+36.9,Robert Aderholt,Republican,Party Alignment,South,Deep South
+AL-5,Alabama,AL,5,-30.00,R+30.0,Republican,Safe Republican,R+29.1,R+0.9,Dale Strong,Republican,Party Alignment,South,Deep South
+AL-6,Alabama,AL,6,-34.00,R+34.0,Republican,Safe Republican,R+29.1,R+4.9,Gary Palmer,Republican,Party Alignment,South,Deep South
+AL-7,Alabama,AL,7,20.00,D+20.0,Democratic,Safe Democratic,R+29.1,D+49.1,Terri Sewell,Democratic,Party Alignment,South,Deep South
+AK-1,Alaska,AK,1,-7.00,R+7.0,Republican,Likely Republican,R+7.0,EVEN,Nick Begich III,Republican,Party Alignment,West,Pacific Northwest
+AZ-1,Arizona,AZ,1,-2.00,R+2.0,Republican,Lean Republican,R+0.4,R+1.6,Amish Shah,Democratic,Crossover / Split Seat,West,The Rockies
+AZ-2,Arizona,AZ,2,-14.00,R+14.0,Republican,Safe Republican,R+0.4,R+13.6,Eli Crane,Republican,Party Alignment,West,The Rockies
+AZ-3,Arizona,AZ,3,44.00,D+44.0,Democratic,Safe Democratic,R+0.4,D+44.4,Yassamin Ansari,Democratic,Party Alignment,West,The Rockies
+AZ-4,Arizona,AZ,4,8.00,D+8.0,Democratic,Likely Democratic,R+0.4,D+8.4,Greg Stanton,Democratic,Party Alignment,West,The Rockies
+AZ-5,Arizona,AZ,5,-20.00,R+20.0,Republican,Safe Republican,R+0.4,R+19.6,Mark Lamb,Republican,Party Alignment,West,The Rockies
+AZ-6,Arizona,AZ,6,0.00,EVEN,Even,Toss-Up,R+0.4,D+0.4,JoAnna Mendoza,Democratic,Party Alignment,West,The Rockies
+AZ-7,Arizona,AZ,7,26.00,D+26.0,Democratic,Safe Democratic,R+0.4,D+26.4,Adelita Grijalva,Democratic,Party Alignment,West,The Rockies
+AZ-8,Arizona,AZ,8,-16.00,R+16.0,Republican,Safe Republican,R+0.4,R+15.6,Abraham Hamadeh,Republican,Party Alignment,West,The Rockies
+AZ-9,Arizona,AZ,9,-30.00,R+30.0,Republican,Safe Republican,R+0.4,R+29.6,Paul Gosar,Republican,Party Alignment,West,The Rockies
+AR-1,Arkansas,AR,1,-46.00,R+46.0,Republican,Safe Republican,R+32.0,R+14.0,Rick Crawford,Republican,Party Alignment,South,Deep South
+AR-2,Arkansas,AR,2,-16.00,R+16.0,Republican,Safe Republican,R+32.0,D+16.0,French Hill,Republican,Party Alignment,South,Deep South
+AR-3,Arkansas,AR,3,-26.00,R+26.0,Republican,Safe Republican,R+32.0,D+6.0,Steve Womack,Republican,Party Alignment,South,Deep South
+AR-4,Arkansas,AR,4,-40.00,R+40.0,Republican,Safe Republican,R+32.0,R+8.0,Bruce Westerman,Republican,Party Alignment,South,Deep South
+CA-1,California,CA,1,14.00,D+14.0,Democratic,Safe Democratic,D+23.0,R+9.0,Mike McGuire,Democratic,Party Alignment,West,West
+CA-2,California,CA,2,26.00,D+26.0,Democratic,Safe Democratic,D+23.0,D+3.0,Jared Huffman,Democratic,Party Alignment,West,West
+CA-3,California,CA,3,12.00,D+12.0,Democratic,Safe Democratic,D+23.0,R+11.0,Ami Bera,Democratic,Party Alignment,West,West
+CA-4,California,CA,4,16.00,D+16.0,Democratic,Safe Democratic,D+23.0,R+7.0,Mike Thompson,Democratic,Party Alignment,West,West
+CA-5,California,CA,5,-20.00,R+20.0,Republican,Safe Republican,D+23.0,R+43.0,Tom McClintock,Republican,Party Alignment,West,West
+CA-6,California,CA,6,10.00,D+10.0,Democratic,Likely Democratic,D+23.0,R+13.0,Richard Pan,Democratic,Party Alignment,West,West
+CA-7,California,CA,7,14.00,D+14.0,Democratic,Safe Democratic,D+23.0,R+9.0,Doris Matsui,Democratic,Party Alignment,West,West
+CA-8,California,CA,8,38.00,D+38.0,Democratic,Safe Democratic,D+23.0,D+15.0,John Garamendi,Democratic,Party Alignment,West,West
+CA-9,California,CA,9,16.00,D+16.0,Democratic,Safe Democratic,D+23.0,R+7.0,Josh Harder,Democratic,Party Alignment,West,West
+CA-10,California,CA,10,36.00,D+36.0,Democratic,Safe Democratic,D+23.0,D+13.0,Mark DeSaulnier,Democratic,Party Alignment,West,West
+CA-11,California,CA,11,72.00,D+72.0,Democratic,Safe Democratic,D+23.0,D+49.0,Scott Wiener,Democratic,Party Alignment,West,West
+CA-12,California,CA,12,78.00,D+78.0,Democratic,Safe Democratic,D+23.0,D+55.0,Lateefah Simon,Democratic,Party Alignment,West,West
+CA-13,California,CA,13,4.00,D+4.0,Democratic,Lean Democratic,D+23.0,R+19.0,Adam Gray,Democratic,Party Alignment,West,West
+CA-14,California,CA,14,38.00,D+38.0,Democratic,Safe Democratic,D+23.0,D+15.0,Aisha Wahab,Democratic,Party Alignment,West,West
+CA-15,California,CA,15,52.00,D+52.0,Democratic,Safe Democratic,D+23.0,D+29.0,Kevin Mullin,Democratic,Party Alignment,West,West
+CA-16,California,CA,16,50.00,D+50.0,Democratic,Safe Democratic,D+23.0,D+27.0,Sam Liccardo,Democratic,Party Alignment,West,West
+CA-17,California,CA,17,42.00,D+42.0,Democratic,Safe Democratic,D+23.0,D+19.0,Ro Khanna,Democratic,Party Alignment,West,West
+CA-18,California,CA,18,32.00,D+32.0,Democratic,Safe Democratic,D+23.0,D+9.0,Zoe Lofgren,Democratic,Party Alignment,West,West
+CA-19,California,CA,19,36.00,D+36.0,Democratic,Safe Democratic,D+23.0,D+13.0,Jimmy Panetta,Democratic,Party Alignment,West,West
+CA-20,California,CA,20,-32.00,R+32.0,Republican,Safe Republican,D+23.0,R+55.0,Vince Fong,Republican,Party Alignment,West,West
+CA-21,California,CA,21,10.00,D+10.0,Democratic,Likely Democratic,D+23.0,R+13.0,Jim Costa,Democratic,Party Alignment,West,West
+CA-22,California,CA,22,2.00,D+2.0,Democratic,Lean Democratic,D+23.0,R+21.0,Randy Villegas,Democratic,Party Alignment,West,West
+CA-23,California,CA,23,-18.00,R+18.0,Republican,Safe Republican,D+23.0,R+41.0,Jay Obernolte,Republican,Party Alignment,West,West
+CA-24,California,CA,24,26.00,D+26.0,Democratic,Safe Democratic,D+23.0,D+3.0,Salud Carbajal,Democratic,Party Alignment,West,West
+CA-25,California,CA,25,8.00,D+8.0,Democratic,Likely Democratic,D+23.0,R+15.0,Raul Ruiz,Democratic,Party Alignment,West,West
+CA-26,California,CA,26,18.00,D+18.0,Democratic,Safe Democratic,D+23.0,R+5.0,Jacqui Irwin,Democratic,Party Alignment,West,West
+CA-27,California,CA,27,12.00,D+12.0,Democratic,Safe Democratic,D+23.0,R+11.0,George T. Whitesides,Democratic,Party Alignment,West,West
+CA-28,California,CA,28,28.00,D+28.0,Democratic,Safe Democratic,D+23.0,D+5.0,Judy Chu,Democratic,Party Alignment,West,West
+CA-29,California,CA,29,38.00,D+38.0,Democratic,Safe Democratic,D+23.0,D+15.0,Luz Maria Rivas,Democratic,Party Alignment,West,West
+CA-30,California,CA,30,42.00,D+42.0,Democratic,Safe Democratic,D+23.0,D+19.0,Laura Friedman,Democratic,Party Alignment,West,West
+CA-31,California,CA,31,16.00,D+16.0,Democratic,Safe Democratic,D+23.0,R+7.0,Gil Cisneros,Democratic,Party Alignment,West,West
+CA-32,California,CA,32,28.00,D+28.0,Democratic,Safe Democratic,D+23.0,D+5.0,Brad Sherman,Democratic,Party Alignment,West,West
+CA-33,California,CA,33,14.00,D+14.0,Democratic,Safe Democratic,D+23.0,R+9.0,Pete Aguilar,Democratic,Party Alignment,West,West
+CA-34,California,CA,34,56.00,D+56.0,Democratic,Safe Democratic,D+23.0,D+33.0,Angela Gonzales-Torres,Democratic,Party Alignment,West,West
+CA-35,California,CA,35,12.00,D+12.0,Democratic,Safe Democratic,D+23.0,R+11.0,Norma Torres,Democratic,Party Alignment,West,West
+CA-36,California,CA,36,42.00,D+42.0,Democratic,Safe Democratic,D+23.0,D+19.0,Ted Lieu,Democratic,Party Alignment,West,West
+CA-37,California,CA,37,66.00,D+66.0,Democratic,Safe Democratic,D+23.0,D+43.0,Sydney Kamlager-Dove,Democratic,Party Alignment,West,West
+CA-38,California,CA,38,16.00,D+16.0,Democratic,Safe Democratic,D+23.0,R+7.0,Hilda Solis,Democratic,Party Alignment,West,West
+CA-39,California,CA,39,14.00,D+14.0,Democratic,Safe Democratic,D+23.0,R+9.0,Mark Takano,Democratic,Party Alignment,West,West
+CA-40,California,CA,40,-12.00,R+12.0,Republican,Safe Republican,D+23.0,R+35.0,Ken Calvert,Republican,Party Alignment,West,West
+CA-41,California,CA,41,18.00,D+18.0,Democratic,Safe Democratic,D+23.0,R+5.0,Linda Sánchez,Democratic,Party Alignment,West,West
+CA-42,California,CA,42,16.00,D+16.0,Democratic,Safe Democratic,D+23.0,R+7.0,Robert Garcia,Democratic,Party Alignment,West,West
+CA-43,California,CA,43,54.00,D+54.0,Democratic,Safe Democratic,D+23.0,D+31.0,Maxine Waters,Democratic,Party Alignment,West,West
+CA-44,California,CA,44,40.00,D+40.0,Democratic,Safe Democratic,D+23.0,D+17.0,Nanette Barragán,Democratic,Party Alignment,West,West
+CA-45,California,CA,45,6.00,D+6.0,Democratic,Likely Democratic,D+23.0,R+17.0,Derek Tran,Democratic,Party Alignment,West,West
+CA-46,California,CA,46,20.00,D+20.0,Democratic,Safe Democratic,D+23.0,R+3.0,Lou Correa,Democratic,Party Alignment,West,West
+CA-47,California,CA,47,12.00,D+12.0,Democratic,Safe Democratic,D+23.0,R+11.0,Dave Min,Democratic,Party Alignment,West,West
+CA-48,California,CA,48,4.00,D+4.0,Democratic,Lean Democratic,D+23.0,R+19.0,Marni von Wilpert,Democratic,Party Alignment,West,West
+CA-49,California,CA,49,14.00,D+14.0,Democratic,Safe Democratic,D+23.0,R+9.0,Mike Levin,Democratic,Party Alignment,West,West
+CA-50,California,CA,50,20.00,D+20.0,Democratic,Safe Democratic,D+23.0,R+3.0,Scott Peters,Democratic,Party Alignment,West,West
+CA-51,California,CA,51,20.00,D+20.0,Democratic,Safe Democratic,D+23.0,R+3.0,Sara Jacobs,Democratic,Party Alignment,West,West
+CA-52,California,CA,52,22.00,D+22.0,Democratic,Safe Democratic,D+23.0,R+1.0,Juan Vargas,Democratic,Party Alignment,West,West
+CO-1,Colorado,CO,1,58.00,D+58.0,Democratic,Safe Democratic,D+12.3,D+45.8,Melat Kiros,Democratic,Party Alignment,West,The Rockies
+CO-2,Colorado,CO,2,40.00,D+40.0,Democratic,Safe Democratic,D+12.3,D+27.8,Joe Neguse,Democratic,Party Alignment,West,The Rockies
+CO-3,Colorado,CO,3,-10.00,R+10.0,Republican,Likely Republican,D+12.3,R+22.3,Jeff Hurd,Republican,Party Alignment,West,The Rockies
+CO-4,Colorado,CO,4,-18.00,R+18.0,Republican,Safe Republican,D+12.3,R+30.3,Eileen Laubacher,Democratic,Crossover / Split Seat,West,The Rockies
+CO-5,Colorado,CO,5,-10.00,R+10.0,Republican,Likely Republican,D+12.3,R+22.3,Jessica Killin,Democratic,Crossover / Split Seat,West,The Rockies
+CO-6,Colorado,CO,6,22.00,D+22.0,Democratic,Safe Democratic,D+12.3,D+9.8,Jason Crow,Democratic,Party Alignment,West,The Rockies
+CO-7,Colorado,CO,7,16.00,D+16.0,Democratic,Safe Democratic,D+12.3,D+3.8,Brittany Pettersen,Democratic,Party Alignment,West,The Rockies
+CO-8,Colorado,CO,8,0.00,EVEN,Even,Toss-Up,D+12.3,R+12.3,Manny Rutinel,Democratic,Party Alignment,West,The Rockies
+CT-1,Connecticut,CT,1,19.00,D+19.0,Democratic,Safe Democratic,D+11.0,D+8.0,Luke Bronin,Democratic,Party Alignment,Northeast,New England
+CT-2,Connecticut,CT,2,3.00,D+3.0,Democratic,Lean Democratic,D+11.0,R+8.0,Joe Courtney,Democratic,Party Alignment,Northeast,New England
+CT-3,Connecticut,CT,3,11.00,D+11.0,Democratic,Likely Democratic,D+11.0,EVEN,Rosa DeLauro,Democratic,Party Alignment,Northeast,New England
+CT-4,Connecticut,CT,4,21.00,D+21.0,Democratic,Safe Democratic,D+11.0,D+10.0,Jim Himes,Democratic,Party Alignment,Northeast,New England
+CT-5,Connecticut,CT,5,1.00,D+1.0,Democratic,Toss-Up,D+11.0,R+10.0,Jahana Hayes,Democratic,Party Alignment,Northeast,New England
+DE-1,Delaware,DE,1,16.00,D+16.0,Democratic,Safe Democratic,D+16.0,EVEN,Sarah McBride,Democratic,Party Alignment,Northeast,Northeast
+FL-1,Florida,FL,1,-36.00,R+36.0,Republican,Safe Republican,R+9.3,R+26.7,Jimmy Patronis,Republican,Party Alignment,South,Deep South
+FL-2,Florida,FL,2,-16.00,R+16.0,Republican,Safe Republican,R+9.3,R+6.7,Austin Rogers,Republican,Party Alignment,South,Deep South
+FL-3,Florida,FL,3,-20.00,R+20.0,Republican,Safe Republican,R+9.3,R+10.7,Kat Cammack,Republican,Party Alignment,South,Deep South
+FL-4,Florida,FL,4,-10.00,R+10.0,Republican,Likely Republican,R+9.3,R+0.7,Aaron Bean,Republican,Party Alignment,South,Deep South
+FL-5,Florida,FL,5,-20.00,R+20.0,Republican,Safe Republican,R+9.3,R+10.7,John Rutherford,Republican,Party Alignment,South,Deep South
+FL-6,Florida,FL,6,-28.00,R+28.0,Republican,Safe Republican,R+9.3,R+18.7,Randy Fine,Republican,Party Alignment,South,Deep South
+FL-7,Florida,FL,7,-10.00,R+10.0,Republican,Likely Republican,R+9.3,R+0.7,Ryan Elijah,Republican,Party Alignment,South,Deep South
+FL-8,Florida,FL,8,-16.00,R+16.0,Republican,Safe Republican,R+9.3,R+6.7,Mike Haridopolos,Republican,Party Alignment,South,Deep South
+FL-9,Florida,FL,9,-16.00,R+16.0,Republican,Safe Republican,R+9.3,R+6.7,Darren Soto,Democratic,Crossover / Split Seat,South,Deep South
+FL-10,Florida,FL,10,26.00,D+26.0,Democratic,Safe Democratic,R+9.3,D+35.3,Maxwell Frost,Democratic,Party Alignment,South,Deep South
+FL-11,Florida,FL,11,-14.00,R+14.0,Republican,Safe Republican,R+9.3,R+4.7,Joe Strada,Republican,Party Alignment,South,Deep South
+FL-12,Florida,FL,12,-14.00,R+14.0,Republican,Safe Republican,R+9.3,R+4.7,Gus Bilirakis,Republican,Party Alignment,South,Deep South
+FL-13,Florida,FL,13,-12.00,R+12.0,Republican,Safe Republican,R+9.3,R+2.7,Anna Paulina Luna,Republican,Party Alignment,South,Deep South
+FL-14,Florida,FL,14,-8.00,R+8.0,Republican,Likely Republican,R+9.3,D+1.3,Kathy Castor,Democratic,Crossover / Split Seat,South,Deep South
+FL-15,Florida,FL,15,-18.00,R+18.0,Republican,Safe Republican,R+9.3,R+8.7,Laurel Lee,Republican,Party Alignment,South,Deep South
+FL-16,Florida,FL,16,-12.00,R+12.0,Republican,Safe Republican,R+9.3,R+2.7,Sydney Gruters,Republican,Party Alignment,South,Deep South
+FL-17,Florida,FL,17,-20.00,R+20.0,Republican,Safe Republican,R+9.3,R+10.7,Greg Steube,Republican,Party Alignment,South,Deep South
+FL-18,Florida,FL,18,-16.00,R+16.0,Republican,Safe Republican,R+9.3,R+6.7,Scott Franklin,Republican,Party Alignment,South,Deep South
+FL-19,Florida,FL,19,-28.00,R+28.0,Republican,Safe Republican,R+9.3,R+18.7,Jim Schwartzel,Republican,Party Alignment,South,Deep South
+FL-20,Florida,FL,20,40.00,D+40.0,Democratic,Safe Democratic,R+9.3,D+49.3,Debbie Wasserman Schultz,Democratic,Party Alignment,South,Deep South
+FL-21,Florida,FL,21,-14.00,R+14.0,Republican,Safe Republican,R+9.3,R+4.7,Brian Mast,Republican,Party Alignment,South,Deep South
+FL-22,Florida,FL,22,-8.00,R+8.0,Republican,Likely Republican,R+9.3,D+1.3,Pia Dandiya,Democratic,Crossover / Split Seat,South,Deep South
+FL-23,Florida,FL,23,18.00,D+18.0,Democratic,Safe Democratic,R+9.3,D+27.3,Lois Frankel,Democratic,Party Alignment,South,Deep South
+FL-24,Florida,FL,24,44.00,D+44.0,Democratic,Safe Democratic,R+9.3,D+53.3,Oliver Gilbert,Democratic,Party Alignment,South,Deep South
+FL-25,Florida,FL,25,-6.00,R+6.0,Republican,Likely Republican,R+9.3,D+3.3,Jared Moskowitz,Democratic,Crossover / Split Seat,South,Deep South
+FL-26,Florida,FL,26,-14.00,R+14.0,Republican,Safe Republican,R+9.3,R+4.7,Mario Díaz-Balart,Republican,Party Alignment,South,Deep South
+FL-27,Florida,FL,27,-12.00,R+12.0,Republican,Safe Republican,R+9.3,R+2.7,Maria Elvira Salazar,Republican,Party Alignment,South,Deep South
+FL-28,Florida,FL,28,-20.00,R+20.0,Republican,Safe Republican,R+9.3,R+10.7,Carlos A. Giménez,Republican,Party Alignment,South,Deep South
+GA-1,Georgia,GA,1,-14.00,R+14.0,Republican,Safe Republican,D+1.7,R+15.7,Jim Kingston,Republican,Party Alignment,South,Deep South
+GA-2,Georgia,GA,2,10.00,D+10.0,Democratic,Likely Democratic,D+1.7,D+8.3,Sanford Bishop,Democratic,Party Alignment,South,Deep South
+GA-3,Georgia,GA,3,-28.00,R+28.0,Republican,Safe Republican,D+1.7,R+29.7,Brian Jack,Republican,Party Alignment,South,Deep South
+GA-4,Georgia,GA,4,56.00,D+56.0,Democratic,Safe Democratic,D+1.7,D+54.3,Hank Johnson,Democratic,Party Alignment,South,Deep South
+GA-5,Georgia,GA,5,74.00,D+74.0,Democratic,Safe Democratic,D+1.7,D+72.3,Nikema Williams,Democratic,Party Alignment,South,Deep South
+GA-6,Georgia,GA,6,52.00,D+52.0,Democratic,Safe Democratic,D+1.7,D+50.3,Lucy McBath,Democratic,Party Alignment,South,Deep South
+GA-7,Georgia,GA,7,-20.00,R+20.0,Republican,Safe Republican,D+1.7,R+21.7,Rich McCormick,Republican,Party Alignment,South,Deep South
+GA-8,Georgia,GA,8,-28.00,R+28.0,Republican,Safe Republican,D+1.7,R+29.7,Austin Scott,Republican,Party Alignment,South,Deep South
+GA-9,Georgia,GA,9,-32.00,R+32.0,Republican,Safe Republican,D+1.7,R+33.7,Andrew Clyde,Republican,Party Alignment,South,Deep South
+GA-10,Georgia,GA,10,-20.00,R+20.0,Republican,Safe Republican,D+1.7,R+21.7,Houston Gaines,Republican,Party Alignment,South,Deep South
+GA-11,Georgia,GA,11,-22.00,R+22.0,Republican,Safe Republican,D+1.7,R+23.7,John Cowan,Republican,Party Alignment,South,Deep South
+GA-12,Georgia,GA,12,-12.00,R+12.0,Republican,Safe Republican,D+1.7,R+13.7,Rick Allen,Republican,Party Alignment,South,Deep South
+GA-13,Georgia,GA,13,44.00,D+44.0,Democratic,Safe Democratic,D+1.7,D+42.3,Jasmine Clark,Democratic,Party Alignment,South,Deep South
+GA-14,Georgia,GA,14,-36.00,R+36.0,Republican,Safe Republican,D+1.7,R+37.7,Clay Fuller,Republican,Party Alignment,South,Deep South
+HI-1,Hawaii,HI,1,26.00,D+26.0,Democratic,Safe Democratic,D+25.0,D+1.0,Ed Case,Democratic,Party Alignment,West,West
+HI-2,Hawaii,HI,2,24.00,D+24.0,Democratic,Safe Democratic,D+25.0,R+1.0,Jill Tokuda,Democratic,Party Alignment,West,West
+ID-1,Idaho,ID,1,-44.00,R+44.0,Republican,Safe Republican,R+35.0,R+9.0,Russ Fulcher,Republican,Party Alignment,West,Pacific Northwest; The Rockies
+ID-2,Idaho,ID,2,-26.00,R+26.0,Republican,Safe Republican,R+35.0,D+9.0,Mike Simpson,Republican,Party Alignment,West,Pacific Northwest; The Rockies
+IL-1,Illinois,IL,1,31.00,D+31.0,Democratic,Safe Democratic,D+9.8,D+21.2,Jonathan Jackson,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-2,Illinois,IL,2,31.00,D+31.0,Democratic,Safe Democratic,D+9.8,D+21.2,Donna Miller,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-3,Illinois,IL,3,29.00,D+29.0,Democratic,Safe Democratic,D+9.8,D+19.2,Delia Ramirez,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-4,Illinois,IL,4,29.00,D+29.0,Democratic,Safe Democratic,D+9.8,D+19.2,Patty García,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-5,Illinois,IL,5,33.00,D+33.0,Democratic,Safe Democratic,D+9.8,D+23.2,Mike Quigley,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-6,Illinois,IL,6,1.00,D+1.0,Democratic,Toss-Up,D+9.8,R+8.8,Sean Casten,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-7,Illinois,IL,7,63.00,D+63.0,Democratic,Safe Democratic,D+9.8,D+53.2,La Shawn K. Ford,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-8,Illinois,IL,8,5.00,D+5.0,Democratic,Likely Democratic,D+9.8,R+4.8,Melissa Bean,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-9,Illinois,IL,9,33.00,D+33.0,Democratic,Safe Democratic,D+9.8,D+23.2,Daniel Biss,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-10,Illinois,IL,10,19.00,D+19.0,Democratic,Safe Democratic,D+9.8,D+9.2,Brad Schneider,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-11,Illinois,IL,11,7.00,D+7.0,Democratic,Likely Democratic,D+9.8,R+2.8,Bill Foster,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-12,Illinois,IL,12,-49.00,R+49.0,Republican,Safe Republican,D+9.8,R+58.8,Mike Bost,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-13,Illinois,IL,13,5.00,D+5.0,Democratic,Likely Democratic,D+9.8,R+4.8,Nikki Budzinski,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-14,Illinois,IL,14,1.00,D+1.0,Democratic,Toss-Up,D+9.8,R+8.8,Lauren Underwood,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-15,Illinois,IL,15,-45.00,R+45.0,Republican,Safe Republican,D+9.8,R+54.8,Mary Miller,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-16,Illinois,IL,16,-27.00,R+27.0,Republican,Safe Republican,D+9.8,R+36.8,Darin LaHood,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IL-17,Illinois,IL,17,1.00,D+1.0,Democratic,Toss-Up,D+9.8,R+8.8,Eric Sorensen,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-1,Indiana,IN,1,2.00,D+2.0,Democratic,Lean Democratic,R+17.6,D+19.6,Frank J. Mrvan,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-2,Indiana,IN,2,-26.00,R+26.0,Republican,Safe Republican,R+17.6,R+8.4,Rudy Yakym,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-3,Indiana,IN,3,-32.00,R+32.0,Republican,Safe Republican,R+17.6,R+14.4,Marlin Stutzman,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-4,Indiana,IN,4,-30.00,R+30.0,Republican,Safe Republican,R+17.6,R+12.4,Jim Baird,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-5,Indiana,IN,5,-16.00,R+16.0,Republican,Safe Republican,R+17.6,D+1.6,J.D. Ford,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+IN-6,Indiana,IN,6,-32.00,R+32.0,Republican,Safe Republican,R+17.6,R+14.4,Jefferson Shreve,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-7,Indiana,IN,7,42.00,D+42.0,Democratic,Safe Democratic,R+17.6,D+59.6,André Carson,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-8,Indiana,IN,8,-36.00,R+36.0,Republican,Safe Republican,R+17.6,R+18.4,Mark Messmer,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IN-9,Indiana,IN,9,-30.00,R+30.0,Republican,Safe Republican,R+17.6,R+12.4,Erin Houchin,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+IA-1,Iowa,IA,1,-8.00,R+8.0,Republican,Likely Republican,R+12.5,D+4.5,Christina Bohannan,Democratic,Crossover / Split Seat,Midwest,Prairie States
+IA-2,Iowa,IA,2,-8.00,R+8.0,Republican,Likely Republican,R+12.5,D+4.5,Lindsay James,Democratic,Crossover / Split Seat,Midwest,Prairie States
+IA-3,Iowa,IA,3,-4.00,R+4.0,Republican,Lean Republican,R+12.5,D+8.5,Sarah Trone Garriott,Democratic,Crossover / Split Seat,Midwest,Prairie States
+IA-4,Iowa,IA,4,-30.00,R+30.0,Republican,Safe Republican,R+12.5,R+17.5,Chris McGowan,Republican,Party Alignment,Midwest,Prairie States
+KS-1,Kansas,KS,1,-27.00,R+27.0,Republican,Safe Republican,R+13.0,R+14.0,Tracey Mann,Republican,Party Alignment,Midwest,Prairie States
+KS-2,Kansas,KS,2,-15.00,R+15.0,Republican,Safe Republican,R+13.0,R+2.0,Derek Schmidt,Republican,Party Alignment,Midwest,Prairie States
+KS-3,Kansas,KS,3,9.00,D+9.0,Democratic,Likely Democratic,R+13.0,D+22.0,Sharice Davids,Democratic,Party Alignment,Midwest,Prairie States
+KS-4,Kansas,KS,4,-19.00,R+19.0,Republican,Safe Republican,R+13.0,R+6.0,Ron Estes,Republican,Party Alignment,Midwest,Prairie States
+KY-1,Kentucky,KY,1,-46.00,R+46.0,Republican,Safe Republican,R+30.0,R+16.0,James Comer,Republican,Party Alignment,South,Appalachia
+KY-2,Kentucky,KY,2,-40.00,R+40.0,Republican,Safe Republican,R+30.0,R+10.0,Brett Guthrie,Republican,Party Alignment,South,Appalachia
+KY-3,Kentucky,KY,3,20.00,D+20.0,Democratic,Safe Democratic,R+30.0,D+50.0,Morgan McGarvey,Democratic,Party Alignment,South,Appalachia
+KY-4,Kentucky,KY,4,-36.00,R+36.0,Republican,Safe Republican,R+30.0,R+6.0,Ed Gallrein,Republican,Party Alignment,South,Appalachia
+KY-5,Kentucky,KY,5,-64.00,R+64.0,Republican,Safe Republican,R+30.0,R+34.0,Hal Rogers,Republican,Party Alignment,South,Appalachia
+KY-6,Kentucky,KY,6,-14.00,R+14.0,Republican,Safe Republican,R+30.0,D+16.0,Zach Dembo,Democratic,Crossover / Split Seat,South,Appalachia
+LA-1,Louisiana,LA,1,-40.00,R+40.0,Republican,Safe Republican,R+21.0,R+19.0,Steve Scalise,Republican,Party Alignment,South,Deep South
+LA-2,Louisiana,LA,2,50.00,D+50.0,Democratic,Safe Democratic,R+21.0,D+71.0,Troy Carter,Democratic,Party Alignment,South,Deep South
+LA-3,Louisiana,LA,3,-36.00,R+36.0,Republican,Safe Republican,R+21.0,R+15.0,Clay Higgins,Republican,Party Alignment,South,Deep South
+LA-4,Louisiana,LA,4,-34.00,R+34.0,Republican,Safe Republican,R+21.0,R+13.0,Mike Johnson,Republican,Party Alignment,South,Deep South
+LA-5,Louisiana,LA,5,-34.00,R+34.0,Republican,Safe Republican,R+21.0,R+13.0,Stewart Cathey,Republican,Party Alignment,South,Deep South
+LA-6,Louisiana,LA,6,-32.00,R+32.0,Republican,Safe Republican,R+21.0,R+11.0,Cleo Fields,Democratic,Crossover / Split Seat,South,Deep South
+ME-1,Maine,ME,1,22.00,D+22.0,Democratic,Safe Democratic,D+7.0,D+15.0,Chellie Pingree,Democratic,Party Alignment,Northeast,New England
+ME-2,Maine,ME,2,-8.00,R+8.0,Republican,Likely Republican,D+7.0,R+15.0,Paul LePage,Republican,Party Alignment,Northeast,New England
+MD-1,Maryland,MD,1,-16.00,R+16.0,Republican,Safe Republican,D+33.5,R+49.5,Andy Harris,Republican,Party Alignment,Northeast,Northeast
+MD-2,Maryland,MD,2,20.00,D+20.0,Democratic,Safe Democratic,D+33.5,R+13.5,Johnny Olszewski,Democratic,Party Alignment,Northeast,Northeast
+MD-3,Maryland,MD,3,24.00,D+24.0,Democratic,Safe Democratic,D+33.5,R+9.5,Sarah Elfreth,Democratic,Party Alignment,Northeast,Northeast
+MD-4,Maryland,MD,4,78.00,D+78.0,Democratic,Safe Democratic,D+33.5,D+44.5,Glenn Ivey,Democratic,Party Alignment,Northeast,Northeast
+MD-5,Maryland,MD,5,34.00,D+34.0,Democratic,Safe Democratic,D+33.5,D+0.5,Adrian Boafo,Democratic,Party Alignment,Northeast,Northeast
+MD-6,Maryland,MD,6,6.00,D+6.0,Democratic,Likely Democratic,D+33.5,R+27.5,April McClain Delaney,Democratic,Party Alignment,Northeast,Northeast
+MD-7,Maryland,MD,7,62.00,D+62.0,Democratic,Safe Democratic,D+33.5,D+28.5,Kweisi Mfume,Democratic,Party Alignment,Northeast,Northeast
+MD-8,Maryland,MD,8,60.00,D+60.0,Democratic,Safe Democratic,D+33.5,D+26.5,Jamie Raskin,Democratic,Party Alignment,Northeast,Northeast
+MA-1,Massachusetts,MA,1,16.00,D+16.0,Democratic,Safe Democratic,D+29.6,R+13.6,Richard Neal,Democratic,Party Alignment,Northeast,New England
+MA-2,Massachusetts,MA,2,26.00,D+26.0,Democratic,Safe Democratic,D+29.6,R+3.6,Jim McGovern,Democratic,Party Alignment,Northeast,New England
+MA-3,Massachusetts,MA,3,22.00,D+22.0,Democratic,Safe Democratic,D+29.6,R+7.6,Lori Trahan,Democratic,Party Alignment,Northeast,New England
+MA-4,Massachusetts,MA,4,22.00,D+22.0,Democratic,Safe Democratic,D+29.6,R+7.6,Jake Auchincloss,Democratic,Party Alignment,Northeast,New England
+MA-5,Massachusetts,MA,5,48.00,D+48.0,Democratic,Safe Democratic,D+29.6,D+18.4,Katherine Clark,Democratic,Party Alignment,Northeast,New England
+MA-6,Massachusetts,MA,6,22.00,D+22.0,Democratic,Safe Democratic,D+29.6,R+7.6,Dan Koh,Democratic,Party Alignment,Northeast,New England
+MA-7,Massachusetts,MA,7,68.00,D+68.0,Democratic,Safe Democratic,D+29.6,D+38.4,Ayanna Pressley,Democratic,Party Alignment,Northeast,New England
+MA-8,Massachusetts,MA,8,30.00,D+30.0,Democratic,Safe Democratic,D+29.6,D+0.4,Stephen Lynch,Democratic,Party Alignment,Northeast,New England
+MA-9,Massachusetts,MA,9,12.00,D+12.0,Democratic,Safe Democratic,D+29.6,R+17.6,Bill Keating,Democratic,Party Alignment,Northeast,New England
+MI-1,Michigan,MI,1,-22.00,R+22.0,Republican,Safe Republican,D+0.9,R+22.9,Jack Bergman,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-2,Michigan,MI,2,-30.00,R+30.0,Republican,Safe Republican,D+0.9,R+30.9,John Moolenaar,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-3,Michigan,MI,3,8.00,D+8.0,Democratic,Likely Democratic,D+0.9,D+7.1,Hillary Scholten,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-4,Michigan,MI,4,-6.00,R+6.0,Republican,Likely Republican,D+0.9,R+6.9,Sean McCann,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+MI-5,Michigan,MI,5,-26.00,R+26.0,Republican,Safe Republican,D+0.9,R+26.9,Tim Walberg,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-6,Michigan,MI,6,24.00,D+24.0,Democratic,Safe Democratic,D+0.9,D+23.1,Debbie Dingell,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-7,Michigan,MI,7,0.00,EVEN,Even,Toss-Up,D+0.9,R+0.9,William Lawrence,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-8,Michigan,MI,8,-2.00,R+2.0,Republican,Lean Republican,D+0.9,R+2.9,Kristen McDonald Rivet,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+MI-9,Michigan,MI,9,-32.00,R+32.0,Republican,Safe Republican,D+0.9,R+32.9,Lisa McClain,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-10,Michigan,MI,10,-6.00,R+6.0,Republican,Likely Republican,D+0.9,R+6.9,Christina Hines,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+MI-11,Michigan,MI,11,18.00,D+18.0,Democratic,Safe Democratic,D+0.9,D+17.1,Jeremy Moss,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-12,Michigan,MI,12,42.00,D+42.0,Democratic,Safe Democratic,D+0.9,D+41.1,Rashida Tlaib,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MI-13,Michigan,MI,13,44.00,D+44.0,Democratic,Safe Democratic,D+0.9,D+43.1,Donavan McKinney,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+MN-1,Minnesota,MN,1,-12.00,R+12.0,Republican,Safe Republican,D+5.8,R+17.8,Jake Johnson,Democratic,Crossover / Split Seat,Midwest,Prairie States; Great Lakes States
+MN-2,Minnesota,MN,2,6.00,D+6.0,Democratic,Likely Democratic,D+5.8,D+0.3,Matt Little,Democratic,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-3,Minnesota,MN,3,22.00,D+22.0,Democratic,Safe Democratic,D+5.8,D+16.3,Kelly Morrison,Democratic,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-4,Minnesota,MN,4,36.00,D+36.0,Democratic,Safe Democratic,D+5.8,D+30.3,Betty McCollum,Democratic,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-5,Minnesota,MN,5,64.00,D+64.0,Democratic,Safe Democratic,D+5.8,D+58.3,Ilhan Omar,Democratic,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-6,Minnesota,MN,6,-20.00,R+20.0,Republican,Safe Republican,D+5.8,R+25.8,Tom Emmer,Republican,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-7,Minnesota,MN,7,-36.00,R+36.0,Republican,Safe Republican,D+5.8,R+41.8,Michelle Fischbach,Republican,Party Alignment,Midwest,Prairie States; Great Lakes States
+MN-8,Minnesota,MN,8,-14.00,R+14.0,Republican,Safe Republican,D+5.8,R+19.8,Pete Stauber,Republican,Party Alignment,Midwest,Prairie States; Great Lakes States
+MS-1,Mississippi,MS,1,-31.00,R+31.0,Republican,Safe Republican,R+16.0,R+15.0,Trent Kelly,Republican,Party Alignment,South,Deep South
+MS-2,Mississippi,MS,2,27.00,D+27.0,Democratic,Safe Democratic,R+16.0,D+43.0,Bennie Thompson,Democratic,Party Alignment,South,Deep South
+MS-3,Mississippi,MS,3,-23.00,R+23.0,Republican,Safe Republican,R+16.0,R+7.0,Michael Guest,Republican,Party Alignment,South,Deep South
+MS-4,Mississippi,MS,4,-37.00,R+37.0,Republican,Safe Republican,R+16.0,R+21.0,Mike Ezell,Republican,Party Alignment,South,Deep South
+MO-1,Missouri,MO,1,58.00,D+58.0,Democratic,Safe Democratic,R+16.0,D+74.0,Wesley Bell,Democratic,Party Alignment,Midwest,Midwest
+MO-2,Missouri,MO,2,-8.00,R+8.0,Republican,Likely Republican,R+16.0,D+8.0,Fred Wellman,Democratic,Crossover / Split Seat,Midwest,Midwest
+MO-3,Missouri,MO,3,-26.00,R+26.0,Republican,Safe Republican,R+16.0,R+10.0,Bob Onder,Republican,Party Alignment,Midwest,Midwest
+MO-4,Missouri,MO,4,-42.00,R+42.0,Republican,Safe Republican,R+16.0,R+26.0,Mark Alford,Republican,Party Alignment,Midwest,Midwest
+MO-5,Missouri,MO,5,24.00,D+24.0,Democratic,Safe Democratic,R+16.0,D+40.0,Emanuel Cleaver,Democratic,Party Alignment,Midwest,Midwest
+MO-6,Missouri,MO,6,-38.00,R+38.0,Republican,Safe Republican,R+16.0,R+22.0,Chris Stigall,Republican,Party Alignment,Midwest,Midwest
+MO-7,Missouri,MO,7,-42.00,R+42.0,Republican,Safe Republican,R+16.0,R+26.0,Eric Burlison,Republican,Party Alignment,Midwest,Midwest
+MO-8,Missouri,MO,8,-54.00,R+54.0,Republican,Safe Republican,R+16.0,R+38.0,Jason Smith,Republican,Party Alignment,Midwest,Midwest
+MT-1,Montana,MT,1,-10.00,R+10.0,Republican,Likely Republican,R+20.0,D+10.0,Sam Forstag,Democratic,Crossover / Split Seat,West,Prairie States; The Rockies
+MT-2,Montana,MT,2,-30.00,R+30.0,Republican,Safe Republican,R+20.0,R+10.0,Troy Downing,Republican,Party Alignment,West,Prairie States; The Rockies
+NE-1,Nebraska,NE,1,-12.00,R+12.0,Republican,Safe Republican,R+20.0,D+8.0,Mike Flood,Republican,Party Alignment,Midwest,Prairie States
+NE-2,Nebraska,NE,2,6.00,D+6.0,Democratic,Likely Democratic,R+20.0,D+26.0,Denise Powell,Democratic,Party Alignment,Midwest,Prairie States
+NE-3,Nebraska,NE,3,-54.00,R+54.0,Republican,Safe Republican,R+20.0,R+34.0,Adrian Smith,Republican,Party Alignment,Midwest,Prairie States
+NV-1,Nevada,NV,1,4.00,D+4.0,Democratic,Lean Democratic,R+1.0,D+5.0,Dina Titus,Democratic,Party Alignment,West,The Rockies
+NV-2,Nevada,NV,2,-14.00,R+14.0,Republican,Safe Republican,R+1.0,R+13.0,Teresa Benitez-Thompson,Democratic,Crossover / Split Seat,West,The Rockies
+NV-3,Nevada,NV,3,2.00,D+2.0,Democratic,Lean Democratic,R+1.0,D+3.0,Susie Lee,Democratic,Party Alignment,West,The Rockies
+NV-4,Nevada,NV,4,4.00,D+4.0,Democratic,Lean Democratic,R+1.0,D+5.0,Steven Horsford,Democratic,Party Alignment,West,The Rockies
+NH-1,New Hampshire,NH,1,4.00,D+4.0,Democratic,Lean Democratic,D+4.0,EVEN,Stefany Shaheen,Democratic,Party Alignment,Northeast,New England
+NH-2,New Hampshire,NH,2,4.00,D+4.0,Democratic,Lean Democratic,D+4.0,EVEN,Maggie Goodlander,Democratic,Party Alignment,Northeast,New England
+NJ-1,New Jersey,NJ,1,20.00,D+20.0,Democratic,Safe Democratic,D+10.8,D+9.2,Donald Norcross,Democratic,Party Alignment,Northeast,Northeast
+NJ-2,New Jersey,NJ,2,-10.00,R+10.0,Republican,Likely Republican,D+10.8,R+20.8,Zack Mullock,Democratic,Crossover / Split Seat,Northeast,Northeast
+NJ-3,New Jersey,NJ,3,10.00,D+10.0,Democratic,Likely Democratic,D+10.8,R+0.8,Herb Conaway,Democratic,Party Alignment,Northeast,Northeast
+NJ-4,New Jersey,NJ,4,-28.00,R+28.0,Republican,Safe Republican,D+10.8,R+38.8,Chris Smith,Republican,Party Alignment,Northeast,Northeast
+NJ-5,New Jersey,NJ,5,4.00,D+4.0,Democratic,Lean Democratic,D+10.8,R+6.8,Josh Gottheimer,Democratic,Party Alignment,Northeast,Northeast
+NJ-6,New Jersey,NJ,6,10.00,D+10.0,Democratic,Likely Democratic,D+10.8,R+0.8,Frank Pallone,Democratic,Party Alignment,Northeast,Northeast
+NJ-7,New Jersey,NJ,7,0.00,EVEN,Even,Toss-Up,D+10.8,R+10.8,Rebecca Bennett,Democratic,Party Alignment,Northeast,Northeast
+NJ-8,New Jersey,NJ,8,30.00,D+30.0,Democratic,Safe Democratic,D+10.8,D+19.2,Rob Menendez,Democratic,Party Alignment,Northeast,Northeast
+NJ-9,New Jersey,NJ,9,4.00,D+4.0,Democratic,Lean Democratic,D+10.8,R+6.8,Nellie Pou,Democratic,Party Alignment,Northeast,Northeast
+NJ-10,New Jersey,NJ,10,54.00,D+54.0,Democratic,Safe Democratic,D+10.8,D+43.2,LaMonica McIver,Democratic,Party Alignment,Northeast,Northeast
+NJ-11,New Jersey,NJ,11,10.00,D+10.0,Democratic,Likely Democratic,D+10.8,R+0.8,Analilia Mejia,Democratic,Party Alignment,Northeast,Northeast
+NJ-12,New Jersey,NJ,12,26.00,D+26.0,Democratic,Safe Democratic,D+10.8,D+15.2,Adam Hamawy,Democratic,Party Alignment,Northeast,Northeast
+NM-1,New Mexico,NM,1,14.00,D+14.0,Democratic,Safe Democratic,D+6.7,D+7.3,Melanie Stansbury,Democratic,Party Alignment,West,The Rockies
+NM-2,New Mexico,NM,2,0.00,EVEN,Even,Toss-Up,D+6.7,R+6.7,Gabe Vasquez,Democratic,Party Alignment,West,The Rockies
+NM-3,New Mexico,NM,3,6.00,D+6.0,Democratic,Likely Democratic,D+6.7,R+0.7,Teresa Leger Fernandez,Democratic,Party Alignment,West,The Rockies
+NY-1,New York,NY,1,-13.00,R+13.0,Republican,Safe Republican,D+14.2,R+27.2,Nick LaLota,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-2,New York,NY,2,-17.00,R+17.0,Republican,Safe Republican,D+14.2,R+31.2,Andrew Garbarino,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-3,New York,NY,3,-5.00,R+5.0,Republican,Likely Republican,D+14.2,R+19.2,Tom Suozzi,Democratic,Crossover / Split Seat,Northeast,Rust Belt; Great Lakes States
+NY-4,New York,NY,4,-1.00,R+1.0,Republican,Toss-Up,D+14.2,R+15.2,Laura Gillen,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-5,New York,NY,5,43.00,D+43.0,Democratic,Safe Democratic,D+14.2,D+28.8,Gregory Meeks,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-6,New York,NY,6,7.00,D+7.0,Democratic,Likely Democratic,D+14.2,R+7.2,Grace Meng,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-7,New York,NY,7,45.00,D+45.0,Democratic,Safe Democratic,D+14.2,D+30.8,Claire Valdez,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-8,New York,NY,8,43.00,D+43.0,Democratic,Safe Democratic,D+14.2,D+28.8,Hakeem Jeffries,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-9,New York,NY,9,39.00,D+39.0,Democratic,Safe Democratic,D+14.2,D+24.8,Yvette Clarke,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-10,New York,NY,10,59.00,D+59.0,Democratic,Safe Democratic,D+14.2,D+44.8,Brad Lander,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-11,New York,NY,11,-25.00,R+25.0,Republican,Safe Republican,D+14.2,R+39.2,Nicole Malliotakis,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-12,New York,NY,12,61.00,D+61.0,Democratic,Safe Democratic,D+14.2,D+46.8,Micah Lasher,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-13,New York,NY,13,59.00,D+59.0,Democratic,Safe Democratic,D+14.2,D+44.8,Darializa Avila Chevalier,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-14,New York,NY,14,33.00,D+33.0,Democratic,Safe Democratic,D+14.2,D+18.8,Alexandria Ocasio-Cortez,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-15,New York,NY,15,49.00,D+49.0,Democratic,Safe Democratic,D+14.2,D+34.8,Ritchie Torres,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-16,New York,NY,16,31.00,D+31.0,Democratic,Safe Democratic,D+14.2,D+16.8,George Latimer,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-17,New York,NY,17,-3.00,R+3.0,Republican,Lean Republican,D+14.2,R+17.2,Cait Conley,Democratic,Crossover / Split Seat,Northeast,Rust Belt; Great Lakes States
+NY-18,New York,NY,18,-1.00,R+1.0,Republican,Toss-Up,D+14.2,R+15.2,Pat Ryan,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-19,New York,NY,19,-3.00,R+3.0,Republican,Lean Republican,D+14.2,R+17.2,Josh Riley,Democratic,Crossover / Split Seat,Northeast,Rust Belt; Great Lakes States
+NY-20,New York,NY,20,11.00,D+11.0,Democratic,Likely Democratic,D+14.2,R+3.2,Paul Tonko,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-21,New York,NY,21,-25.00,R+25.0,Republican,Safe Republican,D+14.2,R+39.2,Anthony Constantino,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-22,New York,NY,22,3.00,D+3.0,Democratic,Lean Democratic,D+14.2,R+11.2,John Mannion,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-23,New York,NY,23,-25.00,R+25.0,Republican,Safe Republican,D+14.2,R+39.2,Nick Langworthy,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-24,New York,NY,24,-27.00,R+27.0,Republican,Safe Republican,D+14.2,R+41.2,Claudia Tenney,Republican,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-25,New York,NY,25,15.00,D+15.0,Democratic,Safe Democratic,D+14.2,D+0.8,Joseph Morelle,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NY-26,New York,NY,26,17.00,D+17.0,Democratic,Safe Democratic,D+14.2,D+2.8,Tim Kennedy,Democratic,Party Alignment,Northeast,Rust Belt; Great Lakes States
+NC-1,North Carolina,NC,1,-8.00,R+8.0,Republican,Likely Republican,R+0.9,R+7.1,Don Davis,Democratic,Crossover / Split Seat,South,Appalachia
+NC-2,North Carolina,NC,2,36.00,D+36.0,Democratic,Safe Democratic,R+0.9,D+36.9,Deborah Ross,Democratic,Party Alignment,South,Appalachia
+NC-3,North Carolina,NC,3,-10.00,R+10.0,Republican,Likely Republican,R+0.9,R+9.1,Greg Murphy,Republican,Party Alignment,South,Appalachia
+NC-4,North Carolina,NC,4,48.00,D+48.0,Democratic,Safe Democratic,R+0.9,D+48.9,Valerie Foushee,Democratic,Party Alignment,South,Appalachia
+NC-5,North Carolina,NC,5,-16.00,R+16.0,Republican,Safe Republican,R+0.9,R+15.1,Virginia Foxx,Republican,Party Alignment,South,Appalachia
+NC-6,North Carolina,NC,6,-16.00,R+16.0,Republican,Safe Republican,R+0.9,R+15.1,Cyril Jefferson,Democratic,Crossover / Split Seat,South,Appalachia
+NC-7,North Carolina,NC,7,-12.00,R+12.0,Republican,Safe Republican,R+0.9,R+11.1,David Rouzer,Republican,Party Alignment,South,Appalachia
+NC-8,North Carolina,NC,8,-18.00,R+18.0,Republican,Safe Republican,R+0.9,R+17.1,Mark Harris,Republican,Party Alignment,South,Appalachia
+NC-9,North Carolina,NC,9,-14.00,R+14.0,Republican,Safe Republican,R+0.9,R+13.1,Richard Ojeda,Democratic,Crossover / Split Seat,South,Appalachia
+NC-10,North Carolina,NC,10,-16.00,R+16.0,Republican,Safe Republican,R+0.9,R+15.1,Pat Harrigan,Republican,Party Alignment,South,Appalachia
+NC-11,North Carolina,NC,11,-8.00,R+8.0,Republican,Likely Republican,R+0.9,R+7.1,Jamie Ager,Democratic,Crossover / Split Seat,South,Appalachia
+NC-12,North Carolina,NC,12,50.00,D+50.0,Democratic,Safe Democratic,R+0.9,D+50.9,Alma Adams,Democratic,Party Alignment,South,Appalachia
+NC-13,North Carolina,NC,13,-14.00,R+14.0,Republican,Safe Republican,R+0.9,R+13.1,Paul Barringer,Democratic,Crossover / Split Seat,South,Appalachia
+NC-14,North Carolina,NC,14,-14.00,R+14.0,Republican,Safe Republican,R+0.9,R+13.1,LaKesha Womack,Democratic,Crossover / Split Seat,South,Appalachia
+ND-1,North Dakota,ND,1,-36.00,R+36.0,Republican,Safe Republican,R+36.0,EVEN,Julie Fedorchak,Republican,Party Alignment,Midwest,Prairie States
+OH-1,Ohio,OH,1,-2.00,R+2.0,Republican,Lean Republican,R+9.7,D+7.7,Greg Landsman,Democratic,Crossover / Split Seat,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-2,Ohio,OH,2,-42.00,R+42.0,Republican,Safe Republican,R+9.7,R+32.3,David Taylor,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-3,Ohio,OH,3,42.00,D+42.0,Democratic,Safe Democratic,R+9.7,D+51.7,Joyce Beatty,Democratic,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-4,Ohio,OH,4,-42.00,R+42.0,Republican,Safe Republican,R+9.7,R+32.3,Jim Jordan,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-5,Ohio,OH,5,-24.00,R+24.0,Republican,Safe Republican,R+9.7,R+14.3,Bob Latta,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-6,Ohio,OH,6,-34.00,R+34.0,Republican,Safe Republican,R+9.7,R+24.3,Michael Rulli,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-7,Ohio,OH,7,-10.00,R+10.0,Republican,Likely Republican,R+9.7,R+0.3,Brian Poindexter,Democratic,Crossover / Split Seat,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-8,Ohio,OH,8,-16.00,R+16.0,Republican,Safe Republican,R+9.7,R+6.3,Warren Davidson,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-9,Ohio,OH,9,-10.00,R+10.0,Republican,Likely Republican,R+9.7,R+0.3,Marcy Kaptur,Democratic,Crossover / Split Seat,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-10,Ohio,OH,10,-8.00,R+8.0,Republican,Likely Republican,R+9.7,D+1.7,Kristina Knickerbocker,Democratic,Crossover / Split Seat,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-11,Ohio,OH,11,56.00,D+56.0,Democratic,Safe Democratic,R+9.7,D+65.7,Shontel Brown,Democratic,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-12,Ohio,OH,12,-30.00,R+30.0,Republican,Safe Republican,R+9.7,R+20.3,Troy Balderson,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-13,Ohio,OH,13,4.00,D+4.0,Democratic,Lean Democratic,R+9.7,D+13.7,Emilia Sykes,Democratic,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-14,Ohio,OH,14,-20.00,R+20.0,Republican,Safe Republican,R+9.7,R+10.3,David Joyce,Republican,Party Alignment,Midwest,Appalachia; Rust Belt; Great Lakes States
+OH-15,Ohio,OH,15,-10.00,R+10.0,Republican,Likely Republican,R+9.7,R+0.3,Don Leonard,Democratic,Crossover / Split Seat,Midwest,Appalachia; Rust Belt; Great Lakes States
+OK-1,Oklahoma,OK,1,-22.00,R+22.0,Republican,Safe Republican,R+35.2,D+13.2,Mark Tedford,Republican,Party Alignment,South,Prairie States
+OK-2,Oklahoma,OK,2,-56.00,R+56.0,Republican,Safe Republican,R+35.2,R+20.8,Josh Brecheen,Republican,Party Alignment,South,Prairie States
+OK-3,Oklahoma,OK,3,-46.00,R+46.0,Republican,Safe Republican,R+35.2,R+10.8,Frank Lucas,Republican,Party Alignment,South,Prairie States
+OK-4,Oklahoma,OK,4,-34.00,R+34.0,Republican,Safe Republican,R+35.2,D+1.2,Tom Cole,Republican,Party Alignment,South,Prairie States
+OK-5,Oklahoma,OK,5,-18.00,R+18.0,Republican,Safe Republican,R+35.2,D+17.2,Stephanie Bice,Republican,Party Alignment,South,Prairie States
+OR-1,Oregon,OR,1,35.00,D+35.0,Democratic,Safe Democratic,D+10.3,D+24.7,Suzanne Bonamici,Democratic,Party Alignment,West,Pacific Northwest
+OR-2,Oregon,OR,2,-33.00,R+33.0,Republican,Safe Republican,D+10.3,R+43.3,Cliff Bentz,Republican,Party Alignment,West,Pacific Northwest
+OR-3,Oregon,OR,3,43.00,D+43.0,Democratic,Safe Democratic,D+10.3,D+32.7,Maxine Dexter,Democratic,Party Alignment,West,Pacific Northwest
+OR-4,Oregon,OR,4,7.00,D+7.0,Democratic,Likely Democratic,D+10.3,R+3.3,Val Hoyle,Democratic,Party Alignment,West,Pacific Northwest
+OR-5,Oregon,OR,5,3.00,D+3.0,Democratic,Lean Democratic,D+10.3,R+7.3,Janelle Bynum,Democratic,Party Alignment,West,Pacific Northwest
+OR-6,Oregon,OR,6,7.00,D+7.0,Democratic,Likely Democratic,D+10.3,R+3.3,Andrea Salinas,Democratic,Party Alignment,West,Pacific Northwest
+PA-1,Pennsylvania,PA,1,2.00,D+2.0,Democratic,Lean Democratic,R+0.7,D+2.7,Bob Harvie,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-2,Pennsylvania,PA,2,38.00,D+38.0,Democratic,Safe Democratic,R+0.7,D+38.7,Brendan Boyle,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-3,Pennsylvania,PA,3,80.00,D+80.0,Democratic,Safe Democratic,R+0.7,D+80.7,Chris Rabb,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-4,Pennsylvania,PA,4,16.00,D+16.0,Democratic,Safe Democratic,R+0.7,D+16.7,Madeleine Dean,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-5,Pennsylvania,PA,5,30.00,D+30.0,Democratic,Safe Democratic,R+0.7,D+30.7,Mary Gay Scanlon,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-6,Pennsylvania,PA,6,12.00,D+12.0,Democratic,Safe Democratic,R+0.7,D+12.7,Chrissy Houlahan,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-7,Pennsylvania,PA,7,-2.00,R+2.0,Republican,Lean Republican,R+0.7,R+1.3,Bob Brooks,Democratic,Crossover / Split Seat,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-8,Pennsylvania,PA,8,-8.00,R+8.0,Republican,Likely Republican,R+0.7,R+7.3,Paige Cognetti,Democratic,Crossover / Split Seat,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-9,Pennsylvania,PA,9,-38.00,R+38.0,Republican,Safe Republican,R+0.7,R+37.3,Dan Meuser,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-10,Pennsylvania,PA,10,-6.00,R+6.0,Republican,Likely Republican,R+0.7,R+5.3,Janelle Stelson,Democratic,Crossover / Split Seat,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-11,Pennsylvania,PA,11,-22.00,R+22.0,Republican,Safe Republican,R+0.7,R+21.3,Lloyd Smucker,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-12,Pennsylvania,PA,12,20.00,D+20.0,Democratic,Safe Democratic,R+0.7,D+20.7,Summer Lee,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-13,Pennsylvania,PA,13,-46.00,R+46.0,Republican,Safe Republican,R+0.7,R+45.3,John Joyce,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-14,Pennsylvania,PA,14,-34.00,R+34.0,Republican,Safe Republican,R+0.7,R+33.3,Guy Reschenthaler,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-15,Pennsylvania,PA,15,-38.00,R+38.0,Republican,Safe Republican,R+0.7,R+37.3,Glenn Thompson,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-16,Pennsylvania,PA,16,-22.00,R+22.0,Republican,Safe Republican,R+0.7,R+21.3,Mike Kelly,Republican,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+PA-17,Pennsylvania,PA,17,6.00,D+6.0,Democratic,Likely Democratic,R+0.7,D+6.7,Chris Deluzio,Democratic,Party Alignment,Northeast,Appalachia; Rust Belt; Great Lakes States
+RI-1,Rhode Island,RI,1,24.00,D+24.0,Democratic,Safe Democratic,D+16.0,D+8.0,Gabe Amo,Democratic,Party Alignment,Northeast,New England
+RI-2,Rhode Island,RI,2,8.00,D+8.0,Democratic,Likely Democratic,D+16.0,R+8.0,Seth Magaziner,Democratic,Party Alignment,Northeast,New England
+SC-1,South Carolina,SC,1,-7.00,R+7.0,Republican,Likely Republican,R+10.7,D+3.7,Nancy Lacore,Democratic,Crossover / Split Seat,South,Deep South
+SC-2,South Carolina,SC,2,-9.00,R+9.0,Republican,Likely Republican,R+10.7,D+1.7,Joe Wilson,Republican,Party Alignment,South,Deep South
+SC-3,South Carolina,SC,3,-37.00,R+37.0,Republican,Safe Republican,R+10.7,R+26.3,Sheri Biggs,Republican,Party Alignment,South,Deep South
+SC-4,South Carolina,SC,4,-17.00,R+17.0,Republican,Safe Republican,R+10.7,R+6.3,William Timmons,Republican,Party Alignment,South,Deep South
+SC-5,South Carolina,SC,5,-17.00,R+17.0,Republican,Safe Republican,R+10.7,R+6.3,Wes Climer,Republican,Party Alignment,South,Deep South
+SC-6,South Carolina,SC,6,31.00,D+31.0,Democratic,Safe Democratic,R+10.7,D+41.7,Jim Clyburn,Democratic,Party Alignment,South,Deep South
+SC-7,South Carolina,SC,7,-19.00,R+19.0,Republican,Safe Republican,R+10.7,R+8.3,Russell Fry,Republican,Party Alignment,South,Deep South
+SD-1,South Dakota,SD,1,-30.00,R+30.0,Republican,Safe Republican,R+30.0,EVEN,Marty Jackley,Republican,Party Alignment,Midwest,Prairie States
+TN-1,Tennessee,TN,1,-58.00,R+58.0,Republican,Safe Republican,R+28.4,R+29.6,Diana Harshbarger,Republican,Party Alignment,South,Appalachia
+TN-2,Tennessee,TN,2,-34.00,R+34.0,Republican,Safe Republican,R+28.4,R+5.6,Tim Burchett,Republican,Party Alignment,South,Appalachia
+TN-3,Tennessee,TN,3,-36.00,R+36.0,Republican,Safe Republican,R+28.4,R+7.6,Chuck Fleischmann,Republican,Party Alignment,South,Appalachia
+TN-4,Tennessee,TN,4,-22.00,R+22.0,Republican,Safe Republican,R+28.4,D+6.4,Victoria Broderick,Democratic,Crossover / Split Seat,South,Appalachia
+TN-5,Tennessee,TN,5,-20.00,R+20.0,Republican,Safe Republican,R+28.4,D+8.4,Charlie Hatcher,Republican,Party Alignment,South,Appalachia
+TN-6,Tennessee,TN,6,-26.00,R+26.0,Republican,Safe Republican,R+28.4,D+2.4,Johnny Garrett,Republican,Party Alignment,South,Appalachia
+TN-7,Tennessee,TN,7,-22.00,R+22.0,Republican,Safe Republican,R+28.4,D+6.4,Matt Van Epps,Republican,Party Alignment,South,Appalachia
+TN-8,Tennessee,TN,8,-20.00,R+20.0,Republican,Safe Republican,R+28.4,D+8.4,David Kustoff,Republican,Party Alignment,South,Appalachia
+TN-9,Tennessee,TN,9,-18.00,R+18.0,Republican,Safe Republican,R+28.4,D+10.4,Brent Taylor,Republican,Party Alignment,South,Appalachia
+TX-1,Texas,TX,1,-43.00,R+43.0,Republican,Safe Republican,R+4.3,R+38.7,Nathaniel Moran,Republican,Party Alignment,West,Deep South
+TX-2,Texas,TX,2,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Steve Toth,Republican,Party Alignment,West,Deep South
+TX-3,Texas,TX,3,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Keith Self,Republican,Party Alignment,West,Deep South
+TX-4,Texas,TX,4,-19.00,R+19.0,Republican,Safe Republican,R+4.3,R+14.7,Pat Fallon,Republican,Party Alignment,West,Deep South
+TX-5,Texas,TX,5,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Lance Gooden,Republican,Party Alignment,West,Deep South
+TX-6,Texas,TX,6,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Jake Ellzey,Republican,Party Alignment,West,Deep South
+TX-7,Texas,TX,7,31.00,D+31.0,Democratic,Safe Democratic,R+4.3,D+35.3,Lizzie Fletcher,Democratic,Party Alignment,West,Deep South
+TX-8,Texas,TX,8,-21.00,R+21.0,Republican,Safe Republican,R+4.3,R+16.7,Jessica Hart Steinmann,Republican,Party Alignment,West,Deep South
+TX-9,Texas,TX,9,-13.00,R+13.0,Republican,Safe Republican,R+4.3,R+8.7,Leticia Gutierrez,Democratic,Crossover / Split Seat,West,Deep South
+TX-10,Texas,TX,10,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Chris Gober,Republican,Party Alignment,West,Deep South
+TX-11,Texas,TX,11,-29.00,R+29.0,Republican,Safe Republican,R+4.3,R+24.7,August Pfluger,Republican,Party Alignment,West,Deep South
+TX-12,Texas,TX,12,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Craig Goldman,Republican,Party Alignment,West,Deep South
+TX-13,Texas,TX,13,-41.00,R+41.0,Republican,Safe Republican,R+4.3,R+36.7,Ronny Jackson,Republican,Party Alignment,West,Deep South
+TX-14,Texas,TX,14,-19.00,R+19.0,Republican,Safe Republican,R+4.3,R+14.7,Randy Weber,Republican,Party Alignment,West,Deep South
+TX-15,Texas,TX,15,-9.00,R+9.0,Republican,Likely Republican,R+4.3,R+4.7,Bobby Pulido,Democratic,Crossover / Split Seat,West,Deep South
+TX-16,Texas,TX,16,27.00,D+27.0,Democratic,Safe Democratic,R+4.3,D+31.3,Veronica Escobar,Democratic,Party Alignment,West,Deep South
+TX-17,Texas,TX,17,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Pete Sessions,Republican,Party Alignment,West,Deep South
+TX-18,Texas,TX,18,63.00,D+63.0,Democratic,Safe Democratic,R+4.3,D+67.3,Christian Menefee,Democratic,Party Alignment,West,Deep South
+TX-19,Texas,TX,19,-45.00,R+45.0,Republican,Safe Republican,R+4.3,R+40.7,Tom Sell,Republican,Party Alignment,West,Deep South
+TX-20,Texas,TX,20,37.00,D+37.0,Democratic,Safe Democratic,R+4.3,D+41.3,Joaquin Castro,Democratic,Party Alignment,West,Deep South
+TX-21,Texas,TX,21,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Mark Teixeira,Republican,Party Alignment,West,Deep South
+TX-22,Texas,TX,22,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Trever Nehls,Republican,Party Alignment,West,Deep South
+TX-23,Texas,TX,23,-9.00,R+9.0,Republican,Likely Republican,R+4.3,R+4.7,Katy Padilla Stout,Democratic,Crossover / Split Seat,West,Deep South
+TX-24,Texas,TX,24,-11.00,R+11.0,Republican,Likely Republican,R+4.3,R+6.7,Beth Van Duyne,Republican,Party Alignment,West,Deep South
+TX-25,Texas,TX,25,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Roger Williams,Republican,Party Alignment,West,Deep South
+TX-26,Texas,TX,26,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,Brandon Gill,Republican,Party Alignment,West,Deep South
+TX-27,Texas,TX,27,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Michael Cloud,Republican,Party Alignment,West,Deep South
+TX-28,Texas,TX,28,-1.00,R+1.0,Republican,Toss-Up,R+4.3,D+3.3,Henry Cuellar,Democratic,Party Alignment,West,Deep South
+TX-29,Texas,TX,29,39.00,D+39.0,Democratic,Safe Democratic,R+4.3,D+43.3,Sylvia Garcia,Democratic,Party Alignment,West,Deep South
+TX-30,Texas,TX,30,55.00,D+55.0,Democratic,Safe Democratic,R+4.3,D+59.3,Frederick Haynes III,Democratic,Party Alignment,West,Deep South
+TX-31,Texas,TX,31,-17.00,R+17.0,Republican,Safe Republican,R+4.3,R+12.7,John Carter,Republican,Party Alignment,West,Deep South
+TX-32,Texas,TX,32,-11.00,R+11.0,Republican,Likely Republican,R+4.3,R+6.7,Jace Yarbrough,Republican,Party Alignment,West,Deep South
+TX-33,Texas,TX,33,41.00,D+41.0,Democratic,Safe Democratic,R+4.3,D+45.3,Colin Allred,Democratic,Party Alignment,West,Deep South
+TX-34,Texas,TX,34,-1.00,R+1.0,Republican,Toss-Up,R+4.3,D+3.3,Vicente Gonzalez,Democratic,Party Alignment,West,Deep South
+TX-35,Texas,TX,35,-3.00,R+3.0,Republican,Lean Republican,R+4.3,D+1.3,Johnny Garcia,Democratic,Crossover / Split Seat,West,Deep South
+TX-36,Texas,TX,36,-19.00,R+19.0,Republican,Safe Republican,R+4.3,R+14.7,Brian Babin,Republican,Party Alignment,West,Deep South
+TX-37,Texas,TX,37,65.00,D+65.0,Democratic,Safe Democratic,R+4.3,D+69.3,Greg Casar,Democratic,Party Alignment,West,Deep South
+TX-38,Texas,TX,38,-15.00,R+15.0,Republican,Safe Republican,R+4.3,R+10.7,Jon Bonck,Republican,Party Alignment,West,Deep South
+UT-1,Utah,UT,1,24.00,D+24.0,Democratic,Safe Democratic,R+20.5,D+44.5,Ben McAdams,Democratic,Party Alignment,West,The Rockies
+UT-2,Utah,UT,2,-30.00,R+30.0,Republican,Safe Republican,R+20.5,R+9.5,Blake Moore,Republican,Party Alignment,West,The Rockies
+UT-3,Utah,UT,3,-42.00,R+42.0,Republican,Safe Republican,R+20.5,R+21.5,Celeste Maloy,Republican,Party Alignment,West,The Rockies
+UT-4,Utah,UT,4,-34.00,R+34.0,Republican,Safe Republican,R+20.5,R+13.5,Mike Kennedy,Republican,Party Alignment,West,The Rockies
+VT-1,Vermont,VT,1,34.00,D+34.0,Democratic,Safe Democratic,D+34.0,EVEN,Becca Balint,Democratic,Party Alignment,Northeast,New England
+VA-1,Virginia,VA,1,-6.00,R+6.0,Republican,Likely Republican,D+8.0,R+14.0,Shannon Taylor,Democratic,Crossover / Split Seat,South,Appalachia
+VA-2,Virginia,VA,2,0.00,EVEN,Even,Toss-Up,D+8.0,R+8.0,Elaine Luria,Democratic,Party Alignment,South,Appalachia
+VA-3,Virginia,VA,3,36.00,D+36.0,Democratic,Safe Democratic,D+8.0,D+28.0,Bobby Scott,Democratic,Party Alignment,South,Appalachia
+VA-4,Virginia,VA,4,34.00,D+34.0,Democratic,Safe Democratic,D+8.0,D+26.0,Jennifer McClellan,Democratic,Party Alignment,South,Appalachia
+VA-5,Virginia,VA,5,-12.00,R+12.0,Republican,Safe Republican,D+8.0,R+20.0,John McGuire,Republican,Party Alignment,South,Appalachia
+VA-6,Virginia,VA,6,-24.00,R+24.0,Republican,Safe Republican,D+8.0,R+32.0,Ben Cline,Republican,Party Alignment,South,Appalachia
+VA-7,Virginia,VA,7,4.00,D+4.0,Democratic,Lean Democratic,D+8.0,R+4.0,Eugene Vindman,Democratic,Party Alignment,South,Appalachia
+VA-8,Virginia,VA,8,52.00,D+52.0,Democratic,Safe Democratic,D+8.0,D+44.0,Don Beyer,Democratic,Party Alignment,South,Appalachia
+VA-9,Virginia,VA,9,-44.00,R+44.0,Republican,Safe Republican,D+8.0,R+52.0,Morgan Griffith,Republican,Party Alignment,South,Appalachia
+VA-10,Virginia,VA,10,12.00,D+12.0,Democratic,Safe Democratic,D+8.0,D+4.0,Suhas Subramanyam,Democratic,Party Alignment,South,Appalachia
+VA-11,Virginia,VA,11,36.00,D+36.0,Democratic,Safe Democratic,D+8.0,D+28.0,James Walkinshaw,Democratic,Party Alignment,South,Appalachia
+WA-1,Washington,WA,1,25.00,D+25.0,Democratic,Safe Democratic,D+13.6,D+11.4,Suzan DelBene,Democratic,Party Alignment,West,Pacific Northwest
+WA-2,Washington,WA,2,19.00,D+19.0,Democratic,Safe Democratic,D+13.6,D+5.4,Rick Larsen,Democratic,Party Alignment,West,Pacific Northwest
+WA-3,Washington,WA,3,-9.00,R+9.0,Republican,Likely Republican,D+13.6,R+22.6,Marie Gluesenkamp Perez,Democratic,Crossover / Split Seat,West,Pacific Northwest
+WA-4,Washington,WA,4,-25.00,R+25.0,Republican,Safe Republican,D+13.6,R+38.6,Amanda McKinney,Republican,Party Alignment,West,Pacific Northwest
+WA-5,Washington,WA,5,-15.00,R+15.0,Republican,Safe Republican,D+13.6,R+28.6,Michael Baumgartner,Republican,Party Alignment,West,Pacific Northwest
+WA-6,Washington,WA,6,15.00,D+15.0,Democratic,Safe Democratic,D+13.6,D+1.4,Emily Randall,Democratic,Party Alignment,West,Pacific Northwest
+WA-7,Washington,WA,7,73.00,D+73.0,Democratic,Safe Democratic,D+13.6,D+59.4,Pramila Jayapal,Democratic,Party Alignment,West,Pacific Northwest
+WA-8,Washington,WA,8,1.00,D+1.0,Democratic,Toss-Up,D+13.6,R+12.6,Kim Schrier,Democratic,Party Alignment,West,Pacific Northwest
+WA-9,Washington,WA,9,39.00,D+39.0,Democratic,Safe Democratic,D+13.6,D+25.4,Adam Smith,Democratic,Party Alignment,West,Pacific Northwest
+WA-10,Washington,WA,10,13.00,D+13.0,Democratic,Safe Democratic,D+13.6,R+0.6,Marilyn Strickland,Democratic,Party Alignment,West,Pacific Northwest
+WV-1,West Virginia,WV,1,-44.00,R+44.0,Republican,Safe Republican,R+42.0,R+2.0,Carol Miller,Republican,Party Alignment,South,Appalachia; Rust Belt
+WV-2,West Virginia,WV,2,-40.00,R+40.0,Republican,Safe Republican,R+42.0,D+2.0,Riley Moore,Republican,Party Alignment,South,Appalachia; Rust Belt
+WI-1,Wisconsin,WI,1,-4.00,R+4.0,Republican,Lean Republican,D+1.0,R+5.0,Mitchell Berman,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+WI-2,Wisconsin,WI,2,42.00,D+42.0,Democratic,Safe Democratic,D+1.0,D+41.0,Mark Pocan,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WI-3,Wisconsin,WI,3,-6.00,R+6.0,Republican,Likely Republican,D+1.0,R+7.0,Rebecca Cooke,Democratic,Crossover / Split Seat,Midwest,Rust Belt; Great Lakes States
+WI-4,Wisconsin,WI,4,52.00,D+52.0,Democratic,Safe Democratic,D+1.0,D+51.0,Gwen Moore,Democratic,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WI-5,Wisconsin,WI,5,-22.00,R+22.0,Republican,Safe Republican,D+1.0,R+23.0,Scott Fitzgerald,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WI-6,Wisconsin,WI,6,-16.00,R+16.0,Republican,Safe Republican,D+1.0,R+17.0,Glenn Grothman,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WI-7,Wisconsin,WI,7,-22.00,R+22.0,Republican,Safe Republican,D+1.0,R+23.0,Michael Alfonso,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WI-8,Wisconsin,WI,8,-16.00,R+16.0,Republican,Safe Republican,D+1.0,R+17.0,Tony Wied,Republican,Party Alignment,Midwest,Rust Belt; Great Lakes States
+WY-1,Wyoming,WY,1,-46.00,R+46.0,Republican,Safe Republican,R+46.0,EVEN,Chuck Gray,Republican,Party Alignment,West,Prairie States; The Rockies

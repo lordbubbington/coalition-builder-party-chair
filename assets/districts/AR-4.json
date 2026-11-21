@@ -1,0 +1,111 @@
+{
+  "stateId": "AR",
+  "name": "Arkansas",
+  "districtCount": 4,
+  "totalPopulation": 3049389,
+  "citizenPopulation": 2940538,
+  "cvap": 2245940,
+  "representationRatio": {
+    "citizenPerDistrict": 735135,
+    "populationPerDistrict": 762347,
+    "cvapPerDistrict": 561485
+  },
+  "boundingBox": {
+    "minX": 510.9,
+    "maxX": 596.6,
+    "minY": 274.3,
+    "maxY": 340.2,
+    "width": 85.7,
+    "height": 65.9
+  },
+  "districts": [
+    {
+      "id": "AR-1",
+      "stateId": "AR",
+      "districtNumber": 1,
+      "q": "}_IglDqUZ?iR~T?A|DfAlKs@@",
+      "cx": 531.6,
+      "cy": 291.3,
+      "path": "M513.5,277.2L549.6,275.8L549.6,306.7L514.4,306.7L514.5,297.2L510.9,277.3L513.5,277.2Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 735135,
+      "totalPopulation": 762347,
+      "cvap": 561485,
+      "name": "Arkansas 1",
+      "bbox": {
+        "minX": 510.9,
+        "maxX": 549.6,
+        "minY": 275.8,
+        "maxY": 306.7,
+        "width": 38.7,
+        "height": 30.9
+      }
+    },
+    {
+      "id": "AR-2",
+      "stateId": "AR",
+      "districtNumber": 2,
+      "q": "ovIk{D?~NmW\\c@eAr@o@r@cAaFLDeAp@SF{@|@}@KuA^cARC",
+      "cx": 570.7,
+      "cy": 288.3,
+      "path": "M549.6,301.4L549.6,275.8L588.7,274.3L590.5,277.8L587.9,280.2L585.3,283.6L596.6,282.9L596.3,286.4L593.8,287.4L593.4,290.4L590.3,293.5L590.9,297.8L589.3,301.2L588.3,301.4Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 735135,
+      "totalPopulation": 762347,
+      "cvap": 561485,
+      "name": "Arkansas 2",
+      "bbox": {
+        "minX": 549.6,
+        "maxX": 596.6,
+        "minY": 274.3,
+        "maxY": 301.4,
+        "width": 47,
+        "height": 27.1
+      }
+    },
+    {
+      "id": "AR-3",
+      "stateId": "AR",
+      "districtNumber": 3,
+      "q": "ovIu~D?oSdKKzCAB~Dp@LfASb@b@C~L",
+      "cx": 532.9,
+      "cy": 322.5,
+      "path": "M549.6,306.7L549.6,339.5L530.1,340.1L522.3,340.2L522.1,330.6L519.6,329.9L516,330.9L514.2,329.1L514.4,306.7Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 735135,
+      "totalPopulation": 762347,
+      "cvap": 561485,
+      "name": "Arkansas 3",
+      "bbox": {
+        "minX": 514.2,
+        "maxX": 549.6,
+        "minY": 306.7,
+        "maxY": 340.2,
+        "width": 35.4,
+        "height": 33.5
+      }
+    },
+    {
+      "id": "AR-4",
+      "stateId": "AR",
+      "districtNumber": 4,
+      "q": "ovIk{DeW?LCU_@t@_@T_Ad@OKgA~@UEWfA}@Wg@|@}@r@qB_Ak@Z_@UiAXs@jNO",
+      "cx": 564.6,
+      "cy": 318.6,
+      "path": "M549.6,301.4L588.3,301.4L587.6,301.6L588.7,303.2L586,304.8L584.9,308L583,308.8L583.6,312.4L580.4,313.5L580.7,314.7L577.1,317.8L578.3,319.8L575.2,322.9L572.6,328.6L575.8,330.8L574.4,332.4L575.5,336.1L574.2,338.7L549.6,339.5Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 735135,
+      "totalPopulation": 762347,
+      "cvap": 561485,
+      "name": "Arkansas 4",
+      "bbox": {
+        "minX": 549.6,
+        "maxX": 588.7,
+        "minY": 301.4,
+        "maxY": 339.5,
+        "width": 39.1,
+        "height": 38
+      }
+    }
+  ]
+}

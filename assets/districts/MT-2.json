@@ -1,0 +1,67 @@
+{
+  "stateId": "MT",
+  "name": "Montana",
+  "districtCount": 2,
+  "totalPopulation": 1116872,
+  "citizenPopulation": 1104976,
+  "cvap": 871202,
+  "representationRatio": {
+    "citizenPerDistrict": 552488,
+    "populationPerDistrict": 558436,
+    "cvapPerDistrict": 435601
+  },
+  "boundingBox": {
+    "minX": 182.6,
+    "maxX": 365.4,
+    "minY": 24.7,
+    "maxY": 120.3,
+    "width": 182.8,
+    "height": 95.6
+  },
+  "districts": [
+    {
+      "id": "MT-1",
+      "stateId": "MT",
+      "districtNumber": 1,
+      "q": "okDgdAnOlA\\sDp@j@f@dArA{@`ACJRjAAf@XlAS~ATh@[\\XRtB`AN^d@O~@^^f@lANdAKZp@j@d@_@pA]|@n@W`@Nd@_AZRz@WjAcAxBxALAVhAp@Df@zApB@Xz@Xp@t@S|AlApBgAtIei@aG}LaA",
+      "cx": 234.3,
+      "cy": 68.8,
+      "path": "M276,110.8L249.6,106.9L248.1,115.9L245.6,113.7L243.6,110.2L239.4,113.2L236.1,113.4L235.5,112.4L231.7,112.5L229.7,111.2L225.8,112.2L221,111.1L218.9,112.5L217.4,111.2L216.4,105.3L213.1,104.5L211.5,102.6L212.3,99.4L210.7,97.8L208.7,93.9L207.9,90.4L208.5,89L206,86.8L204.1,88.4L200,89.9L196.9,87.5L198.1,85.8L197.3,83.9L200.5,82.5L199.5,79.5L200.7,75.7L204.1,69.6L199.6,68.9L199.7,67.7L196,65.2L195.7,63.2L191.1,57.5L191,56.2L188,54.9L185.5,52.2L186.5,47.5L182.6,41.8L186.2,24.7L253.7,37.6L276,40.9Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 552488,
+      "totalPopulation": 558436,
+      "cvap": 435601,
+      "name": "Montana 1",
+      "bbox": {
+        "minX": 182.6,
+        "maxX": 276,
+        "minY": 24.7,
+        "maxY": 115.9,
+        "width": 93.4,
+        "height": 91.2
+      }
+    },
+    {
+      "id": "MT-2",
+      "stateId": "MT",
+      "districtNumber": 2,
+      "q": "kcFc_@\\cKz@uSVgID?hQv@`^vBvAL?tj@gDYsq@wD",
+      "cx": 319.3,
+      "cy": 80.7,
+      "path": "M365.4,51.4L363.9,70.8L360.9,103.9L359.7,120.3L359.4,120.3L330.1,117.5L280.4,111.5L276,110.8L276,40.9L284.4,42.2L365.4,51.4Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 552488,
+      "totalPopulation": 558436,
+      "cvap": 435601,
+      "name": "Montana 2",
+      "bbox": {
+        "minX": 276,
+        "maxX": 365.4,
+        "minY": 40.9,
+        "maxY": 120.3,
+        "width": 89.4,
+        "height": 79.4
+      }
+    }
+  ]
+}

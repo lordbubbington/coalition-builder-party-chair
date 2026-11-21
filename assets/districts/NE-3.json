@@ -1,0 +1,89 @@
+{
+  "stateId": "NE",
+  "name": "Nebraska",
+  "districtCount": 3,
+  "totalPopulation": 1978709,
+  "citizenPopulation": 1886937,
+  "cvap": 1413882,
+  "representationRatio": {
+    "citizenPerDistrict": 628979,
+    "populationPerDistrict": 659570,
+    "cvapPerDistrict": 471294
+  },
+  "boundingBox": {
+    "minX": 353.6,
+    "maxX": 498.4,
+    "minY": 155.4,
+    "maxY": 214.4,
+    "width": 144.8,
+    "height": 59
+  },
+  "districts": [
+    {
+      "id": "NE-1",
+      "stateId": "NE",
+      "districtNumber": 1,
+      "q": "eeFw`BcPc@sDG?g`@pIHl@@UdJrSn@{@dUiFS",
+      "cx": 382.3,
+      "cy": 179.5,
+      "path": "M368.3,156.4L395.7,158.2L404.7,158.6L404.7,211.8L387.8,211.3L385.5,211.2L386.6,193.3L353.6,190.9L356.6,155.4L368.3,156.4Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 628979,
+      "totalPopulation": 659570,
+      "cvap": 471294,
+      "name": "Nebraska 1",
+      "bbox": {
+        "minX": 353.6,
+        "maxX": 404.7,
+        "minY": 155.4,
+        "maxY": 211.8,
+        "width": 51.1,
+        "height": 56.4
+      }
+    },
+    {
+      "id": "NE-2",
+      "stateId": "NE",
+      "districtNumber": 2,
+      "q": "}{FcbBwWa@?{_@vWT",
+      "cx": 424.5,
+      "cy": 185.9,
+      "path": "M404.7,158.6L444.3,160.3L444.3,212.9L404.7,211.8Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 628979,
+      "totalPopulation": 659570,
+      "cvap": 471294,
+      "name": "Nebraska 2",
+      "bbox": {
+        "minX": 404.7,
+        "maxX": 444.3,
+        "minY": 158.6,
+        "maxY": 212.9,
+        "width": 39.7,
+        "height": 54.3
+      }
+    },
+    {
+      "id": "NE-3",
+      "stateId": "NE",
+      "districtNumber": 3,
+      "q": "utGecBg@AIQgDcAe@`@m@IwCAkDaASq@y@K}@_Di@WW{@Rk@Eq@{@_@BwAa@oAP{Ae@m@iAuBoA}Ax`@\\",
+      "cx": 465.7,
+      "cy": 190.5,
+      "path": "M444.3,160.3L446.3,160.4L446.8,161.3L455.2,164.7L457.1,163L459.4,163.5L467,163.6L475.6,166.9L476.6,169.4L479.5,170L482.6,178L484.7,179.2L485.9,182.2L484.9,184.4L485.2,186.9L488.2,188.5L488,192.9L489.7,196.9L488.8,201.5L490.7,203.8L494.4,209.7L498.4,214.4L444.3,212.9Z",
+      "areaRatio": 0.3333,
+      "citizenPopulation": 628979,
+      "totalPopulation": 659570,
+      "cvap": 471294,
+      "name": "Nebraska 3",
+      "bbox": {
+        "minX": 444.3,
+        "maxX": 498.4,
+        "minY": 160.3,
+        "maxY": 214.4,
+        "width": 54.1,
+        "height": 54.1
+      }
+    }
+  ]
+}

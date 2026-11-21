@@ -1,0 +1,48 @@
+{
+  "stateId": "NH",
+  "stateName": "New Hampshire",
+  "districtCount": 2,
+  "citizenRepresentation": 680676,
+  "totalPopulationRepresentation": 697434,
+  "cvapRepresentation": 554801,
+  "legislativeSeats": 400,
+  "legislativeRatio": 4,
+  "boundingBox": {
+    "minX": 863.1,
+    "maxX": 891.7,
+    "minY": 69.2,
+    "maxY": 118.6,
+    "width": 28.6,
+    "height": 49.4
+  },
+  "districts": [
+    {
+      "id": "NH-1",
+      "stateId": "NH",
+      "districtNumber": 1,
+      "q": "ebPgj@iAsEcCcLfL?ITEpASd@TnA}A|@a@dAh@n@[~@J`@SbBgAFIV",
+      "cx": 874.8,
+      "cy": 89.2,
+      "path": "M875.5,69.2L879.2,79.8L885.8,100.8L864.6,100.8L865.1,99.7L865.4,95.6L866.4,93.7L865.3,89.7L870,86.6L871.7,83.1L869.6,80.7L871,77.5L870.4,75.8L871.4,70.8L875,70.4L875.5,69.2Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 680676,
+      "totalPopulation": 697434,
+      "cvap": 554801,
+      "name": "New Hampshire 1"
+    },
+    {
+      "id": "NH-2",
+      "stateId": "NH",
+      "districtNumber": 2,
+      "q": "shP_~@GW{@WEc@k@MRiA`@AjAy@Xg@nJsA^TFn@SZNl@JtC]|@",
+      "cx": 875.5,
+      "cy": 108.4,
+      "path": "M885.8,100.8L886.2,102L889.2,103.2L889.5,105L891.7,105.7L890.7,109.4L889,109.5L885.2,112.4L883.9,114.4L865.5,118.6L863.9,117.5L863.5,115.1L864.5,113.7L863.7,111.4L863.1,103.9L864.6,100.8Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 680676,
+      "totalPopulation": 697434,
+      "cvap": 554801,
+      "name": "New Hampshire 2"
+    }
+  ]
+}

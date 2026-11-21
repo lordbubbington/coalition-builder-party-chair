@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64" shape-rendering="crispEdges" role="img" aria-labelledby="title">
+  <title id="title">Coalition Builder: Party Chair</title>
+  <rect width="64" height="64" fill="#101724"/>
+  <path d="M7 15h5v-2h5v-2h7v2h4v-2h5v1h4v1h5v1h5v2h5v2h4v3h3v3h-3v2h-2v3h3v2h-3v3h-2v3h-3v2h-4v2h-4v2h-3v2h-3v-2h-4v-2h-4v2h-4v-2h-4v-1h-3v-2h-3v-2h-2v-3h-2v-3h-2v-3h1v-3h-2v-3h1v-3h-2v-3h1z" fill="#528f8b" stroke="#26333c" stroke-width="2" stroke-linejoin="miter"/>
+  <path d="M26 30l8 8 16-19" fill="none" stroke="#a56f43" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M26 30l8 8 16-19" fill="none" stroke="#f0eadc" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M11 52h5v2h-5zm38 0h5v2h-5z" fill="#a56f43"/>
+</svg>

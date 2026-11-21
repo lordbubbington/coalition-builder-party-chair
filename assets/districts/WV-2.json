@@ -1,0 +1,48 @@
+{
+  "stateId": "WV",
+  "stateName": "West Virginia",
+  "districtCount": 2,
+  "citizenRepresentation": 881842,
+  "totalPopulationRepresentation": 889187,
+  "cvapRepresentation": 704639,
+  "legislativeSeats": 100,
+  "legislativeRatio": 1,
+  "boundingBox": {
+    "minX": 714.9,
+    "maxX": 793.8,
+    "minY": 182,
+    "maxY": 246.2,
+    "width": 78.9,
+    "height": 64.2
+  },
+  "districts": [
+    {
+      "id": "WV-1",
+      "stateId": "WV",
+      "districtNumber": 1,
+      "q": "soMwpBi@kG?q\\??tA_@p@\\x@y@j@I~@Vv@p@A^j@AfA`@Tb@|@l@p@|@DjBuAVGn@e@VXt@o@|Ay@o@_@f@Nd@]hAg@D]t@g@Qg@VoBdCIfC_@zAHt@Z`@m@\\",
+      "cx": 734.1,
+      "cy": 223.4,
+      "path": "M743.4,182L745.5,195.4L745.5,242.7L745.5,242.7L741.2,244.3L738.7,242.8L735.8,245.7L733.6,246.2L730.4,245L727.6,242.5L727.7,240.9L725.5,241L721.9,239.3L720.8,237.5L717.7,235.2L715.2,232.1L714.9,226.7L719.2,225.5L719.6,223.1L721.5,221.9L720.2,219.2L722.6,214.5L725.5,216.9L727.1,214.9L726.3,213L727.8,209.3L729.8,209L731.3,206.3L733.3,207.2L735.3,206L740.9,199.3L741.4,192.5L743,187.9L742.5,185.2L741.1,183.5L743.4,182Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 881842,
+      "totalPopulation": 889187,
+      "cvap": 704639,
+      "name": "West Virginia 1"
+    },
+    {
+      "id": "WV-2",
+      "stateId": "WV",
+      "districtNumber": 2,
+      "q": "}pMcyBIy@yIz@[uD{@j@w@fAm@Au@~@gBIEh@s@F]^}@Uw@Jw@{AViAbErACiB`CmDp@Vn@gCZe@z@F`Ab@FuAv@kAPcAp@_AZ_AE_Ar@i@PRnC}A",
+      "cx": 760.8,
+      "cy": 212.1,
+      "path": "M745.5,195.4L746,198.3L763.3,195.3L764.7,204.4L767.7,202.2L770.5,198.6L772.8,198.7L775.5,195.5L780.7,196L781,193.9L783.6,193.5L785.1,191.9L788.2,193L791,192.4L793.8,197L792.6,200.7L782.8,196.5L783,201.8L776.5,210.5L774,209.3L771.6,216.1L770.2,218L767.2,217.6L763.9,215.8L763.5,220.1L760.7,223.9L759.8,227.3L757.3,230.5L755.9,233.7L756.2,236.9L753.6,239L752.7,238L745.5,242.7Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 881842,
+      "totalPopulation": 889187,
+      "cvap": 704639,
+      "name": "West Virginia 2"
+    }
+  ]
+}

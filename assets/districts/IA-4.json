@@ -1,0 +1,111 @@
+{
+  "stateId": "IA",
+  "name": "Iowa",
+  "districtCount": 4,
+  "totalPopulation": 3210509,
+  "citizenPopulation": 3104036,
+  "cvap": 2381746,
+  "representationRatio": {
+    "citizenPerDistrict": 776009,
+    "populationPerDistrict": 802627,
+    "cvapPerDistrict": 595437
+  },
+  "boundingBox": {
+    "minX": 476.6,
+    "maxX": 582.8,
+    "minY": 150.2,
+    "maxY": 205.8,
+    "width": 106.2,
+    "height": 55.6
+  },
+  "districts": [
+    {
+      "id": "IA-1",
+      "stateId": "IA",
+      "districtNumber": 1,
+      "q": "yhIqlBx[?h@hBx@nA]r@IbAYVh@b@I~@NZi@Da]T",
+      "cx": 503.4,
+      "cy": 163.4,
+      "path": "M527.7,175.3L481.6,175.3L479.5,170L476.6,166L478.1,163.4L478.6,160L479.9,158.8L477.8,157L478.3,153.8L477.5,152.4L479.6,152.1L527.7,151Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 776009,
+      "totalPopulation": 802627,
+      "cvap": 595437,
+      "name": "Iowa 1",
+      "bbox": {
+        "minX": 476.6,
+        "maxX": 527.7,
+        "minY": 151,
+        "maxY": 175.3,
+        "width": 51.1,
+        "height": 24.3
+      }
+    },
+    {
+      "id": "IA-2",
+      "stateId": "IA",
+      "districtNumber": 2,
+      "q": "{}I}|Ao@@Is@m@_@b@m@OkAYw@wB_@Wm@kAy@Kc@iA]Km@B[ha@??hOaTL",
+      "cx": 550.2,
+      "cy": 165,
+      "path": "M561.4,150.3L563.8,150.2L564.3,152.8L566.6,154.4L564.8,156.7L565.6,160.5L566.9,163.3L572.9,164.9L574.1,167.2L577.9,170.1L578.5,171.9L582.2,173.4L582.8,175.7L582.6,177.1L527.7,177.1L527.7,151L561.4,150.3Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 776009,
+      "totalPopulation": 802627,
+      "cvap": 595437,
+      "name": "Iowa 2",
+      "bbox": {
+        "minX": 527.7,
+        "maxX": 582.8,
+        "minY": 150.2,
+        "maxY": 177.1,
+        "width": 55.1,
+        "height": 26.9
+      }
+    },
+    {
+      "id": "IA-3",
+      "stateId": "IA",
+      "districtNumber": 3,
+      "q": "yhIqlB?sPfJIzJBd@l@QzA`@nACvAz@^Dp@Sj@Vz@h@VRt@",
+      "cx": 507.2,
+      "cy": 189.1,
+      "path": "M527.7,175.3L527.7,203.5L509.7,204L490.7,203.8L488.8,201.5L489.7,196.9L488,192.9L488.2,188.5L485.2,186.9L484.9,184.4L485.9,182.2L484.7,179.2L482.6,178L481.6,175.3Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 776009,
+      "totalPopulation": 802627,
+      "cvap": 595437,
+      "name": "Iowa 3",
+      "bbox": {
+        "minX": 481.6,
+        "maxX": 527.7,
+        "minY": 175.3,
+        "maxY": 204,
+        "width": 46.1,
+        "height": 28.7
+      }
+    },
+    {
+      "id": "IA-4",
+      "stateId": "IA",
+      "districtNumber": 4,
+      "q": "ckJumBBg@h@[Du@dBs@~BYP{@w@o@?_Af@e@Fu@zAk@@aAd@HdAfA`@ExM[~AA?nO",
+      "cx": 550.4,
+      "cy": 189.2,
+      "path": "M582.6,177.1L582.4,179.1L580.3,180.5L580,183.2L574.9,185.8L568.5,187.1L567.6,190.1L570.4,192.5L570.4,195.7L568.4,197.6L568,200.3L563.4,202.5L563.3,205.8L561.4,205.3L557.9,201.7L556.2,202L532.5,203.4L527.7,203.5L527.7,177.1Z",
+      "areaRatio": 0.25,
+      "citizenPopulation": 776009,
+      "totalPopulation": 802627,
+      "cvap": 595437,
+      "name": "Iowa 4",
+      "bbox": {
+        "minX": 527.7,
+        "maxX": 582.6,
+        "minY": 177.1,
+        "maxY": 205.8,
+        "width": 55,
+        "height": 28.7
+      }
+    }
+  ]
+}

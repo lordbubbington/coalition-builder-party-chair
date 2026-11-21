@@ -1,0 +1,67 @@
+{
+  "stateId": "ID",
+  "name": "Idaho",
+  "districtCount": 2,
+  "totalPopulation": 1934264,
+  "citizenPopulation": 1871962,
+  "cvap": 1411149,
+  "representationRatio": {
+    "citizenPerDistrict": 935981,
+    "populationPerDistrict": 967132,
+    "cvapPerDistrict": 705575
+  },
+  "boundingBox": {
+    "minX": 145,
+    "maxX": 248.1,
+    "minY": 21.5,
+    "maxY": 159.2,
+    "width": 103.1,
+    "height": 137.7
+  },
+  "districts": [
+    {
+      "id": "ID-1",
+      "stateId": "ID",
+      "districtNumber": 1,
+      "q": "ksBmNfAuImAqBR}Aq@u@{@YAY{AqBEg@iAq@@WyAMbAyBVkAS{@~@[Oe@Va@}@o@qA\\e@^q@k@J[OeAg@mA_@_@N_A_@e@aAOSuB]Yi@Z_BUmARg@YkA@KSaABsAz@g@eAm@g@x{@?]bCaAfBR`@v@RJp@yAjBc@Bi@j@A^m@^_@x@uAvAPp@~@f@\\bAMz@\\bAK\\eB~L_B|K_H_A",
+      "cx": 182.9,
+      "cy": 82.8,
+      "path": "M186.2,24.7L182.6,41.8L186.5,47.5L185.5,52.2L188,54.9L191,56.2L191.1,57.5L195.7,63.2L196,65.2L199.7,67.7L199.6,68.9L204.1,69.6L200.7,75.7L199.5,79.5L200.5,82.5L197.3,83.9L198.1,85.8L196.9,87.5L200,89.9L204.1,88.4L206,86.8L208.5,89L207.9,90.4L208.7,93.9L210.7,97.8L212.3,99.4L211.5,102.6L213.1,104.5L216.4,105.3L217.4,111.2L218.9,112.5L221,111.1L225.8,112.2L229.7,111.2L231.7,112.5L235.5,112.4L236.1,113.4L239.4,113.2L243.6,110.2L245.6,113.7L247.9,115.7L150.6,115.7L152.1,109.1L155.4,103.9L154.4,102.2L151.6,101.2L151,98.7L155.5,93.3L157.3,93.1L159.4,90.9L159.5,89.3L161.8,87.7L163.4,84.8L167.7,80.4L166.8,77.9L163.6,75.9L162.1,72.5L162.8,69.5L161.3,66.1L161.9,64.6L167,42.2L171.8,21.5L186.2,24.7Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 935981,
+      "totalPopulation": 967132,
+      "cvap": 705575,
+      "name": "Idaho 1",
+      "bbox": {
+        "minX": 150.6,
+        "maxX": 247.9,
+        "minY": 21.5,
+        "maxY": 115.7,
+        "width": 97.3,
+        "height": 94.2
+      }
+    },
+    {
+      "id": "ID-2",
+      "stateId": "ID",
+      "districtNumber": 2,
+      "q": "}yCigACChCaZdJz@~QlB|\\fEoBrN",
+      "cx": 200.5,
+      "cy": 133.5,
+      "path": "M247.9,115.7L248.1,115.9L241.2,159.2L223.3,156.2L192.9,150.7L145,140.7L150.6,115.7Z",
+      "areaRatio": 0.5,
+      "citizenPopulation": 935981,
+      "totalPopulation": 967132,
+      "cvap": 705575,
+      "name": "Idaho 2",
+      "bbox": {
+        "minX": 145,
+        "maxX": 248.1,
+        "minY": 115.7,
+        "maxY": 159.2,
+        "width": 103.1,
+        "height": 43.5
+      }
+    }
+  ]
+}
