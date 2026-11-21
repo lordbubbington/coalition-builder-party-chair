@@ -1,7 +1,7 @@
 const { spawnSync } = require('child_process');
 const path = require('path');
 
-console.log('Building Coalition Builder: Party Chair (v0.18.1)...');
+console.log('Building Coalition Builder: Party Chair (v0.18.2)...');
 
 const psScript = path.join(__dirname, 'build.ps1');
 const result = spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psScript], {

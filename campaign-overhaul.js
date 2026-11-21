@@ -237,14 +237,22 @@
     const allIssues = global.PartySystemsEngine?.getActiveIssuesForGame
       ? global.PartySystemsEngine.getActiveIssuesForGame(game)
       : (global.PartyChairData?.VERSION_021_ISSUES || global.PartyChairData?.ISSUES || []);
-    const issueObj = allIssues.find((i) => i.id === issueId) || { id: issueId, name: issueId, importance: 0.65, baseline: 0 };
-    const playerStance = Number(game.issuePositions?.[issueId] ?? game.platform?.[issueId] ?? 0);
-    const rawMedian = issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline ?? issueObj.defaultPosition ?? 0;
-    const nationalMedian = Number.isFinite(Number(rawMedian)) ? Number(rawMedian) : 0;
+    const issueObj = allIssues.find((i) => i.id === issueId) || { id: issueId, label: issueId, name: issueId, importance: 0.7 };
+    const issueDisplayName = issueObj.label || issueObj.name || issueId;
+    const playerStance = Number(game.issuePositions?.[issueId] ?? game.platform?.[issueId] ?? 5.5);
+    // #6: Compute national median on the 1-10 issue scale from issue.defaults (people/heritage midpoint)
+    let nationalMedian = 5.5;
+    if (issueObj.defaults && typeof issueObj.defaults === 'object') {
+      const vals = [issueObj.defaults.people, issueObj.defaults.heritage].map(Number).filter(Number.isFinite);
+      if (vals.length > 0) nationalMedian = round(vals.reduce((s, v) => s + v, 0) / vals.length, 2);
+    } else if (Number.isFinite(Number(issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline))) {
+      nationalMedian = Number(issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline);
+    }
     const alignmentDist = Math.abs(playerStance - nationalMedian);
-    const rawSalience = issueObj.salience ?? issueObj.importance ?? issueObj.weight ?? (issueObj.priority ? issueObj.priority / 10 : 0.65);
+    const highSalienceCats = new Set(['Economy & Affordability', 'Healthcare & Safety Net', 'Immigration & Borders', 'Democracy & Institutions']);
+    const rawSalience = issueObj.salience ?? issueObj.importance ?? (highSalienceCats.has(issueObj.category) ? 0.8 : 0.65);
     const salience = Number.isFinite(Number(rawSalience)) ? (Number(rawSalience) > 1 ? Number(rawSalience) / 10 : Number(rawSalience)) : 0.65;
-    const isImportantAgreement = salience >= 0.6 && alignmentDist <= 0.45;
+    const isImportantAgreement = salience >= 0.6 && alignmentDist <= 1.25;
 
     let baseLift = isImportantAgreement ? 1.5 : 0.75;
     let indTrustDelta = isImportantAgreement ? 2 : 0;
@@ -287,7 +295,7 @@
     });
 
     usedThemes.push(issueId);
-    const note = `Theme of Month ${month} (${eff.name}): ${issueObj.name || issueId} (${scaledLift >= 0 ? '+' : ''}${scaledLift}% persuasion lift).${noteSuffix}`;
+    const note = `Theme of Month ${month} (${eff.name}): ${issueDisplayName} (${scaledLift >= 0 ? '+' : ''}${scaledLift}% persuasion lift).${noteSuffix}`;
     return {
       ...game,
       trust: nextTrust,
@@ -295,7 +303,7 @@
       campaign: {
         ...game.campaign,
         activeThemeId: issueId,
-        activeThemeName: issueObj.name || issueId,
+        activeThemeName: issueDisplayName,
         themeSelectedThisMonth: true,
         usedThemes,
         themePersuasionLift: round((game.campaign.themePersuasionLift || 0) + scaledLift, 2),
@@ -1157,6 +1165,7 @@
 
   function applyDynamicCorruptTraitsOnStart(game) {
     if (!game || typeof game !== 'object') return game;
+    if (game._dynamicCorruptInitialized) return game;
     const seed = game.seed || 1;
     const corruptDecision = new Map();
     const decide = (key) => {
@@ -1171,7 +1180,7 @@
     const nextPols = Array.isArray(game.politicians)
       ? game.politicians.map((p) => applyCorruptTraitToRecord(p, decide(p.name || p.id)))
       : game.politicians;
-    return { ...game, sittingMembers: nextSM, politicians: nextPols };
+    return { ...game, _dynamicCorruptInitialized: true, sittingMembers: nextSM, politicians: nextPols };
   }
 
   function rollNewPoliticianCorruptTrait(pol, seed = 1, salt = '') {
