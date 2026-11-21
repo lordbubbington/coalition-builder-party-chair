@@ -131,11 +131,34 @@
    * Initializes or verifies the statutory ballot access table for all parties.
    * Enforces Tier 1 Fringe: 0 ballot access across all states and 0 automatic retention.
    */
+  function baDeterministicRand(seedStr) {
+    let h = 2166136261 >>> 0;
+    const s = String(seedStr || 'ba');
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return (h >>> 0) / 4294967296;
+  }
+
   function buildStartingStatutoryBallotTable(game) {
     const rules = getStatutoryRules();
     const states = Object.keys(rules);
-    const parties = ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'];
-    if (game?.player?.custom) parties.push('player');
+    const partySet = new Set(['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist']);
+    if (game?.player?.custom) partySet.add('player');
+    if (game?.player?.id) partySet.add(game.player.id);
+    if (game?.player?.baseTemplateId) partySet.add(game.player.baseTemplateId);
+    (game?.rivals || []).forEach((r) => {
+      if (r?.id) partySet.add(r.id);
+      if (r?.baseTemplateId) partySet.add(r.baseTemplateId);
+    });
+    const robCat = (typeof window !== 'undefined' && window.PartySystemsRobots?.ROBOT_PARTY_CATALOG)
+      || (typeof global !== 'undefined' && global.PartySystemsRobots?.ROBOT_PARTY_CATALOG) || [];
+    if (game?.partySystems?.isSyntheticSuffrageActive) {
+      robCat.forEach((rp) => { if (rp?.id) partySet.add(rp.id); });
+    }
+    (game?.partySystems?.coalitionSystem?.postBreakupParties || []).forEach((p) => { if (p?.id) partySet.add(p.id); });
+    const parties = [...partySet];
 
     const table = {};
     parties.forEach((partyId) => {
@@ -311,7 +334,13 @@
     const partyId = p.partyId || (game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people'));
 
     if (!canLaunchPetitionDrive(game, requestedStateId, bufferTier, partyId)) {
-      return game;
+      const hasActs = game.phase === 'campaign'
+        ? (game.campaign?.monthlyActionsLeft ?? game.campaign?.weeklyActionsLeft ?? 0) >= 1
+        : (game.actionsLeft || 0) >= 1;
+      const reason = !hasActs
+        ? 'Cannot launch ballot petition drive: no actions remaining.'
+        : 'Cannot launch ballot petition drive: insufficient treasury or already certified in this state.';
+      return { ...game, lastNote: reason };
     }
 
     const progress = getPresidentialBallotProgress(game, partyId);
@@ -319,13 +348,13 @@
     const costInfo = calculatePetitionCost(game, refState, bufferTier, partyId);
 
     const targetBatch = progress.certifiedCount < 35
-      ? (5 + Math.floor(Math.random() * 6))   // 5 to 10
-      : (3 + Math.floor(Math.random() * 3));  // 3 to 5
+      ? (5 + Math.floor(baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:1:${typeof stateId !== 'undefined' ? stateId : ''}`) * 6))   // 5 to 10
+      : (3 + Math.floor(baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:2:${typeof stateId !== 'undefined' ? stateId : ''}`) * 3));  // 3 to 5
     const grantCount = Math.min(progress.remaining.length, targetBatch);
 
     const pool = progress.remaining.filter((id) => id !== requestedStateId);
     for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:3:${typeof stateId !== 'undefined' ? stateId : ''}`) * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
     const grantedStates = [];
@@ -469,7 +498,7 @@
         failRate = Math.min(0.98, Math.round((failRate + auditRiskDelta) * 1000) / 1000);
 
         const rollSeed = options.seed ? `${options.seed}:${stId}:challenge` : `${game.year}:${stId}:${game.chairTurn || 0}`;
-        const roll = options.fixedRoll !== undefined ? options.fixedRoll : (Math.random());
+        const roll = options.fixedRoll !== undefined ? options.fixedRoll : (baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:4:${typeof stateId !== 'undefined' ? stateId : ''}`));
         const disqualified = roll < failRate;
 
         const challengeRecord = {
@@ -535,7 +564,7 @@
     if (option === 'law_firm') {
       const cost = 2.5;
       const nextTreasury = Math.max(0, Math.round(((nextGame.treasury || 0) - cost) * 100) / 100);
-      const roll = payload.fixedRoll !== undefined ? payload.fixedRoll : Math.random();
+      const roll = payload.fixedRoll !== undefined ? payload.fixedRoll : baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:5:${typeof stateId !== 'undefined' ? stateId : ''}`);
       const success = roll < 0.70;
 
       if (success) {
@@ -563,7 +592,7 @@
       nextGame.actionsLeft = nextActions;
       nextGame.treasury = nextTreasury;
 
-      const roll = payload.fixedRoll !== undefined ? payload.fixedRoll : Math.random();
+      const roll = payload.fixedRoll !== undefined ? payload.fixedRoll : baDeterministicRand(`${game?.seed || 2028}:${game?.year || 2028}:ba:6:${typeof stateId !== 'undefined' ? stateId : ''}`);
       const success = roll < 0.60;
 
       if (success) {

@@ -4,7 +4,7 @@ const PARTY_ARCHETYPES = [
   { id: 'liberty', name: 'Libertarian Party', color: '#e2bd45', baseShare: 1.8, economic: 0.65, social: -0.5, climate: -0.05, local: -0.6, isMajor: false, lastPresidentialShare: 1.1, startingBudget: 10, counterRivalId: 'green', appeal: 'Civil Liberties & Free Markets', description: 'A small-government party emphasizing individual liberty, deregulation, and free markets.' },
   { id: 'green', name: 'Green Party', color: '#55bf78', baseShare: 1.8, economic: -0.3, social: -0.65, climate: 0.8, local: -0.15, isMajor: false, lastPresidentialShare: 0.8, startingBudget: 10, counterRivalId: 'liberty', appeal: 'Eco-Socialist & Grassroots Peace', description: 'A grassroots progressive party centered on urgent climate action, public investment, and social justice.' },
   { id: 'constitution', name: 'Constitution Party', color: '#a84214', baseShare: 0.2, economic: 0.55, social: 0.85, climate: -0.65, local: 0.7, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 10, counterRivalId: 'socialist', appeal: 'MAGA / Faith & Flag Constitutionalism', description: 'A nationalist-traditionalist third party championing Faith & Flag social conservatism, strict border sovereignty, and originalist constitutionalism.' },
-  { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.9, social: -0.65, climate: 0.75, local: -0.25, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 10, counterRivalId: 'constitution', appeal: 'Labor / Progressive Anti-Corporate Populism', description: 'A democratic-socialist workers party advocating union ownership, guaranteed public healthcare, wealth redistribution, and aggressive climate action.' },
+  { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.9, social: -0.65, climate: 0.75, local: -0.25, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 10, counterRivalId: 'constitution', appeal: 'Labor / Progressive Anti-Corporate Populism', description: 'A democratic-socialist workers party advocating union ownership, guaranteed public healthcare, wealth redistribution, and aggressive climate action.' }
 ];
 
 // Party-Specific Ideological & Rhetorical Factions (5 Democratic, 5 Republican, plus minor-party wings)
@@ -89,7 +89,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: 0.42,
       turnoutWeight: 0.95,
       allies: ['establishment-liberals', 'labor-industrial-populists'],
-    },
+    }
   ],
   heritage: [
     {
@@ -171,7 +171,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: 0.28,
       turnoutWeight: 1.0,
       allies: ['faith-flag-conservatives', 'market-country-club'],
-    },
+    }
   ],
   liberty: [
     {
@@ -203,7 +203,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: 0.3,
       turnoutWeight: 1.0,
       allies: ['liberty-civil-hawks'],
-    },
+    }
   ],
   green: [
     {
@@ -235,7 +235,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: 0.15,
       turnoutWeight: 1.0,
       allies: ['green-ecosocialists'],
-    },
+    }
   ],
   constitution: [
     {
@@ -267,7 +267,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: -0.2,
       turnoutWeight: 1.15,
       allies: ['constitution-faith-flag'],
-    },
+    }
   ],
   socialist: [
     {
@@ -299,7 +299,7 @@ const PARTY_FACTIONS = {
       suburbanAppeal: -0.15,
       turnoutWeight: 1.15,
       allies: ['socialist-rank-and-file'],
-    },
+    }
   ],
 };
 
@@ -334,7 +334,7 @@ const CANDIDATE_RATING_KEYS = [
   'fieldcraft',
   'experience',
   'mediaSavvy',
-  'regionalStrength',
+  'regionalStrength'
 ];
 
 const POSITIVE_RATING_KEYS = [
@@ -346,7 +346,7 @@ const POSITIVE_RATING_KEYS = [
   'fieldcraft',
   'experience',
   'mediaSavvy',
-  'regionalStrength',
+  'regionalStrength'
 ];
 
 const CANDIDATE_RATING_DEFINITIONS = [
@@ -359,7 +359,7 @@ const CANDIDATE_RATING_DEFINITIONS = [
   { id: 'fieldcraft', label: 'Fieldcraft', shortLabel: 'Fieldcraft', positive: true, description: 'Ground-game organization and chapter synergy.' },
   { id: 'experience', label: 'Experience', shortLabel: 'Experience', positive: true, description: 'Legislative/executive governing seasoning and caucus respect.' },
   { id: 'mediaSavvy', label: 'Media Savvy', shortLabel: 'Media', positive: true, description: 'Earned media discipline and message control.' },
-  { id: 'regionalStrength', label: 'Regional Strength', shortLabel: 'Regional', positive: true, description: 'Home-region affinity bonus across overlapping political regions.' },
+  { id: 'regionalStrength', label: 'Regional Strength', shortLabel: 'Regional', positive: true, description: 'Home-region affinity bonus across overlapping political regions.' }
 ];
 
 function computeCandidateQuality(ratings) {
@@ -434,7 +434,7 @@ const OVERLAPPING_REGION_DEFINITIONS = [
     states: ['CO', 'UT', 'ID', 'MT', 'WY', 'NV', 'NM', 'AZ'],
     pull: { economic: 0.16, social: -0.04, climate: 0.06, local: 0.24 },
     description: 'Mountain West and desert swing states with fast-growing suburbs and independent streaks.',
-  },
+  }
 ];
 
 const OVERLAPPING_REGIONS = Object.fromEntries(
@@ -644,7 +644,7 @@ const MEMBERS = [
     stateId: 'CA', region: 'West', regions: ['West Coast'], portrait: '',
     ratings: { persuadability: 5, turnout: 8, debate: 7, charisma: 6, corruption: 1, fundraising: 5, fieldcraft: 7, experience: 7, mediaSavvy: 6, regionalStrength: 7 },
     effect: 'Anchors longtime Peace and Freedom ballot-access and anti-war coalitions.',
-  },
+  }
 ];
 
 const REGIONS = ['Northeast', 'Midwest', 'South', 'West'];
@@ -662,7 +662,7 @@ const STATES = [
   { id: 'CO', name: 'Colorado', region: 'West', regions: getStateOverlappingRegions('CO', 'West'), ev: 10, lean: -0.18 },
   { id: 'AZ', name: 'Arizona', region: 'West', regions: getStateOverlappingRegions('AZ', 'West'), ev: 11, lean: 0.14 },
   { id: 'CA', name: 'California', region: 'West', regions: getStateOverlappingRegions('CA', 'West'), ev: 54, lean: -0.58 },
-  { id: 'NV', name: 'Nevada', region: 'West', regions: getStateOverlappingRegions('NV', 'West'), ev: 6, lean: 0.08 },
+  { id: 'NV', name: 'Nevada', region: 'West', regions: getStateOverlappingRegions('NV', 'West'), ev: 6, lean: 0.08 }
 ];
 
 // Standard campaign events for Weeks 1–12 and 14–15 (Week 13 is reserved strictly for OCTOBER_SURPRISES).
@@ -678,7 +678,7 @@ const EVENTS = [
     body: 'Mayors and neighborhood groups ask for practical help. Your response will shape how local leaders see the party.',
     choices: [
       { label: 'Fund local relief teams', effect: 'Spend $5M; local leaders and organizers gain confidence.', money: -5, faction: 'localists', trust: 9, membership: 1 },
-      { label: 'Let community groups lead', effect: 'Organizers gain confidence; the party keeps its funds.', faction: 'organizers', trust: 7, chapters: 1 },
+      { label: 'Let community groups lead', effect: 'Organizers gain confidence; the party keeps its funds.', faction: 'organizers', trust: 7, chapters: 1 }
     ],
   },
   {
@@ -691,7 +691,7 @@ const EVENTS = [
     body: 'The press wants a clean answer. Your factions disagree on how far the party should go.',
     choices: [
       { label: 'Make the bold case', effect: 'Reformers gain energy; pragmatists want more detail.', faction: 'reformers', trust: 9, factionLoss: 'pragmatists', loss: 4, polling: 1.2 },
-      { label: 'Lead with the practical plan', effect: 'Pragmatists and local leaders appreciate the specifics.', faction: 'pragmatists', trust: 8, polling: 0.6 },
+      { label: 'Lead with the practical plan', effect: 'Pragmatists and local leaders appreciate the specifics.', faction: 'pragmatists', trust: 8, polling: 0.6 }
     ],
   },
   {
@@ -704,7 +704,7 @@ const EVENTS = [
     body: 'The contribution could fund a year of organizing, but members want to know who sets the agenda.',
     choices: [
       { label: 'Accept with public rules', effect: 'The party gains $10M and keeps its independence.', money: 10, faction: 'pragmatists', trust: 5 },
-      { label: 'Pass and launch a member drive', effect: 'Workers and organizers gain confidence; membership grows.', faction: 'workers', trust: 7, membership: 2 },
+      { label: 'Pass and launch a member drive', effect: 'Workers and organizers gain confidence; membership grows.', faction: 'workers', trust: 7, membership: 2 }
     ],
   },
   {
@@ -717,9 +717,9 @@ const EVENTS = [
     body: 'The national committee can centralize the next campaign or share its budget with state parties.',
     choices: [
       { label: 'Share the organizing budget', effect: 'Local leaders gain confidence and chapters expand.', faction: 'localists', trust: 9, chapters: 2, money: -4 },
-      { label: 'Keep one national message', effect: 'The party gains a small polling bump; local leaders are annoyed.', polling: 1.0, faction: 'pragmatists', trust: 4, factionLoss: 'localists', loss: 6 },
+      { label: 'Keep one national message', effect: 'The party gains a small polling bump; local leaders are annoyed.', polling: 1.0, faction: 'pragmatists', trust: 4, factionLoss: 'localists', loss: 6 }
     ],
-  },
+  }
 ];
 
 // 20 Major October Surprises (Week 13 Shockwaves) — strictly Grand-Strategy Party Chair responses.
@@ -758,7 +758,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -1,
         happinessDelta: 2,
         budgetDelta: -4,
-      },
+      }
     ],
   },
   {
@@ -795,7 +795,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -1.5,
         happinessDelta: 3,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -823,7 +823,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 1,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -860,7 +860,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -0.5,
         happinessDelta: 0,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -888,7 +888,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 1,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -916,7 +916,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -1.5,
         happinessDelta: 2,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -945,7 +945,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -0.5,
         happinessDelta: -4,
         budgetDelta: 4,
-      },
+      }
     ],
   },
   {
@@ -973,7 +973,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -0.5,
         happinessDelta: -1,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1002,7 +1002,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 2,
         budgetDelta: -4,
-      },
+      }
     ],
   },
   {
@@ -1030,7 +1030,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -0.5,
         happinessDelta: -6,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1058,7 +1058,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 0.5,
         happinessDelta: 0,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1086,7 +1086,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -1,
         happinessDelta: -6,
         budgetDelta: 4,
-      },
+      }
     ],
   },
   {
@@ -1114,7 +1114,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 3,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1142,7 +1142,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 0.5,
         happinessDelta: 1,
         budgetDelta: -6,
-      },
+      }
     ],
   },
   {
@@ -1170,7 +1170,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -2,
         happinessDelta: 3,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1198,7 +1198,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 0.5,
         happinessDelta: 2,
         budgetDelta: -2,
-      },
+      }
     ],
   },
   {
@@ -1226,7 +1226,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 2,
         budgetDelta: -2,
-      },
+      }
     ],
   },
   {
@@ -1255,7 +1255,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1,
         happinessDelta: 1,
         budgetDelta: -4,
-      },
+      }
     ],
   },
   {
@@ -1283,7 +1283,7 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: -1,
         happinessDelta: 3,
         budgetDelta: 0,
-      },
+      }
     ],
   },
   {
@@ -1311,9 +1311,9 @@ const OCTOBER_SURPRISES = [
         waveMomentumDelta: 1.5,
         happinessDelta: 7,
         budgetDelta: 8,
-      },
+      }
     ],
-  },
+  }
 ];
 
 const BILLS = [
@@ -1370,14 +1370,14 @@ const BILLS = [
     cost: 2,
     supporters: ['establishment-liberals', 'frontier-suburban-moderates', 'nationalist-populists', 'faith-flag-conservatives'],
     effect: 'Coordinates national service with local priorities.',
-  },
+  }
 ];
 
 const CONVENTIONS = [
   { region: 'Northeast', faction: 'progressive-activists', gopFaction: 'market-country-club', axis: 'climate', delta: -0.1, plank: 'A rapid clean-energy transition', focus: 'A convention focused on field work' },
   { region: 'Midwest', faction: 'labor-industrial-populists', gopFaction: 'heartland-institutionalists', axis: 'economic', delta: -0.1, plank: 'Public investment in good jobs', focus: 'A convention focused on field work' },
   { region: 'South', faction: 'community-faith-pillar', gopFaction: 'faith-flag-conservatives', axis: 'local', delta: -0.1, plank: 'More authority for state parties', focus: 'A convention focused on field work' },
-  { region: 'West', faction: 'frontier-suburban-moderates', gopFaction: 'liberty-western-mavericks', axis: 'climate', delta: -0.1, plank: 'A rapid clean-energy transition', focus: 'A convention focused on field work' },
+  { region: 'West', faction: 'frontier-suburban-moderates', gopFaction: 'liberty-western-mavericks', axis: 'climate', delta: -0.1, plank: 'A rapid clean-energy transition', focus: 'A convention focused on field work' }
 ];
 
 // Custom Party Starting Leader Archetypes
@@ -1496,7 +1496,7 @@ const STARTING_LEADER_ARCHETYPES = [
       factionsWarmth: 2,
     },
     ratings: { persuadability: 8, turnout: 7, debate: 8, charisma: 7, corruption: 4, fundraising: 7, fieldcraft: 7, experience: 9, mediaSavvy: 8, regionalStrength: 9 },
-  },
+  }
 ];
 
 const CUSTOM_LEADER_ARCHETYPES = STARTING_LEADER_ARCHETYPES;
@@ -1582,12 +1582,12 @@ const SUPER_PACS_SCHEMA = [
     funds: 11.0,
     demandText: 'Champion universal early voting standards and automatic voter registration.',
     adEffectLabel: '+1.5 pt high-propensity base turnout lift in battleground metro centers',
-  },
+  }
 ];
 
 // REQ-290: Faction-Tied Super PACs & Swing PAC Ecosystem
 const FACTION_SUPER_PACS_REGISTRY = [
-  // Democratic / People's Party Allies
+  // Democratic / Democratic Party Allies
   {
     id: 'pac-workers-united',
     legacyId: 'workers-pac',
@@ -1641,7 +1641,7 @@ const FACTION_SUPER_PACS_REGISTRY = [
     lean: 'left',
   },
 
-  // Republican / Heritage Party Allies
+  // Republican / Republican Party Allies
   {
     id: 'pac-freedom-fund',
     legacyId: 'freedom-fund',
@@ -1801,7 +1801,7 @@ const FACTION_SUPER_PACS_REGISTRY = [
     evaluationThreshold: 60,
     targetCategory: 'good_governance',
     lean: 'center',
-  },
+  }
 ];
 
 function getSuperPacById(id) {
@@ -1830,7 +1830,7 @@ const FIFTY_US_STATES_FOR_PRIORITIES = [
   { id: 'NM', name: 'New Mexico' }, { id: 'NY', name: 'New York' }, { id: 'NC', name: 'North Carolina' }, { id: 'ND', name: 'North Dakota' }, { id: 'OH', name: 'Ohio' },
   { id: 'OK', name: 'Oklahoma' }, { id: 'OR', name: 'Oregon' }, { id: 'PA', name: 'Pennsylvania' }, { id: 'RI', name: 'Rhode Island' }, { id: 'SC', name: 'South Carolina' },
   { id: 'SD', name: 'South Dakota' }, { id: 'TN', name: 'Tennessee' }, { id: 'TX', name: 'Texas' }, { id: 'UT', name: 'Utah' }, { id: 'VT', name: 'Vermont' },
-  { id: 'VA', name: 'Virginia' }, { id: 'WA', name: 'Washington' }, { id: 'WV', name: 'West Virginia' }, { id: 'WI', name: 'Wisconsin' }, { id: 'WY', name: 'Wyoming' },
+  { id: 'VA', name: 'Virginia' }, { id: 'WA', name: 'Washington' }, { id: 'WV', name: 'West Virginia' }, { id: 'WI', name: 'Wisconsin' }, { id: 'WY', name: 'Wyoming' }
 ];
 
 const OVERALL_PRIORITY_QUESTS = [
@@ -2969,7 +2969,7 @@ const OVERALL_PRIORITY_QUESTS = [
     checkCompletion: (game, outcome) => {
       return (game.customPriorityTracking?.promotedStandoutsCount || 0) >= 2;
     },
-  },
+  }
 ];
 
 const POLITICIAN_TRAITS = [
@@ -2980,7 +2980,7 @@ const POLITICIAN_TRAITS = [
   'Polished',
   'Rough',
   'Disciplined',
-  'Undisciplined',
+  'Undisciplined'
 ];
 
 
@@ -3181,7 +3181,7 @@ const INSTITUTIONAL_TIERS = [
     badgeColor: '#059669',
     description: 'Full national institutional parity with 7 strategic Party Focus slots, unrestricted Super PAC coordination, and immunity to wasted-vote squeezes.',
     nextRequirement: 'Maximum institutional standing achieved.',
-  },
+  }
 ];
 
 const PRESIDENTIAL_DEBATE_STAGE_EVENT = {
@@ -3221,30 +3221,30 @@ const PRESIDENTIAL_DEBATE_STAGE_EVENT = {
       trust: { supporters: 3, independents: 2, opponents: 0.5 },
       waveMomentum: 1.4,
       voterSurge: 3500,
-    },
+    }
   ],
 };
 
 const FLEDGLING_SUPER_PAC_TEMPLATES = {
   liberty: [
     { id: 'pac-fledgling-liberty-1', name: 'Free Citizen Action Fund', petIssueId: 'tax-policy', petIssueLabel: 'Tax Cuts & Fiscal Restraint', axis: 'economic', idealRange: [7, 10], initialPool: 7.5, weeklyIncome: 0.9, tagline: 'Independent classical-liberal donors buying airwaves for civil liberties and deregulation.' },
-    { id: 'pac-fledgling-liberty-2', name: 'Constitutional Restraint PAC', petIssueId: 'civil-liberties', petIssueLabel: 'Civil Liberties & Privacy', axis: 'social', idealRange: [1, 4], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Backs anti-surveillance and limited-government challengers in competitive districts.' },
+    { id: 'pac-fledgling-liberty-2', name: 'Constitutional Restraint PAC', petIssueId: 'civil-liberties', petIssueLabel: 'Civil Liberties & Privacy', axis: 'social', idealRange: [1, 4], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Backs anti-surveillance and limited-government challengers in competitive districts.' }
   ],
   green: [
     { id: 'pac-fledgling-green-1', name: 'Clean Future Grassroots PAC', petIssueId: 'climate-policy', petIssueLabel: 'Climate & Clean Energy', axis: 'climate', idealRange: [1, 3], initialPool: 7.5, weeklyIncome: 0.9, tagline: 'Crowdfunded environmental activists financing rapid-transition media blitzes.' },
-    { id: 'pac-fledgling-green-2', name: 'Public Goods Coalition Fund', petIssueId: 'healthcare', petIssueLabel: 'Universal Healthcare', axis: 'economic', idealRange: [1, 3], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Channels small-dollar donor coalitions behind public healthcare and green transit.' },
+    { id: 'pac-fledgling-green-2', name: 'Public Goods Coalition Fund', petIssueId: 'healthcare', petIssueLabel: 'Universal Healthcare', axis: 'economic', idealRange: [1, 3], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Channels small-dollar donor coalitions behind public healthcare and green transit.' }
   ],
   socialist: [
     { id: 'pac-fledgling-socialist-1', name: 'Solidarity Workers Action PAC', petIssueId: 'labor-rights', petIssueLabel: 'Labor & Union Power', axis: 'economic', idealRange: [1, 3], initialPool: 7.0, weeklyIncome: 0.9, tagline: 'Rank-and-file union solidarity fund amplifying anti-corporate working-class campaigns.' },
-    { id: 'pac-fledgling-socialist-2', name: 'Housing & Healthcare Now Fund', petIssueId: 'healthcare', petIssueLabel: 'Universal Healthcare', axis: 'economic', idealRange: [1, 3], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Mobilizes tenant coalitions and young urban organizers into battleground media buys.' },
+    { id: 'pac-fledgling-socialist-2', name: 'Housing & Healthcare Now Fund', petIssueId: 'healthcare', petIssueLabel: 'Universal Healthcare', axis: 'economic', idealRange: [1, 3], initialPool: 6.0, weeklyIncome: 0.8, tagline: 'Mobilizes tenant coalitions and young urban organizers into battleground media buys.' }
   ],
   constitution: [
     { id: 'pac-fledgling-constitution-1', name: 'Tenth Amendment Heritage Fund', petIssueId: 'immigration', petIssueLabel: 'Border Sovereignty', axis: 'social', idealRange: [8, 10], initialPool: 7.0, weeklyIncome: 0.9, tagline: 'Constitutional originalists backing strict border sovereignty and traditional values.' },
-    { id: 'pac-fledgling-constitution-2', name: 'Faith & Republic Defense PAC', petIssueId: 'religious-liberty', petIssueLabel: 'Religious Liberty & Heritage', axis: 'social', idealRange: [8, 10], initialPool: 6.5, weeklyIncome: 0.8, tagline: 'Independent church-network backers rallying traditionalist turnout across heartland states.' },
+    { id: 'pac-fledgling-constitution-2', name: 'Faith & Republic Defense PAC', petIssueId: 'religious-liberty', petIssueLabel: 'Religious Liberty & Heritage', axis: 'social', idealRange: [8, 10], initialPool: 6.5, weeklyIncome: 0.8, tagline: 'Independent church-network backers rallying traditionalist turnout across heartland states.' }
   ],
   custom: [
     { id: 'pac-fledgling-custom-1', name: 'Independent Reform Citizens PAC', petIssueId: 'cost-of-living', petIssueLabel: 'Cost of Living & Reform', axis: 'economic', idealRange: [4, 7], initialPool: 8.0, weeklyIncome: 0.9, tagline: 'Civic reformers financing outsider campaigns once national polling breaks the blackout.' },
-    { id: 'pac-fledgling-custom-2', name: 'New Coalition Victory Fund', petIssueId: 'campaign-finance', petIssueLabel: 'Democracy & Electoral Reform', axis: 'governance', idealRange: [4, 7], initialPool: 6.5, weeklyIncome: 0.8, tagline: 'Channels cross-partisan movement money into high-leverage battlegrounds.' },
+    { id: 'pac-fledgling-custom-2', name: 'New Coalition Victory Fund', petIssueId: 'campaign-finance', petIssueLabel: 'Democracy & Electoral Reform', axis: 'governance', idealRange: [4, 7], initialPool: 6.5, weeklyIncome: 0.8, tagline: 'Channels cross-partisan movement money into high-leverage battlegrounds.' }
   ],
 };
 
@@ -3283,7 +3283,7 @@ const FUSION_POLICY_PLEDGES = [
   { id: 'pledge-electoral-reform', label: 'Ballot Access & Ranked-Choice Pledge', description: 'Commits the cross-endorsed nominee to back open ballot access and anti-spoiler electoral reforms.' },
   { id: 'pledge-civil-liberties', label: 'Constitutional Limits & Oversight Pledge', description: 'Binds the nominee to oppose warrantless surveillance, unfunded mandates, and executive overreach.' },
   { id: 'pledge-working-families', label: 'Working Families & Public Investment Pledge', description: 'Commits the nominee to champion domestic wages, clean infrastructure, and anti-monopoly enforcement.' },
-  { id: 'pledge-fiscal-restraint', label: 'Balanced Budget & Local Autonomy Pledge', description: 'Binds the nominee to curb deficit spending and devolve regulatory power back to statehouses.' },
+  { id: 'pledge-fiscal-restraint', label: 'Balanced Budget & Local Autonomy Pledge', description: 'Binds the nominee to curb deficit spending and devolve regulatory power back to statehouses.' }
 ];
 
 const MINOR_PARTY_FOUNDING_FACTIONS = {
@@ -3393,7 +3393,7 @@ const STATE_VOTING_LAW_BILLS = [
     effect: 'Expands early voting to 21 days with secure drop boxes. Increases working-class turnout by +1.8% and buffers against adverse Election-Day weather suppression.',
     workingClassTurnoutModifier: 0.018,
     weatherBuffer: true,
-  },
+  }
 ];
 
 // REQ-239: Party Origin Stories (5 Archetypes)
@@ -3433,7 +3433,7 @@ const CUSTOM_PARTY_ORIGINS = [
     startingBudget: 50,
     upsides: 'Massive $50M starting war chest; cuts Tier 1–3 Media Blackout penalties by 50% through high-profile figurehead visibility.',
     downsides: 'Grassroots Cynicism: -30% Small-Donor yield; harder persuasion and reduced base enthusiasm among populist and vanguard factions.',
-  },
+  }
 ];
 
 // REQ-241: Founding Charter Traits (Pick 1-2)
@@ -3459,7 +3459,7 @@ const CUSTOM_CHARTER_TRAITS = [
     id: 'state_first_federation',
     name: 'State-First Federation',
     description: '-33% State Chapter opening costs ($4M vs $6M) and +1 Quality / +5 Fame for Breakout State Legislators; softer top-down national whip discipline.',
-  },
+  }
 ];
 
 // REQ-241: Party Branding Suite (10 Inline SVG Vector Emblems)
@@ -3473,7 +3473,7 @@ const CUSTOM_PARTY_EMBLEMS = [
   { id: 'pine', label: 'Pine', svg: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="32 6 42 22 36 22 46 38 38 38 48 52 16 52 26 38 18 38 28 22 22 22"/><path d="M30 52v8h4v-8"/></svg>' },
   { id: 'bison', label: 'Bison', svg: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 28c0-8 6-14 14-14h16c6 0 12 4 14 10 4 2 6 6 6 10 0 6-4 10-8 12v10h-6v-8H36v8h-6v-10c-6-2-10-6-14-12H10v-6zM46 16l4-6M18 16l-4-6"/></svg>' },
   { id: 'starburst', label: 'Starburst', svg: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="32" y1="4" x2="32" y2="60"/><line x1="4" y1="32" x2="60" y2="32"/><line x1="12" y1="12" x2="52" y2="52"/><line x1="12" y1="52" x2="52" y2="12"/><circle cx="32" cy="32" r="6" fill="currentColor"/></svg>' },
-  { id: 'shield', label: 'Shield', svg: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6l22 8v18c0 16-12 24-22 26C22 56 10 48 10 32V14l22-8z"/><path d="M32 16v32M20 28h24"/></svg>' },
+  { id: 'shield', label: 'Shield', svg: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6l22 8v18c0 16-12 24-22 26C22 56 10 48 10 32V14l22-8z"/><path d="M32 16v32M20 28h24"/></svg>' }
 ];
 
 
@@ -10849,7 +10849,7 @@ const STARTING_STATEWIDE_OFFICERS = [
     "factionLabel": "Progressive / Civil Rights",
     "isIncumbent": true,
     "traits": [
-      "Corrupt",
+
       "Polished",
       "High-Stakes Financial Fraud Crusader"
     ],
@@ -12266,7 +12266,7 @@ const STARTING_STATEWIDE_OFFICERS = [
     "factionLabel": "Forensic Fraud Specialist",
     "isIncumbent": true,
     "traits": [
-      "Corrupt",
+
       "Squeaky Clean",
       "First Black Row Officer",
       "Nonpartisan Tone"
@@ -12989,7 +12989,7 @@ const STARTING_STATEWIDE_OFFICERS = [
     "factionLabel": "Hardline Movement Leader",
     "isIncumbent": true,
     "traits": [
-      "Corrupt",
+
       "Polished",
       "Impeachment Survivor",
       "Federal Scourge"
@@ -14520,7 +14520,7 @@ function computeStatePartyPlatformDeltas(stateId, partyId = 'people', customPlat
     { id: 'campaign-finance', pillar: 'democracy-policy' },
     { id: 'judicial-reform', pillar: 'democracy-policy' },
     { id: 'anti-establishment', pillar: 'establishment-stance' },
-    { id: 'grassroots-primaries', pillar: 'party-structure' },
+    { id: 'grassroots-primaries', pillar: 'party-structure' }
   ];
 
   effectiveIssues.forEach((iss) => {

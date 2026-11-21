@@ -1,4 +1,4 @@
-// Coalition Builder: Party Chair — MAS-01 Party Systems UI Shell
+// Coalition Builder: Party Chair — System Party Systems UI Shell
 // Renders the Top-Bar Active Era Badge, Qualitative Era Dossier Modal,
 // Fullscreen Historic Realignment Transition Modal, and Historical Era Timeline.
 // Strictly adheres to qualitative in-universe political journalism copy (zero raw probabilities, weights, or internal tags).
@@ -322,7 +322,7 @@
       </section>`;
   }
 
-  // REQ-234: Party Systems Era Dating Philosophy Popup Modal
+  // System: Party Systems Era Dating Philosophy Popup Modal
   function renderEraDatingPhilosophyModal(game) {
     return `
       <div class="era-realignment-backdrop" role="dialog" aria-modal="true" aria-labelledby="era-dating-heading" style="--era-accent:#c48f45">
@@ -651,7 +651,7 @@
       </div>`;
   }
 
-  // Unified Pending Modal Dispatcher (handles mid-modal save/reload across all MAS-01 modal types)
+  // Unified Pending Modal Dispatcher (handles mid-modal save/reload across all System modal types)
   function renderActivePartySystemsModal(game) {
     const pm = game?.partySystems?.pendingModal;
     if (!pm) return '';

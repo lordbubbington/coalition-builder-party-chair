@@ -68,6 +68,16 @@
    * then adds state-level independent polling error (sigma = 1.2%).
    */
   function generateCorrelatedPollingError(game, options = {}) {
+    // v0.18.1 (#43): If CampaignOverhaul already generated correlated polling errors for this cycle, reuse them to avoid double-randomization
+    const existingReport = game?.pollingMissReport || game?.lastElection?.pollingMissReport;
+    if (!options.forceNew && existingReport && existingReport.stateErrors && Number(existingReport.year || game?.year) === Number(game?.year || 2028)) {
+      return {
+        correlatedRegionalError: existingReport.regionalErrors || {},
+        statePollingErrors: { ...existingReport.stateErrors },
+        nationalError: existingReport.recalculatedNationalMiss ?? existingReport.nationalMiss ?? 0,
+        source: 'campaign-overhaul-unified',
+      };
+    }
     const seed = options.seed !== undefined ? options.seed : (game?.seed || 2028) + (game?.year || 2028);
     const rng = createPrng(seed);
 

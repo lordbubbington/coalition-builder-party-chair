@@ -6932,7 +6932,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "senate:DE:class-1": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -6989,7 +6988,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "senate:IA:class-2": [
-    "Corrupt",
     "Established politician"
   ],
   "senate:KS:class-3": [
@@ -7209,7 +7207,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:TX:class-2": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -7222,7 +7219,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "senate:UT:class-1": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -7362,9 +7358,7 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rising Star",
     "Polished"
   ],
-  "governor:MI": [
-    "Corrupt"
-  ],
+  "governor:MI": [],
   "governor:MN": [
     "Established politician",
     "Rough"
@@ -7448,7 +7442,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "governor:TX": [
-    "Corrupt",
     "Established politician"
   ],
   "governor:UT": [
@@ -7473,7 +7466,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "governor:WI": [
-    "Corrupt",
     "Polished"
   ],
   "governor:WY": [
@@ -7482,7 +7474,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:AL-1": [
-    "Corrupt",
     "Polished"
   ],
   "house:AL-2": [
@@ -7539,7 +7530,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:AZ-8": [
-    "Corrupt",
     "Rough"
   ],
   "house:AZ-9": [
@@ -7598,7 +7588,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:CA-12": [
-    "Corrupt",
     "Rough"
   ],
   "house:CA-13": [
@@ -7610,7 +7599,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "house:CA-15": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -7633,7 +7621,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:CA-21": [
-    "Corrupt",
     "Rough"
   ],
   "house:CA-22": [
@@ -7647,7 +7634,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:CA-25": [
-    "Corrupt",
     "Rough"
   ],
   "house:CA-26": [
@@ -7677,11 +7663,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined",
     "Established politician"
   ],
-  "house:CA-34": [
-    "Corrupt"
-  ],
+  "house:CA-34": [],
   "house:CA-35": [
-    "Corrupt",
     "Polished"
   ],
   "house:CA-36": [
@@ -7689,7 +7672,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:CA-37": [
-    "Corrupt",
     "Disciplined"
   ],
   "house:CA-38": [
@@ -7715,9 +7697,7 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician",
     "Rough"
   ],
-  "house:CA-44": [
-    "Corrupt"
-  ],
+  "house:CA-44": [],
   "house:CA-45": [
     "Polished",
     "Disciplined"
@@ -7783,7 +7763,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:CT-2": [
-    "Corrupt",
     "Rough"
   ],
   "house:CT-3": [
@@ -7799,7 +7778,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:DE-1": [
-    "Corrupt",
     "Polished"
   ],
   "house:FL-1": [
@@ -7810,7 +7788,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:FL-3": [
-    "Corrupt",
     "Polished"
   ],
   "house:FL-4": [
@@ -7839,7 +7816,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:FL-11": [
-    "Corrupt",
     "Rough"
   ],
   "house:FL-12": [
@@ -7881,7 +7857,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:FL-23": [
-    "Corrupt",
     "Polished"
   ],
   "house:FL-24": [
@@ -7892,7 +7867,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:FL-26": [
-    "Corrupt",
     "Disciplined"
   ],
   "house:FL-27": [
@@ -7914,7 +7888,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:GA-4": [
-    "Corrupt",
     "Rough"
   ],
   "house:GA-5": [
@@ -7925,7 +7898,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:GA-7": [
-    "Corrupt",
     "Polished"
   ],
   "house:GA-8": [
@@ -7953,9 +7925,7 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
   "house:HI-1": [
     "Rough"
   ],
-  "house:HI-2": [
-    "Corrupt"
-  ],
+  "house:HI-2": [],
   "house:ID-1": [
     "Polished",
     "Disciplined"
@@ -7983,9 +7953,7 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean",
     "Polished"
   ],
-  "house:IL-7": [
-    "Corrupt"
-  ],
+  "house:IL-7": [],
   "house:IL-8": [
     "Polished",
     "Disciplined"
@@ -8019,7 +7987,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:IL-16": [
-    "Corrupt",
     "Polished"
   ],
   "house:IL-17": [
@@ -8029,19 +7996,15 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean",
     "Established politician"
   ],
-  "house:IN-2": [
-    "Corrupt"
-  ],
+  "house:IN-2": [],
   "house:IN-3": [
     "Polished",
     "Disciplined"
   ],
   "house:IN-4": [
-    "Corrupt",
     "Polished"
   ],
   "house:IN-5": [
-    "Corrupt",
     "Rough"
   ],
   "house:IN-6": [
@@ -8061,11 +8024,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
   "house:IA-1": [
     "Rough"
   ],
-  "house:IA-2": [
-    "Corrupt"
-  ],
+  "house:IA-2": [],
   "house:IA-3": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -8081,7 +8041,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:KS-3": [
-    "Corrupt",
     "Rough"
   ],
   "house:KS-4": [
@@ -8089,11 +8048,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "house:KY-1": [
-    "Corrupt",
     "Polished"
   ],
   "house:KY-2": [
-    "Corrupt",
     "Rough"
   ],
   "house:KY-3": [
@@ -8138,7 +8095,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:ME-2": [
-    "Corrupt",
     "Polished"
   ],
   "house:MD-1": [
@@ -8253,9 +8209,7 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
   "house:MN-1": [
     "Established politician"
   ],
-  "house:MN-2": [
-    "Corrupt"
-  ],
+  "house:MN-2": [],
   "house:MN-3": [
     "Polished",
     "Disciplined"
@@ -8271,11 +8225,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:MN-7": [
-    "Corrupt",
     "Rough"
   ],
   "house:MN-8": [
-    "Corrupt",
     "Rough"
   ],
   "house:MS-1": [
@@ -8337,23 +8289,19 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:NE-3": [
-    "Corrupt",
     "Established politician"
   ],
   "house:NV-1": [
     "Rough"
   ],
   "house:NV-2": [
-    "Corrupt",
     "Disciplined"
   ],
   "house:NV-3": [
     "Squeaky Clean",
     "Disciplined"
   ],
-  "house:NV-4": [
-    "Corrupt"
-  ],
+  "house:NV-4": [],
   "house:NH-1": [
     "Squeaky Clean",
     "Rough"
@@ -8375,7 +8323,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:NJ-4": [
-    "Corrupt",
     "Polished"
   ],
   "house:NJ-5": [
@@ -8423,7 +8370,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:NY-2": [
-    "Corrupt",
     "Polished"
   ],
   "house:NY-3": [
@@ -8435,7 +8381,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:NY-5": [
-    "Corrupt",
     "Rough"
   ],
   "house:NY-6": [
@@ -8451,11 +8396,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:NY-9": [
-    "Corrupt",
     "Rough"
   ],
   "house:NY-10": [
-    "Corrupt",
     "Polished"
   ],
   "house:NY-11": [
@@ -8463,11 +8406,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:NY-12": [
-    "Corrupt",
     "Rough"
   ],
   "house:NY-13": [
-    "Corrupt",
     "Rough"
   ],
   "house:NY-14": [
@@ -8494,7 +8435,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:NY-20": [
-    "Corrupt",
     "Polished"
   ],
   "house:NY-21": [
@@ -8532,14 +8472,12 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:NC-5": [
-    "Corrupt",
     "Disciplined"
   ],
   "house:NC-6": [
     "Polished"
   ],
   "house:NC-7": [
-    "Corrupt",
     "Rough"
   ],
   "house:NC-8": [
@@ -8560,7 +8498,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:NC-13": [
-    "Corrupt",
     "Rough"
   ],
   "house:NC-14": [
@@ -8638,11 +8575,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:OK-3": [
-    "Corrupt",
     "Rough"
   ],
   "house:OK-4": [
-    "Corrupt",
     "Rough"
   ],
   "house:OK-5": [
@@ -8650,18 +8585,13 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:OR-1": [
-    "Corrupt",
     "Disciplined"
   ],
-  "house:OR-2": [
-    "Corrupt"
-  ],
+  "house:OR-2": [],
   "house:OR-3": [
-    "Corrupt",
     "Polished"
   ],
   "house:OR-4": [
-    "Corrupt",
     "Rough"
   ],
   "house:OR-5": [
@@ -8699,11 +8629,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:PA-8": [
-    "Corrupt",
     "Rough"
   ],
   "house:PA-9": [
-    "Corrupt",
     "Rough"
   ],
   "house:PA-10": [
@@ -8719,7 +8647,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:PA-13": [
-    "Corrupt",
     "Rough"
   ],
   "house:PA-14": [
@@ -8786,11 +8713,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean",
     "Rough"
   ],
-  "house:TN-4": [
-    "Corrupt"
-  ],
+  "house:TN-4": [],
   "house:TN-5": [
-    "Corrupt",
     "Undisciplined"
   ],
   "house:TN-6": [
@@ -8801,7 +8725,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:TN-8": [
-    "Corrupt",
     "Polished"
   ],
   "house:TN-9": [
@@ -8819,7 +8742,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:TX-4": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -8850,7 +8772,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:TX-12": [
-    "Corrupt",
     "Polished"
   ],
   "house:TX-13": [
@@ -8866,7 +8787,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:TX-16": [
-    "Corrupt",
     "Rough"
   ],
   "house:TX-17": [
@@ -8886,7 +8806,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:TX-22": [
-    "Corrupt",
     "Polished"
   ],
   "house:TX-23": [
@@ -8905,11 +8824,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:TX-27": [
-    "Corrupt",
     "Polished"
   ],
   "house:TX-28": [
-    "Corrupt",
     "Established politician"
   ],
   "house:TX-29": [
@@ -8936,7 +8853,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:TX-35": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -8953,7 +8869,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:UT-1": [
-    "Corrupt",
     "Established politician",
     "Polished"
   ],
@@ -8972,7 +8887,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:VA-1": [
-    "Corrupt",
     "Established politician"
   ],
   "house:VA-2": [
@@ -8980,7 +8894,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:VA-3": [
-    "Corrupt",
     "Established politician",
     "Rough"
   ],
@@ -9004,15 +8917,12 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "house:VA-9": [
-    "Corrupt",
     "Rough"
   ],
   "house:VA-10": [
     "Undisciplined"
   ],
-  "house:VA-11": [
-    "Corrupt"
-  ],
+  "house:VA-11": [],
   "house:WA-1": [
     "Squeaky Clean",
     "Polished"
@@ -9028,7 +8938,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:WA-5": [
-    "Corrupt",
     "Polished"
   ],
   "house:WA-6": [
@@ -9039,7 +8948,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:WA-8": [
-    "Corrupt",
     "Disciplined"
   ],
   "house:WA-9": [
@@ -9064,7 +8972,6 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:WI-3": [
-    "Corrupt",
     "Polished"
   ],
   "house:WI-4": [
@@ -9079,11 +8986,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "house:WI-7": [
-    "Corrupt",
     "Polished"
   ],
   "house:WI-8": [
-    "Corrupt",
     "Rough"
   ],
   "house:WY-1": [

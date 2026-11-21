@@ -383,9 +383,10 @@
       }
     }
 
-    // 3. Check thirdParty.byParty sample units (x100)
+    // 3. Check thirdParty.byParty units (native 1:1 in v0.18.0+, x100 for legacy 1:100)
     if (vm?.affiliations?.thirdParty?.byParty && Number.isFinite(Number(vm.affiliations.thirdParty.byParty[resolvedKey]))) {
-      return Number(vm.affiliations.thirdParty.byParty[resolvedKey]) * 100;
+      const _v07Scale = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+      return Number(vm.affiliations.thirdParty.byParty[resolvedKey]) * _v07Scale;
     }
 
     // 4. Custom party fallback

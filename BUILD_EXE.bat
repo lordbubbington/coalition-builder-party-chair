@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 echo ============================================================
-echo  Building Coalition Builder: Party Chair (v0.17.1)...
+echo  Building Coalition Builder: Party Chair (v0.18.1)...
 echo ============================================================
 echo.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%~dp0' -Include *.ps1,*.cs,*.bat -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue"

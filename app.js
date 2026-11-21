@@ -540,7 +540,7 @@ function getStatePollingBreakdown(stateObj, districtObj = null) {
       : canonicalId === 'green' ? 'Green'
       : canonicalId === 'liberty' ? 'Lib'
       : canonicalId === 'constitution' ? 'Const'
-      : canonicalId === 'socialist' ? 'Soc'
+      : canonicalId === 'socialist' ? 'PFP'
       : p.name.split(' ')[0];
     return {
       id: p.id,
@@ -826,7 +826,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.17.1)
+// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.18.1)
 if (typeof document !== 'undefined') {
   document.addEventListener('click', (event) => {
     const btn = event.target?.closest ? event.target.closest('[data-set-additional-type]') : null;
@@ -879,14 +879,14 @@ function modeledVotersForParty(partyId) {
     return affiliations[partyId].representedVoters;
   }
   if (affiliations.thirdParty?.byParty?.[partyId]) {
-    return affiliations.thirdParty.byParty[partyId] * 100;
+    return affiliations.thirdParty.byParty[partyId];
   }
   if (partyId === 'player') {
     const baseKey = game?.player?.baseTemplateId;
     if (baseKey && affiliations[baseKey]?.representedVoters) return affiliations[baseKey].representedVoters;
-    return (affiliations.thirdParty?.byParty?.player || affiliations.thirdParty?.byParty?.[baseKey] || 1000) * 100;
+    return (affiliations.thirdParty?.byParty?.player || affiliations.thirdParty?.byParty?.[baseKey] || 100000);
   }
-  return (affiliations.thirdParty?.byParty?.other || 0) * 100;
+  return (affiliations.thirdParty?.byParty?.other || 0);
 }
 
 function totalModeledElectorate() {
@@ -1038,7 +1038,7 @@ function effectiveMemberNetApproval(member = {}) {
 }
 
 // REQ-128: Candidate Traits Engine & 8-Trait Character System
-const POLITICIAN_TRAITS_MAP = window.PartyChairData?.POLITICIAN_TRAITS_MAP || {"Jon Ossoff":["Rising Star","Polished"],"Gretchen Whitmer":["Polished","Disciplined","Rising Star"],"Cory Booker":["Established Politician","Polished"],"Alexandria Ocasio-Cortez":["Rising Star","Rough"],"Andy Beshear":["Rising Star","Squeaky Clean","Polished"],"Amy Klobuchar":["Established Politician","Disciplined"],"J. D. Vance":["Rising Star","Rough"],"Nikki Haley":["Established Politician","Polished"],"Marco Rubio":["Established Politician","Polished"],"Glenn Youngkin":["Polished","Disciplined"],"Butch Ware":["Rough","Undisciplined"],"Mike ter Maat":["Disciplined"],"Chase Oliver":["Rising Star","Polished"],"Jill Stein":["Established Politician","Rough"],"Kshama Sawant":["Rough","Undisciplined"],"Ajamu Baraka":["Rough"],"Randall Terry":["Rough","Undisciplined"],"Scott Bradley":["Disciplined"],"Claudia De la Cruz":["Rising Star","Rough"],"Gloria La Riva":["Established Politician","Disciplined"],"Spike Cohen":["Polished","Rising Star"],"Lisa Murkowski":["Established Politician","Disciplined"],"Mary Peltola":["Rising Star","Squeaky Clean","Polished"],"Katie Britt":["Rising Star","Polished"],"Tommy Tuberville":["Rough","Undisciplined"],"John Boozman":["Squeaky Clean","Polished"],"Tom Cotton":["Rising Star","Disciplined"],"Mark Kelly":["Squeaky Clean","Polished","Rising Star"],"Ruben Gallego":["Rising Star","Rough"],"Adam Schiff":["Established Politician","Polished"],"Alex Padilla":["Established Politician","Polished"],"John Hickenlooper":["Squeaky Clean","Established Politician","Polished"],"Michael Bennet":["Undisciplined"],"Chris Murphy":["Rising Star","Polished"],"Richard Blumenthal":["Established Politician","Polished"],"Chris Coons":["Established Politician","Disciplined"],"Lisa Blunt Rochester":["Corrupt","Established Politician","Polished"],"Ashley Moody":["Squeaky Clean","Established Politician","Polished"],"Rick Scott":["Established Politician","Disciplined"],"Raphael Warnock":["Rising Star","Polished"],"Brian Schatz":["Established Politician","Disciplined"],"Mazie Hirono":["Established Politician","Rough"],"Chuck Grassley":["Established Politician","Rough"],"Josh Turek":["Corrupt","Established Politician"],"Jim Risch":["Established Politician","Disciplined"],"Mike Crapo":["Established Politician","Disciplined"],"Juliana Stratton":["Established Politician"],"Tammy Duckworth":["Established Politician","Disciplined"],"Jim Banks":["Established Politician","Polished"],"Todd Young":["Disciplined","Polished"],"Adam Hamilton":["Established Politician","Disciplined"],"Jerry Moran":["Established Politician","Disciplined"],"Andy Barr":["Established Politician","Rough"],"Rand Paul":["Established Politician","Undisciplined"],"Bill Cassidy":["Established Politician","Disciplined"],"John Kennedy":["Established Politician","Rough","Undisciplined"],"Ed Markey":["Established Politician","Rough"],"Elizabeth Warren":["Established Politician","Disciplined"],"Angela Alsobrooks":["Squeaky Clean","Established Politician","Rough"],"Chris Van Hollen":["Rough"],"Angus King":["Established Politician","Squeaky Clean"],"Troy Jackson":["Squeaky Clean","Established Politician","Polished"],"Elissa Slotkin":["Rising Star","Polished"],"Haley Stevens":["Established Politician","Rough"],"Angie Craig":["Established Politician","Polished"],"Eric Schmitt":["Rising Star","Polished"],"Josh Hawley":["Rising Star","Polished"],"Roger Wicker":["Established Politician","Disciplined"],"Scott Colom":["Squeaky Clean","Established Politician","Rough"],"Steve Daines":["Established Politician","Disciplined"],"Tim Sheehy":["Established Politician"],"Roy Cooper":["Established Politician","Disciplined"],"Ted Budd":["Disciplined"],"John Hoeven":["Established Politician","Disciplined"],"Kevin Cramer":["Established Politician","Rough"],"Deb Fischer":["Established Politician","Disciplined"],"Pete Ricketts":["Established Politician","Polished"],"Chris Pappas":["Established Politician"],"Maggie Hassan":["Established Politician","Disciplined"],"Andy Kim":["Rough"],"Ben Ray Lujan":["Established Politician","Polished"],"Martin Heinrich":["Established Politician","Polished"],"Catherine Cortez Masto":["Established Politician","Disciplined"],"Jacky Rosen":["Disciplined","Established Politician"],"Chuck Schumer":["Established Politician","Disciplined"],"Kirsten Gillibrand":["Established Politician","Polished"],"Bernie Moreno":["Established Politician","Polished"],"Sherrod Brown":["Established Politician","Rough"],"James Lankford":["Established Politician","Disciplined"],"Markwayne Mullin":["Rough","Undisciplined"],"Jeff Merkley":["Established Politician","Disciplined"],"Ron Wyden":["Established Politician","Disciplined"],"Dave McCormick":["Squeaky Clean","Established Politician"],"John Fetterman":["Rough","Undisciplined"],"Jack Reed":["Established Politician","Disciplined"],"Sheldon Whitehouse":["Established Politician","Disciplined"],"Annie Andrews":["Squeaky Clean","Established Politician","Rough"],"Tim Scott":["Established Politician","Polished"],"John Thune":["Established Politician","Disciplined"],"Mike Rounds":["Established Politician","Disciplined"],"Bill Hagerty":["Disciplined","Polished"],"Marsha Blackburn":["Established Politician","Rough"],"James Talarico":["Corrupt","Established Politician","Polished"],"Ted Cruz":["Established Politician","Polished"],"John Curtis":["Corrupt","Established Politician","Polished"],"Mike Lee":["Established Politician","Undisciplined"],"Mark Warner":["Established Politician","Polished"],"Tim Kaine":["Established Politician","Disciplined"],"Bernie Sanders":["Established Politician","Squeaky Clean","Rough"],"Peter Welch":["Established Politician","Squeaky Clean"],"Maria Cantwell":["Established Politician","Disciplined"],"Patty Murray":["Established Politician","Disciplined"],"Ron Johnson":["Established Politician","Rough","Undisciplined"],"Tammy Baldwin":["Established Politician","Disciplined"],"Jim Justice":["Established Politician","Rough"],"Shelley Moore Capito":["Established Politician","Disciplined"],"Harriet Hageman":["Established Politician","Polished"],"John Barrasso":["Established Politician","Disciplined"],"Click Bishop":["Squeaky Clean","Established Politician"],"Sarah Huckabee Sanders":["Rising Star","Rough"],"Katie Hobbs":["Disciplined"],"Eleni Kounalakis":["Established Politician"],"Phil Weiser":["Squeaky Clean","Established Politician","Polished"],"Ned Lamont":["Established Politician","Polished"],"Matt Meyer":["Squeaky Clean","Established Politician"],"Byron Donalds":["Rising Star","Polished"],"Keisha Lance Bottoms":["Squeaky Clean","Established Politician","Polished"],"Josh Green":["Squeaky Clean","Polished"],"Rob Sand":["Squeaky Clean","Established Politician"],"Brad Little":["Established Politician","Disciplined"],"JB Pritzker":["Established Politician","Polished"],"Mike Braun":["Established Politician","Disciplined"],"Sharice Davids":["Squeaky Clean","Established Politician","Polished"],"Jeff Landry":["Rough","Undisciplined"],"Maura Healey":["Rising Star","Polished"],"Wes Moore":["Rising Star","Polished"],"Shenna Bellows":["Rough","Disciplined"],"Jocelyn Benson":["Corrupt"],"Tim Walz":["Established Politician","Rough"],"Mike Kehoe":["Squeaky Clean","Established Politician","Rough"],"Tate Reeves":["Established Politician","Disciplined"],"Greg Gianforte":["Rough","Established Politician"],"Josh Stein":["Squeaky Clean","Established Politician","Polished"],"Kelly Armstrong":["Squeaky Clean","Established Politician"],"Jim Pillen":["Rough"],"Kelly Ayotte":["Established Politician","Polished"],"Mikie Sherrill":["Rising Star","Polished"],"Deb Haaland":["Established Politician","Disciplined"],"Aaron Ford":["Polished","Disciplined"],"Kathy Hochul":["Established Politician","Polished"],"Amy Acton":["Squeaky Clean","Established Politician"],"Gentner Drummond":["Established Politician","Polished"],"Tina Kotek":["Disciplined","Polished"],"Josh Shapiro":["Rising Star","Polished"],"Dan McKee":["Established Politician","Disciplined"],"Alan Wilson":["Established Politician","Rough"],"Larry Rhoden":["Squeaky Clean","Established Politician","Polished"],"Gina Hinojosa":["Corrupt","Established Politician"],"Spencer Cox":["Squeaky Clean","Polished"],"Abigail Spanberger":["Rising Star","Polished","Disciplined"],"Phil Scott":["Squeaky Clean","Established Politician"],"Bob Ferguson":["Disciplined","Polished"],"Mandela Barnes":["Corrupt","Polished"],"Patrick Morrisey":["Squeaky Clean","Undisciplined"],"Chuck Gray":["Squeaky Clean","Established Politician","Rough"],"AK-1":["Established Politician","Polished"],"AL-1":["Corrupt","Polished"],"AL-2":["Established Politician","Polished"],"AL-3":["Established Politician","Disciplined"],"AL-4":["Polished","Disciplined"],"AL-5":["Rough","Undisciplined"],"AL-6":["Squeaky Clean","Rough"],"AL-7":["Rough","Undisciplined"],"AR-1":["Squeaky Clean","Polished"],"AR-2":["Squeaky Clean"],"AR-3":["Undisciplined"],"AR-4":["Rough"],"AZ-1":["Polished"],"AZ-2":["Polished","Disciplined"],"AZ-3":["Squeaky Clean","Polished"],"AZ-4":["Established Politician","Polished"],"AZ-5":["Squeaky Clean","Polished"],"AZ-6":["Established Politician"],"AZ-7":["Established Politician"],"AZ-8":["Corrupt","Rough"],"AZ-9":["Rough","Undisciplined"],"CA-1":["Undisciplined"],"CA-2":["Disciplined"],"CA-3":["Squeaky Clean","Rough"],"CA-4":["Polished"],"CA-5":["Rough"],"CA-6":["Disciplined"],"CA-7":["Disciplined"],"CA-8":["Polished","Disciplined"],"CA-9":["Established Politician","Rough"],"CA-10":["Squeaky Clean","Polished"],"CA-11":["Polished","Disciplined"],"CA-12":["Corrupt","Rough"],"CA-13":["Established Politician","Polished"],"CA-14":["Rough","Undisciplined"],"CA-15":["Corrupt","Established Politician","Polished"],"CA-16":["Squeaky Clean","Disciplined"],"CA-17":["Rising Star","Polished"],"CA-18":["Squeaky Clean","Polished"],"CA-19":["Polished"],"CA-20":["Rough"],"CA-21":["Corrupt","Rough"],"CA-22":["Squeaky Clean","Disciplined"],"CA-23":["Rough"],"CA-24":["Disciplined"],"CA-25":["Corrupt","Rough"],"CA-26":["Rough"],"CA-27":["Rough"],"CA-28":["Established Politician"],"CA-29":["Squeaky Clean"],"CA-30":["Squeaky Clean","Undisciplined"],"CA-31":["Established Politician"],"CA-32":["Squeaky Clean","Established Politician"],"CA-33":["Disciplined","Established Politician"],"CA-34":["Corrupt"],"CA-35":["Corrupt","Polished"],"CA-36":["Polished","Established Politician"],"CA-37":["Corrupt","Disciplined"],"CA-38":["Polished"],"CA-39":["Squeaky Clean","Polished"],"CA-40":["Squeaky Clean"],"CA-41":["Squeaky Clean","Disciplined"],"CA-42":["Squeaky Clean","Established Politician","Rough"],"CA-43":["Established Politician","Rough"],"CA-44":["Corrupt"],"CA-45":["Polished","Disciplined"],"CA-46":["Rough","Disciplined"],"CA-47":["Rough","Disciplined"],"CA-48":["Squeaky Clean","Rough"],"CA-49":["Disciplined"],"CA-50":["Rough","Undisciplined"],"CA-51":["Squeaky Clean","Disciplined"],"CA-52":["Rough","Undisciplined"],"CO-1":["Squeaky Clean"],"CO-2":["Squeaky Clean","Rough"],"CO-3":["Rough"],"CO-4":["Squeaky Clean","Established Politician","Rough"],"CO-5":["Rough"],"CO-6":["Squeaky Clean","Rough"],"CO-7":["Squeaky Clean"],"CO-8":["Squeaky Clean","Polished"],"CT-1":["Squeaky Clean","Disciplined"],"CT-2":["Corrupt","Rough"],"CT-3":["Established Politician","Rough"],"CT-4":["Squeaky Clean","Rough"],"CT-5":["Squeaky Clean","Polished"],"DE-1":["Corrupt","Polished"],"FL-1":["Squeaky Clean","Disciplined"],"FL-2":["Squeaky Clean"],"FL-3":["Corrupt","Polished"],"FL-4":["Rough"],"FL-5":["Rough"],"FL-6":["Squeaky Clean","Established Politician","Rough"],"FL-7":["Established Politician"],"FL-8":["Rough"],"FL-9":["Rough","Undisciplined"],"FL-10":["Rising Star","Rough"],"FL-11":["Corrupt","Rough"],"FL-12":["Squeaky Clean","Polished"],"FL-13":["Rising Star","Rough"],"FL-14":["Squeaky Clean"],"FL-15":["Established Politician"],"FL-16":["Squeaky Clean"],"FL-17":["Squeaky Clean","Polished"],"FL-18":["Squeaky Clean","Undisciplined"],"FL-19":["Squeaky Clean"],"FL-20":["Rough"],"FL-21":["Established Politician","Disciplined"],"FL-22":["Disciplined"],"FL-23":["Corrupt","Polished"],"FL-24":["Established Politician"],"FL-25":["Squeaky Clean","Polished"],"FL-26":["Corrupt","Disciplined"],"FL-27":["Disciplined"],"FL-28":["Squeaky Clean","Rough"],"GA-1":["Polished","Disciplined"],"GA-2":["Established Politician","Disciplined"],"GA-3":["Established Politician"],"GA-4":["Corrupt","Rough"],"GA-5":["Polished","Disciplined"],"GA-6":["Rough"],"GA-7":["Corrupt","Polished"],"GA-8":["Polished"],"GA-9":["Undisciplined"],"GA-10":["Established Politician"],"GA-11":["Polished","Disciplined"],"GA-12":["Squeaky Clean"],"GA-13":["Polished"],"GA-14":["Squeaky Clean"],"HI-1":["Rough"],"HI-2":["Corrupt"],"IA-1":["Rough"],"IA-2":["Corrupt"],"IA-3":["Corrupt","Established Politician","Polished"],"IA-4":["Rough","Undisciplined"],"ID-1":["Polished","Disciplined"],"ID-2":["Polished","Disciplined"],"IL-1":["Squeaky Clean"],"IL-2":["Disciplined"],"IL-3":["Established Politician"],"IL-4":["Established Politician"],"IL-5":["Disciplined"],"IL-6":["Squeaky Clean","Polished"],"IL-7":["Corrupt"],"IL-8":["Polished","Disciplined"],"IL-9":["Squeaky Clean","Rough"],"IL-10":["Squeaky Clean","Established Politician","Polished"],"IL-11":["Rough"],"IL-12":["Established Politician","Disciplined"],"IL-13":["Squeaky Clean","Disciplined"],"IL-14":["Rising Star","Polished"],"IL-15":["Polished","Disciplined"],"IL-16":["Corrupt","Polished"],"IL-17":["Established Politician"],"IN-1":["Squeaky Clean","Established Politician"],"IN-2":["Corrupt"],"IN-3":["Polished","Disciplined"],"IN-4":["Corrupt","Polished"],"IN-5":["Corrupt","Rough"],"IN-6":["Rough"],"IN-7":["Squeaky Clean"],"IN-8":["Rough","Undisciplined"],"IN-9":["Squeaky Clean","Disciplined"],"KS-1":["Established Politician"],"KS-2":["Established Politician","Polished"],"KS-3":["Corrupt","Rough"],"KS-4":["Rough","Undisciplined"],"KY-1":["Corrupt","Polished"],"KY-2":["Corrupt","Rough"],"KY-3":["Squeaky Clean","Polished"],"KY-4":["Squeaky Clean","Polished"],"KY-5":["Established Politician","Disciplined"],"KY-6":["Polished"],"LA-1":["Established Politician","Disciplined"],"LA-2":["Rough"],"LA-3":["Rough","Undisciplined"],"LA-4":["Disciplined","Polished"],"LA-5":["Rough"],"LA-6":["Squeaky Clean","Rough"],"MA-1":["Rough"],"MA-2":["Squeaky Clean","Rough"],"MA-3":["Disciplined"],"MA-4":["Squeaky Clean","Polished"],"MA-5":["Disciplined","Established Politician"],"MA-6":["Rough"],"MA-7":["Rough"],"MA-8":["Rough","Undisciplined"],"MA-9":["Established Politician"],"MD-1":["Squeaky Clean","Rough"],"MD-2":["Polished","Disciplined"],"MD-3":["Rough","Disciplined"],"MD-4":["Squeaky Clean","Polished"],"MD-5":["Established Politician"],"MD-6":["Rough"],"MD-7":["Polished"],"MD-8":["Squeaky Clean","Polished"],"ME-1":["Squeaky Clean","Polished"],"ME-2":["Corrupt","Polished"],"MI-1":["Established Politician"],"MI-2":["Squeaky Clean","Polished"],"MI-3":["Disciplined"],"MI-4":["Undisciplined"],"MI-5":["Squeaky Clean","Polished"],"MI-6":["Polished","Disciplined"],"MI-7":["Squeaky Clean","Established Politician","Rough"],"MI-8":["Polished","Disciplined"],"MI-9":["Squeaky Clean","Rough"],"MI-10":["Squeaky Clean","Disciplined"],"MI-11":["Rough"],"MI-12":["Rough","Undisciplined"],"MI-13":["Squeaky Clean","Rough"],"MN-1":["Established Politician"],"MN-2":["Corrupt"],"MN-3":["Polished","Disciplined"],"MN-4":["Polished"],"MN-5":["Rough","Undisciplined"],"MN-6":["Squeaky Clean"],"MN-7":["Corrupt","Rough"],"MN-8":["Corrupt","Rough"],"MO-1":["Squeaky Clean","Rough"],"MO-2":["Polished","Disciplined"],"MO-3":["Squeaky Clean","Polished"],"MO-4":["Rough"],"MO-5":["Established Politician"],"MO-6":["Squeaky Clean","Polished"],"MO-7":["Polished"],"MO-8":["Disciplined"],"MS-1":["Disciplined"],"MS-2":["Polished","Disciplined"],"MS-3":["Squeaky Clean","Polished"],"MS-4":["Squeaky Clean","Rough"],"MT-1":["Rough","Undisciplined"],"MT-2":["Rough"],"NC-1":["Disciplined"],"NC-2":["Rough"],"NC-3":["Rough"],"NC-4":["Squeaky Clean","Polished"],"NC-5":["Corrupt","Disciplined"],"NC-6":["Polished"],"NC-7":["Corrupt","Rough"],"NC-8":["Rough"],"NC-9":["Squeaky Clean","Polished"],"NC-10":["Rough"],"NC-11":["Rough"],"NC-12":["Squeaky Clean","Rough"],"NC-13":["Corrupt","Rough"],"NC-14":["Undisciplined"],"ND-1":["Squeaky Clean","Rough"],"NE-1":["Established Politician","Disciplined"],"NE-2":["Squeaky Clean","Rough"],"NE-3":["Corrupt","Established Politician"],"NH-1":["Squeaky Clean","Rough"],"NH-2":["Rough"],"NJ-1":["Polished","Disciplined"],"NJ-2":["Squeaky Clean","Rough"],"NJ-3":["Squeaky Clean","Established Politician","Polished"],"NJ-4":["Corrupt","Polished"],"NJ-5":["Squeaky Clean","Polished"],"NJ-6":["Rough"],"NJ-7":["Squeaky Clean","Rough"],"NJ-8":["Squeaky Clean","Rough"],"NJ-9":["Polished"],"NJ-10":["Squeaky Clean","Rough"],"NJ-11":["Rough"],"NJ-12":["Rough","Disciplined"],"NM-1":["Squeaky Clean","Established Politician","Polished"],"NM-2":["Squeaky Clean","Rough"],"NM-3":["Disciplined"],"NV-1":["Rough"],"NV-2":["Corrupt","Disciplined"],"NV-3":["Squeaky Clean","Disciplined"],"NV-4":["Corrupt"],"NY-1":["Established Politician"],"NY-2":["Corrupt","Polished"],"NY-3":["Squeaky Clean","Polished"],"NY-4":["Squeaky Clean","Polished"],"NY-5":["Corrupt","Rough"],"NY-6":["Undisciplined"],"NY-7":["Squeaky Clean","Rough"],"NY-8":["Established Politician","Polished","Disciplined"],"NY-9":["Corrupt","Rough"],"NY-10":["Corrupt","Polished"],"NY-11":["Rough","Disciplined"],"NY-12":["Corrupt","Rough"],"NY-13":["Corrupt","Rough"],"NY-14":["Rising Star","Rough"],"NY-15":["Polished","Disciplined"],"NY-16":["Rough"],"NY-17":["Squeaky Clean","Rough"],"NY-18":["Rising Star","Polished"],"NY-19":["Squeaky Clean","Established Politician"],"NY-20":["Corrupt","Polished"],"NY-21":["Rough"],"NY-22":["Polished","Disciplined"],"NY-23":["Established Politician"],"NY-24":["Rough","Undisciplined"],"NY-25":["Rough"],"NY-26":["Squeaky Clean","Polished"],"OH-1":["Rough","Disciplined"],"OH-2":["Rough","Undisciplined"],"OH-3":["Rough"],"OH-4":["Established Politician","Rough","Disciplined"],"OH-5":["Squeaky Clean","Rough"],"OH-6":["Squeaky Clean","Polished"],"OH-7":["Rough","Undisciplined"],"OH-8":["Squeaky Clean","Disciplined"],"OH-9":["Established Politician","Disciplined"],"OH-10":["Rough"],"OH-11":["Polished","Disciplined"],"OH-12":["Rough","Disciplined"],"OH-13":["Rough","Undisciplined"],"OH-14":["Squeaky Clean","Established Politician"],"OH-15":["Rough","Undisciplined"],"OK-1":["Squeaky Clean","Rough"],"OK-2":["Polished","Disciplined"],"OK-3":["Corrupt","Rough"],"OK-4":["Corrupt","Rough"],"OK-5":["Rough","Disciplined"],"OR-1":["Corrupt","Disciplined"],"OR-2":["Corrupt"],"OR-3":["Corrupt","Polished"],"OR-4":["Corrupt","Rough"],"OR-5":["Polished","Disciplined"],"OR-6":["Rough","Disciplined"],"PA-1":["Established Politician","Polished"],"PA-2":["Disciplined"],"PA-3":["Squeaky Clean"],"PA-4":["Squeaky Clean","Undisciplined"],"PA-5":["Squeaky Clean","Disciplined"],"PA-6":["Established Politician","Disciplined"],"PA-7":["Squeaky Clean","Rough"],"PA-8":["Corrupt","Rough"],"PA-9":["Corrupt","Rough"],"PA-10":["Rough","Disciplined"],"PA-11":["Squeaky Clean","Established Politician"],"PA-12":["Rough","Disciplined"],"PA-13":["Corrupt","Rough"],"PA-14":["Squeaky Clean","Polished"],"PA-15":["Squeaky Clean","Polished"],"PA-16":["Squeaky Clean","Polished"],"PA-17":["Squeaky Clean","Polished"],"RI-1":["Undisciplined"],"RI-2":["Squeaky Clean","Polished"],"SC-1":["Rough"],"SC-2":["Disciplined"],"SC-3":["Polished"],"SC-4":["Squeaky Clean","Established Politician","Rough"],"SC-5":["Squeaky Clean"],"SC-6":["Established Politician","Disciplined"],"SC-7":["Squeaky Clean","Polished"],"SD-1":["Squeaky Clean","Polished"],"TN-1":["Squeaky Clean","Rough"],"TN-2":["Squeaky Clean","Rough"],"TN-3":["Squeaky Clean","Rough"],"TN-4":["Corrupt"],"TN-5":["Corrupt","Undisciplined"],"TN-6":["Squeaky Clean","Polished"],"TN-7":["Established Politician"],"TN-8":["Corrupt","Polished"],"TN-9":["Established Politician","Rough"],"TX-1":["Squeaky Clean","Rough"],"TX-2":["Disciplined"],"TX-3":["Squeaky Clean"],"TX-4":["Corrupt","Established Politician","Polished"],"TX-5":["Squeaky Clean","Polished"],"TX-6":["Established Politician","Disciplined"],"TX-7":["Rough","Disciplined"],"TX-8":["Polished","Disciplined"],"TX-9":["Polished","Disciplined"],"TX-10":["Established Politician"],"TX-11":["Squeaky Clean"],"TX-12":["Corrupt","Polished"],"TX-13":["Squeaky Clean","Established Politician","Rough"],"TX-14":["Rough","Undisciplined"],"TX-15":["Rough"],"TX-16":["Corrupt","Rough"],"TX-17":["Rough"],"TX-18":["Rough"],"TX-19":["Squeaky Clean"],"TX-20":["Rough","Undisciplined"],"TX-21":["Rough"],"TX-22":["Corrupt","Polished"],"TX-23":["Polished","Disciplined"],"TX-24":["Rough"],"TX-25":["Squeaky Clean","Polished"],"TX-26":["Squeaky Clean","Rough"],"TX-27":["Corrupt","Polished"],"TX-28":["Corrupt","Established Politician"],"TX-29":["Rough"],"TX-30":["Squeaky Clean","Rough"],"TX-31":["Squeaky Clean","Undisciplined"],"TX-32":["Squeaky Clean","Rough"],"TX-33":["Squeaky Clean","Polished"],"TX-34":["Squeaky Clean","Polished"],"TX-35":["Corrupt","Established Politician","Polished"],"TX-36":["Squeaky Clean","Rough"],"TX-37":["Rough","Undisciplined"],"TX-38":["Squeaky Clean","Rough"],"UT-1":["Corrupt","Established Politician","Polished"],"UT-2":["Rough"],"UT-3":["Rough"],"UT-4":["Squeaky Clean","Polished"],"VA-1":["Corrupt","Established Politician"],"VA-2":["Squeaky Clean","Rough"],"VA-3":["Corrupt","Established Politician","Rough"],"VA-4":["Squeaky Clean","Rough"],"VA-5":["Rough"],"VA-6":["Squeaky Clean","Polished"],"VA-7":["Squeaky Clean","Polished"],"VA-8":["Polished","Disciplined"],"VA-9":["Corrupt","Rough"],"VA-10":["Undisciplined"],"VA-11":["Corrupt"],"VT-1":["Polished","Disciplined"],"WA-1":["Squeaky Clean","Polished"],"WA-2":["Rough"],"WA-3":["Rough","Rising Star"],"WA-4":["Squeaky Clean"],"WA-5":["Corrupt","Polished"],"WA-6":["Squeaky Clean"],"WA-7":["Established Politician","Rough"],"WA-8":["Corrupt","Disciplined"],"WA-9":["Squeaky Clean"],"WA-10":["Undisciplined"],"WI-1":["Squeaky Clean","Polished"],"WI-2":["Rough"],"WI-3":["Corrupt","Polished"],"WI-4":["Established Politician","Disciplined"],"WI-5":["Squeaky Clean","Rough"],"WI-6":["Established Politician"],"WI-7":["Corrupt","Polished"],"WI-8":["Corrupt","Rough"],"WV-1":["Established Politician","Polished"],"WV-2":["Squeaky Clean","Polished"],"WY-1":["Rough"]};
+const POLITICIAN_TRAITS_MAP = window.PartyChairData?.POLITICIAN_TRAITS_MAP || {"Jon Ossoff":["Rising Star","Polished"],"Gretchen Whitmer":["Polished","Disciplined","Rising Star"],"Cory Booker":["Established Politician","Polished"],"Alexandria Ocasio-Cortez":["Rising Star","Rough"],"Andy Beshear":["Rising Star","Squeaky Clean","Polished"],"Amy Klobuchar":["Established Politician","Disciplined"],"J. D. Vance":["Rising Star","Rough"],"Nikki Haley":["Established Politician","Polished"],"Marco Rubio":["Established Politician","Polished"],"Glenn Youngkin":["Polished","Disciplined"],"Butch Ware":["Rough","Undisciplined"],"Mike ter Maat":["Disciplined"],"Chase Oliver":["Rising Star","Polished"],"Jill Stein":["Established Politician","Rough"],"Kshama Sawant":["Rough","Undisciplined"],"Ajamu Baraka":["Rough"],"Randall Terry":["Rough","Undisciplined"],"Scott Bradley":["Disciplined"],"Claudia De la Cruz":["Rising Star","Rough"],"Gloria La Riva":["Established Politician","Disciplined"],"Spike Cohen":["Polished","Rising Star"],"Lisa Murkowski":["Established Politician","Disciplined"],"Mary Peltola":["Rising Star","Squeaky Clean","Polished"],"Katie Britt":["Rising Star","Polished"],"Tommy Tuberville":["Rough","Undisciplined"],"John Boozman":["Squeaky Clean","Polished"],"Tom Cotton":["Rising Star","Disciplined"],"Mark Kelly":["Squeaky Clean","Polished","Rising Star"],"Ruben Gallego":["Rising Star","Rough"],"Adam Schiff":["Established Politician","Polished"],"Alex Padilla":["Established Politician","Polished"],"John Hickenlooper":["Squeaky Clean","Established Politician","Polished"],"Michael Bennet":["Undisciplined"],"Chris Murphy":["Rising Star","Polished"],"Richard Blumenthal":["Established Politician","Polished"],"Chris Coons":["Established Politician","Disciplined"],"Lisa Blunt Rochester":["Established Politician","Polished"],"Ashley Moody":["Squeaky Clean","Established Politician","Polished"],"Rick Scott":["Established Politician","Disciplined"],"Raphael Warnock":["Rising Star","Polished"],"Brian Schatz":["Established Politician","Disciplined"],"Mazie Hirono":["Established Politician","Rough"],"Chuck Grassley":["Established Politician","Rough"],"Josh Turek":["Established Politician"],"Jim Risch":["Established Politician","Disciplined"],"Mike Crapo":["Established Politician","Disciplined"],"Juliana Stratton":["Established Politician"],"Tammy Duckworth":["Established Politician","Disciplined"],"Jim Banks":["Established Politician","Polished"],"Todd Young":["Disciplined","Polished"],"Adam Hamilton":["Established Politician","Disciplined"],"Jerry Moran":["Established Politician","Disciplined"],"Andy Barr":["Established Politician","Rough"],"Rand Paul":["Established Politician","Undisciplined"],"Bill Cassidy":["Established Politician","Disciplined"],"John Kennedy":["Established Politician","Rough","Undisciplined"],"Ed Markey":["Established Politician","Rough"],"Elizabeth Warren":["Established Politician","Disciplined"],"Angela Alsobrooks":["Squeaky Clean","Established Politician","Rough"],"Chris Van Hollen":["Rough"],"Angus King":["Established Politician","Squeaky Clean"],"Troy Jackson":["Squeaky Clean","Established Politician","Polished"],"Elissa Slotkin":["Rising Star","Polished"],"Haley Stevens":["Established Politician","Rough"],"Angie Craig":["Established Politician","Polished"],"Eric Schmitt":["Rising Star","Polished"],"Josh Hawley":["Rising Star","Polished"],"Roger Wicker":["Established Politician","Disciplined"],"Scott Colom":["Squeaky Clean","Established Politician","Rough"],"Steve Daines":["Established Politician","Disciplined"],"Tim Sheehy":["Established Politician"],"Roy Cooper":["Established Politician","Disciplined"],"Ted Budd":["Disciplined"],"John Hoeven":["Established Politician","Disciplined"],"Kevin Cramer":["Established Politician","Rough"],"Deb Fischer":["Established Politician","Disciplined"],"Pete Ricketts":["Established Politician","Polished"],"Chris Pappas":["Established Politician"],"Maggie Hassan":["Established Politician","Disciplined"],"Andy Kim":["Rough"],"Ben Ray Lujan":["Established Politician","Polished"],"Martin Heinrich":["Established Politician","Polished"],"Catherine Cortez Masto":["Established Politician","Disciplined"],"Jacky Rosen":["Disciplined","Established Politician"],"Chuck Schumer":["Established Politician","Disciplined"],"Kirsten Gillibrand":["Established Politician","Polished"],"Bernie Moreno":["Established Politician","Polished"],"Sherrod Brown":["Established Politician","Rough"],"James Lankford":["Established Politician","Disciplined"],"Markwayne Mullin":["Rough","Undisciplined"],"Jeff Merkley":["Established Politician","Disciplined"],"Ron Wyden":["Established Politician","Disciplined"],"Dave McCormick":["Squeaky Clean","Established Politician"],"John Fetterman":["Rough","Undisciplined"],"Jack Reed":["Established Politician","Disciplined"],"Sheldon Whitehouse":["Established Politician","Disciplined"],"Annie Andrews":["Squeaky Clean","Established Politician","Rough"],"Tim Scott":["Established Politician","Polished"],"John Thune":["Established Politician","Disciplined"],"Mike Rounds":["Established Politician","Disciplined"],"Bill Hagerty":["Disciplined","Polished"],"Marsha Blackburn":["Established Politician","Rough"],"James Talarico":["Established Politician","Polished"],"Ted Cruz":["Established Politician","Polished"],"John Curtis":["Established Politician","Polished"],"Mike Lee":["Established Politician","Undisciplined"],"Mark Warner":["Established Politician","Polished"],"Tim Kaine":["Established Politician","Disciplined"],"Bernie Sanders":["Established Politician","Squeaky Clean","Rough"],"Peter Welch":["Established Politician","Squeaky Clean"],"Maria Cantwell":["Established Politician","Disciplined"],"Patty Murray":["Established Politician","Disciplined"],"Ron Johnson":["Established Politician","Rough","Undisciplined"],"Tammy Baldwin":["Established Politician","Disciplined"],"Jim Justice":["Established Politician","Rough"],"Shelley Moore Capito":["Established Politician","Disciplined"],"Harriet Hageman":["Established Politician","Polished"],"John Barrasso":["Established Politician","Disciplined"],"Click Bishop":["Squeaky Clean","Established Politician"],"Sarah Huckabee Sanders":["Rising Star","Rough"],"Katie Hobbs":["Disciplined"],"Eleni Kounalakis":["Established Politician"],"Phil Weiser":["Squeaky Clean","Established Politician","Polished"],"Ned Lamont":["Established Politician","Polished"],"Matt Meyer":["Squeaky Clean","Established Politician"],"Byron Donalds":["Rising Star","Polished"],"Keisha Lance Bottoms":["Squeaky Clean","Established Politician","Polished"],"Josh Green":["Squeaky Clean","Polished"],"Rob Sand":["Squeaky Clean","Established Politician"],"Brad Little":["Established Politician","Disciplined"],"JB Pritzker":["Established Politician","Polished"],"Mike Braun":["Established Politician","Disciplined"],"Sharice Davids":["Squeaky Clean","Established Politician","Polished"],"Jeff Landry":["Rough","Undisciplined"],"Maura Healey":["Rising Star","Polished"],"Wes Moore":["Rising Star","Polished"],"Shenna Bellows":["Rough","Disciplined"],"Jocelyn Benson":[],"Tim Walz":["Established Politician","Rough"],"Mike Kehoe":["Squeaky Clean","Established Politician","Rough"],"Tate Reeves":["Established Politician","Disciplined"],"Greg Gianforte":["Rough","Established Politician"],"Josh Stein":["Squeaky Clean","Established Politician","Polished"],"Kelly Armstrong":["Squeaky Clean","Established Politician"],"Jim Pillen":["Rough"],"Kelly Ayotte":["Established Politician","Polished"],"Mikie Sherrill":["Rising Star","Polished"],"Deb Haaland":["Established Politician","Disciplined"],"Aaron Ford":["Polished","Disciplined"],"Kathy Hochul":["Established Politician","Polished"],"Amy Acton":["Squeaky Clean","Established Politician"],"Gentner Drummond":["Established Politician","Polished"],"Tina Kotek":["Disciplined","Polished"],"Josh Shapiro":["Rising Star","Polished"],"Dan McKee":["Established Politician","Disciplined"],"Alan Wilson":["Established Politician","Rough"],"Larry Rhoden":["Squeaky Clean","Established Politician","Polished"],"Gina Hinojosa":["Established Politician"],"Spencer Cox":["Squeaky Clean","Polished"],"Abigail Spanberger":["Rising Star","Polished","Disciplined"],"Phil Scott":["Squeaky Clean","Established Politician"],"Bob Ferguson":["Disciplined","Polished"],"Mandela Barnes":["Polished"],"Patrick Morrisey":["Squeaky Clean","Undisciplined"],"Chuck Gray":["Squeaky Clean","Established Politician","Rough"],"AK-1":["Established Politician","Polished"],"AL-1":["Polished"],"AL-2":["Established Politician","Polished"],"AL-3":["Established Politician","Disciplined"],"AL-4":["Polished","Disciplined"],"AL-5":["Rough","Undisciplined"],"AL-6":["Squeaky Clean","Rough"],"AL-7":["Rough","Undisciplined"],"AR-1":["Squeaky Clean","Polished"],"AR-2":["Squeaky Clean"],"AR-3":["Undisciplined"],"AR-4":["Rough"],"AZ-1":["Polished"],"AZ-2":["Polished","Disciplined"],"AZ-3":["Squeaky Clean","Polished"],"AZ-4":["Established Politician","Polished"],"AZ-5":["Squeaky Clean","Polished"],"AZ-6":["Established Politician"],"AZ-7":["Established Politician"],"AZ-8":["Rough"],"AZ-9":["Rough","Undisciplined"],"CA-1":["Undisciplined"],"CA-2":["Disciplined"],"CA-3":["Squeaky Clean","Rough"],"CA-4":["Polished"],"CA-5":["Rough"],"CA-6":["Disciplined"],"CA-7":["Disciplined"],"CA-8":["Polished","Disciplined"],"CA-9":["Established Politician","Rough"],"CA-10":["Squeaky Clean","Polished"],"CA-11":["Polished","Disciplined"],"CA-12":["Rough"],"CA-13":["Established Politician","Polished"],"CA-14":["Rough","Undisciplined"],"CA-15":["Established Politician","Polished"],"CA-16":["Squeaky Clean","Disciplined"],"CA-17":["Rising Star","Polished"],"CA-18":["Squeaky Clean","Polished"],"CA-19":["Polished"],"CA-20":["Rough"],"CA-21":["Rough"],"CA-22":["Squeaky Clean","Disciplined"],"CA-23":["Rough"],"CA-24":["Disciplined"],"CA-25":["Rough"],"CA-26":["Rough"],"CA-27":["Rough"],"CA-28":["Established Politician"],"CA-29":["Squeaky Clean"],"CA-30":["Squeaky Clean","Undisciplined"],"CA-31":["Established Politician"],"CA-32":["Squeaky Clean","Established Politician"],"CA-33":["Disciplined","Established Politician"],"CA-34":[],"CA-35":["Polished"],"CA-36":["Polished","Established Politician"],"CA-37":["Disciplined"],"CA-38":["Polished"],"CA-39":["Squeaky Clean","Polished"],"CA-40":["Squeaky Clean"],"CA-41":["Squeaky Clean","Disciplined"],"CA-42":["Squeaky Clean","Established Politician","Rough"],"CA-43":["Established Politician","Rough"],"CA-44":[],"CA-45":["Polished","Disciplined"],"CA-46":["Rough","Disciplined"],"CA-47":["Rough","Disciplined"],"CA-48":["Squeaky Clean","Rough"],"CA-49":["Disciplined"],"CA-50":["Rough","Undisciplined"],"CA-51":["Squeaky Clean","Disciplined"],"CA-52":["Rough","Undisciplined"],"CO-1":["Squeaky Clean"],"CO-2":["Squeaky Clean","Rough"],"CO-3":["Rough"],"CO-4":["Squeaky Clean","Established Politician","Rough"],"CO-5":["Rough"],"CO-6":["Squeaky Clean","Rough"],"CO-7":["Squeaky Clean"],"CO-8":["Squeaky Clean","Polished"],"CT-1":["Squeaky Clean","Disciplined"],"CT-2":["Rough"],"CT-3":["Established Politician","Rough"],"CT-4":["Squeaky Clean","Rough"],"CT-5":["Squeaky Clean","Polished"],"DE-1":["Polished"],"FL-1":["Squeaky Clean","Disciplined"],"FL-2":["Squeaky Clean"],"FL-3":["Polished"],"FL-4":["Rough"],"FL-5":["Rough"],"FL-6":["Squeaky Clean","Established Politician","Rough"],"FL-7":["Established Politician"],"FL-8":["Rough"],"FL-9":["Rough","Undisciplined"],"FL-10":["Rising Star","Rough"],"FL-11":["Rough"],"FL-12":["Squeaky Clean","Polished"],"FL-13":["Rising Star","Rough"],"FL-14":["Squeaky Clean"],"FL-15":["Established Politician"],"FL-16":["Squeaky Clean"],"FL-17":["Squeaky Clean","Polished"],"FL-18":["Squeaky Clean","Undisciplined"],"FL-19":["Squeaky Clean"],"FL-20":["Rough"],"FL-21":["Established Politician","Disciplined"],"FL-22":["Disciplined"],"FL-23":["Polished"],"FL-24":["Established Politician"],"FL-25":["Squeaky Clean","Polished"],"FL-26":["Disciplined"],"FL-27":["Disciplined"],"FL-28":["Squeaky Clean","Rough"],"GA-1":["Polished","Disciplined"],"GA-2":["Established Politician","Disciplined"],"GA-3":["Established Politician"],"GA-4":["Rough"],"GA-5":["Polished","Disciplined"],"GA-6":["Rough"],"GA-7":["Polished"],"GA-8":["Polished"],"GA-9":["Undisciplined"],"GA-10":["Established Politician"],"GA-11":["Polished","Disciplined"],"GA-12":["Squeaky Clean"],"GA-13":["Polished"],"GA-14":["Squeaky Clean"],"HI-1":["Rough"],"HI-2":[],"IA-1":["Rough"],"IA-2":[],"IA-3":["Established Politician","Polished"],"IA-4":["Rough","Undisciplined"],"ID-1":["Polished","Disciplined"],"ID-2":["Polished","Disciplined"],"IL-1":["Squeaky Clean"],"IL-2":["Disciplined"],"IL-3":["Established Politician"],"IL-4":["Established Politician"],"IL-5":["Disciplined"],"IL-6":["Squeaky Clean","Polished"],"IL-7":[],"IL-8":["Polished","Disciplined"],"IL-9":["Squeaky Clean","Rough"],"IL-10":["Squeaky Clean","Established Politician","Polished"],"IL-11":["Rough"],"IL-12":["Established Politician","Disciplined"],"IL-13":["Squeaky Clean","Disciplined"],"IL-14":["Rising Star","Polished"],"IL-15":["Polished","Disciplined"],"IL-16":["Polished"],"IL-17":["Established Politician"],"IN-1":["Squeaky Clean","Established Politician"],"IN-2":[],"IN-3":["Polished","Disciplined"],"IN-4":["Polished"],"IN-5":["Rough"],"IN-6":["Rough"],"IN-7":["Squeaky Clean"],"IN-8":["Rough","Undisciplined"],"IN-9":["Squeaky Clean","Disciplined"],"KS-1":["Established Politician"],"KS-2":["Established Politician","Polished"],"KS-3":["Rough"],"KS-4":["Rough","Undisciplined"],"KY-1":["Polished"],"KY-2":["Rough"],"KY-3":["Squeaky Clean","Polished"],"KY-4":["Squeaky Clean","Polished"],"KY-5":["Established Politician","Disciplined"],"KY-6":["Polished"],"LA-1":["Established Politician","Disciplined"],"LA-2":["Rough"],"LA-3":["Rough","Undisciplined"],"LA-4":["Disciplined","Polished"],"LA-5":["Rough"],"LA-6":["Squeaky Clean","Rough"],"MA-1":["Rough"],"MA-2":["Squeaky Clean","Rough"],"MA-3":["Disciplined"],"MA-4":["Squeaky Clean","Polished"],"MA-5":["Disciplined","Established Politician"],"MA-6":["Rough"],"MA-7":["Rough"],"MA-8":["Rough","Undisciplined"],"MA-9":["Established Politician"],"MD-1":["Squeaky Clean","Rough"],"MD-2":["Polished","Disciplined"],"MD-3":["Rough","Disciplined"],"MD-4":["Squeaky Clean","Polished"],"MD-5":["Established Politician"],"MD-6":["Rough"],"MD-7":["Polished"],"MD-8":["Squeaky Clean","Polished"],"ME-1":["Squeaky Clean","Polished"],"ME-2":["Polished"],"MI-1":["Established Politician"],"MI-2":["Squeaky Clean","Polished"],"MI-3":["Disciplined"],"MI-4":["Undisciplined"],"MI-5":["Squeaky Clean","Polished"],"MI-6":["Polished","Disciplined"],"MI-7":["Squeaky Clean","Established Politician","Rough"],"MI-8":["Polished","Disciplined"],"MI-9":["Squeaky Clean","Rough"],"MI-10":["Squeaky Clean","Disciplined"],"MI-11":["Rough"],"MI-12":["Rough","Undisciplined"],"MI-13":["Squeaky Clean","Rough"],"MN-1":["Established Politician"],"MN-2":[],"MN-3":["Polished","Disciplined"],"MN-4":["Polished"],"MN-5":["Rough","Undisciplined"],"MN-6":["Squeaky Clean"],"MN-7":["Rough"],"MN-8":["Rough"],"MO-1":["Squeaky Clean","Rough"],"MO-2":["Polished","Disciplined"],"MO-3":["Squeaky Clean","Polished"],"MO-4":["Rough"],"MO-5":["Established Politician"],"MO-6":["Squeaky Clean","Polished"],"MO-7":["Polished"],"MO-8":["Disciplined"],"MS-1":["Disciplined"],"MS-2":["Polished","Disciplined"],"MS-3":["Squeaky Clean","Polished"],"MS-4":["Squeaky Clean","Rough"],"MT-1":["Rough","Undisciplined"],"MT-2":["Rough"],"NC-1":["Disciplined"],"NC-2":["Rough"],"NC-3":["Rough"],"NC-4":["Squeaky Clean","Polished"],"NC-5":["Disciplined"],"NC-6":["Polished"],"NC-7":["Rough"],"NC-8":["Rough"],"NC-9":["Squeaky Clean","Polished"],"NC-10":["Rough"],"NC-11":["Rough"],"NC-12":["Squeaky Clean","Rough"],"NC-13":["Rough"],"NC-14":["Undisciplined"],"ND-1":["Squeaky Clean","Rough"],"NE-1":["Established Politician","Disciplined"],"NE-2":["Squeaky Clean","Rough"],"NE-3":["Established Politician"],"NH-1":["Squeaky Clean","Rough"],"NH-2":["Rough"],"NJ-1":["Polished","Disciplined"],"NJ-2":["Squeaky Clean","Rough"],"NJ-3":["Squeaky Clean","Established Politician","Polished"],"NJ-4":["Polished"],"NJ-5":["Squeaky Clean","Polished"],"NJ-6":["Rough"],"NJ-7":["Squeaky Clean","Rough"],"NJ-8":["Squeaky Clean","Rough"],"NJ-9":["Polished"],"NJ-10":["Squeaky Clean","Rough"],"NJ-11":["Rough"],"NJ-12":["Rough","Disciplined"],"NM-1":["Squeaky Clean","Established Politician","Polished"],"NM-2":["Squeaky Clean","Rough"],"NM-3":["Disciplined"],"NV-1":["Rough"],"NV-2":["Disciplined"],"NV-3":["Squeaky Clean","Disciplined"],"NV-4":[],"NY-1":["Established Politician"],"NY-2":["Polished"],"NY-3":["Squeaky Clean","Polished"],"NY-4":["Squeaky Clean","Polished"],"NY-5":["Rough"],"NY-6":["Undisciplined"],"NY-7":["Squeaky Clean","Rough"],"NY-8":["Established Politician","Polished","Disciplined"],"NY-9":["Rough"],"NY-10":["Polished"],"NY-11":["Rough","Disciplined"],"NY-12":["Rough"],"NY-13":["Rough"],"NY-14":["Rising Star","Rough"],"NY-15":["Polished","Disciplined"],"NY-16":["Rough"],"NY-17":["Squeaky Clean","Rough"],"NY-18":["Rising Star","Polished"],"NY-19":["Squeaky Clean","Established Politician"],"NY-20":["Polished"],"NY-21":["Rough"],"NY-22":["Polished","Disciplined"],"NY-23":["Established Politician"],"NY-24":["Rough","Undisciplined"],"NY-25":["Rough"],"NY-26":["Squeaky Clean","Polished"],"OH-1":["Rough","Disciplined"],"OH-2":["Rough","Undisciplined"],"OH-3":["Rough"],"OH-4":["Established Politician","Rough","Disciplined"],"OH-5":["Squeaky Clean","Rough"],"OH-6":["Squeaky Clean","Polished"],"OH-7":["Rough","Undisciplined"],"OH-8":["Squeaky Clean","Disciplined"],"OH-9":["Established Politician","Disciplined"],"OH-10":["Rough"],"OH-11":["Polished","Disciplined"],"OH-12":["Rough","Disciplined"],"OH-13":["Rough","Undisciplined"],"OH-14":["Squeaky Clean","Established Politician"],"OH-15":["Rough","Undisciplined"],"OK-1":["Squeaky Clean","Rough"],"OK-2":["Polished","Disciplined"],"OK-3":["Rough"],"OK-4":["Rough"],"OK-5":["Rough","Disciplined"],"OR-1":["Disciplined"],"OR-2":[],"OR-3":["Polished"],"OR-4":["Rough"],"OR-5":["Polished","Disciplined"],"OR-6":["Rough","Disciplined"],"PA-1":["Established Politician","Polished"],"PA-2":["Disciplined"],"PA-3":["Squeaky Clean"],"PA-4":["Squeaky Clean","Undisciplined"],"PA-5":["Squeaky Clean","Disciplined"],"PA-6":["Established Politician","Disciplined"],"PA-7":["Squeaky Clean","Rough"],"PA-8":["Rough"],"PA-9":["Rough"],"PA-10":["Rough","Disciplined"],"PA-11":["Squeaky Clean","Established Politician"],"PA-12":["Rough","Disciplined"],"PA-13":["Rough"],"PA-14":["Squeaky Clean","Polished"],"PA-15":["Squeaky Clean","Polished"],"PA-16":["Squeaky Clean","Polished"],"PA-17":["Squeaky Clean","Polished"],"RI-1":["Undisciplined"],"RI-2":["Squeaky Clean","Polished"],"SC-1":["Rough"],"SC-2":["Disciplined"],"SC-3":["Polished"],"SC-4":["Squeaky Clean","Established Politician","Rough"],"SC-5":["Squeaky Clean"],"SC-6":["Established Politician","Disciplined"],"SC-7":["Squeaky Clean","Polished"],"SD-1":["Squeaky Clean","Polished"],"TN-1":["Squeaky Clean","Rough"],"TN-2":["Squeaky Clean","Rough"],"TN-3":["Squeaky Clean","Rough"],"TN-4":[],"TN-5":["Undisciplined"],"TN-6":["Squeaky Clean","Polished"],"TN-7":["Established Politician"],"TN-8":["Polished"],"TN-9":["Established Politician","Rough"],"TX-1":["Squeaky Clean","Rough"],"TX-2":["Disciplined"],"TX-3":["Squeaky Clean"],"TX-4":["Established Politician","Polished"],"TX-5":["Squeaky Clean","Polished"],"TX-6":["Established Politician","Disciplined"],"TX-7":["Rough","Disciplined"],"TX-8":["Polished","Disciplined"],"TX-9":["Polished","Disciplined"],"TX-10":["Established Politician"],"TX-11":["Squeaky Clean"],"TX-12":["Polished"],"TX-13":["Squeaky Clean","Established Politician","Rough"],"TX-14":["Rough","Undisciplined"],"TX-15":["Rough"],"TX-16":["Rough"],"TX-17":["Rough"],"TX-18":["Rough"],"TX-19":["Squeaky Clean"],"TX-20":["Rough","Undisciplined"],"TX-21":["Rough"],"TX-22":["Polished"],"TX-23":["Polished","Disciplined"],"TX-24":["Rough"],"TX-25":["Squeaky Clean","Polished"],"TX-26":["Squeaky Clean","Rough"],"TX-27":["Polished"],"TX-28":["Established Politician"],"TX-29":["Rough"],"TX-30":["Squeaky Clean","Rough"],"TX-31":["Squeaky Clean","Undisciplined"],"TX-32":["Squeaky Clean","Rough"],"TX-33":["Squeaky Clean","Polished"],"TX-34":["Squeaky Clean","Polished"],"TX-35":["Established Politician","Polished"],"TX-36":["Squeaky Clean","Rough"],"TX-37":["Rough","Undisciplined"],"TX-38":["Squeaky Clean","Rough"],"UT-1":["Established Politician","Polished"],"UT-2":["Rough"],"UT-3":["Rough"],"UT-4":["Squeaky Clean","Polished"],"VA-1":["Established Politician"],"VA-2":["Squeaky Clean","Rough"],"VA-3":["Established Politician","Rough"],"VA-4":["Squeaky Clean","Rough"],"VA-5":["Rough"],"VA-6":["Squeaky Clean","Polished"],"VA-7":["Squeaky Clean","Polished"],"VA-8":["Polished","Disciplined"],"VA-9":["Rough"],"VA-10":["Undisciplined"],"VA-11":[],"VT-1":["Polished","Disciplined"],"WA-1":["Squeaky Clean","Polished"],"WA-2":["Rough"],"WA-3":["Rough","Rising Star"],"WA-4":["Squeaky Clean"],"WA-5":["Polished"],"WA-6":["Squeaky Clean"],"WA-7":["Established Politician","Rough"],"WA-8":["Disciplined"],"WA-9":["Squeaky Clean"],"WA-10":["Undisciplined"],"WI-1":["Squeaky Clean","Polished"],"WI-2":["Rough"],"WI-3":["Polished"],"WI-4":["Established Politician","Disciplined"],"WI-5":["Squeaky Clean","Rough"],"WI-6":["Established Politician"],"WI-7":["Polished"],"WI-8":["Rough"],"WV-1":["Established Politician","Polished"],"WV-2":["Squeaky Clean","Polished"],"WY-1":["Rough"]};
 if (window.PartyChairData) window.PartyChairData.POLITICIAN_TRAITS_MAP = POLITICIAN_TRAITS_MAP;
 
 function getPoliticianTraits(member) {
@@ -1866,12 +1866,12 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.17.1</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.1</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
         <h1>Politics is a long game.<br><span>Make sure your party wins it.</span></h1>
-        <p class="hero-copy">Lead an American political party through the years, choosing their platform, policies, and candidates. Starting with the 2028 election, you will take charge of a party of your choice (Or make your own!), and can grow it to glory - or bring it to ruin.</p>
+        <p class="hero-copy">Lead an American political party through the years—shaping platforms, guiding contested Presidential Primaries, commanding an interactive 5-month (8-action/month) General Election War Room, and watching live Election Night returns unfold from 2028 onward.</p>
       </section>
       <div class="setup-grid">
         <section class="panel setup-card">
@@ -1891,10 +1891,10 @@ function setupMarkup() {
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.17.1 · Faction Systems Release · Local autosave</p>
+          <p class="setup-foot">Version 0.18.1 · Faction Systems Release · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
-          <div class="eyebrow">The 2028 turn loop</div>
+          <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
           <div class="loop-step"><i>1</i><span><b>Issue Positions (${window.PartyChairData.VERSION_021_ISSUES.length} Issues)</b><small>Adjust the unified ${window.PartyChairData.VERSION_021_ISSUES.length}-issue platform; your summary ideological axes update automatically.</small></span></div>
           <div class="loop-step"><i>2</i><span><b>Major & Party Focus Priorities</b><small>Select 3 Major Priorities from the Strategic Quests catalog, plus up to 10 Party Focus targets across issues, states, and regions.</small></span></div>
           <div class="loop-step"><i>3</i><span><b>Filter Primary Support</b><small>Inspect 10-stat candidate profiles, Net Approval & Fame in Senate Class III and Governor races. Respect sitting incumbents or face backlash.</small></span></div>
@@ -2106,16 +2106,16 @@ function pollMarkup() {
 function memberCohortsMarkup() {
   const aff = (game?.voterModel?.affiliations) || VOTER_MODEL.affiliations;
   const totalRep = (game?.voterModel?.representedVoters) || VOTER_MODEL.representedVoters || 155_000_000;
-  const libertyVoters = aff.thirdParty?.byParty?.liberty ? aff.thirdParty.byParty.liberty * 100 : (aff.liberty?.representedVoters || 1_147_900);
-  const greenVoters = aff.thirdParty?.byParty?.green ? aff.thirdParty.byParty.green * 100 : (aff.green?.representedVoters || 493_400);
-  const rawOther = aff.thirdParty?.byParty?.other ? aff.thirdParty.byParty.other * 100 : (aff.other?.representedVoters || 3_602_200);
+  const libertyVoters = aff.thirdParty?.byParty?.liberty ? aff.thirdParty.byParty.liberty : (aff.liberty?.representedVoters || 1_147_900);
+  const greenVoters = aff.thirdParty?.byParty?.green ? aff.thirdParty.byParty.green : (aff.green?.representedVoters || 493_400);
+  const rawOther = aff.thirdParty?.byParty?.other ? aff.thirdParty.byParty.other : (aff.other?.representedVoters || 3_602_200);
 
-  const conVoters = aff.thirdParty?.byParty?.constitution ? aff.thirdParty.byParty.constitution * 100 : Math.round(rawOther * 0.45);
-  const socVoters = aff.thirdParty?.byParty?.socialist ? aff.thirdParty.byParty.socialist * 100 : Math.round(rawOther * 0.40);
+  const conVoters = aff.thirdParty?.byParty?.constitution ? aff.thirdParty.byParty.constitution : Math.round(rawOther * 0.45);
+  const socVoters = aff.thirdParty?.byParty?.socialist ? aff.thirdParty.byParty.socialist : Math.round(rawOther * 0.40);
 
   const isCustomPlayer = Boolean(game?.player?.custom || game?.player?.id === 'custom');
   const customVoters = isCustomPlayer
-    ? (aff.thirdParty?.byParty?.custom ? aff.thirdParty.byParty.custom * 100 : Math.round(rawOther * 0.15))
+    ? (aff.thirdParty?.byParty?.custom ? aff.thirdParty.byParty.custom : Math.round(rawOther * 0.15))
     : 0;
 
   // Strict invariant: minor parties are never bundled into generic 'Other' or '3rd party'
@@ -2719,7 +2719,7 @@ function step2PrioritiesMarkup() {
   const activeMainCount = mainQuests.filter(Boolean).length;
   const activeAdditionalCount = additionalSlots.filter((s) => s.targetId).length;
 
-  return `
+  return `${v0180PollingMissBannerMarkup()}
     <section class="panel section-panel">
       <div class="section-heading">
         <div>
@@ -4067,7 +4067,7 @@ function forecastersMarkup() {
         const ev = s.ev || 3;
         if (r.endsWith('Dem') || r.endsWith('D')) demEv += ev;
         else if (r.endsWith('GOP') || r.endsWith('R')) repEv += ev;
-        else if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || r.includes('SOC') || r.includes('IND')) thirdEv += ev;
+        else if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || (r.includes('SOC') || r.includes('PFP')) || r.includes('IND')) thirdEv += ev;
         else tossEv += ev;
       });
     }
@@ -4085,9 +4085,9 @@ function forecastersMarkup() {
         counts[r] = (counts[r] || 0) + 1;
         const ev = s.ev || 3;
         const val = TIER_13_VALUES[r] || 0;
-        if (val > 0 && !r.includes('LIB') && !r.includes('GRN') && !r.includes('CON') && !r.includes('SOC') && !r.includes('IND')) demEv += ev;
+        if (val > 0 && !r.includes('LIB') && !r.includes('GRN') && !r.includes('CON') && !(r.includes('SOC') || r.includes('PFP')) && !r.includes('IND')) demEv += ev;
         else if (val < 0) repEv += ev;
-        else if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || r.includes('SOC') || r.includes('IND')) thirdEv += ev;
+        else if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || (r.includes('SOC') || r.includes('PFP')) || r.includes('IND')) thirdEv += ev;
         else tossEv += ev;
       });
     }
@@ -4460,7 +4460,7 @@ function forecastersMarkup() {
             const r = activeOutletData[k] || consensusRating(game.forecasters?.sallow?.[k], game.forecasters?.cooked?.[k], game.forecasters?.inside?.[k]) || 'Toss-Up';
             counts[r] = (counts[r] || 0) + 1;
             const val = TIER_13_VALUES[r] || 0;
-            if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || r.includes('SOC') || r.includes('IND')) thirdLeg += 1;
+            if (r.includes('LIB') || r.includes('GRN') || r.includes('CON') || (r.includes('SOC') || r.includes('PFP')) || r.includes('IND')) thirdLeg += 1;
             else if (val > 0) demLeg += 1;
             else if (val < 0) repLeg += 1;
             else tossLeg += 1;
@@ -4793,7 +4793,7 @@ function superPacsPanelMarkup() {
   const pacs = ensureSuperPacCatalog();
   const isGreenEra = game?.partySystems?.currentEraId === 'era_13_green_transition';
   const totalPacPool = pacs.reduce((sum, p) => sum + Number(p.pool ?? p.poolMillions ?? p.funds ?? 0), 0);
-  const actionsLeft = game.campaign?.weeklyActionsLeft ?? 5;
+  const actionsLeft = game.campaign?.monthlyActionsLeft ?? game.campaign?.weeklyActionsLeft ?? 8;
   const raceOptions = Object.keys(game.candidateFunding || {})
     .filter((rk) => rk.startsWith('senate:') || rk.startsWith('governor:'))
     .slice(0, 35);
@@ -5046,7 +5046,7 @@ function campaignDashboardMarkup() {
   const c = game.campaign || {};
   const week = c.week || 1;
   const maxWeeks = c.maxWeeks || 5;
-  const actionsLeft = c.weeklyActionsLeft ?? 5;
+  const actionsLeft = c.monthlyActionsLeft ?? c.weeklyActionsLeft ?? 8;
   const wave = c.waveMomentum ?? game.waveMomentum ?? 0;
   const happiness = Math.round(game.sittingMemberHappiness ?? 70);
   const requests = c.weeklyRequests || [];
@@ -5295,7 +5295,7 @@ function campaignDashboardMarkup() {
             <div class="eyebrow">Strategic Operations</div>
             <h2>Monthly Grand-Strategy Actions</h2>
           </div>
-          <span class="turnout-chip">${actionsLeft}/5 Actions Remaining</span>
+          <span class="turnout-chip">${actionsLeft}/${c.maxMonthlyActions || 8} Actions Remaining</span>
         </div>
 
         <div class="v08-actions-grid">
@@ -5384,6 +5384,8 @@ function campaignDashboardMarkup() {
         </div>
       </section>
 
+      ${v0180CampaignWarRoomMarkup()}
+
       <div class="v07-step-nav panel">
         <span class="v07-turn-note">
           ${safe(game.lastNote || `Campaign Month ${week} of 5. Make strategic allocations then advance the month.`)}
@@ -5393,6 +5395,206 @@ function campaignDashboardMarkup() {
         </button>
       </div>
     </div>`;
+}
+
+
+function v0180CampaignWarRoomMarkup() {
+  const CO = window.CampaignOverhaul;
+  const c = game?.campaign;
+  if (!CO || !c) return '';
+  const month = Number(c.month || c.week || 1);
+  const eff = CO.getMonthEfficiency(month);
+  const actionsLeft = c.monthlyActionsLeft ?? c.weeklyActionsLeft ?? 8;
+  const maxActs = c.maxMonthlyActions ?? 8;
+  const ticker = (c.rivalActivity?.tickerItems || []).slice(0, 6);
+  const mapPins = c.rivalActivity?.mapPins || [];
+  const showPins = Boolean(window.__v0181ShowRivalPins);
+  const surrogates = CO.getEligibleSurrogates(game);
+  const usedSur = new Set(c.surrogatesUsedThisMonth || []);
+  const activeCrises = (c.activeCrises || []).filter((cr) => !cr.resolved);
+  const debate = c.pendingDebate && !c.pendingDebate.resolved ? c.pendingDebate : null;
+  const ultimatum = c.pendingUltimatum && !c.pendingUltimatum.resolved ? c.pendingUltimatum : null;
+  const dossiers = (c.oppoDossiers || []).filter((d) => !d.detonated);
+  const tossups = month >= 4 ? CO.getTossUpWatchRaces(game) : [];
+  const pId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+  const isMajor = CO.isPlayerMajorParty ? CO.isPlayerMajorParty(game) : Boolean(game.player?.isMajor || ['people', 'heritage'].includes(pId));
+  // #16: Show ALL active issues (not .slice(0, 12))
+  const issues = window.PartySystemsEngine?.getActiveIssuesForGame
+    ? window.PartySystemsEngine.getActiveIssuesForGame(game)
+    : (window.PartyChairData?.VERSION_021_ISSUES || window.PartyChairData?.ISSUES || []);
+  const statesList = (window.PartyChairData?.STATES || []).slice().sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+  const defaultState = window.__v0181SelectedState || c.recommendedStates?.[0] || 'PA';
+  const satVal = Number(c.stateSaturation?.[defaultState] || 0);
+  const satTier = CO.getSaturationTier ? CO.getSaturationTier(satVal) : { label: 'Fresh', effMult: 1 };
+  const allFactions = (game.factions || []).slice(0, 40);
+  const rivalParties = (game.rivals || []).filter((r) => r && r.id);
+  const defaultRival = window.__v0181SelectedRival || rivalParties[0]?.id || (pId === 'people' ? 'heritage' : 'people');
+  const defaultBlitz = (c.recommendedStates && c.recommendedStates.length >= 3) ? c.recommendedStates.slice(0, 3) : ['PA', 'MI', 'WI'];
+
+  return `
+    <section class="panel section-panel v0180-war-room" style="margin-top:14px;border:1px solid rgba(226,189,112,0.35);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <h3 style="margin:0;">Campaign War Room · Month ${month} (${safe(eff.name)})</h3>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Persuasion Efficiency: <b>${Math.round(eff.persuasion * 100)}%</b> · Turnout Efficiency: <b>${Math.round(eff.turnout * 100)}%</b></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="badge" style="background:rgba(148,163,184,0.16);color:#cbd5e1;padding:4px 10px;border-radius:999px;font-size:11px;">Airwaves (${safe(defaultState)}): <b>${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}%)</b></span>
+          <span class="badge" style="background:rgba(226,189,112,0.18);color:#e2bd70;padding:4px 10px;border-radius:999px;font-weight:700;">Actions Remaining: ${actionsLeft} / ${maxActs}</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;padding:8px 10px;background:rgba(15,23,42,0.45);border-radius:8px;">
+        <label style="font-size:12px;">Target State:
+          <select id="v0180-state-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
+            ${statesList.map((st) => {
+              const stSat = CO.getSaturationTier ? CO.getSaturationTier(c.stateSaturation?.[st.id] || 0) : { label: 'Fresh' };
+              return `<option value="${safe(st.id)}" ${st.id === defaultState ? 'selected' : ''}>${safe(st.id)} — ${safe(st.name)} [${safe(stSat.label)}]</option>`;
+            }).join('')}
+          </select>
+        </label>
+        <label style="font-size:12px;">Target Faction:
+          <select id="v0180-faction-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
+            ${allFactions.map((f) => `<option value="${safe(f.id)}">${safe(f.name || f.id)}</option>`).join('')}
+          </select>
+        </label>
+        <label style="font-size:12px;">Target Rival:
+          <select id="v0180-rival-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
+            ${rivalParties.map((r) => `<option value="${safe(r.id)}" ${r.id === defaultRival ? 'selected' : ''}>${safe(r.name || r.id)}</option>`).join('')}
+          </select>
+        </label>
+        <button type="button" class="button button-secondary" style="font-size:11px;padding:4px 8px;" data-v0180-toggle-pins="1">${showPins ? 'Hide' : 'Show'} Rival Map Pins (${mapPins.length})</button>
+      </div>
+
+      ${showPins && mapPins.length ? `
+        <div style="background:rgba(30,41,59,0.65);border:1px solid rgba(148,163,184,0.25);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;">
+          <b>Rival Chair Map Pins (Month ${month}):</b>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+            ${mapPins.slice(0, 16).map((pin) => `<span class="badge" style="background:rgba(248,113,113,0.16);color:#fecaca;padding:2px 7px;border-radius:6px;">${safe(pin.stateId)}: ${safe(pin.partyName)} (${safe(pin.action)}, $${Number(pin.spend || 0).toFixed(1)}M${pin.isCounter ? ' · Counter' : ''})</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${ticker.length ? `
+        <div style="background:rgba(15,23,42,0.65);border-radius:8px;padding:8px 12px;margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#e2bd70;margin-bottom:4px;">THIS MONTH ON THE TRAIL (RIVAL CHAIR MOVES)</div>
+          ${ticker.map((t) => `<div style="font-size:12px;opacity:0.9;margin-top:2px;">• ${safe(t)}</div>`).join('')}
+        </div>
+      ` : ''}
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;">Theme of Month ${month}:</span>
+        ${c.themeSelectedThisMonth
+          ? `<span style="font-size:12px;color:#86efac;">Active: <b>${safe(c.activeThemeName || c.activeThemeId)}</b></span>`
+          : `<select id="v0180-theme-select" style="padding:4px 8px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
+              ${issues.map((i) => `<option value="${safe(i.id)}">${safe(i.name || i.id)}${(c.usedThemes || []).includes(i.id) ? ' (Used — Stale Penalty)' : ''}</option>`).join('')}
+            </select>
+            <button type="button" class="button button-secondary" data-v0180-action="select-campaign-theme">Set Theme</button>`}
+      </div>
+
+      ${debate ? `
+        <div style="background:rgba(59,130,246,0.14);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:10px;margin-bottom:10px;">
+          <div style="font-weight:700;font-size:13px;">${safe(debate.title)}${debate.qualifiesThirdPartyBreakout ? ' · ★ 3rd-Party Breakout Stage!' : ''}</div>
+          <div style="margin:6px 0;display:flex;flex-direction:column;gap:6px;">
+            ${(debate.questions || []).map((q, qIdx) => `
+              <div style="background:rgba(15,23,42,0.55);padding:6px 8px;border-radius:6px;font-size:12px;">
+                <div><b>Q${qIdx + 1} (${safe(q.category)}):</b> ${safe(q.prompt || q.question || q.text || q.issueId)}</div>
+                <select id="v0180-debate-q${qIdx}" style="margin-top:4px;padding:3px 6px;border-radius:5px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);font-size:11.5px;">
+                  <option value="pragmatic">Pragmatic Center (Broad Appeal &amp; Trust)</option>
+                  <option value="aggressive">Aggressive Counter-Punch (High Risk / High Reward)</option>
+                  <option value="base">Rally the Base (Turnout Surge)</option>
+                  <option value="visionary">Forward-Looking Vision (Downballot Coattails)</option>
+                </select>
+              </div>
+            `).join('')}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+            <button type="button" class="button button-gold" data-v0180-action="resolve-campaign-debate" data-posture="pivot_swing">Pivot to Swing Issues</button>
+            <button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-debate" data-posture="attack_record">Attack Opponent Record</button>
+            <button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-debate" data-posture="protect_base">Protect the Base</button>
+            <button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-debate" data-posture="elevate_downballot">Elevate Downballot Ticket</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${ultimatum ? `
+        <div style="background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.45);border-radius:8px;padding:10px;margin-bottom:10px;">
+          <div style="font-weight:700;font-size:13px;color:#fca5a5;">${safe(ultimatum.headline)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+            <button type="button" class="button button-gold" data-v0180-action="resolve-trail-ultimatum" data-id="${safe(ultimatum.id)}" data-choice="meet">Meet Demand ($2M, +10 Hap)</button>
+            <button type="button" class="button button-secondary" data-v0180-action="resolve-trail-ultimatum" data-id="${safe(ultimatum.id)}" data-choice="compromise">Compromise ($1M, +5 Hap)</button>
+            <button type="button" class="button button-secondary" data-v0180-action="resolve-trail-ultimatum" data-id="${safe(ultimatum.id)}" data-choice="ignore">Call Bluff (-12% Turnout)</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${activeCrises.map((cr) => `
+        <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div style="font-weight:700;font-size:13px;">[${safe(cr.trait)}] ${safe(cr.title)}</div>
+          <div style="font-size:12px;margin:3px 0 6px;">${safe(cr.headline)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${(cr.choices || []).map((ch) => `<button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-crisis" data-crisis-id="${safe(cr.id)}" data-choice-id="${safe(ch.id)}">${safe(ch.label)}</button>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+        <button type="button" class="button button-secondary" data-v0180-action="campaign-microtarget-faction">Micro-Target Faction Ads ($1.5M · Regional +Persuasion &amp; Membership)</button>
+        <button type="button" class="button button-secondary" data-v0180-action="campaign-town-hall-barnstorm">Town Hall Barnstorm ($0.5M · +Persuasion &amp; Turnout)</button>
+        <button type="button" class="button button-secondary" data-v0180-action="campaign-coalition-unity-summit" ${c.unitySummitUsedMonth === month ? 'disabled' : ''}>Coalition Unity Summit ($0 · +5 Hap to 2 Factions)</button>
+        ${isMajor ? `<button type="button" class="button button-secondary" data-v0180-action="campaign-spoiler-wedge">Spoiler Wedge Blitz ($1.5M · Siphon Rival)</button>` : ''}
+        <button type="button" class="button button-secondary" data-v0180-action="campaign-viral-telethon" ${c.telethonUsedMonth === month ? 'disabled' : ''}>Viral Livestream Telethon ($0 · +$2–5M &amp; Membership)</button>
+        ${month <= 3 ? `<button type="button" class="button button-secondary" data-v0180-action="commission-oppo-research">Commission Oppo Research ($1.5M)</button>` : ''}
+        ${dossiers.map((d) => `<button type="button" class="button button-gold" data-v0180-action="release-oppo-dossier" data-id="${safe(d.id)}">Detonate Oppo: ${safe(d.targetName)} (${safe(d.stateId)})</button>`).join('')}
+      </div>
+
+      ${month === 5 && !c.finalBlitzCompleted ? `
+        <div style="margin-top:10px;padding:8px 10px;background:rgba(226,189,112,0.1);border:1px solid rgba(226,189,112,0.35);border-radius:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+          <b style="font-size:12px;">Final 72 Hours Blitz Stops:</b>
+          ${[0, 1, 2].map((bIdx) => `
+            <select id="v0180-blitz-${bIdx}" style="padding:3px 6px;border-radius:5px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);font-size:11.5px;">
+              ${statesList.map((st) => `<option value="${safe(st.id)}" ${st.id === defaultBlitz[bIdx] ? 'selected' : ''}>${safe(st.id)}</option>`).join('')}
+            </select>
+          `).join('')}
+          <button type="button" class="button button-gold" data-v0180-action="resolve-final-blitz">Launch Final 72 Hours Blitz</button>
+        </div>
+      ` : ''}
+
+      ${surrogates.length ? `
+        <div style="margin-top:10px;font-size:12px;">
+          <b>Top-10 Surrogates (Min. 50 Fame):</b>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">
+            ${surrogates.slice(0, 10).map((s) => `<button type="button" class="button button-secondary" style="font-size:11px;padding:3px 8px;" data-v0180-action="deploy-surrogate" data-id="${safe(s.id || s.name)}" ${usedSur.has(s.id || s.name) ? 'disabled' : ''}>${safe(s.name)} (Fame ${s.fame})</button>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${tossups.length ? `
+        <div style="margin-top:8px;font-size:12px;color:#fcd34d;">
+          <b>Toss-Up Watch (Months 4–5):</b> ${tossups.map((t) => `${safe(t.stateId)} (${safe(t.office || 'Race')} ±${t.margin}%)`).join(' · ')}
+        </div>
+      ` : ''}
+    </section>
+  `;
+}
+
+function v0180PollingMissBannerMarkup() {
+  const rep = game?.lastElection?.pollingMissReport;
+  if (!rep) return '';
+  const regStr = Object.entries(rep.regionalRealized || {})
+    .map(([r, v]) => `${r}: ${v >= 0 ? '+' : ''}${Number(v).toFixed(1)}`)
+    .join(' · ');
+  return `
+    <section class="panel section-panel" style="margin-bottom:12px;border:1px solid rgba(99,179,237,0.4);background:rgba(15,23,42,0.75);">
+      <h3 style="margin:0 0 6px;">Final Polling Accuracy &amp; Miss Report (${rep.year})</h3>
+      <div style="font-size:13px;font-weight:600;color:#93c5fd;">${safe(rep.summary)}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Regional Misses: ${safe(regStr)}</div>
+      <div style="font-size:12px;margin-top:4px;">
+        Dead-On State: <b>${safe(rep.deadOnState?.stateName || rep.deadOnState?.stateId || '—')}</b> (${rep.deadOnState?.error >= 0 ? '+' : ''}${Number(rep.deadOnState?.error || 0).toFixed(1)} pts) ·
+        Biggest Miss: <b>${safe(rep.biggestMissState?.stateName || rep.biggestMissState?.stateId || '—')}</b> (${rep.biggestMissState?.error >= 0 ? '+' : ''}${Number(rep.biggestMissState?.error || 0).toFixed(1)} pts)
+      </div>
+    </section>
+  `;
 }
 
 function realignmentSummaryMarkup() {
@@ -5803,14 +6005,14 @@ function nationalMapSvg(mode, options = {}) {
           const dMeta = distMetaMap.get(district.id) || distMetaMap.get(district.id.replace(/-0(\d)$/, '-$1'));
           const bd = getStatePollingBreakdown(stObj, dMeta);
           const fillColor = pollingMarginColor(bd.leader.canonicalId, bd.margin, bd.leader.color);
-          const title = `${district.id} — ${bd.summaryText}${voters ? ` · ${formatMillions(voters.representedVoters * 100)}M modeled voters` : ''}`;
+          const title = `${district.id} — ${bd.summaryText}${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}`;
           return `<path style="fill:${fillColor}" class="map-district" d="${district.q.split('!').map(decodePath).join('')}" data-map-state="${district.stateId || district.id}" tabindex="0"><title>${safe(title)}</title></path>`;
         }
         const k = `house:${district.id}`;
         const kAlt = `house:${district.id.replace(/-(\d)$/, '-0$1')}`;
         const r = activeOutletData[k] || activeOutletData[kAlt] || consensusRating(game.forecasters?.sallow?.[k], game.forecasters?.cooked?.[k], game.forecasters?.inside?.[k]) || 'Toss-Up';
         const fillColor = ratingColor(r);
-        const title = `${district.id} District · Rating: ${formatRating(r)} [${activeOutletName}]${voters ? ` · ${formatMillions(voters.representedVoters * 100)}M modeled voters` : ''}`;
+        const title = `${district.id} District · Rating: ${formatRating(r)} [${activeOutletName}]${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}`;
         return `<path style="fill:${fillColor}" class="map-district" d="${district.q.split('!').map(decodePath).join('')}" data-map-state="${district.stateId || district.id}" tabindex="0"><title>${safe(title)}</title></path>`;
       }).join('');
       geometry += stateRows.map((state) => svgPath(state, 'map-state-outline', state.id)).join('');
@@ -5826,8 +6028,8 @@ function nationalMapSvg(mode, options = {}) {
         const coattailNote = isComplete
           ? ` · Pres. coattail: ${coattail >= 0 ? 'D+' : 'R+'}${Math.abs(coattail).toFixed(1)}%`
           : ` · Pres. coattail: ${coattail >= 2 ? 'Strong Dem' : coattail >= 0.5 ? 'Lean Dem' : coattail > -0.5 ? 'Neutral' : coattail > -2 ? 'Lean Rep' : 'Strong Rep'}`;
-        const mix = voters ? ` · D ${formatMillions(voters.affiliations.people * 100)}M · R ${formatMillions(voters.affiliations.heritage * 100)}M · I ${formatMillions(voters.affiliations.independent * 100)}M · third party ${formatMillions(((voters.affiliations.liberty || 0) + (voters.affiliations.green || 0) + (voters.affiliations.constitution || 0) + (voters.affiliations.socialist || 0) + (voters.affiliations.other || 0)) * 100)}M` : '';
-        return svgPath(district, `map-district ${cls} ${result?.pending ? 'uncalled' : ''}`, `${district.id}: ${result?.label || 'Result pending'}${result?.pending ? ' (uncalled)' : ''}${voters ? ` · ${formatMillions(voters.representedVoters * 100)}M modeled voters` : ''}${coattailNote}${mix}`);
+        const mix = voters ? ` · D ${formatMillions(voters.affiliations.people)}M · R ${formatMillions(voters.affiliations.heritage)}M · I ${formatMillions(voters.affiliations.independent)}M · third party ${formatMillions(((voters.affiliations.liberty || 0) + (voters.affiliations.green || 0) + (voters.affiliations.constitution || 0) + (voters.affiliations.socialist || 0) + (voters.affiliations.other || 0)))}M` : '';
+        return svgPath(district, `map-district ${cls} ${result?.pending ? 'uncalled' : ''}`, `${district.id}: ${result?.label || 'Result pending'}${result?.pending ? ' (uncalled)' : ''}${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}${coattailNote}${mix}`);
       }).join('');
       geometry += stateRows.map((state) => svgPath(state, 'map-state-outline', state.id)).join('');
     }
@@ -6305,7 +6507,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.17.1 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.18.1 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}</div>
@@ -6376,7 +6578,7 @@ function renderStateVoterRegistrationTable(game) {
   const catalog = (game?.factions && game.factions.length) ? game.factions : (window.PartyChairData?.FACTIONS_CATALOG || []);
 
   const rowsData = stateList.filter((s) => s.stateId !== 'DC').map((st) => {
-    const totalRep = st.representedVoters || (st.sampleVoters * 100) || 1;
+    const totalRep = st.representedVoters || st.sampleVoters || 1;
     const aff = st.affiliations || {};
 
     const getPartyVoters = (pid, fallbackSample) => {
@@ -6387,8 +6589,8 @@ function renderStateVoterRegistrationTable(game) {
           if (sum > 0) return sum;
         }
       }
-      if (aff[pid] !== undefined) return aff[pid] * 100;
-      return (fallbackSample || 0) * 100;
+      if (aff[pid] !== undefined) return aff[pid];
+      return (fallbackSample || 0);
     };
 
     const dem = getPartyVoters('people', aff.people);
@@ -6398,7 +6600,7 @@ function renderStateVoterRegistrationTable(game) {
     const grn = getPartyVoters('green', aff.green);
     const con = getPartyVoters('constitution', aff.constitution ?? Math.round((aff.other || 0) * 0.45));
     const soc = getPartyVoters('socialist', aff.socialist ?? Math.round((aff.other || 0) * 0.40));
-    const rawOther = (aff.other || 0) * 100;
+    const rawOther = (aff.other || 0);
     const cust = isCustomPlayer ? getPartyVoters(game?.player?.id, aff[game?.player?.id] ?? Math.round(rawOther * 0.15)) : 0;
     const stateObj = STATES.find((s) => s.id === st.stateId);
     const isLowPop = totalRep < 1000000 || ['VT', 'WY', 'AK', 'DE', 'ND', 'SD'].includes(st.stateId);
@@ -6469,7 +6671,7 @@ function renderStateVoterRegistrationTable(game) {
             <th style="padding:10px 12px;cursor:pointer;color:#e2bd45" data-reg-sort="lib">Libertarian${sortArrow('lib')}</th>
             <th style="padding:10px 12px;cursor:pointer;color:#55bf78" data-reg-sort="grn">Green${sortArrow('grn')}</th>
             <th style="padding:10px 12px;cursor:pointer;color:#a84214" data-reg-sort="con">Constitution${sortArrow('con')}</th>
-            <th style="padding:10px 12px;cursor:pointer;color:#d62828" data-reg-sort="soc">Socialist${sortArrow('soc')}</th>
+            <th style="padding:10px 12px;cursor:pointer;color:#d62828" data-reg-sort="soc">Peace &amp; Freedom${sortArrow('soc')}</th>
             ${isCustomPlayer ? `<th style="padding:10px 12px;cursor:pointer;color:${game.player.color || '#8b5cf6'}" data-reg-sort="cust">${safe(game.player.name)}${sortArrow('cust')}</th>` : ''}
           </tr>
         </thead>
@@ -7441,7 +7643,7 @@ function summitModalMarkup() {
   if (!summitModalOpen || !summitModalFactionId) return '';
   const f = (game?.factions || window.PartyChairData?.FACTIONS_CATALOG || []).find((x) => x.id === summitModalFactionId);
   if (!f) return '';
-  const demands = window.PartyChairEngine?.generateCoalitionDemands ? window.PartyChairEngine.generateCoalitionDemands(game, f.id) : null;
+  const demands = (window.PartyChairEngine?.generateMergerCoalitionDemands || window.PartyChairEngine?.generateCoalitionDemands) ? (window.PartyChairEngine.generateMergerCoalitionDemands || window.PartyChairEngine.generateCoalitionDemands)(game, f.id) : null;
   if (!demands) return '';
 
   const natVoters = Number(game?.voterModel?.factions?.[f.id] ?? f.targetVoters ?? 1000000);
@@ -7648,8 +7850,8 @@ function getMorningWireHeadline(game) {
 
   const isMinor = !['people', 'heritage'].includes(game.player?.baseTemplateId);
   const customOrMinor = game.player?.custom
-    ? `${game.player.name} surges as autonomous third force in 2028 landscape`
-    : (isMinor ? `${game.player.name} mounts nationwide 50-state ballot access offensive` : null);
+    ? `${safe(game.player.name)} surges as autonomous third force in 2028 landscape`
+    : (isMinor ? `${safe(game.player.name)} mounts nationwide 50-state ballot access offensive` : null);
   const story = customOrMinor || presLead;
 
   return `<div class="wire-inner" style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(226,189,112,0.08);border-bottom:1px solid rgba(226,189,112,0.25);font-size:12.5px">
@@ -8610,7 +8812,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.17.1</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.1</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -8665,7 +8867,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.17.1</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.1</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
@@ -8714,7 +8916,162 @@ function syncGameSessionState() {
 
 let electionNightInterval = null;
 
+function buildElectionHoverTooltipHtml(race, snapEval) {
+  if (!race) return '';
+  const pct = snapEval ? Math.round(snapEval.pct) : (race.isCalled ? 100 : 0);
+  const shares = snapEval?.currentShares || snapEval?.liveShares || race.finalShares || race.shares || null;
+  let rowsHtml = '';
+  if (shares && typeof shares === 'object' && Object.keys(shares).length > 0) {
+    const sorted = Object.entries(shares)
+      .filter(([, v]) => Number(v) > 0.05)
+      .sort((a, b) => Number(b[1]) - Number(a[1]))
+      .slice(0, 5);
+    rowsHtml = sorted.map(([pid, val]) => {
+      const col = getElectionPartyColor(pid);
+      const label = getElectionPartyShort(pid);
+      return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-top:2px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:6px;"></span>${safe(label)}</span><b>${Number(val).toFixed(1)}%</b></div>`;
+    }).join('');
+  } else {
+    const lead = Math.abs(Number(snapEval?.liveLead ?? race.finalWinningMargin ?? 0));
+    const winP = snapEval?.liveLeader || race.finalWinner || 'people';
+    const oppP = winP === 'people' ? 'heritage' : 'people';
+    const wPct = Math.min(99, Math.max(50, 50 + lead / 2));
+    const oPct = Math.max(1, 100 - wPct);
+    rowsHtml = `
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-top:2px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getElectionPartyColor(winP)};margin-right:6px;"></span>${safe(getElectionPartyShort(winP))}</span><b>${wPct.toFixed(1)}%</b></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-top:2px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getElectionPartyColor(oppP)};margin-right:6px;"></span>${safe(getElectionPartyShort(oppP))}</span><b>${oPct.toFixed(1)}%</b></div>
+    `;
+  }
+  const statusTxt = (snapEval?.isCalled || race.isCalled) ? 'CALLED' : `${pct}% Reporting`;
+  return `<div style="font-weight:700;font-size:12.5px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.14);padding-bottom:3px;">${safe(race.name || race.stateId || race.code || 'Race')} <span style="opacity:0.75;font-weight:500;">· ${safe(statusTxt)}</span></div>${rowsHtml}`;
+}
+
+function ensureElectionHoverTooltipBound() {
+  if (typeof document === 'undefined' || window.__enHoverBound) return;
+  window.__enHoverBound = true;
+  let tip = document.getElementById('en-hover-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'en-hover-tooltip';
+    tip.style.cssText = 'position:fixed;z-index:99999;pointer-events:none;display:none;background:rgba(12,18,32,0.96);color:#f1f5f9;border:1px solid rgba(148,163,184,0.35);border-radius:8px;padding:8px 11px;min-width:175px;box-shadow:0 8px 24px rgba(0,0,0,0.45);font-family:inherit;';
+    document.body.appendChild(tip);
+  }
+  document.addEventListener('pointerover', (e) => {
+    if (!game?.electionNight?.active) return;
+    const stateEl = e.target?.closest?.('[data-desk-state]');
+    const rowEl = e.target?.closest?.('.the-count-row[data-race-id]');
+    if (!stateEl && !rowEl) return;
+    const enEngine = window.ElectionNightEngine;
+    if (!enEngine?.evaluateElectionNightAt || !game.electionNight?.timeline) return;
+    const snap = enEngine.evaluateElectionNightAt(game.electionNight.timeline, game.electionNight.elapsedMinutes || 0);
+    const activeTab = game.electionNight.activeTab || 'president';
+    const allRaces = game.electionNight.timeline.races || [];
+    let race = null;
+    let snapEval = null;
+    if (rowEl) {
+      const rid = rowEl.getAttribute('data-race-id');
+      snapEval = (snap.theCountRaces || []).find((r) => r.id === rid) || snap.raceEvaluations?.[rid] || null;
+      race = allRaces.find((r) => r.id === rid) || snapEval;
+    } else if (stateEl) {
+      const stId = stateEl.getAttribute('data-desk-state');
+      race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab)
+        || allRaces.find((r) => r.stateId === stId);
+      if (race) snapEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id] || null;
+    }
+    if (!race) return;
+    tip.innerHTML = buildElectionHoverTooltipHtml(race, snapEval);
+    tip.style.display = 'block';
+  });
+  document.addEventListener('pointermove', (e) => {
+    if (tip.style.display !== 'block') return;
+    tip.style.left = `${Math.min(window.innerWidth - 220, e.clientX + 14)}px`;
+    tip.style.top = `${Math.min(window.innerHeight - 140, e.clientY + 14)}px`;
+  });
+  document.addEventListener('pointerout', (e) => {
+    if (e.target?.closest?.('[data-desk-state], .the-count-row[data-race-id]')) {
+      tip.style.display = 'none';
+    }
+  });
+}
+
+// v0.18.1 (QA Fix #1): In-place DOM patching during Election Night playback — zero innerHTML wipes or flicker
+function patchElectionNightLiveDOM() {
+  if (typeof document === 'undefined' || !game?.electionNight?.active) return;
+  const enEngine = window.ElectionNightEngine;
+  if (!enEngine?.evaluateElectionNightAt || !game.electionNight?.timeline) return;
+  const snap = enEngine.evaluateElectionNightAt(game.electionNight.timeline, game.electionNight.elapsedMinutes || 0);
+  const activeTab = game.electionNight.activeTab || 'president';
+  const mapMode = game.electionNight.mapMode || 'called';
+  const allRaces = game.electionNight.timeline.races || [];
+
+  // 1. Patch clock text if present
+  const clockEl = document.querySelector('.desk-clock, [data-en-clock]');
+  if (clockEl && enEngine.formatSimTime) {
+    clockEl.textContent = enEngine.formatSimTime(game.electionNight.elapsedMinutes || 0);
+  }
+
+  // 1b (#37): Patch EV / Senate / House scoreboard & Sallow Forecast & Call Ticker in-place
+  const evDem = document.querySelector('[data-en-ev="people"], .desk-ev-dem');
+  const evRep = document.querySelector('[data-en-ev="heritage"], .desk-ev-rep');
+  if (evDem && snap.evTotals) evDem.textContent = String(snap.evTotals.people || 0);
+  if (evRep && snap.evTotals) evRep.textContent = String(snap.evTotals.heritage || 0);
+  const senDem = document.querySelector('[data-en-senate="people"]');
+  const senRep = document.querySelector('[data-en-senate="heritage"]');
+  if (senDem && snap.senateTotals) senDem.textContent = String(snap.senateTotals.people || 0);
+  if (senRep && snap.senateTotals) senRep.textContent = String(snap.senateTotals.heritage || 0);
+  const hseDem = document.querySelector('[data-en-house="people"]');
+  const hseRep = document.querySelector('[data-en-house="heritage"]');
+  if (hseDem && snap.houseTotals) hseDem.textContent = String(snap.houseTotals.people || 0);
+  if (hseRep && snap.houseTotals) hseRep.textContent = String(snap.houseTotals.heritage || 0);
+  const forecastEl = document.querySelector('[data-en-sallow-forecast], .sallow-forecast-prob');
+  if (forecastEl && snap.sallowForecast?.headline) forecastEl.textContent = snap.sallowForecast.headline;
+  const tickerEl = document.querySelector('[data-en-call-ticker], .desk-call-ticker');
+  if (tickerEl && Array.isArray(snap.recentCalls) && snap.recentCalls.length > 0) {
+    const latest = snap.recentCalls[0];
+    tickerEl.textContent = latest.headline || `${latest.name}: ${getElectionPartyShort(latest.winner)} Projected Winner`;
+  }
+
+  // 2. Patch SVG state fills & opacities in-place
+  document.querySelectorAll('[data-desk-state]').forEach((pathEl) => {
+    const stId = pathEl.getAttribute('data-desk-state');
+    const race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab);
+    if (!race) return;
+    const stEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id];
+    const isOpen = (game.electionNight.elapsedMinutes || 0) >= (race.closeMinutes || 0);
+    const pct = stEval ? stEval.pct : 0;
+    const isCalled = stEval ? stEval.isCalled : false;
+    const leader = stEval ? stEval.liveLeader : race.finalWinner;
+    const lead = stEval ? stEval.liveLead : Math.abs(race.finalWinningMargin || 0);
+    if (!isOpen) {
+      pathEl.style.fill = '#22304F';
+      pathEl.style.fillOpacity = '0.45';
+    } else if (isCalled) {
+      pathEl.style.fill = getElectionPartyColor(race.finalWinner);
+      pathEl.style.fillOpacity = '1';
+    } else {
+      pathEl.style.fill = getElectionPartyColor(leader);
+      pathEl.style.fillOpacity = mapMode === 'margin'
+        ? String(Math.round((0.35 + 0.65 * Math.min(1, lead / 15)) * 100) / 100)
+        : String(Math.round((0.40 + 0.60 * (pct / 100)) * 100) / 100);
+    }
+  });
+
+  // 3. Patch "The Count" race rows in-place without touching scroll position
+  (snap.theCountRaces || []).forEach((r) => {
+    const row = document.querySelector(`.the-count-row[data-race-id="${r.id}"]`);
+    if (!row) return;
+    const col = getElectionPartyColor(r.liveLeader);
+    const leadEl = row.querySelector('.count-lead');
+    const fillEl = row.querySelector('.count-progress-fill');
+    const statEl = row.querySelector('.count-status');
+    if (leadEl) { leadEl.textContent = `${getElectionPartyShort(r.liveLeader)} +${Math.abs(r.liveLead).toFixed(1)}`; leadEl.style.color = col; }
+    if (fillEl) { fillEl.style.width = `${Math.round(r.pct)}%`; fillEl.style.background = col; }
+    if (statEl) { statEl.textContent = r.isCalled ? 'CALLED' : `${Math.round(r.pct)}%`; statEl.className = `count-status ${r.isCalled ? 'called' : 'pct'}`; }
+  });
+}
+
 function ensureElectionNightPlayback() {
+  ensureElectionHoverTooltipBound();
   if (electionNightInterval) return;
   if (!game || !game.electionNight || !game.electionNight.active) return;
   if (game.electionNight.paused || game.electionNight.completed) return;
@@ -8725,15 +9082,17 @@ function ensureElectionNightPlayback() {
       return;
     }
     const speed = game.electionNight.speed || 1;
-    const delta = 0.3 * speed;
+    const delta = 0.75 * speed;
     const nextMin = Math.min(540, (game.electionNight.elapsedMinutes || 0) + delta);
     game.electionNight.elapsedMinutes = nextMin;
     if (nextMin >= 540) {
       game.electionNight.completed = true;
       stopElectionNightPlayback();
+      render();
+      return;
     }
-    render();
-  }, 100);
+    patchElectionNightLiveDOM();
+  }, 250);
 }
 
 function stopElectionNightPlayback() {
@@ -8763,7 +9122,7 @@ function getElectionPartyShort(partyId) {
   if (partyId === 'liberty') return 'LIB';
   if (partyId === 'green') return 'GRN';
   if (partyId === 'constitution') return 'CON';
-  if (partyId === 'socialist') return 'SOC';
+  if (partyId === 'socialist') return 'PFP';
   if (partyId === 'independent') return 'IND';
   if (partyId === 'split') return 'SPLIT';
   if (partyId === 'player') return (game?.player?.partyCode || 'PLY');
@@ -9036,6 +9395,7 @@ function renderElectionNightScreen() {
       <div class="final-summary">
         ${timeline.isPresidential ? `Final Electoral College: ${snapshot.scoreboard.president.people} Dem · ${snapshot.scoreboard.president.heritage} GOP` : `Senate: ${snapshot.scoreboard.senate.people} Dem · ${snapshot.scoreboard.senate.heritage} GOP | House: ${snapshot.scoreboard.house.people} Dem · ${snapshot.scoreboard.house.heritage} GOP`}
       </div>
+${en.completed ? v0180PollingMissBannerMarkup() : ''}
       <button type="button" class="button button-gold desk-complete-btn" id="desk-btn-complete">See the full results →</button>
     </div>
   ` : `
@@ -9227,10 +9587,10 @@ function renderPrimarySvgMap(stateResults = {}) {
   const insets = insetIds.map(([id, name]) => {
     const res = stateResults[id];
     const col = res?.winnerColor || 'var(--line)';
-    return `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:var(--panel2);border:1px solid ${col};font-size:12px">
+    return `<button type="button" data-primary-state="${safe(id)}" style="cursor:pointer;color:inherit;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:var(--panel2);border:1px solid ${col};font-size:12px">
       <span style="width:10px;height:10px;border-radius:50%;background:${col}"></span>
       <b>${name}:</b> ${res ? `${safe(res.winnerName)} (${res.shares?.[res.winnerId] || 0}% · ${res.totalDelegates || 0} del)` : 'Upcoming'}
-    </span>`;
+    </button>`;
   }).join('');
   return `<svg class="desk-map-svg" viewBox="${MAPS?.viewBox || '0 0 960 600'}" role="img" aria-label="Presidential Primary Map">${paths}${labels}</svg><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${insets}</div>`;
 }
@@ -9414,7 +9774,7 @@ function renderPrimaryArchiveModalMarkup() {
   }
   const latestYr = primaryArchiveYear || years[0];
   const byParty = latestYr ? (game.simulatedPrimaries[latestYr] || {}) : {};
-  const partyIds = Object.keys(byParty);
+  const partyIds = Array.from(new Set([...Object.keys(byParty || {}), ...Object.keys(game.presidentialTicket || {})].filter((pid) => byParty?.[pid])));
   if (partyIds.length && !byParty[primaryArchiveParty]) primaryArchiveParty = partyIds[0];
   const rec = byParty[primaryArchiveParty] || null;
   return `
@@ -9490,6 +9850,7 @@ function renderSaveSlotsModalMarkup() {
 }
 
 function render() {
+  if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip) _tip.style.display = 'none'; }
   syncGameSessionState();
   if (game && V07 && (!game.sittingMembers?.length || !game.trust || !game.leadershipRoles)) {
     game = V07.hydrateV07GameState(game);
@@ -9537,6 +9898,9 @@ function dispatchAction(actionId, payload = {}) {
   }
   if (game && window.PartyChairEngine?.enforceGameTrustCaps) {
     window.PartyChairEngine.enforceGameTrustCaps(game);
+  }
+  if (game && typeof saveGame === 'function') {
+    saveGame(game);
   }
   if (V07 && game) {
     // Fallback safeguard if any field stayed stale
@@ -11031,10 +11395,25 @@ function bind() {
     render();
   });
 
-  // Topbar Save Management
-  document.querySelector('#new-game')?.addEventListener('click', () => {
-    if (window.confirm('Start a new party? Export your current save first if you want to keep it.')) {
-      ['partyChairGame.save.v1', 'partyChairGame.save.v2', 'partyChairGame.save.v3', 'partyChairGame.save.v4', 'partyChairGame.save.v5', 'partyChairGame.save.v6', 'partyChairGame.save.v7', 'partyChairGame.save.v8', 'partyChairGame.save.v9', 'partyChairGame.save.v10', 'partyChairGame.save.v11', 'partyChairGame.save.v12', 'partyChairGame.save.v13', 'partyChairGame.save.v14', 'partyChairGame.save.v14.1', 'partyChairGame.save.v14.2', 'partyChairGame.save.v14.3', 'partyChairGame.save.v14.4', 'partyChairGame.save.v14.5', 'partyChairGame.save.v14.6', 'partyChairGame.save.v15.0', 'partyChairGame.save.v15.1', 'partyChairGame.save.v15.2', 'partyChairGame.save.v15.3', 'partyChairGame.save.v15.4', 'partyChairGame.save.v15.5', 'partyChairGame.save.v15.6', 'partyChairGame.save.v15.7', 'partyChairGame.save.v15.8', 'partyChairGame.save.v15.9', 'partyChairGame.save.v16.0', 'partyChairGame.save.v16.1', 'partyChairGame.save.v16.2', 'partyChairGame.save.v16.3'].forEach((k) => localStorage.removeItem(k));
+  // Topbar Save Management (#95 non-blocking confirmation & #40 stop playback)
+  document.querySelector('#new-game')?.addEventListener('click', (ev) => {
+    const btn = ev.currentTarget;
+    if (btn && btn.dataset.confirmArmed !== '1') {
+      btn.dataset.confirmArmed = '1';
+      btn.dataset.origLabel = btn.textContent || 'New Game';
+      btn.textContent = 'Click again to confirm New Party';
+      setTimeout(() => {
+        if (btn.dataset.confirmArmed === '1') {
+          btn.dataset.confirmArmed = '';
+          btn.textContent = btn.dataset.origLabel || 'New Game';
+        }
+      }, 4500);
+      return;
+    }
+    if (btn) btn.dataset.confirmArmed = '';
+    if (typeof stopElectionNightPlayback === 'function') stopElectionNightPlayback();
+    {
+      Object.keys(localStorage).filter((k) => k.startsWith('partyChairGame.save.')).forEach((k) => localStorage.removeItem(k));
       game = null;
       custom = false;
       customIssuePositions = null;
@@ -11246,3 +11625,55 @@ window.PartyChairApp = {
 
 render();
 })();
+
+// v0.18.1: Delegated Campaign War Room action bindings
+if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
+  window.__v0180WarRoomBound = true;
+  document.addEventListener('change', (e) => {
+    if (e.target?.id === 'v0180-state-select') {
+      window.__v0181SelectedState = e.target.value;
+      if (typeof render === 'function') render();
+    } else if (e.target?.id === 'v0180-rival-select') {
+      window.__v0181SelectedRival = e.target.value;
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const pinBtn = e.target?.closest?.('[data-v0180-toggle-pins]');
+    if (pinBtn) {
+      window.__v0181ShowRivalPins = !window.__v0181ShowRivalPins;
+      if (typeof render === 'function') render();
+      return;
+    }
+    const btn = e.target?.closest?.('[data-v0180-action]');
+    if (!btn || !game) return;
+    const act = btn.getAttribute('data-v0180-action');
+    const stateSel = document.getElementById('v0180-state-select');
+    const facSel = document.getElementById('v0180-faction-select');
+    const rivalSel = document.getElementById('v0180-rival-select');
+    const targetState = stateSel?.value || window.__v0181SelectedState || (game.campaign?.recommendedStates?.[0]) || 'PA';
+    const targetFaction = facSel?.value || 'ind_moderates';
+    const targetRival = rivalSel?.value || window.__v0181SelectedRival || undefined;
+    let payload = { stateId: targetState, factionId: targetFaction, partyId: targetRival };
+    if (act === 'select-campaign-theme') {
+      const sel = document.getElementById('v0180-theme-select');
+      payload = { issueId: sel?.value || 'cost-of-living' };
+    } else if (act === 'resolve-campaign-debate') {
+      const answers = [0, 1, 2].map((i) => document.getElementById(`v0180-debate-q${i}`)?.value || 'pragmatic');
+      payload = { posture: btn.getAttribute('data-posture') || 'pivot_swing', answers };
+    } else if (act === 'resolve-campaign-crisis') {
+      payload = { crisisId: btn.getAttribute('data-crisis-id'), choiceId: btn.getAttribute('data-choice-id') };
+    } else if (act === 'resolve-trail-ultimatum') {
+      payload = { ultimatumId: btn.getAttribute('data-id'), choice: btn.getAttribute('data-choice') };
+    } else if (act === 'release-oppo-dossier') {
+      payload = { dossierId: btn.getAttribute('data-id') };
+    } else if (act === 'deploy-surrogate') {
+      payload = { politicianId: btn.getAttribute('data-id'), stateId: targetState };
+    } else if (act === 'resolve-final-blitz') {
+      const picks = [0, 1, 2].map((i) => document.getElementById(`v0180-blitz-${i}`)?.value).filter(Boolean);
+      payload = { stateIds: picks.length ? picks : (game.campaign?.recommendedStates || ['PA', 'MI', 'WI']).slice(0, 3) };
+    }
+    game = window.PartyChairEngine.takeAction(game, act, payload);
+    if (typeof saveGame === 'function') saveGame(game);
+    if (typeof render === 'function') render();
+  });
+}

@@ -2008,8 +2008,10 @@
         natSampleByParty.independent = (natSampleByParty.independent || 0) + diff;
       }
 
+      const _is1to1 = (voterModel.voterScale === '1:1') || (Number(voterModel.sampleVoters || 0) >= 10_000_000);
+      const _scaleMult = _is1to1 ? 1 : 100;
       totalSample += Number(st.sampleVoters || stSumSample || 0);
-      totalRepresented += Number(st.representedVoters || (st.sampleVoters || stSumSample || 0) * 100);
+      totalRepresented += Number(st.representedVoters || (st.sampleVoters || stSumSample || 0) * _scaleMult);
 
       if (st.factions && typeof st.factions === 'object') {
         Object.entries(st.factions).forEach(([fid, count]) => {
@@ -2030,11 +2032,12 @@
     const prevAff = voterModel.affiliations || {};
     const nextAff = { ...prevAff };
     const denom = Math.max(1, totalSample);
+    const _vmScaleMult = (voterModel.voterScale === '1:1' || totalSample >= 10_000_000) ? 1 : 100;
     Object.entries(natSampleByParty).forEach(([k, sampleVal]) => {
       nextAff[k] = {
         ...(typeof prevAff[k] === 'object' ? prevAff[k] : {}),
         sampleVoters: sampleVal,
-        representedVoters: sampleVal * 100,
+        representedVoters: sampleVal * _vmScaleMult,
         sharePercent: round((sampleVal / denom) * 100, 2),
       };
     });
@@ -2048,7 +2051,7 @@
     });
     nextAff.thirdParty = {
       sampleVoters: tpTotalSample,
-      representedVoters: tpTotalSample * 100,
+      representedVoters: tpTotalSample * _vmScaleMult,
       sharePercent: round((tpTotalSample / denom) * 100, 2),
       byParty,
     };
@@ -2448,7 +2451,8 @@
         if (regSample > 0) {
           st.affiliations[playerKey] = (st.affiliations[playerKey] || 0) + regSample;
           st.affiliations[regionalPartyId] = 0;
-          votersMerged += regSample * 100;
+          const _mScale = (working.voterModel?.voterScale === '1:1' || Number(working.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+          votersMerged += regSample * _mScale;
         }
       });
       reconcileVoterModelTotals(working.voterModel);
@@ -2572,7 +2576,8 @@
 
             // Mirror voter transfer into st.factions (0 variance)
             if (st.factions && typeof st.factions === 'object') {
-              const totalGainVoters = modGainSample * 100;
+              const _modScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              const totalGainVoters = modGainSample * _modScale;
               const existingFids = Object.keys(st.factions).filter((fid) => !fid.startsWith('mod_') && (st.factions[fid] || 0) > 0);
               const existingSum = existingFids.reduce((acc, fid) => acc + (st.factions[fid] || 0), 0);
               let actualPulled = 0;
@@ -2866,7 +2871,8 @@
 
             const regDef = regCatalog.find((r) => r.id === regId);
             if (regDef?.faction && st.factions && typeof st.factions === 'object') {
-              const pullTotal = regSampleGain * 100;
+              const _regScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              const pullTotal = regSampleGain * _regScale;
               const existingFids = Object.keys(st.factions).filter((fid) => !fid.startsWith('reg_fac_') && (st.factions[fid] || 0) > 0);
               const existingSum = existingFids.reduce((acc, fid) => acc + (st.factions[fid] || 0), 0);
               let pulled = 0;
@@ -3037,7 +3043,8 @@
             st.affiliations.green = (st.affiliations.green || 0) + actualShift;
 
             if (st.factions && typeof st.factions === 'object') {
-              let greenFactionPool = actualShift * 100;
+              const _ecoScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              let greenFactionPool = actualShift * _ecoScale;
               legacyGreenIds.forEach((oldId) => {
                 if (st.factions[oldId]) {
                   greenFactionPool += Number(st.factions[oldId] || 0);
@@ -3045,7 +3052,7 @@
                 }
               });
               // Deduct the newly shifted voters proportionally from non-green factions to keep state faction sum exact
-              const newPull = actualShift * 100;
+              const newPull = actualShift * _ecoScale;
               const nonGreenFids = Object.keys(st.factions).filter((fid) => !ecoIds.includes(fid) && (st.factions[fid] || 0) > 0);
               const nonGreenSum = nonGreenFids.reduce((acc, fid) => acc + (st.factions[fid] || 0), 0);
               let pulledFromOthers = 0;

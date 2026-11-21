@@ -5824,3 +5824,30 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+
+
+/* v0.18.1 (#91, #92): Decision Desk columns & Campaign War Room layout */
+.desk-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.desk-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.v0180-war-room {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.78));
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.v0180-war-room select {
+  font-family: inherit;
+  cursor: pointer;
+}

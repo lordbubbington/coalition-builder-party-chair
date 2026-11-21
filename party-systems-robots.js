@@ -10,7 +10,7 @@
   const round = (n, places = 2) => Math.round(n * (10 ** places)) / (10 ** places);
 
   const SYNTHETIC_ELECTORATE_VOTERS = 155_000_000;
-  const SYNTHETIC_SAMPLE_VOTERS = 1_550_000; // Each sample unit represents 100 real citizens
+  const SYNTHETIC_SAMPLE_VOTERS = 155_000_000; // Each sample unit represents 100 real citizens
   const SYNTHETIC_TURNOUT_PCT = 100.0;       // Zero turnout variance (100% algorithmic participation)
 
   function getChairData() {
@@ -446,9 +446,10 @@
 
       // Apply synthetic voters into each state's affiliations & factions (~25% to each of the 4 Robot Parties)
       stateSynthSamples.forEach(({ st, floor: synthSample }) => {
-        const prevHumanSample = Number(st.sampleVoters || Math.round((st.representedVoters || 0) / 100));
-        const prevHumanRep = Number(st.representedVoters || prevHumanSample * 100);
-        const synthRep = synthSample * 100;
+        const isOneToOne = (game.voterModel?.voterScale === '1:1') || (Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
+        const prevHumanSample = Number(st.sampleVoters || (isOneToOne ? (st.representedVoters || 0) : Math.round((st.representedVoters || 0) / 100)));
+        const prevHumanRep = Number(st.representedVoters || (isOneToOne ? prevHumanSample : prevHumanSample * 100));
+        const synthRep = isOneToOne ? synthSample : synthSample * 100;
 
         st.humanSampleVoters = prevHumanSample;
         st.humanRepresentedVoters = prevHumanRep;

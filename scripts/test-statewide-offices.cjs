@@ -82,7 +82,7 @@ function check(label, cond, detail = '') {
   // --- SUITE 1: Starting Incumbents Load Cleanly into game.sittingMembers ---
   console.log('\n--- SUITE 1: 50-State Starting Roster & Faction Validation ---');
   let game = Engine.createGame({ baseTemplateId: 'people' });
-  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', game.version === '0.16.9' || game.version === '0.17.0' || game.version === '0.17.1', `got ${game.version}`);
+  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', game.version === '0.18.1' || game.version === '0.17.0' || game.version === '0.18.1', `got ${game.version}`);
 
   const registry = Data.STATEWIDE_OFFICES_REGISTRY || [];
   const startingOfficers = Data.STARTING_STATEWIDE_OFFICERS || [];
@@ -109,8 +109,8 @@ function check(label, cond, detail = '') {
 
   const paxton = seoSitting.find((m) => m.name === 'Ken Paxton' && m.stateId === 'TX');
   const jeffJackson = seoSitting.find((m) => m.name === 'Jeff Jackson' && m.stateId === 'NC');
-  const robSand = seoSitting.find((m) => m.name === 'Rob Sand' && m.stateId === 'IA');
-  check('Spot check: TX AG Ken Paxton (R), NC AG Jeff Jackson (D), IA Auditor Rob Sand (D) loaded',
+  const robSand = seoSitting.find((m) => m.name === 'Claire Halvorsen' && m.stateId === 'IA');
+  check('Spot check: TX AG Ken Paxton (R), NC AG Jeff Jackson (D), IA Auditor Claire Halvorsen (D) loaded',
     paxton?.party === 'heritage' && jeffJackson?.party === 'people' && robSand?.party === 'people');
   check('game.statewideOffices initialized for all 223 seats', Object.keys(game.statewideOffices || {}).length === 223);
 

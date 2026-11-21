@@ -36,12 +36,12 @@ try {
         (Join-Path $projectDir 'party-systems-robots.js'),
         (Join-Path $projectDir 'party-systems-engine.js'),
         (Join-Path $projectDir 'party-systems-ui.js'),
-        (Join-Path $projectDir 'presidential-primaries.js'),
         (Join-Path $projectDir 'ballot-access.js'),
         (Join-Path $projectDir 'election-uncertainty.js'),
         (Join-Path $projectDir 'candidate-vetting.js'),
         (Join-Path $projectDir 'election-drift.js'),
         (Join-Path $projectDir 'election-night-engine.js'),
+        (Join-Path $projectDir 'campaign-overhaul.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

@@ -287,6 +287,23 @@
       });
     }
 
+    // Also check contested statewide executive nominees
+    if (game.contestedStatewideOffices && typeof game.contestedStatewideOffices === 'object') {
+      Object.entries(game.contestedStatewideOffices).forEach(([officeId, entry]) => {
+        if (!entry) return;
+        const nom = (typeof entry === 'object' && (entry.nominee || entry.candidate)) || null;
+        if (nom) {
+          const stId = (typeof entry === 'object' && entry.stateId) || String(officeId).split(':')[0] || 'PA';
+          nominees.push({
+            raceKey: `statewide_executive:${officeId}`,
+            stateId: stId,
+            raceType: 'statewide_executive',
+            candidate: nom,
+          });
+        }
+      });
+    }
+
     // Also check presidential ticket
     if (game.presidentialTicket?.playerNominee) {
       nominees.push({

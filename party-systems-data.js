@@ -1,4 +1,4 @@
-// Coalition Builder: Party Chair — MAS-01 Party Systems Catalog & Issue Swap Metadata
+// Coalition Builder: Party Chair — System Party Systems Catalog & Issue Swap Metadata
 // Contains the 7th Party System baseline, all 26 Historical & Emergent Party Systems,
 // their 1-to-1 baseline replacement maps, era-exclusive issue metadata, and Independent Presidential archetypes.
 
@@ -112,7 +112,7 @@
     last: ['Whitaker', 'Castellano', 'Mercer', 'Callahan', 'Kowalski', 'Vance-Sterling', 'Delgado', 'Prescott', 'Okafor', 'Langford', 'Solis', 'Aldridge', 'brennan', 'Harlow', 'Keller', 'Sato'],
   };
 
-  // REQ-234: Canonical 1st through 6th Former Party Systems Data
+  // System: Canonical 1st through 6th Former Party Systems Data
   const HISTORICAL_CANON_ERAS = [
     {
       eraNumber: 1,
@@ -1426,7 +1426,9 @@
     era_13_green_transition: 'Climate realignment has propelled the Green coalition into national contender ranks, while clean-energy outside groups sharply outpace fossil-fuel committees on the airwaves.',
     era_14_tripartite_corporatist: 'Voters judge every party first on economic stewardship and social insurance, and no state legislative measure can be enacted without joint sign-off from both Labor and Business blocs.',
     era_15_ai_boom: 'Artificial intelligence governance, automation dividends, and labor protections dominate voter priorities, scrambling legacy partisan coalitions around acceleration versus protection.',
+    era_16_robots_citizens: 'Newly enfranchised synthetic citizens have expanded the electorate with four autonomous civic parties, compelling human committees to compete for machine-rights alliances and high-turnout industrial corridors.',
     era_17_ecological_collapse: 'Existential sea-level and aquifer crises have thrust the Green Party into national dominance with effortless chapter organizing, surging small-dollar enthusiasm, and four competing ecological wings.',
+    era_18_party_coalition: 'Mixed-member proportional representation and a fractured multi-party landscape have shattered two-party dominance; governing requires formal post-election parliamentary coalitions and disciplined wing management.',
     era_19_charismatic_movement: 'A magnetic presidential standard-bearer casts massive downballot coattails across the map—yet whenever a movement leader steps aside, a bitter primary Succession War erupts.',
     era_20_permanent_emergency: 'Relentless fiscal showdowns erode incumbent approval rapidly, handing out-of-power opposition parties surging fundraising momentum and steady electoral tailwinds.',
     era_21_metro_vs_heartland: 'Urban megaregions and rural heartland corridors have hardened into rival political worlds; candidates whose geographic identity clashes with local voters suffer severe ballot-box penalties.',

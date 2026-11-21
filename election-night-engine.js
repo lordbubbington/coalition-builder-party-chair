@@ -787,6 +787,49 @@
       races.push(raceDef);
     });
 
+    // 6. Statewide Executive Offices (#44: live counting drops for AG/SoS/Treasurer/etc.)
+    const statewideResults = election?.statewideResults || [];
+    statewideResults.forEach((seo) => {
+      if (!seo || !seo.officeId) return;
+      const stateId = seo.stateId || 'PA';
+      const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
+      const duration = getStateReportingDuration(stateId);
+      const margin = Number(seo.margin || 0);
+      const winner = seo.winner || (margin >= 0 ? 'people' : 'heritage');
+      const cast = 15000;
+      const finalShares = seo.shares && Object.keys(seo.shares).length > 0
+        ? { ...seo.shares }
+        : {
+            people: Math.round((50 + margin / 2) * 10) / 10,
+            heritage: Math.round((50 - margin / 2) * 10) / 10,
+          };
+      const raceDef = {
+        id: `statewide_executive:${seo.officeId}`,
+        raceKind: 'statewide_executive',
+        raceId: seo.officeId,
+        name: seo.title ? `${stateId} ${seo.title}` : seo.officeId,
+        code: stateId,
+        stateId,
+        seats: 1,
+        closeMinutes: close,
+        durationMinutes: duration,
+        endMinutes: close + duration,
+        finalWinner: winner,
+        finalWinningMargin: margin,
+        expectedMargin: margin,
+        finalShares,
+        cast,
+        isRecountPending: Math.abs(margin) <= 0.50,
+        isHouseDistrict: false,
+      };
+      raceDef.finalVotes = allocateIntegerVotePool(cast, finalShares);
+      const drops = buildRaceDrops(raceDef, `${seedKey}|seo|${seo.officeId}`);
+      raceDef.drops = drops;
+      raceDef.callMinutes = precomputeRaceCallMinute(raceDef, drops);
+      raceDef.callTier = findRaceCallTier(margin).tier;
+      races.push(raceDef);
+    });
+
     return {
       year,
       seed: game.seed || 'pc',
@@ -1034,7 +1077,11 @@
         ? 0
         : (gaussianFromSeed(`${game.seed || 2028}:seo:${targetYear}:${office.id}`) * 2.0);
 
-      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + noise).toFixed(2));
+      const coMod = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
+      const coStateLift = coMod?.getCampaignStateLift ? Number(coMod.getCampaignStateLift(game, office.stateId) || 0) : 0;
+      const playerSignSeo = (game.player?.baseTemplateId === 'heritage') ? -1 : 1;
+      const pollErrSeo = Number(game.pollingMissReport?.stateErrors?.[office.stateId] ?? game.lastElection?.pollingMissReport?.stateErrors?.[office.stateId] ?? 0);
+      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + (coStateLift * 0.55 * playerSignSeo) + pollErrSeo + noise).toFixed(2));
       let peopleShare = Number(Math.max(5, Math.min(95, 50 + margin / 2)).toFixed(2));
       let heritageShare = Number((100 - peopleShare).toFixed(2));
       const shares = { people: peopleShare, heritage: heritageShare };
@@ -1049,8 +1096,9 @@
       );
       if (playerContested) {
         const vmSt = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === office.stateId);
-        const totV = Number(vmSt?.representedVoters || 1);
-        const pAffV = Number(vmSt?.affiliations?.[playerIdentity] || 0) * 100;
+        const totV = Math.max(1, Number(vmSt?.representedVoters || 1));
+        const _enScale = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+        const pAffV = Number(vmSt?.affiliations?.[playerIdentity] || 0) * _enScale;
         const basePlayerShare = options.playerBaseShares?.[office.stateId] ?? ((pAffV / totV) * 100);
         const endorsementBonus = (game.primaryEndorsements?.[raceKey] || game.raceEndorsements?.[raceKey]) ? 1.5 : 0;
         const incBonus = prevParty === playerIdentity ? 2.5 : 0;
@@ -1167,6 +1215,11 @@
     getRaceStateAtMinute,
     buildElectionNightTimeline,
     evaluateElectionNightAt,
+    getBroadcastSnapshot: (game) => {
+      const en = game?.electionNight;
+      if (!en || !en.timeline) return null;
+      return evaluateElectionNightAt(en.timeline, en.elapsedMinutes || 0);
+    },
     computeStatewideFundingLift,
     resolveStatewideOffices,
   };

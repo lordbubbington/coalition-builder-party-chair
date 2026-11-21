@@ -192,7 +192,8 @@
         });
       }
       if (factionSumInState <= 0) return;
-      const sampleToMove = Math.round(factionSumInState / 100);
+      const _is1to1 = (vm.voterScale === '1:1') || (Number(vm.sampleVoters || 0) >= 10_000_000);
+      const sampleToMove = _is1to1 ? Math.round(factionSumInState) : Math.round(factionSumInState / 100);
       if (sampleToMove <= 0) return;
 
       const sourceKey = (fromPartyId === 'independent' || fromPartyId === 'unaffiliated' || !fromPartyId) ? 'independent' : fromPartyId;
@@ -209,7 +210,7 @@
       }
 
       st.affiliations[toPartyId] = (Number(st.affiliations[toPartyId]) || 0) + actualMoved;
-      movedVoters += actualMoved * 100;
+      movedVoters += _is1to1 ? actualMoved : actualMoved * 100;
     });
     return movedVoters;
   }
@@ -510,6 +511,7 @@
           social: getFactionStances(f).social,
         })),
         exactVoters,
+        baseShare: liveBaseShare,
         voterMillions: round(exactVoters / 1_000_000, 2),
         electorateSharePct: pctOfElectorate,
         projectedHouseSeats,

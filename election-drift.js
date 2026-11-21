@@ -224,7 +224,8 @@
       const stOrg = game.stateOrganizations?.[stateId] || {};
       game.stateChapterStreaks[stateId] = game.stateChapterStreaks[stateId] || { people: 0, heritage: 0, player: 0 };
 
-      ['people', 'heritage'].forEach((partyId) => {
+      const trackedParties = Array.from(new Set(['people', 'heritage', ...Object.keys(stOrg || {})]));
+      trackedParties.forEach((partyId) => {
         const chapters = Number(stOrg[partyId]?.chapters ?? 1);
         if (chapters >= 2) {
           game.stateChapterStreaks[stateId][partyId] = (game.stateChapterStreaks[stateId][partyId] || 0) + 1;
@@ -234,8 +235,18 @@
 
         // Check if milestone streak of 3 reached
         if (game.stateChapterStreaks[stateId][partyId] === 3) {
-          const cushion = (partyId === 'people') ? -0.50 : +0.50;
-          netLeanShift += cushion;
+          if (partyId === 'people' || partyId === 'heritage') {
+            const cushion = (partyId === 'people') ? -0.50 : +0.50;
+            netLeanShift += cushion;
+          } else {
+            game.statePartyCushions = game.statePartyCushions || {};
+            game.statePartyCushions[stateId] = game.statePartyCushions[stateId] || {};
+            game.statePartyCushions[stateId][partyId] = clamp(
+              round((game.statePartyCushions[stateId][partyId] || 0) + 0.50, 3),
+              0,
+              4.0
+            );
+          }
         }
       });
 

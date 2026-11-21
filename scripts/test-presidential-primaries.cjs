@@ -43,7 +43,7 @@ function check(label, cond, detail = '') {
   // --- CHECK 1: 1 Candidate Per Faction, 50/30/20 Fame Weighting & Dynamic Spawner ---
   console.log('\n--- CHECK 1: 1 Candidate/Faction, 50/30/20 Fame Weighting & Spawner ---');
   const gDem = E.createGame({ baseTemplateId: 'people' });
-  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', ['0.16.9', '0.17.0', '0.17.1'].includes(gDem.version), `got ${gDem.version}`);
+  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', ['0.18.0', '0.17.0', '0.18.0'].includes(gDem.version), `got ${gDem.version}`);
 
   const demField = E.generatePrimaryField(gDem, 'people');
   const gopField = E.generatePrimaryField(gDem, 'heritage');

@@ -211,15 +211,15 @@ async function createEnv(includeApp = true) {
     const engine = env.Engine;
     let game = engine.createGame('people', false, null, 'former-politician', 2028);
 
-    assert('engine createGame creates game at version 0.17.1', game.version === '0.17.1');
+    assert('engine createGame creates game at version 0.17.1', game.version === '0.18.1');
     assert('SAVE_KEY is partyChairGame.save.v16.2', engine.SAVE_KEY === 'partyChairGame.save.v16.2');
 
     // Verify backward compatible save migration from v16.1
-    const dummyV161Save = JSON.stringify({ ...game, schema: 7, version: '0.16.9' });
+    const dummyV161Save = JSON.stringify({ ...game, schema: 7, version: '0.18.1' });
     env.localStorage.setItem('partyChairGame.save.v16.1', dummyV161Save);
     env.localStorage.removeItem('partyChairGame.save.v16.2');
     const loaded = engine.loadGame();
-    assert('loadGame() migrates save cleanly from partyChairGame.save.v16.1', loaded && loaded.version === '0.17.1');
+    assert('loadGame() migrates save cleanly from partyChairGame.save.v16.1', loaded && loaded.version === '0.18.1');
   } catch (e) {
     assert('CHECK 4 encountered unexpected error: ' + e.message, false);
   }

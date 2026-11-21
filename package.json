@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.17.1",
-  "description": "Coalition Builder: Party Chair — Version 0.17.1 (Faction Systems Release Hotfix)",
+  "version": "0.18.1",
+  "description": "Coalition Builder: Party Chair — Version 0.18.1 (Faction Systems Release Hotfix)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

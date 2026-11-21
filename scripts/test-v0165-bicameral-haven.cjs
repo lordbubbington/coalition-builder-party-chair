@@ -178,14 +178,14 @@ function getTotalVoters(game) {
   // --- SUITE 2: 5-Tier Stepper Action, Off-Cycle Lock, Coattails & 155M Conservation ---
   console.log('\n--- SUITE 2: 5-Tier Stepper, Coattails & Invariant +1,000 Voters ---');
   let game = Engine.createGame({ baseTemplateId: 'green' });
-  check('Game version stamped as 0.16.5+', game.version.startsWith('0.16.') || game.version.startsWith('0.17.'), `got ${game.version}`);
+  check('Game version stamped as 0.16.5+', (game.version.startsWith('0.16.') || game.version.startsWith('0.17.') || game.version.startsWith('0.18.')) || game.version.startsWith('0.17.') || game.version.startsWith('0.18.'), `got ${game.version}`);
 
   game.phase = 'organizing';
   game.organizingActionsRemaining = 20;
   game.actionsLeft = 20;
 
   const startTotal = getTotalVoters(game);
-  const startPA = Number(getStateObj(game, 'PA').affiliations.green || 0) * 100;
+  const startPA = Number(getStateObj(game, 'PA').affiliations.green || 0);
   check('Starting electorate equals 155,000,000', startTotal === 155000000, `got ${startTotal}`);
 
   // Step PA State House from 0 -> 5 (5 steps)
@@ -196,14 +196,14 @@ function getTotalVoters(game) {
     check(`PA House stepped to Tier ${t}`, (game.contestedStateHouseSlates?.PA || 0) === t);
   }
   const afterPAHouseTotal = getTotalVoters(game);
-  const afterPAHouse = Number(getStateObj(game, 'PA').affiliations.green || 0) * 100;
+  const afterPAHouse = Number(getStateObj(game, 'PA').affiliations.green || 0);
   check('5 tiers of PA House added +5,000 voters (flat +1,000/tier)', afterPAHouse - startPA === 5000, `delta=${afterPAHouse - startPA}`);
   check('155,000,000 voter conservation holds exactly after slate investment', afterPAHouseTotal === 155000000, `got ${afterPAHouseTotal}`);
 
   // Anti-farming check: step down to 4 and back up to 5 -> no extra voters farmed
   game = Engine.takeAction(game, 'set-state-legislative-slate-tier', { stateId: 'PA', chamber: 'house', targetTier: 4 });
   game = Engine.takeAction(game, 'set-state-legislative-slate-tier', { stateId: 'PA', chamber: 'house', targetTier: 5 });
-  const afterTogglePA = Number(getStateObj(game, 'PA').affiliations.green || 0) * 100;
+  const afterTogglePA = Number(getStateObj(game, 'PA').affiliations.green || 0);
   check('Stepping down and back up does not farm duplicate voters', afterTogglePA === afterPAHouse, `afterToggle=${afterTogglePA}`);
 
   // Step PA State Senate to Tier 1 to test bicameral coattail compounding
