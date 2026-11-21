@@ -2311,7 +2311,7 @@ function getHighestVoterShareStateForParty(game, partyId = 'player') {
   };
 }
 
-// v0.16.9: Mathematical Simulation Effects for all 8 Qualitative Candidate Traits
+// v0.16.9: Mathematical Simulation Effects for all 40 Qualitative Candidate Traits
 const CANDIDATE_TRAIT_EFFECTS = {
   'Rising Star': {
     donorViralityMultiplier: 1.5,
@@ -2344,6 +2344,139 @@ const CANDIDATE_TRAIT_EFFECTS = {
   'Undisciplined': {
     volatilityMultiplier: 1.65,
     unforcedGaffeOddsMultiplier: 2.5,
+  },
+  // Background & Roots
+  'Military Veteran': {
+    workingClassRuralAppeal: 2.2,
+    baselineDefenseFloor: 2.5,
+  },
+  'Union Stalwart': {
+    volunteerSurgeMultiplier: 1.25,
+    workingClassRuralAppeal: 2.5,
+  },
+  'Prosecutorial Edge': {
+    debatePerformanceMultiplier: 1.20,
+    vulnerabilityDelta: -10,
+  },
+  'Small-Town Pillar': {
+    baselineDefenseFloor: 3.0,
+    workingClassRuralAppeal: 1.5,
+  },
+  'Academic Theorist': {
+    debatePerformanceMultiplier: 1.10,
+    earnedMediaEfficiencyMultiplier: 1.10,
+  },
+  'K-Street Veteran': {
+    donorViralityMultiplier: 1.30,
+    baselineDefenseFloor: 1.5,
+  },
+  'Local Sports Legend': {
+    baselineDefenseFloor: 3.5,
+    suburbanSwingLift: 1.5,
+  },
+  'Grassroots Organizer': {
+    volunteerSurgeMultiplier: 1.30,
+    donorViralityMultiplier: 1.15,
+  },
+  'Self-Made Entrepreneur': {
+    suburbanSwingLift: 2.0,
+    donorViralityMultiplier: 1.20,
+  },
+  'Dynastic Name': {
+    earnedMediaEfficiencyMultiplier: 1.25,
+    baselineDefenseFloor: 2.0,
+  },
+  // Campaign & Media Style
+  'Sunday Show Fixture': {
+    earnedMediaEfficiencyMultiplier: 1.30,
+    debatePerformanceMultiplier: 1.08,
+  },
+  'Relentless Door-Knocker': {
+    volunteerSurgeMultiplier: 1.25,
+    baselineDefenseFloor: 2.5,
+  },
+  'Floor Speech Maverick': {
+    donorViralityMultiplier: 1.25,
+    earnedMediaEfficiencyMultiplier: 1.15,
+  },
+  'Oratorical Phenom': {
+    debatePerformanceMultiplier: 1.25,
+    volunteerSurgeMultiplier: 1.20,
+  },
+  'Digital Native': {
+    donorViralityMultiplier: 1.35,
+    volunteerSurgeMultiplier: 1.15,
+  },
+  'Media Darling': {
+    earnedMediaEfficiencyMultiplier: 1.25,
+    vulnerabilityDelta: -15,
+  },
+  'Quiet Diplomat': {
+    volatilityMultiplier: 0.70,
+    baselineDefenseFloor: 2.0,
+  },
+  'Cautious Deliberator': {
+    unforcedGaffeOddsMultiplier: 0.0,
+    volatilityMultiplier: 0.60,
+  },
+  'Populist Firebrand': {
+    workingClassRuralAppeal: 3.5,
+    donorViralityMultiplier: 1.20,
+    volatilityMultiplier: 1.25,
+  },
+  'Deep-Pocket Rolodex': {
+    donorViralityMultiplier: 1.40,
+    baselineDefenseFloor: 1.5,
+  },
+  // Legislative & Governance
+  'Machine Loyalist': {
+    volatilityMultiplier: 0.60,
+    baselineDefenseFloor: 2.5,
+  },
+  'Budget Hawk': {
+    suburbanSwingLift: 1.8,
+    vulnerabilityDelta: -10,
+  },
+  'Bipartisan Dealmaker': {
+    suburbanSwingLift: 3.0,
+    volatilityMultiplier: 0.75,
+  },
+  'Doctrinal Purist': {
+    volunteerSurgeMultiplier: 1.20,
+    scandalOddsMultiplier: 0.5,
+  },
+  'Committee Workhorse': {
+    baselineDefenseFloor: 3.0,
+    volatilityMultiplier: 0.70,
+  },
+  'Backbench Agitator': {
+    earnedMediaEfficiencyMultiplier: 1.15,
+    volatilityMultiplier: 1.30,
+  },
+  'Kingmaker Conduit': {
+    donorViralityMultiplier: 1.20,
+    suburbanSwingLift: 1.5,
+  },
+  'Statehouse Alum': {
+    volunteerSurgeMultiplier: 1.15,
+    baselineDefenseFloor: 2.0,
+  },
+  // Character & Volatility
+  'Gaffe Prone': {
+    unforcedGaffeOddsMultiplier: 1.8,
+    volatilityMultiplier: 1.35,
+  },
+  'Teflon Brand': {
+    vulnerabilityDelta: -35,
+    baselineDefenseFloor: 3.5,
+  },
+  'Charismatic Fundraiser': {
+    donorViralityMultiplier: 1.35,
+    earnedMediaEfficiencyMultiplier: 1.15,
+  },
+  'Principled Contrarian': {
+    suburbanSwingLift: 2.5,
+    volatilityMultiplier: 0.85,
   },
 };
 
@@ -2398,6 +2531,28 @@ function evaluateCandidateTraitEffects(candidate) {
     out.volatilityMultiplier *= 1.65;
     out.unforcedGaffeOddsMultiplier = out.unforcedGaffeOddsMultiplier === 0 ? 0 : (out.unforcedGaffeOddsMultiplier * 2.5);
   }
+
+  // Expanded qualitative traits dynamic evaluation
+  Object.entries(CANDIDATE_TRAIT_EFFECTS).forEach(([tName, fx]) => {
+    if (['Rising Star', 'Established Politician', 'Corrupt', 'Squeaky Clean', 'Polished', 'Rough', 'Disciplined', 'Undisciplined'].includes(tName)) return;
+    if (norm.has(tName.toLowerCase())) {
+      if (fx.donorViralityMultiplier !== undefined) out.donorViralityMultiplier *= fx.donorViralityMultiplier;
+      if (fx.volunteerSurgeMultiplier !== undefined) out.volunteerSurgeMultiplier *= fx.volunteerSurgeMultiplier;
+      if (fx.volatilityMultiplier !== undefined) out.volatilityMultiplier *= fx.volatilityMultiplier;
+      if (fx.baselineDefenseFloor !== undefined) out.baselineDefenseFloor += fx.baselineDefenseFloor;
+      if (fx.vulnerabilityDelta !== undefined) out.vulnerabilityDelta += fx.vulnerabilityDelta;
+      if (fx.scandalOddsMultiplier !== undefined) out.scandalOddsMultiplier *= fx.scandalOddsMultiplier;
+      if (fx.oppoImmunity !== undefined) out.oppoImmunity = out.oppoImmunity || fx.oppoImmunity;
+      if (fx.suburbanSwingLift !== undefined) out.suburbanSwingLift += fx.suburbanSwingLift;
+      if (fx.debatePerformanceMultiplier !== undefined) out.debatePerformanceMultiplier *= fx.debatePerformanceMultiplier;
+      if (fx.earnedMediaEfficiencyMultiplier !== undefined) out.earnedMediaEfficiencyMultiplier *= fx.earnedMediaEfficiencyMultiplier;
+      if (fx.workingClassRuralAppeal !== undefined) out.workingClassRuralAppeal += fx.workingClassRuralAppeal;
+      if (fx.unforcedGaffeOddsMultiplier !== undefined) {
+        out.unforcedGaffeOddsMultiplier = out.unforcedGaffeOddsMultiplier === 0 ? 0 : (out.unforcedGaffeOddsMultiplier * fx.unforcedGaffeOddsMultiplier);
+      }
+    }
+  });
+
   return out;
 }
 
@@ -11164,12 +11319,24 @@ function pullCandidateFunds(game, raceKey, amount = null) {
 const SIMULATED_TRAIT_POOL = [
   'Rising Star', 'Established Politician', 'Corrupt', 'Squeaky Clean',
   'Polished', 'Rough', 'Disciplined', 'Undisciplined',
+  'Military Veteran', 'Union Stalwart', 'Prosecutorial Edge', 'Small-Town Pillar',
+  'Academic Theorist', 'K-Street Veteran', 'Local Sports Legend', 'Grassroots Organizer',
+  'Self-Made Entrepreneur', 'Dynastic Name', 'Sunday Show Fixture', 'Relentless Door-Knocker',
+  'Floor Speech Maverick', 'Oratorical Phenom', 'Digital Native', 'Media Darling',
+  'Quiet Diplomat', 'Cautious Deliberator', 'Populist Firebrand', 'Deep-Pocket Rolodex',
+  'Machine Loyalist', 'Budget Hawk', 'Bipartisan Dealmaker', 'Doctrinal Purist',
+  'Committee Workhorse', 'Backbench Agitator', 'Kingmaker Conduit', 'Statehouse Alum',
+  'Gaffe Prone', 'Teflon Brand', 'Charismatic Fundraiser', 'Principled Contrarian',
 ];
 
 // REQ-291: Chronological Age Engine Trait Age Gates
 const TRAIT_AGE_GATES = {
   'Rising Star': { maxAge: 59 }, // Under 60 strictly
   'Established Politician': { minAge: 40 },
+  'Digital Native': { maxAge: 52 },
+  'Committee Workhorse': { minAge: 45 },
+  'Machine Loyalist': { minAge: 38 },
+  'K-Street Veteran': { minAge: 38 },
 };
 
 function generateFreshPoliticianForSeat(opts = {}) {

@@ -2980,7 +2980,43 @@ const POLITICIAN_TRAITS = [
   'Polished',
   'Rough',
   'Disciplined',
-  'Undisciplined'
+  'Undisciplined',
+  // Background & Roots
+  'Military Veteran',
+  'Union Stalwart',
+  'Prosecutorial Edge',
+  'Small-Town Pillar',
+  'Academic Theorist',
+  'K-Street Veteran',
+  'Local Sports Legend',
+  'Grassroots Organizer',
+  'Self-Made Entrepreneur',
+  'Dynastic Name',
+  // Campaign & Media Style
+  'Sunday Show Fixture',
+  'Relentless Door-Knocker',
+  'Floor Speech Maverick',
+  'Oratorical Phenom',
+  'Digital Native',
+  'Media Darling',
+  'Quiet Diplomat',
+  'Cautious Deliberator',
+  'Populist Firebrand',
+  'Deep-Pocket Rolodex',
+  // Legislative & Governance
+  'Machine Loyalist',
+  'Budget Hawk',
+  'Bipartisan Dealmaker',
+  'Doctrinal Purist',
+  'Committee Workhorse',
+  'Backbench Agitator',
+  'Kingmaker Conduit',
+  'Statehouse Alum',
+  // Character & Volatility
+  'Gaffe Prone',
+  'Teflon Brand',
+  'Charismatic Fundraiser',
+  'Principled Contrarian',
 ];
 
 

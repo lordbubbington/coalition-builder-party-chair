@@ -1,28 +1,76 @@
 # Coalition Builder: Party Chair — Politician Traits Specification Document
 
-> **Document Status:** Reference Specification & Catalog for **REQ-128 / TRAITS-01** (Candidate Traits Engine).  
-> **Last Updated:** November 14, 2026  
-> **Applicable Version:** Version 0.14+ Engine Architecture  
+> **Document Status:** Reference Specification & Catalog for **REQ-128 / TRAITS-01** (Candidate Traits Engine & 40-Trait Qualitative Taxonomy).  
+> **Last Updated:** November 21, 2026  
+> **Applicable Version:** Version 0.18+ / Antigravity Busywork Systems Release  
 
 ---
 
 ## 1. Executive Summary & Trait System Architecture
 
-The **Candidate Traits Engine** introduces a comprehensive qualitative character taxonomy to *Coalition Builder: Party Chair*. Every active political figure in the game—encompassing all **100 U.S. Senators**, **50 Governors**, **435 House Representatives**, and **Party Leadership figures**—is assigned at least one defining trait based on their established public perception, media reputation, and career profile.
+The **Candidate Traits Engine** introduces a comprehensive qualitative character taxonomy to *Coalition Builder: Party Chair*. Every active political figure in the game—encompassing all **100 U.S. Senators**, **50 Governors**, **435 House Representatives**, **Statewide Executive Officers**, and **Party Leadership figures**—is assigned defining traits based on their established public perception, media reputation, biographical background, and legislative style.
 
-### The 8 Canonical Candidate Traits
-| Trait Name | Definition & Archetype Profile | Core Criteria & Constraints |
-| :--- | :--- | :--- |
-| **Rising Star** | Rapidly gaining national popularity, media buzz, and grassroots momentum. | Must be under 60 years of age *(Candidate Age Engine tracked under `TBD-13`)*. |
-| **Established politician** | Veteran lawmaker or institutional fixture with deep party roots, seniority, and committee power. | High experience, prolonged tenure, well-known brand identity. |
-| **Corrupt** | Dogged by ethics probes, campaign finance controversies, self-dealing, or criminal indictments. | Prominent ethical baggage or federal investigations. |
-| **Squeaky Clean** | Renowned for ethics reform, personal transparency, anti-PAC integrity, and untainted public standing. | Low corruption footprint, high public integrity rating. |
-| **Polished** | Highly camera-ready, teleprompter-adept, slick oratorical and debate delivery. | Strong debate skills, high media savvy, message discipline. |
-| **Rough** | Unvarnished, raw, combative, unapologetically populist, plain-spoken, or blue-collar. | Anti-establishment delivery, outsider posture, unscripted appeal. |
-| **Disciplined** | Strictly on-message, party-line regular, cautious operator, rare unforced gaffes. | High message discipline, reliable institutional loyalty. |
-| **Undisciplined** | Prone to hot-mic gaffes, rogue voting, explosive social media rants, and tactical blunders. | High controversy risk, spontaneous outbursts, tactical volatility. |
+The system features **40 qualitative traits** divided into 5 distinct categories.
 
-*(Note: In accordance with project directions, mechanical simulation effects for these traits are staged under **TBD-14**).*
+### Category 1: Canonical Baseline Traits (8 Traits)
+| Trait Name | Category | Definition & Archetype Profile | Mechanical & Narrative Impact |
+| :--- | :--- | :--- | :--- |
+| **Rising Star** | Career Stage | Rapidly gaining national popularity, media buzz, and grassroots momentum. Age < 60. | 1.5× donor virality, 1.35× volunteer surges. |
+| **Established Politician** | Career Stage | Veteran lawmaker or institutional fixture with deep party roots, seniority, and committee power. Age ≥ 40. | 0.65× volatility, +4.0 baseline defense floor. |
+| **Corrupt** | Ethics | Dogged by ethics probes, campaign finance controversies, self-dealing, or federal indictments. | +45 vulnerability delta, 2.0× scandal odds. |
+| **Squeaky Clean** | Ethics | Renowned for ethics reform, personal transparency, anti-PAC integrity, and untainted public standing. | Opposition smear immunity, +2.5 suburban swing lift, 0.0× scandal odds. |
+| **Polished** | Communication | Highly camera-ready, teleprompter-adept, slick oratorical and debate delivery. | 1.15× debate score, 1.20× earned media efficiency. |
+| **Rough** | Communication | Unvarnished, raw, combative, unapologetically populist, plain-spoken, or blue-collar. | +3.0 working-class/rural appeal, 0.82× earned media efficiency. |
+| **Disciplined** | Operational | Strictly on-message, party-line regular, cautious operator, rare unforced gaffes. | 0.55× volatility, 0.0× unforced gaffe odds. |
+| **Undisciplined** | Operational | Prone to hot-mic gaffes, rogue voting, explosive social media rants, and tactical blunders. | 1.65× volatility, 2.5× unforced gaffe odds. |
+
+### Category 2: Background & Roots (10 Traits)
+| Trait Name | Category | Definition & Archetype Profile | Mechanical & Narrative Impact |
+| :--- | :--- | :--- | :--- |
+| **Military Veteran** | Background | Decorated service in the armed forces; commands deep respect among rural voters, working families, and veteran communities. | +2.2 working-class/rural appeal, +2.5 baseline defense. |
+| **Union Stalwart** | Background | Lifelong ally of organized labor and industrial trade councils; unlocks volunteer mobilization surges in manufacturing hubs. | 1.25× volunteer surges, +2.5 working-class/rural appeal. |
+| **Prosecutorial Edge** | Background | Former prosecutor, attorney general, or forensic litigator; conducts sharp questioning on debate stages and in committee hearings. | 1.20× debate score, -10 vulnerability delta. |
+| **Small-Town Pillar** | Background | Deep roots in civic clubs, county fairs, agricultural cooperatives, and local commerce; fortifies rural turnout defenses. | +3.0 baseline defense, +1.5 working-class/rural appeal. |
+| **Academic Theorist** | Background | Former scholar, author, or think-tank fellow; brings intellectual rigor and policy credibility to complex legislative battles. | 1.10× debate score, 1.10× earned media efficiency. |
+| **K-Street Veteran** | Background | Connected institutional insider with deep corporate rolodexes; elevates high-dollar donor bundling efficiency. | 1.30× donor virality, +1.5 baseline defense. |
+| **Local Sports Legend** | Background | Beloved collegiate or professional athletics figure; enjoys an unshakeable baseline of statewide goodwill and name recognition. | +3.5 baseline defense, +1.5 suburban swing lift. |
+| **Grassroots Organizer** | Background | Seasoned precinct captain who cut teeth in community door-knocking; accelerates volunteer recruitment drives. | 1.30× volunteer surges, 1.15× donor virality. |
+| **Self-Made Entrepreneur** | Background | Private-sector executive or business founder; projects fiscal competence and commands suburban moderate appeal. | +2.0 suburban swing lift, 1.20× donor virality. |
+| **Dynastic Name** | Background | Scion of a legendary political family; enters politics with high immediate name recognition and national press access. | 1.25× earned media efficiency, +2.0 baseline defense. |
+
+### Category 3: Campaign & Media Style (10 Traits)
+| Trait Name | Category | Definition & Archetype Profile | Mechanical & Narrative Impact |
+| :--- | :--- | :--- | :--- |
+| **Sunday Show Fixture** | Media Style | Frequent network roundtable panelist; maximizes the earned-media publicity value of party initiatives. | 1.30× earned media efficiency, 1.08× debate score. |
+| **Relentless Door-Knocker** | Media Style | Tireless retail campaigner who spends cycles on front porches; lifts field operation yields in contested home counties. | 1.25× volunteer surges, +2.5 baseline defense. |
+| **Floor Speech Maverick** | Media Style | Fiery chamber speaker whose viral floor speeches dominate social feeds and spark small-dollar fundraising spikes. | 1.25× donor virality, 1.15× earned media efficiency. |
+| **Oratorical Phenom** | Media Style | Spellbinding public speaker capable of electrifying packed convention arenas and stadium rallies. | 1.25× debate score, 1.20× volunteer surges. |
+| **Digital Native** | Media Style | Master of algorithmic outreach, livestreams, and digital memes; multiplies online donation momentum. | 1.35× donor virality, 1.15× volunteer surges. |
+| **Media Darling** | Media Style | Consistently praised by national political columnists; dampens the damage of rival negative advertising. | 1.25× earned media efficiency, -15 vulnerability delta. |
+| **Quiet Diplomat** | Media Style | Works quietly behind closed cloakroom doors; soothes intra-party ideological friction and stabilizes alliances. | 0.70× volatility, +2.0 baseline defense. |
+| **Cautious Deliberator** | Media Style | Risk-averse and measured operator; virtually immune to unforced message mistakes and tactical traps. | 0.0× unforced gaffe odds, 0.60× volatility. |
+| **Populist Firebrand** | Media Style | Uncompromising tribune for the disaffected; mobilizes non-voters with fiery anti-establishment rhetoric. | +3.5 working-class/rural appeal, 1.20× donor virality, 1.25× volatility. |
+| **Deep-Pocket Rolodex** | Media Style | Commands access to major private finance networks; can summon rapid emergency cash infusions for key races. | 1.40× donor virality, +1.5 baseline defense. |
+
+### Category 4: Legislative & Governance (8 Traits)
+| Trait Name | Category | Definition & Archetype Profile | Mechanical & Narrative Impact |
+| :--- | :--- | :--- | :--- |
+| **Machine Loyalist** | Governance | Steadfast party regular who enforces caucus discipline and honors organizational hierarchy. | 0.60× volatility, +2.5 baseline defense. |
+| **Budget Hawk** | Governance | Relentless fiscal watchdog who scrutinizes appropriations and projects unbending spending discipline. | +1.8 suburban swing lift, -10 vulnerability delta. |
+| **Bipartisan Dealmaker** | Governance | Proven record of cross-aisle legislation; holds strong appeal among independent swing voters in purple battlegrounds. | +3.0 suburban swing lift, 0.75× volatility. |
+| **Doctrinal Purist** | Governance | Refuses ideological dilution or compromise; strictly enforces party platform principles among allies. | 1.20× volunteer surges, 0.5× scandal odds. |
+| **Committee Workhorse** | Governance | Diligent legislative craftsman who masters complex bill markup; extends career longevity and chamber influence. | +3.0 baseline defense, 0.70× volatility. |
+| **Backbench Agitator** | Governance | Insurgent firebrand who challenges party leadership mandates; provokes factional tension and media drama. | 1.15× earned media efficiency, 1.30× volatility. |
+| **Kingmaker Conduit** | Governance | Maintains intimate ties with influential state party power-brokers and independent swing PAC directors. | 1.20× donor virality, +1.5 suburban swing lift. |
+| **Statehouse Alum** | Governance | Rose through state legislative ranks; bridges state capitol delegations and federal campaign machinery seamlessly. | 1.15× volunteer surges, +2.0 baseline defense. |
+
+### Category 5: Character & Volatility (4 Traits)
+| Trait Name | Category | Definition & Archetype Profile | Mechanical & Narrative Impact |
+| :--- | :--- | :--- | :--- |
+| **Gaffe Prone** | Character | Vulnerable to awkward press slips and hot-mic stumbles, though often viewed by voters as endearing authenticity. | 1.8× unforced gaffe odds, 1.35× volatility. |
+| **Teflon Brand** | Character | Naturally bulletproof public figure against whom opponent attacks and opposition research fail to stick. | -35 vulnerability delta, +3.5 baseline defense. |
+| **Charismatic Fundraiser** | Character | Effortlessly charms donor galas and grassroots rallies alike; multiplies campaign finance momentum. | 1.35× donor virality, 1.15× earned media efficiency. |
+| **Principled Contrarian** | Character | Renowned for breaking with party orthodoxy on core conscience votes; enjoys unmatched independent credibility. | +2.5 suburban swing lift, 0.85× volatility. |
 
 ---
 

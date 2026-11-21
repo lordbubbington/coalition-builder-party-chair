@@ -30,6 +30,7 @@ try {
         (Join-Path $projectDir 'voter-model-0.5.js'),
         (Join-Path $projectDir 'demographics-0.9.js'),
         (Join-Path $projectDir 'political-trends-system.js'),
+        (Join-Path $projectDir 'political-texture-system.js'),
         (Join-Path $projectDir 'v07-scaffolding.js'),
         (Join-Path $projectDir 'party-systems-data.js'),
         (Join-Path $projectDir 'party-systems-coalition.js'),
