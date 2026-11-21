@@ -48,7 +48,7 @@ console.log('===================================================================
 
 // Fix #2 & #12: AI simulated primary winners carry to General Election & activePresidentialPrimary clears
 let g = E.createGame({ baseTemplateId: 'people' });
-check('Version is 0.16.9 or 0.17.0 or 0.17.1', ['0.18.1', '0.17.0', '0.18.1'].includes(g.version), g.version);
+check('Version is 0.16.9 or 0.17.0 or 0.17.1', ['0.18.2', '0.17.0', '0.18.2'].includes(g.version), g.version);
 g = E.takeAction(g, 'start-presidential-primary');
 const simRep = g.simulatedPrimaries?.[2028]?.heritage?.nomineeName;
 const simGrn = g.simulatedPrimaries?.[2028]?.green?.nomineeName;

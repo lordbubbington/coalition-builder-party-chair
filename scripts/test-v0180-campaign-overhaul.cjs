@@ -42,12 +42,12 @@ const E = ctx.window.PartyChairEngine;
 const CO = ctx.window.CampaignOverhaul;
 
 console.log('====================================================================');
-console.log(' VERSION 0.18.1 CAMPAIGN PHASE OVERHAUL & 1:1 SCALE SUITE');
+console.log(' VERSION 0.18.2 CAMPAIGN PHASE OVERHAUL & 1:1 SCALE SUITE');
 console.log('====================================================================');
 
 // 1. Version & 1:1 Voter Scale
 let g = E.createGame({ baseTemplateId: 'people' });
-check('Version stamped as 0.18.1', g.version === '0.18.1', g.version);
+check('Version stamped as 0.18.2', g.version === '0.18.2', g.version);
 check('Native 1:1 Voter Scale: sampleVoters === representedVoters === 155,000,000',
   g.voterModel.sampleVoters === 155000000 && g.voterModel.representedVoters === 155000000,
   `sample=${g.voterModel.sampleVoters}, rep=${g.voterModel.representedVoters}`);
@@ -92,6 +92,7 @@ check('Campaign starts at Month 1 with 8 actions & Rival Chair Month 1 activity'
 g = E.takeAction(g, 'select-campaign-theme', { issueId: 'inflation' });
 const lift1 = g.campaign.themePersuasionLift;
 const indBeforeRepeat = g.trust.independents;
+  g = { ...g, campaign: { ...g.campaign, month: 2, themeSelectedThisMonth: false } };
 g = E.takeAction(g, 'select-campaign-theme', { issueId: 'inflation' });
 check('Theme of the Month awards lift & penalizes consecutive repeat selection',
   lift1 > 0 && g.trust.independents < indBeforeRepeat && g.campaign.rivalThemeCounterBonus > 0,
@@ -172,6 +173,6 @@ check('QA Fix #5: Hardcoded * 100 voter display multipliers removed in app.js',
   !appTxt.includes('aff.thirdParty?.byParty?.socialist * 100') && !appTxt.includes('voters.representedVoters * 100'));
 
 console.log('\n====================================================================');
-console.log(` V0.18.1 CAMPAIGN OVERHAUL SUITE: ${passed} passed, ${failed} failed`);
+console.log(` V0.18.2 CAMPAIGN OVERHAUL SUITE: ${passed} passed, ${failed} failed`);
 console.log('====================================================================');
 process.exit(failed > 0 ? 1 : 0);

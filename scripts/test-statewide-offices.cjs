@@ -82,7 +82,7 @@ function check(label, cond, detail = '') {
   // --- SUITE 1: Starting Incumbents Load Cleanly into game.sittingMembers ---
   console.log('\n--- SUITE 1: 50-State Starting Roster & Faction Validation ---');
   let game = Engine.createGame({ baseTemplateId: 'people' });
-  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', game.version === '0.18.1' || game.version === '0.17.0' || game.version === '0.18.1', `got ${game.version}`);
+  check('Game version stamped as 0.16.9, 0.17.0, or 0.17.1', game.version === '0.18.2' || game.version === '0.17.0' || game.version === '0.18.2', `got ${game.version}`);
 
   const registry = Data.STATEWIDE_OFFICES_REGISTRY || [];
   const startingOfficers = Data.STARTING_STATEWIDE_OFFICERS || [];

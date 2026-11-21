@@ -826,7 +826,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.18.1)
+// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.18.2)
 if (typeof document !== 'undefined') {
   document.addEventListener('click', (event) => {
     const btn = event.target?.closest ? event.target.closest('[data-set-additional-type]') : null;
@@ -1866,7 +1866,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.1</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.2</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1891,7 +1891,7 @@ function setupMarkup() {
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.18.1 · Faction Systems Release · Local autosave</p>
+          <p class="setup-foot">Version 0.18.2 · Faction Systems Release · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -4984,7 +4984,7 @@ function commissionedPollsModalMarkup() {
       <div class="v08-modal-content" style="max-width:850px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
           <div>
-            <div class="eyebrow">Polling Archive · Campaign 2028</div>
+            <div class="eyebrow">Polling Archive · Campaign ${game?.year || 2028}</div>
             <h2 style="margin:2px 0;font-family:'Iowan Old Style',Palatino,Georgia,serif;font-size:24px">Commissioned Internal Surveys Archive</h2>
             <p style="margin:4px 0 0;color:var(--muted);font-size:13px">
               Review historical survey tracking and top-line margins across battleground races polled by your campaign.
@@ -5455,7 +5455,7 @@ function v0180CampaignWarRoomMarkup() {
         </label>
         <label style="font-size:12px;">Target Faction:
           <select id="v0180-faction-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
-            ${allFactions.map((f) => `<option value="${safe(f.id)}">${safe(f.name || f.id)}</option>`).join('')}
+            ${allFactions.map((f) => `<option value="${safe(f.id)}" ${f.id === (window.__v0181SelectedFaction || allFactions[0]?.id) ? 'selected' : ''}>${safe(f.name || f.id)}</option>`).join('')}
           </select>
         </label>
         <label style="font-size:12px;">Target Rival:
@@ -5487,7 +5487,7 @@ function v0180CampaignWarRoomMarkup() {
         ${c.themeSelectedThisMonth
           ? `<span style="font-size:12px;color:#86efac;">Active: <b>${safe(c.activeThemeName || c.activeThemeId)}</b></span>`
           : `<select id="v0180-theme-select" style="padding:4px 8px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
-              ${issues.map((i) => `<option value="${safe(i.id)}">${safe(i.name || i.id)}${(c.usedThemes || []).includes(i.id) ? ' (Used — Stale Penalty)' : ''}</option>`).join('')}
+              ${issues.map((i) => `<option value="${safe(i.id)}">${safe(i.label || i.name || i.id)}${(c.usedThemes || []).includes(i.id) ? ' (Used — Stale Penalty)' : ''}</option>`).join('')}
             </select>
             <button type="button" class="button button-secondary" data-v0180-action="select-campaign-theme">Set Theme</button>`}
       </div>
@@ -6507,7 +6507,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.18.1 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.18.2 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}</div>
@@ -7005,7 +7005,7 @@ function jointVictoryCompactsMarkup(game) {
       .map((p) => ({
         id: `compact-${p.id}`,
         pacName: p.name,
-        term: `2028 Cycle · ${p.petIssueLabel || p.petIssue || 'Targeted'} Media Reserve`,
+        term: `${game?.year || 2028} Cycle · ${p.petIssueLabel || p.petIssue || 'Targeted'} Media Reserve`,
         reserve: `$${(p.poolMillions || p.pool || 8.0).toFixed(1)}M`,
         status: 'pending',
       }));
@@ -7052,7 +7052,7 @@ function jointVictoryCompactsMarkup(game) {
             <div class="v13-compact-row">
               <div class="v13-compact-info">
                 <span class="v13-compact-name">${safe(c.pacName || c.name || 'Joint Steering Partner')}</span>
-                <span class="v13-compact-term">${safe(c.term || '2028 Cycle Agreement')}</span>
+                <span class="v13-compact-term">${safe(c.term || `${game?.year || 2028} Cycle Agreement`)}</span>
               </div>
               <div class="v13-compact-meta">
                 <span class="v13-compact-reserve">${safe(c.reserve || c.reserveAmount || '$0.0M')}</span>
@@ -7850,7 +7850,7 @@ function getMorningWireHeadline(game) {
 
   const isMinor = !['people', 'heritage'].includes(game.player?.baseTemplateId);
   const customOrMinor = game.player?.custom
-    ? `${safe(game.player.name)} surges as autonomous third force in 2028 landscape`
+    ? `${safe(game.player.name)} surges as autonomous third force in ${game?.year || 2028} landscape`
     : (isMinor ? `${safe(game.player.name)} mounts nationwide 50-state ballot access offensive` : null);
   const story = customOrMinor || presLead;
 
@@ -8812,7 +8812,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.1</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.2</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -8867,7 +8867,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.1</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.2</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
@@ -8970,13 +8970,13 @@ function ensureElectionHoverTooltipBound() {
     let snapEval = null;
     if (rowEl) {
       const rid = rowEl.getAttribute('data-race-id');
-      snapEval = (snap.theCountRaces || []).find((r) => r.id === rid) || snap.raceEvaluations?.[rid] || null;
+      snapEval = (snap.theCountRaces || []).find((r) => r.id === rid) || (snap.raceEvaluations || []).find((r) => r.id === rid) || null;
       race = allRaces.find((r) => r.id === rid) || snapEval;
     } else if (stateEl) {
       const stId = stateEl.getAttribute('data-desk-state');
       race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab)
         || allRaces.find((r) => r.stateId === stId);
-      if (race) snapEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id] || null;
+      if (race) snapEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || (snap.raceEvaluations || []).find((r) => r.id === race.id) || null;
     }
     if (!race) return;
     tip.innerHTML = buildElectionHoverTooltipHtml(race, snapEval);
@@ -8994,7 +8994,7 @@ function ensureElectionHoverTooltipBound() {
   });
 }
 
-// v0.18.1 (QA Fix #1): In-place DOM patching during Election Night playback — zero innerHTML wipes or flicker
+// v0.18.2 (QA Fix #1): In-place DOM patching during Election Night playback — zero innerHTML wipes or flicker
 function patchElectionNightLiveDOM() {
   if (typeof document === 'undefined' || !game?.electionNight?.active) return;
   const enEngine = window.ElectionNightEngine;
@@ -9004,39 +9004,45 @@ function patchElectionNightLiveDOM() {
   const mapMode = game.electionNight.mapMode || 'called';
   const allRaces = game.electionNight.timeline.races || [];
 
-  // 1. Patch clock text if present
+  // 1 (#4): Patch clock text directly from snap.clockLabel
   const clockEl = document.querySelector('.desk-clock, [data-en-clock]');
-  if (clockEl && enEngine.formatSimTime) {
-    clockEl.textContent = enEngine.formatSimTime(game.electionNight.elapsedMinutes || 0);
+  if (clockEl && snap.clockLabel) {
+    clockEl.textContent = snap.clockLabel;
   }
 
-  // 1b (#37): Patch EV / Senate / House scoreboard & Sallow Forecast & Call Ticker in-place
-  const evDem = document.querySelector('[data-en-ev="people"], .desk-ev-dem');
-  const evRep = document.querySelector('[data-en-ev="heritage"], .desk-ev-rep');
-  if (evDem && snap.evTotals) evDem.textContent = String(snap.evTotals.people || 0);
-  if (evRep && snap.evTotals) evRep.textContent = String(snap.evTotals.heritage || 0);
+  // 1b (#2): Patch EV / Senate / House scoreboard, Sallow Forecast, and Call Ticker from snap.scoreboard / snap.forecast / snap.calls
+  const sb = snap.scoreboard || {};
+  const evDem = document.querySelector('[data-en-ev="people"]');
+  const evRep = document.querySelector('[data-en-ev="heritage"]');
+  if (evDem && sb.president) evDem.textContent = String(sb.president.people || 0);
+  if (evRep && sb.president) evRep.textContent = String(sb.president.heritage || 0);
   const senDem = document.querySelector('[data-en-senate="people"]');
   const senRep = document.querySelector('[data-en-senate="heritage"]');
-  if (senDem && snap.senateTotals) senDem.textContent = String(snap.senateTotals.people || 0);
-  if (senRep && snap.senateTotals) senRep.textContent = String(snap.senateTotals.heritage || 0);
+  if (senDem && sb.senate) senDem.textContent = String(sb.senate.people || 0);
+  if (senRep && sb.senate) senRep.textContent = String(sb.senate.heritage || 0);
   const hseDem = document.querySelector('[data-en-house="people"]');
   const hseRep = document.querySelector('[data-en-house="heritage"]');
-  if (hseDem && snap.houseTotals) hseDem.textContent = String(snap.houseTotals.people || 0);
-  if (hseRep && snap.houseTotals) hseRep.textContent = String(snap.houseTotals.heritage || 0);
-  const forecastEl = document.querySelector('[data-en-sallow-forecast], .sallow-forecast-prob');
-  if (forecastEl && snap.sallowForecast?.headline) forecastEl.textContent = snap.sallowForecast.headline;
-  const tickerEl = document.querySelector('[data-en-call-ticker], .desk-call-ticker');
-  if (tickerEl && Array.isArray(snap.recentCalls) && snap.recentCalls.length > 0) {
-    const latest = snap.recentCalls[0];
-    tickerEl.textContent = latest.headline || `${latest.name}: ${getElectionPartyShort(latest.winner)} Projected Winner`;
+  if (hseDem && sb.house) hseDem.textContent = String(sb.house.people || 0);
+  if (hseRep && sb.house) hseRep.textContent = String(sb.house.heritage || 0);
+  const forecastEl = document.querySelector('[data-en-sallow-forecast]');
+  if (forecastEl && snap.forecast) {
+    const fc = snap.forecast;
+    forecastEl.textContent = fc.medianEvDem !== undefined
+      ? `${fc.medianEvDem} EV (80%: ${fc.range80Dem?.[0] ?? ''}–${fc.range80Dem?.[1] ?? ''})`
+      : (fc.medianSeatsDem !== undefined ? `${fc.medianSeatsDem} seats` : forecastEl.textContent);
+  }
+  const tickerEl = document.querySelector('[data-en-call-ticker]');
+  if (tickerEl && Array.isArray(snap.calls) && snap.calls.length > 0) {
+    const latest = snap.calls[0];
+    tickerEl.textContent = `${latest.name}: Called for ${getElectionPartyShort(latest.winnerPartyId)} (${latest.timestampLabel || ''})`;
   }
 
-  // 2. Patch SVG state fills & opacities in-place
+  // 2 (#3): Patch SVG state fills & opacities in-place using Array.find on raceEvaluations
   document.querySelectorAll('[data-desk-state]').forEach((pathEl) => {
     const stId = pathEl.getAttribute('data-desk-state');
     const race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab);
     if (!race) return;
-    const stEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id];
+    const stEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || (snap.raceEvaluations || []).find((r) => r.id === race.id);
     const isOpen = (game.electionNight.elapsedMinutes || 0) >= (race.closeMinutes || 0);
     const pct = stEval ? stEval.pct : 0;
     const isCalled = stEval ? stEval.isCalled : false;
@@ -9352,7 +9358,7 @@ function renderElectionNightScreen() {
             <span style="color:var(--gold);font-weight:700">Hung: ${odds.hung || 0}%</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px;">
-            Median Democratic projection: <b style="color:#f1f5f9">${fc.medianSeatsDem} seats</b> (80% confidence: ${fc.range80Dem[0]}–${fc.range80Dem[1]})
+            Median Democratic projection: <b style="color:#f1f5f9" data-en-sallow-forecast>${fc.medianSeatsDem} seats</b> (80% confidence: ${fc.range80Dem[0]}–${fc.range80Dem[1]})
           </div>
         </div>
       </div>
@@ -9410,8 +9416,14 @@ ${en.completed ? v0180PollingMissBannerMarkup() : ''}
       <header class="decision-desk-header">
         <div class="desk-header-left">
           ${statusPill}
-          <span class="desk-clock">${snapshot.clockLabel}</span>
+          <span class="desk-clock" data-en-clock>${snapshot.clockLabel}</span>
           <span class="desk-title">DECISION DESK · NOV 7, ${game?.year || 2028}</span>
+          <span class="badge" style="font-size:11px;margin-left:8px;background:rgba(15,23,42,0.7);padding:3px 8px;border-radius:6px;">
+            ${timeline.isPresidential ? `EV: <b data-en-ev="people">${snapshot.scoreboard.president.people}</b>–<b data-en-ev="heritage">${snapshot.scoreboard.president.heritage}</b> · ` : ''}
+            Sen: <b data-en-senate="people">${snapshot.scoreboard.senate.people}</b>–<b data-en-senate="heritage">${snapshot.scoreboard.senate.heritage}</b> ·
+            House: <b data-en-house="people">${snapshot.scoreboard.house.people}</b>–<b data-en-house="heritage">${snapshot.scoreboard.house.heritage}</b>
+          </span>
+          <span data-en-call-ticker style="font-size:11px;margin-left:8px;opacity:0.85;">${snapshot.calls[0] ? safe(`${snapshot.calls[0].name}: ${getElectionPartyShort(snapshot.calls[0].winnerPartyId)}`) : 'Awaiting first calls'}</span>
         </div>
         <div class="desk-phases">
           ${phaseMarkup}
@@ -9912,21 +9924,11 @@ function bind() {
   document.querySelectorAll('[data-template]').forEach((button) => button.addEventListener('click', () => {
     selectedTemplate = button.dataset.template;
     custom = false;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
-  const customToggle = document.querySelector('#custom-mode');
-  if (customToggle) customToggle.addEventListener('change', () => {
-    custom = customToggle.checked;
-    if (custom && !customIssuePositions) customIssuePositions = null;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
-    if (nameInput) customPartyName = nameInput.value;
-    render();
-  });
   document.querySelectorAll('[data-leader-archetype]').forEach((button) => button.addEventListener('click', () => {
     selectedLeaderArchetype = button.dataset.leaderArchetype;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
@@ -9979,7 +9981,6 @@ function bind() {
 
   document.querySelectorAll('[data-custom-cat]').forEach((button) => button.addEventListener('click', () => {
     customIssueCategory = button.dataset.customCat;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
@@ -10050,20 +10051,15 @@ function bind() {
 
   const start = document.querySelector('#start-game');
   if (start) start.addEventListener('click', () => {
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
-    const leaderInput = document.querySelector('#custom-leader-name') || document.querySelector('#leader-name');
     if (leaderInput) customLeaderName = leaderInput.value;
     const colorInput = document.querySelector('#custom-party-color-hex')
       || document.querySelector('#custom-party-color')
-      || document.querySelector('#party-color-hex')
-      || document.querySelector('#party-color');
     if (colorInput) customPartyColor = colorInput.value;
 
     const isCustomMode = custom || selectedTemplate === 'custom';
     const customName = (customPartyName || '').trim();
     if (isCustomMode && !customName) {
-      const customNameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
       customNameInput?.focus();
       customNameInput?.classList.add('invalid');
       return;
@@ -10301,10 +10297,6 @@ function bind() {
   });
 
   // Major Priorities Confirmation Modal & Lock Handlers (REQ-97)
-  document.querySelector('#btn-request-lock-priorities')?.addEventListener('click', () => {
-    majorPrioritiesConfirmModalOpen = true;
-    render();
-  });
   document.querySelector('#btn-lock-major-priorities-confirm')?.addEventListener('click', () => {
     majorPrioritiesConfirmModalOpen = false;
     game.prioritiesLocked = true;
@@ -10341,10 +10333,6 @@ function bind() {
     priorityIssueCategory = button.dataset.priorityCat;
     render();
   }));
-  document.querySelector('#allow-extra-regions')?.addEventListener('change', (e) => {
-    allowExtraRegions = e.target.checked;
-    render();
-  });
   document.querySelectorAll('[data-toggle-issue-priority]').forEach((button) => button.addEventListener('click', () => {
     dispatchAction('toggle-issue-priority', { issueId: button.dataset.toggleIssuePriority });
     render();
@@ -10437,7 +10425,6 @@ function bind() {
     if (action === 'chapter') {
       payload.stateId = document.querySelector('#chapter-state')?.value || mapState;
     }
-    if (action === 'summit') payload.factionId = document.querySelector('#summit-faction')?.value;
     if (action === 'introduce-bill') {
       payload.billId = document.querySelector('#bill-choice')?.value;
       payload.stateId = document.querySelector('#bill-state')?.value;
@@ -10452,7 +10439,6 @@ function bind() {
       payload.stateId = document.querySelector('#reg-state')?.value || mapState;
     }
     if (action === 'persuade-independent-caucus' || action === 'court-politician') {
-      const targetId = document.querySelector('#ind-caucus-target')?.value || document.querySelector('#court-target')?.value;
       payload.memberId = targetId;
       payload.targetId = targetId;
       payload.leadershipRoleId = document.querySelector('#court-role-select')?.value;
@@ -10674,10 +10660,6 @@ function bind() {
     customFoundingStateId = e.target.value;
     render();
   });
-  document.querySelector('#custom-schism-parent')?.addEventListener('change', (e) => {
-    customSchismParent = e.target.value;
-    render();
-  });
   document.querySelector('#custom-100k-name')?.addEventListener('input', (e) => {
     custom100kName = e.target.value;
   });
@@ -10686,9 +10668,6 @@ function bind() {
   });
   document.querySelector('#custom-100k-soc')?.addEventListener('input', (e) => {
     custom100kSliders.social = parseFloat(e.target.value);
-  });
-  document.querySelector('#custom-100k-gov')?.addEventListener('input', (e) => {
-    custom100kSliders.governance = parseFloat(e.target.value);
   });
 
   // Draft-of-7 Priorities Controls (REQ-230, REQ-231)
@@ -10790,10 +10769,6 @@ function bind() {
   }));
 
   // Strategic Priorities Lock-In (REQ-69)
-  document.querySelector('#confirm-lock-priorities')?.addEventListener('click', () => {
-    dispatchAction('lock-priorities', {});
-    render();
-  });
 
   // State Subview & Registration Sorting (REQ-66)
   document.querySelectorAll('[data-state-subview]').forEach((button) => button.addEventListener('click', () => {
@@ -11150,10 +11125,6 @@ function bind() {
       dispatchAction('vet-or-oppo', { mode: 'oppo', stateId });
       render();
     }
-  });
-  document.querySelector('#action-caucus-retreat')?.addEventListener('click', () => {
-    dispatchAction('caucus-retreat', {});
-    render();
   });
   document.querySelector('#action-volunteer-drive')?.addEventListener('click', () => {
     const stateId = document.querySelector('#volunteer-state-select')?.value || 'PA';
@@ -11626,7 +11597,7 @@ window.PartyChairApp = {
 render();
 })();
 
-// v0.18.1: Delegated Campaign War Room action bindings
+// v0.18.2: Delegated Campaign War Room action bindings
 if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
   window.__v0180WarRoomBound = true;
   document.addEventListener('change', (e) => {
@@ -11635,9 +11606,17 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
       if (typeof render === 'function') render();
     } else if (e.target?.id === 'v0180-rival-select') {
       window.__v0181SelectedRival = e.target.value;
+    } else if (e.target?.id === 'v0180-faction-select') {
+      window.__v0181SelectedFaction = e.target.value;
     }
   });
   document.addEventListener('click', (e) => {
+    const primStateBtn = e.target?.closest?.('[data-primary-state]');
+    if (primStateBtn && game?.activePresidentialPrimary) {
+      primaryFilterStatePick = primStateBtn.getAttribute('data-primary-state');
+      if (typeof render === 'function') render();
+      return;
+    }
     const pinBtn = e.target?.closest?.('[data-v0180-toggle-pins]');
     if (pinBtn) {
       window.__v0181ShowRivalPins = !window.__v0181ShowRivalPins;
