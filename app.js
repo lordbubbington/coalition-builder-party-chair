@@ -1482,7 +1482,8 @@ function renderCurrentPoliticianPicker() {
       <option value="3" ${customPoliticianSeat === '3' ? 'selected' : ''}>Senate Class III</option>
     `;
   } else if (curOffice === 'house') {
-    const districts = (window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || []).filter((d) => d.stateId === curState);
+    const activeHouseDistList = game?.currentHouseMap?.districts || window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
+    const districts = activeHouseDistList.filter((d) => (d.stateId || d.id?.split('-')[0]) === curState);
     if (districts.length > 0) {
       if (!districts.some((d) => d.id === customPoliticianSeat)) {
         customPoliticianSeat = districts[0].id;
@@ -4431,7 +4432,9 @@ function forecastersMarkup() {
         } else if (effectiveForecastChamber === 'house') {
           const counts = {};
           TIER_13_ORDER.forEach((t) => { counts[t] = 0; });
-          MAPS.districts.forEach((d) => {
+          const activeHouseMap = (game?.currentHouseMap?.districts?.length ? game.currentHouseMap : (game?.activeHouseMapKey && game[game.activeHouseMapKey]?.districts?.length ? game[game.activeHouseMapKey] : null));
+          const forecastDistricts = activeHouseMap?.districts || MAPS.districts;
+          forecastDistricts.forEach((d) => {
             const k = `house:${d.id}`;
             const kAlt = `house:${d.id.replace(/-(\d)$/, '-0$1')}`;
             const r = activeOutletData[k] || activeOutletData[kAlt] || consensusRating(game.forecasters?.sallow?.[k], game.forecasters?.cooked?.[k], game.forecasters?.inside?.[k]) || 'Toss-Up';
@@ -5919,18 +5922,49 @@ const partyClass = (party) => party === 'people' ? 'party-dem' : party === 'heri
 function nationalMapSvg(mode, options = {}) {
   const isPres = mode === 'presidential';
   const stateRows = isPres ? MAPS.states : MAPS.states.filter((state) => state.id !== 'DC');
+  const activeHouseMap = (game?.currentHouseMap?.districts?.length ? game.currentHouseMap : (game?.activeHouseMapKey && game[game.activeHouseMapKey]?.districts?.length ? game[game.activeHouseMapKey] : null));
   const sittingHouse = (game.sittingMembers || []).filter((m) => m.office === 'house');
   const liveHouseMap = new Map(sittingHouse.map((m) => [m.districtId || m.district, m.party || m.caucus]));
-  const houseById = new Map(
-    (game.phase === 'complete' && game.representatives?.length)
-      ? game.representatives.map((rep) => [rep.districtId, { id: rep.districtId, party: rep.partyId === game.player.id ? playerIdentity() : rep.partyId, label: `${rep.name} (${rep.partyId})` }])
-      : MAPS.houseResults.map((row) => {
-          const liveParty = liveHouseMap.get(row.id);
-          return [row.id, liveParty ? { ...row, party: liveParty } : row];
-        })
-  );
+  const houseById = new Map();
+  if (game.representatives?.length) {
+    game.representatives.forEach((rep) => {
+      const liveParty = liveHouseMap.get(rep.districtId) || (rep.partyId === game.player.id ? playerIdentity() : rep.partyId);
+      houseById.set(rep.districtId, {
+        id: rep.districtId,
+        party: liveParty,
+        label: `${rep.name} (${liveParty})`,
+      });
+    });
+  } else {
+    MAPS.houseResults.forEach((row) => {
+      const liveParty = liveHouseMap.get(row.id);
+      houseById.set(row.id, liveParty ? { ...row, party: liveParty } : row);
+    });
+  }
   const voterDistricts = new Map(VOTER_MODEL.districts.map((row) => [`${row.stateId}-${Number(row.district)}`, row]));
   const voterStates = new Map((game?.voterModel?.states || VOTER_MODEL.states).map((row) => [row.stateId, row]));
+  const resolveDistrictVoters = (stateId, districtNo) => {
+    const direct = voterDistricts.get(`${stateId}-${districtNo}`);
+    if (direct) return direct;
+    const stVoters = voterStates.get(stateId);
+    if (!stVoters) return null;
+    const stSeats = game?.states?.find((s) => s.id === stateId)?.districtCount || activeHouseMap?.seats?.[stateId] || 1;
+    const repCount = Math.round((stVoters.representedVoters || 1000000) / Math.max(1, stSeats));
+    const aff = stVoters.affiliations || {};
+    return {
+      representedVoters: repCount,
+      affiliations: {
+        people: Math.round((aff.people || 0) / Math.max(1, stSeats)),
+        heritage: Math.round((aff.heritage || 0) / Math.max(1, stSeats)),
+        independent: Math.round((aff.independent || 0) / Math.max(1, stSeats)),
+        liberty: Math.round((aff.liberty || 0) / Math.max(1, stSeats)),
+        green: Math.round((aff.green || 0) / Math.max(1, stSeats)),
+        constitution: Math.round((aff.constitution || 0) / Math.max(1, stSeats)),
+        socialist: Math.round((aff.socialist || 0) / Math.max(1, stSeats)),
+        other: Math.round((aff.other || 0) / Math.max(1, stSeats)),
+      },
+    };
+  };
 
   const chamber = computeSenateChamberBreakdown();
   const activeSenateClsNum = game?.activeSenateClass || 3;
@@ -5951,7 +5985,7 @@ function nationalMapSvg(mode, options = {}) {
   });
 
   const presForecast = (window.PartyChairEngine.presidentialForecast && game) ? window.PartyChairEngine.presidentialForecast(game) : null;
-  const districts = mode === 'house' ? MAPS.districts : [];
+  const districts = mode === 'house' ? (activeHouseMap?.districts || MAPS.districts) : [];
   const houseCounts = { people: 0, heritage: 0, other: 0, pending: 0 };
   districts.forEach((district) => {
     const result = houseById.get(district.id);
@@ -6002,11 +6036,12 @@ function nationalMapSvg(mode, options = {}) {
 
   if (mode === 'house') {
     if (isForecasterMode) {
-      const distMetaMap = new Map((window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || []).map((d) => [d.id, d]));
+      const customDistList = activeHouseMap?.modelDistricts || activeHouseMap?.districts;
+      const distMetaMap = new Map((customDistList || window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || []).map((d) => [d.id, d]));
       geometry = districts.map((district) => {
         const districtNo = Number(String(district.id).split('-').at(-1));
         const stateId = String(district.id).split('-')[0];
-        const voters = voterDistricts.get(`${stateId}-${districtNo}`);
+        const voters = resolveDistrictVoters(stateId, districtNo);
         if (isPollingMode) {
           const stObj = STATES.find((s) => s.id === stateId);
           const dMeta = distMetaMap.get(district.id) || distMetaMap.get(district.id.replace(/-0(\d)$/, '-$1'));
@@ -6029,7 +6064,7 @@ function nationalMapSvg(mode, options = {}) {
         const cls = partyClass(result?.party);
         const districtNo = Number(String(district.id).split('-').at(-1));
         const stateId = String(district.id).split('-')[0];
-        const voters = voterDistricts.get(`${stateId}-${districtNo}`);
+        const voters = resolveDistrictVoters(stateId, districtNo);
         const presMargin = window.PartyChairEngine.presidentialStateMargin ? window.PartyChairEngine.presidentialStateMargin(game, stateId) : 0;
         const coattail = presMargin * 0.34;
         const coattailNote = isComplete

@@ -7350,6 +7350,34 @@ function encodePolylineRing(points) {
   return out;
 }
 
+function clipPolygonHalfPlane(poly, a, b, c) {
+  const out = [];
+  const len = poly.length;
+  if (!len) return out;
+  const isInside = (p) => (a * p[0] + b * p[1] + c) >= -1e-9;
+  for (let i = 0; i < len; i += 1) {
+    const curr = poly[i];
+    const prev = poly[(i + len - 1) % len];
+    const currIn = isInside(curr);
+    const prevIn = isInside(prev);
+    if (currIn) {
+      if (!prevIn) {
+        const d1 = a * prev[0] + b * prev[1] + c;
+        const d2 = a * curr[0] + b * curr[1] + c;
+        const t = Math.abs(d1 - d2) > 1e-9 ? (d1 / (d1 - d2)) : 0;
+        out.push([prev[0] + t * (curr[0] - prev[0]), prev[1] + t * (curr[1] - prev[1])]);
+      }
+      out.push(curr);
+    } else if (prevIn) {
+      const d1 = a * prev[0] + b * prev[1] + c;
+      const d2 = a * curr[0] + b * curr[1] + c;
+      const t = Math.abs(d1 - d2) > 1e-9 ? (d1 / (d1 - d2)) : 0;
+      out.push([prev[0] + t * (curr[0] - prev[0]), prev[1] + t * (curr[1] - prev[1])]);
+    }
+  }
+  return out;
+}
+
 function generateStateDistrictSlices(stateShape, n) {
   const count = Math.max(1, Number(n) || 1);
   if (count <= 1) {
@@ -7400,11 +7428,43 @@ function generateStateDistrictSlices(stateShape, n) {
       const boxRing = [
         [x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0],
       ];
+
+      // Procedural Sutherland-Hodgman clipping against real state boundary polyline rings
+      const clippedRings = [];
+      let totalPts = 0;
+      let sumX = 0, sumY = 0;
+
+      rings.forEach((ring) => {
+        if (!ring || ring.length < 3) return;
+        let poly = clipPolygonHalfPlane(ring, 1, 0, -x0); // x >= x0
+        poly = clipPolygonHalfPlane(poly, -1, 0, x1);     // x <= x1
+        poly = clipPolygonHalfPlane(poly, 0, 1, -y0);     // y >= y0
+        poly = clipPolygonHalfPlane(poly, 0, -1, y1);     // y <= y1
+        if (poly.length >= 3) {
+          clippedRings.push(poly);
+          poly.forEach((pt) => {
+            sumX += pt[0];
+            sumY += pt[1];
+            totalPts += 1;
+          });
+        }
+      });
+
+      const qStr = clippedRings.length
+        ? clippedRings.map(encodePolylineRing).join('!')
+        : encodePolylineRing(boxRing);
+      const sliceCx = totalPts > 0
+        ? Math.round((sumX / totalPts) * 10) / 10
+        : Math.round(((x0 + x1) / 2) * 10) / 10;
+      const sliceCy = totalPts > 0
+        ? Math.round((sumY / totalPts) * 10) / 10
+        : Math.round(((y0 + y1) / 2) * 10) / 10;
+
       slices.push({
         districtNumber: dNum,
-        q: encodePolylineRing(boxRing),
-        cx: Math.round(((x0 + x1) / 2) * 10) / 10,
-        cy: Math.round(((y0 + y1) / 2) * 10) / 10,
+        q: qStr,
+        cx: sliceCx,
+        cy: sliceCy,
       });
     }
   }
@@ -7421,6 +7481,17 @@ function loadStateDistrictSlice(stateId, n, baseStateShape) {
       const loaded = window.loadDistrictSliceFromFile(stateId, count);
       if (loaded && Array.isArray(loaded)) return loaded;
     } catch { /* proceed to procedural fallback */ }
+  }
+  // Check if baseline map data already contains the exact district count for this state
+  const baselineMap = (typeof window !== 'undefined' && window.PartyChairData?.VERSION_03_MAPS);
+  const baselineDists = baselineMap?.districts?.filter((d) => d.stateId === stateId);
+  if (baselineDists && baselineDists.length === count) {
+    return baselineDists.map((d) => ({
+      districtNumber: d.districtNumber || Number(String(d.id).split('-')[1]) || 1,
+      q: d.q,
+      cx: d.cx,
+      cy: d.cy,
+    }));
   }
   const shape = baseStateShape || { q: '', cx: 500, cy: 250 };
   return generateStateDistrictSlices(shape, count);
@@ -10480,9 +10551,12 @@ function estimateRaceMarginInternal(game, raceKey, options = {}) {
   // REQ-118 & REQ-261: Decouple House Races from Statewide Lean (Pure District Leans + Full National Environment)
   if (kind === 'house') {
     const distId = parts[1];
-    const allDistricts = window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
-    const distObj = allDistricts.find((d) => d.id === distId);
-    const districtLean = distObj?.lean ?? 0;
+    const activeMap = game?.currentHouseMap || (game?.activeHouseMapKey ? game[game.activeHouseMapKey] : null);
+    const customDistList = activeMap?.modelDistricts || activeMap?.districts;
+    const allDistricts = customDistList || window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
+    const distObj = allDistricts.find((d) => d.id === distId || d.label === distId);
+    const rawLean = distObj?.leanPercent ?? distObj?.lean ?? 0;
+    const districtLean = (typeof rawLean === 'number' && Math.abs(rawLean) <= 1 && rawLean !== 0) ? -rawLean * 100 : rawLean;
     const nationalMargin = Number(game?.nationalEnvironment ?? 9);
     if (options.fundamentalsOnly || options.ignoreCandidates) {
       return districtLean + nationalMargin;
@@ -10989,7 +11063,7 @@ function buildForecasters(game) {
   });
 
   // 4. House Contests (all 435 legislative districts)
-  legislativeDistricts().forEach((district) => {
+  legislativeDistricts(game).forEach((district) => {
     const key = `house:${district.id}`;
     const margin = estimateRaceMarginInternal(game, key);
     const evalResult = evaluateRaceRatings(game, key, margin, natLean);
