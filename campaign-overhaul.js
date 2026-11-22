@@ -1294,5 +1294,41 @@
     rollNewPoliticianCorrupt: rollNewPoliticianCorruptTrait,
     rollNewPoliticianCorruptTrait,
     advanceCycleCorruptTraitDrift,
+    recordFactionCampaignFunding(game, factionId, amountM) {
+      if (!game || !factionId || !Number.isFinite(Number(amountM)) || Number(amountM) <= 0) return game;
+      const prev = game.campaign?.factionFundingSpent || {};
+      const nextSpent = { ...prev, [factionId]: round((prev[factionId] || 0) + Number(amountM), 2) };
+      return {
+        ...game,
+        campaign: { ...(game.campaign || {}), factionFundingSpent: nextSpent },
+      };
+    },
+    evaluateFactionResourceStarvation(game) {
+      if (!game || !Array.isArray(game.factions)) return [];
+      const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+      const spentMap = game.campaign?.factionFundingSpent || {};
+      const funding = game.candidateFunding || {};
+      const competitiveFactions = new Set();
+      const fundedFactions = new Set(Object.keys(spentMap).filter((fid) => (spentMap[fid] || 0) > 0));
+      Object.values(funding).forEach((rec) => {
+        if (!rec || typeof rec !== 'object') return;
+        const fid = rec.factionId || rec.faction;
+        if (!fid) return;
+        if (Number(rec.spent || rec.allocated || rec.amount || 0) > 0) fundedFactions.add(fid);
+        const margin = Math.abs(Number(rec.margin ?? rec.projectedMargin ?? 5));
+        if (margin <= 10 && (!rec.partyId || rec.partyId === playerPartyId)) {
+          competitiveFactions.add(fid);
+        }
+      });
+      // Also check sitting/nominated candidates in competitive states if candidateFunding didn't tag factionId
+      const starved = [];
+      game.factions.forEach((f) => {
+        if (!f || f.partyId !== playerPartyId) return;
+        if (competitiveFactions.has(f.id) && !fundedFactions.has(f.id)) {
+          starved.push(f.id);
+        }
+      });
+      return starved;
+    },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

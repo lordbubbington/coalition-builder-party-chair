@@ -7359,9 +7359,18 @@ function factionsTabMarkup() {
     const tierLabel = tier === 'leading' ? '👑 Leading Faction' : tier === 'major' ? '★ Major Faction' : tier === 'minor' ? '◆ Minor Faction' : '· Fringe Faction';
     const typeLabel = f.type === 'racial' ? 'Racial Demographic' : 'Ideological Wing';
     const isUnaffiliated = f.partyId === 'none';
+    const isIndependentPool = f.partyId === 'none' || f.partyId === 'independent' || f.partyId === 'unaffiliated';
     const isUltimatum = f.ultimatumTurnsRemaining !== null && f.ultimatumTurnsRemaining !== undefined;
-    const isInOtherParty = f.partyId !== identity && !['independent', 'unaffiliated', 'none'].includes(f.partyId);
-    const canConveneSummit = f.partyId !== identity && game?.phase === 'organizing' && (!isInOtherParty || hVal < 50);
+    const isInOtherParty = f.partyId !== identity && !isIndependentPool;
+    const isPlayerOwnFaction = f.partyId === identity;
+    const isAnchorFaction = f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || Boolean(f.isIroncladAnchor);
+    const isOrganizing = game?.phase === 'organizing';
+    const courtshipGoodwill = Math.round(Number(game?.factionCourtship?.[f.id]?.[identity] || 0));
+    const canConveneSummit = isIndependentPool && isOrganizing;
+    const canOpenCourtship = isInOtherParty && isOrganizing && hVal < 50;
+    const canDriveWedge = isInOtherParty && isOrganizing && hVal < 60;
+    const canSubsidizeDissidents = isInOtherParty && isOrganizing && isUltimatum;
+    const canExpelFaction = isPlayerOwnFaction && isOrganizing && !isAnchorFaction;
 
     return `
       <article class="v15-faction-card panel ${tier === 'leading' ? 'is-leading' : ''}">
@@ -7370,7 +7379,7 @@ function factionsTabMarkup() {
             <span class="v15-badge ${tierBadgeClass}">${tierLabel}</span>
             <span class="v15-badge badge-outline">${typeLabel}</span>
             ${window.PartyChairData?.getFactionCohesionLabel ? `<span class="v15-badge badge-outline" style="border-color:rgba(131,168,213,0.4);color:#83a8d5">${safe(window.PartyChairData.getFactionCohesionLabel(f))}</span>` : ''}
-            ${isUnaffiliated ? `<span class="v15-badge v15-unaffiliated-badge">★ Unaffiliated</span>` : ''}
+            ${isUnaffiliated ? `<span class="v15-badge v15-unaffiliated-badge">★ Unaffiliated</span><span class="v15-badge badge-gold" style="margin-left:4px">⚡ Actively Courting Coalitions</span>` : ''}
             ${isUltimatum ? `<span class="v15-badge v15-ultimatum-badge">⚠️ ULTIMATUM (${f.ultimatumTurnsRemaining} Turn${f.ultimatumTurnsRemaining === 1 ? '' : 's'} Left)</span>` : ''}
             <h3>${safe(f.name)}</h3>
             <div class="v15-party-sub"><span class="dot dot-${f.partyId}"></span> ${partyName} · <b>${natVoters.toLocaleString()}</b> voters (${(natVoters / 1_000_000).toFixed(2)}M)</div>
@@ -7420,9 +7429,41 @@ function factionsTabMarkup() {
         })()}
         <p class="v15-faction-flavor">${safe(f.flavor || '')}</p>
 
+        ${courtshipGoodwill > 0 ? `<div style="margin-top:6px;font-size:11.5px;color:#75c89a">Coalition Goodwill: <b>${courtshipGoodwill} / 100</b></div>` : ''}
         ${canConveneSummit ? `
-          <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" style="margin-top:12px;width:100%;padding:8px 12px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:pointer">
-            🏛️ Convene Coalition Summit (1 Action)
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:pointer">
+              🏛️ Convene Coalition Summit (1 Action)
+            </button>
+            <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" style="padding:8px 10px">
+              🤝 Court Independent ($1.5M)
+            </button>
+          </div>
+        ` : isInOtherParty && isOrganizing ? `
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            ${canOpenCourtship ? `
+              <button type="button" class="v15-summit-btn" data-faction-op="open-courtship-dialogue" data-faction-id="${f.id}" style="flex:1;padding:8px 10px;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#7dd3fc;border-radius:4px;font-weight:700;cursor:pointer">
+                🤝 Open Courtship Dialogue (1 Action)
+              </button>
+            ` : `
+              <button type="button" class="v15-summit-btn" disabled title="Loyal to parent party (Happiness >= 50). Must be destabilized or alienated first." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                🤝 Open Courtship Dialogue (1 Action)
+              </button>
+            `}
+            ${canDriveWedge ? `
+              <button type="button" class="button button-small" data-faction-op="drive-coalition-wedge" data-faction-id="${f.id}" style="padding:8px 10px">
+                🪓 Drive Wedge ($2M)
+              </button>
+            ` : ''}
+            ${canSubsidizeDissidents ? `
+              <button type="button" class="button button-small" data-faction-op="subsidize-dissident-caucus" data-faction-id="${f.id}" style="padding:8px 10px;border-color:#e8887e;color:#e8887e">
+                💰 Subsidize Dissidents ($3M)
+              </button>
+            ` : ''}
+          </div>
+        ` : canExpelFaction ? `
+          <button type="button" class="button button-small" data-faction-op="expel-faction" data-faction-id="${f.id}" style="margin-top:10px;width:100%;padding:7px 10px;border-color:rgba(232,136,126,0.5);color:#e8887e">
+            🚫 Expel Faction to Independent (1 Action)
           </button>
         ` : ''}
       </article>
@@ -11084,6 +11125,17 @@ function bind() {
       render();
     });
   }
+
+  // REC-02, REC-03, REC-06: Faction Courtship, Wedge, Subsidize, and Expulsion action bindings
+  document.querySelectorAll('[data-faction-op]').forEach((btn) => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const op = btn.dataset.factionOp;
+    const fid = btn.dataset.factionId;
+    if (op && fid) {
+      dispatchAction(op, { factionId: fid });
+      render();
+    }
+  }));
 
   // Coalition Summit Modal bindings (SUM-02, SUM-06)
   document.querySelectorAll('[data-summit-faction]').forEach((btn) => btn.addEventListener('click', (e) => {

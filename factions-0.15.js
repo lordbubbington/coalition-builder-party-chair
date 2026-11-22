@@ -22,6 +22,7 @@
       "Institutional Norms",
       "Entitlement Defense"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "The traditional backbone of the Democratic Party—elected officials, party apparatus loyalists, and suburban pragmatists who favor steady governance, institutional guardrails, and incremental reform.",
     "startingHappiness": 83,
     "cohesion": 0.5,
@@ -62,6 +63,7 @@
       "Civil Rights",
       "Voting Access"
     ],
+    "redLineIssues": ["voting-rights-rollback", "civil-rights-retrenchment"],
     "flavor": "The African American Voting Block - have been a core faction of the democratic party since the civil rights movement",
     "startingHappiness": 66,
     "cohesion": 0.75,
@@ -104,6 +106,7 @@
       "Universal Healthcare",
       "Climate Action"
     ],
+    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
     "flavor": "Extreme on Rhetoric, Extreme on Policy - these are the progressives that are keeping fox news in business",
     "startingHappiness": 49,
     "cohesion": 0.88,
@@ -147,6 +150,7 @@
       "Free Trade Agreements",
       "Corporate Tax Competitiveness"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "Pro-globalization, free-trade technocrats and educated professionals who combine socially progressive values with market-oriented economic policies and fiscal prudence.",
     "startingHappiness": 64,
     "cohesion": 0.45,
@@ -185,6 +189,7 @@
       "Wealth and Capital Gains",
       "Business Regulation and Antitrust Laws"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "These are voters who became engaged in politics during Bernie Sanders 2016 campaign. They’re milder on social views and rhetoric, but very left leaning on economic issues. It also has a strong populist current.",
     "startingHappiness": 39,
     "cohesion": 0.85,
@@ -225,6 +230,7 @@
       "Voting Rights",
       "Civil Rights Protections"
     ],
+    "redLineIssues": ["voting-rights-rollback", "civil-rights-retrenchment"],
     "flavor": "Mainline Protestant, Catholic, and interfaith social-gospel voters who view progressive politics as a moral duty to care for the poor, marginalized, and vulnerable.",
     "startingHappiness": 68,
     "cohesion": 0.65,
@@ -262,6 +268,7 @@
       "Balanced Budget Amendment",
       "Rural Healthcare Support"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Fiscally conservative and culturally moderate Democrats who represent rural, small-town, and border districts, emphasizing bipartisan compromise and deficit reduction.",
     "startingHappiness": 43,
     "cohesion": 0.48,
@@ -301,6 +308,7 @@
       "Comprehensive Immigration Reform",
       "Labor Standards Enforcement"
     ],
+    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
     "flavor": "Multi-generational Hispanic and Latino families in urban centers and agricultural belts who blend socially moderate family values with support for public education and healthcare access.",
     "startingHappiness": 57,
     "cohesion": 0.6,
@@ -338,6 +346,7 @@
       "Religious Liberty",
       "Right to Life Protections"
     ],
+    "redLineIssues": ["social-liberalization", "religious-exemption-repeal"],
     "flavor": "Evangelical and devout traditionalist Christians who prioritize social conservatism, judicial originalism, and the defense of religious institutions in public life.",
     "startingHappiness": 72,
     "cohesion": 0.88,
@@ -381,6 +390,7 @@
       "Border Security Wall",
       "Tariffs & Trade Protection"
     ],
+    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
     "flavor": "America-First working-class nationalists energized by Donald Trump, emphasizing strict border enforcement, protectionist trade policies, and cultural populism.",
     "startingHappiness": 76,
     "cohesion": 0.85,
@@ -423,6 +433,7 @@
       "Second Amendment Rights",
       "Federal Land Transfer"
     ],
+    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
     "flavor": "Rugged individualists, ranchers, and Second Amendment absolutists across the Mountain West who demand federal land divestment and radical regulatory relief.",
     "startingHappiness": 59,
     "cohesion": 0.65,
@@ -462,6 +473,7 @@
       "Immigration Enforcement",
       "National Sovereignty"
     ],
+    "redLineIssues": ["amnesty-compromise", "foreign-interventionism"],
     "flavor": "Hardline nativist reactionaries who demand an end to legal immigration, aggressive deportation operations, and the cultural reassertion of European heritage.",
     "startingHappiness": 50,
     "cohesion": 0.92,
@@ -500,6 +512,7 @@
       "Suburban School Choice",
       "Local Tax Restraint"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "College-educated suburbanites and Sunbelt professionals who favor pro-business tax policy and public safety while rejecting conspiratorial rhetoric and cultural extremism.",
     "startingHappiness": 44,
     "cohesion": 0.42,
@@ -539,6 +552,7 @@
       "Defense Modernization",
       "NATO Expansion"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Hawkish foreign policy institutionalists and defense-sector advocates who champion global American hegemony, democratic interventionism, and deterrence against authoritarian rivals.",
     "startingHappiness": 32,
     "cohesion": 0.7,
@@ -576,6 +590,7 @@
       "Foreign Non-Intervention",
       "Decentralized Federalism"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Old-Right isolationists who combine deep cultural traditionalism with fierce opposition to foreign wars, global trade pacts, and centralized federal power.",
     "startingHappiness": 61,
     "cohesion": 0.86,
@@ -614,6 +629,7 @@
       "Religious Freedom Protections",
       "Refugee Resettlement"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Latter-day Saint voters across the Intermountain West who pair devout family values and fiscal conservatism with institutional decency, civic trust, and welcoming refugee attitudes.",
     "startingHappiness": 45,
     "cohesion": 0.78,
@@ -649,6 +665,7 @@
       "Agricultural Subsidies & Crop Insurance",
       "Rural Broadband Infrastructure"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Generational agricultural producers and rural smallholders who depend on farm bill protections, biofuel mandates, and water rights while maintaining traditional cultural leanings.",
     "startingHappiness": 62,
     "cohesion": 0.62,
@@ -688,6 +705,7 @@
       "Corporate Tax Reductions",
       "Financial Deregulation"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "Wealthy corporate executives, financiers, and donors who focus primarily on supply-side tax cuts, capital gains relief, and minimal government intervention in capital markets.",
     "startingHappiness": 40,
     "cohesion": 0.6,
@@ -725,6 +743,7 @@
       "Anti-Communist Foreign Policy",
       "Sanctions Enforcement"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "South Florida Cuban-American voting bloc with deep anti-communist convictions, fiercely loyal to hardline foreign policy against Latin American dictatorships and supportive of free-market policies.",
     "startingHappiness": 70,
     "cohesion": 0.7,
@@ -756,6 +775,7 @@
       "Government Gridlock Reform",
       "Bipartisan Infrastructure"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "The perfect ideological center of the American electorate, evenly divided and skeptical of ideological purity from both parties, deciding general election outcomes.",
     "startingHappiness": 46,
     "cohesion": 0.3,
@@ -794,6 +814,7 @@
       "Domestic Manufacturing",
       "Union Protections"
     ],
+    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
     "flavor": "Union Voters and Construction workers used to be reliably democratic - but the Trump Coalition swallowed them up",
     "startingHappiness": 36,
     "cohesion": 0.52,
@@ -832,6 +853,7 @@
       "Cryptocurrency Freedom",
       "Free Speech Online"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "These low information voters get most of their news from podcasts - and that’s how they decide on who they vote for, too",
     "startingHappiness": 38,
     "cohesion": 0.28,
@@ -869,6 +891,7 @@
       "Fiscal Discipline",
       "Free Market Deregulation"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "These voters used to be dyed in the wool republicans - but Trump changed everything",
     "startingHappiness": 56,
     "cohesion": 0.35,
@@ -906,6 +929,7 @@
       "Artificial Intelligence Deregulation",
       "High-Skill Immigration"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "These voters believe in the power of technology. They hold progressive social views (civil rights, free speech) but despise regulatory barriers, compute controls, and wealth taxes.",
     "startingHappiness": 55,
     "cohesion": 0.4,
@@ -944,6 +968,7 @@
       "Inflation Reduction",
       "Lower Grocery Prices"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "These voters don’t follow politics closely - they just want to be left alone and grill. But when food, gas, and energy prices spike, they deliver brutal verdicts to the governing party.",
     "startingHappiness": 53,
     "cohesion": 0.2,
@@ -982,6 +1007,7 @@
       "Charitable Giving Incentives",
       "Community Poverty Programs"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Churchgoers, Catholics, and interfaith believers who resist hard-right Christian nationalism but expect politicians to respect personal faith, family values, and basic community compassion.",
     "startingHappiness": 51,
     "cohesion": 0.45,
@@ -1019,6 +1045,7 @@
       "Small Business Loans",
       "Public Safety & Policing"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Blue-collar Hispanic voters in Nevada, Arizona, Texas, and the Rust Belt who prioritize steady jobs, law and order, and small-business opportunity, swinging fluidly between both major parties.",
     "startingHappiness": 41,
     "cohesion": 0.45,
@@ -1055,6 +1082,7 @@
       "Reproductive Healthcare Access",
       "Equal Pay Protections"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Young, pop-culture-fluent women who care deeply about reproductive autonomy, social equality, and campus climate, but distrust career politicians and rigid ideological labels.",
     "startingHappiness": 52,
     "cohesion": 0.25,
@@ -1092,6 +1120,7 @@
       "Tax Policy",
       "Gun Policy"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "True libertarians are hard to come by - but these voters believe in true small government, not just on liberal issues",
     "startingHappiness": 48,
     "cohesion": 0.88,
@@ -1131,6 +1160,7 @@
       "Abolition of the Federal Reserve",
       "Total Tax Elimination"
     ],
+    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
     "flavor": "These voters don’t think the government should exist.",
     "isExtremist": true,
     "startingHappiness": 30,
@@ -1168,6 +1198,7 @@
       "Fossil Fuel Nationalization",
       "Degrowth Climate Transition"
     ],
+    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
     "flavor": "The Eco-Socialist Vanguard warns of the coming eco-apoclypse",
     "startingHappiness": 47,
     "cohesion": 0.9,
@@ -1206,6 +1237,7 @@
       "NIMBYism and Housing Development",
       "Affordability and the Cost of Living"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "These leftie voters left the democrats over housing issues - now they’re in an uncomfortable alliance with the greens",
     "startingHappiness": 54,
     "cohesion": 0.58,
@@ -1243,6 +1275,7 @@
       "Religious Liberty",
       "Religion in Public Schools"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "Radical religious reconstructionists who believe American civil law should be completely replaced with biblical law and Christian governance.",
     "isExtremist": true,
     "startingHappiness": 60,
@@ -1282,6 +1315,7 @@
       "Worker-Owned Enterprises",
       "Public Banking Infrastructure"
     ],
+    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
     "flavor": "These voters are socialists, who idealize Karl Marx.",
     "isExtremist": true,
     "startingHappiness": 34,
@@ -1320,6 +1354,7 @@
       "Expropriation of Corporate Monopolies",
       "Centralized Economic Planning"
     ],
+    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
     "flavor": "These are communists, who want total state control over the economy.",
     "isExtremist": true,
     "startingHappiness": 28,
@@ -1357,6 +1392,7 @@
       "Immigration Moratorium",
       "Anti-Globalist Sovereignty"
     ],
+    "redLineIssues": ["amnesty-compromise", "foreign-interventionism"],
     "flavor": "Online alt-right provocateurs and youth reactionaries who use irony, memes, and internet culture to push far-right ethno-nationalist talking points into mainstream discourse.",
     "startingHappiness": 24,
     "cohesion": 0.95,
@@ -1392,6 +1428,7 @@
       "Racial Segregation",
       "Totalitarian State Authority"
     ],
+    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
     "flavor": "These voters support the Klu Klux Klan and Neo-Nazis. They turn out 0%.",
     "isExtremist": true,
     "startingHappiness": 17,

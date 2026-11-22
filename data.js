@@ -669,6 +669,90 @@ const STATES = [
 const CAMPAIGN_STANDARD_WEEKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15];
 const EVENTS = [
   {
+    id: 'event_union_strike_bolt',
+    category: 'faction-crisis',
+    targetFactionId: 'dem_labor_unions',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Industrial Union Strike & Trade Revolt',
+    body: 'Major manufacturing unions threaten an immediate bolt to Independent status unless the party repudiates corporate trade concessions.',
+    choices: [
+      { label: 'Reaffirm pro-labor trade protections', effect: 'Industrial unions stay loyal (+10 Happiness, -20 Friction); free-trade donors pull back (-$2M).', money: -2, faction: 'workers', trust: 8, reaffirmFactionId: 'dem_labor_unions' },
+      { label: 'Stand by the trade compromise', effect: 'Industrial union faction bolts immediately into Independent status.', faction: 'pragmatists', trust: 2, boltFactionId: 'dem_labor_unions' }
+    ],
+  },
+  {
+    id: 'event_suburban_moderates_revolt',
+    category: 'faction-crisis',
+    targetFactionId: 'dem_suburban_moderates',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Suburban Moderates Walkout Threat',
+    body: 'Suburban swing-district leaders warn that radical rhetoric is alienating college-educated families and threaten an immediate coalition walkout.',
+    choices: [
+      { label: 'Issue moderate economic reassurance pledge', effect: 'Suburban wing calms (+10 Happiness, -20 Friction); progressive activists grumble.', faction: 'pragmatists', trust: 8, reaffirmFactionId: 'dem_suburban_moderates' },
+      { label: 'Double down on base mobilization rhetoric', effect: 'Suburban moderate wing secedes into Independent status.', faction: 'reformers', trust: 4, boltFactionId: 'dem_suburban_moderates' }
+    ],
+  },
+  {
+    id: 'event_evangelical_boycott',
+    category: 'faction-crisis',
+    targetFactionId: 'gop_evangelicals',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Social Conservative Platform Boycott',
+    body: 'Faith-based conservative leaders threaten an independent boycott unless the party formally reaffirms traditional social planks.',
+    choices: [
+      { label: 'Reaffirm traditional social platform plank', effect: 'Social conservatives rally (+10 Happiness, -20 Friction); suburban swing cools slightly.', faction: 'organizers', trust: 8, reaffirmFactionId: 'gop_evangelicals' },
+      { label: 'Soften social planks for swing appeal', effect: 'Social conservative wing bolts into Independent status.', faction: 'pragmatists', trust: 3, boltFactionId: 'gop_evangelicals' }
+    ],
+  },
+  {
+    id: 'event_green_left_walkout',
+    category: 'faction-crisis',
+    targetFactionId: 'dem_progressive_left',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Eco-Socialist Energy Compromise Walkout',
+    body: 'Climate-first progressives erupt over a bipartisan fossil-fuel permitting deal and threaten to walk out into Independent ranks.',
+    choices: [
+      { label: 'Freeze fossil-fuel permitting concessions', effect: 'Climate progressives stay aboard (+10 Happiness, -20 Friction); energy donors cool (-$2M).', money: -2, faction: 'reformers', trust: 8, reaffirmFactionId: 'dem_progressive_left' },
+      { label: 'Keep the energy compromise intact', effect: 'Climate progressive wing secedes into Independent status.', faction: 'pragmatists', trust: 3, boltFactionId: 'dem_progressive_left' }
+    ],
+  },
+  {
+    id: 'event_libertarian_secession',
+    category: 'faction-crisis',
+    targetFactionId: 'gop_fiscal_hawks',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Market Purists Debt-Ceiling Secession',
+    body: 'Fiscal conservatives and market purists threaten to bolt over federal debt expansion unless strict spending caps are restored.',
+    choices: [
+      { label: 'Commit to binding federal spending caps', effect: 'Fiscal hawks remain loyal (+10 Happiness, -20 Friction); spending advocates push back.', faction: 'localists', trust: 8, reaffirmFactionId: 'gop_fiscal_hawks' },
+      { label: 'Back the omnibus spending package', effect: 'Fiscal conservative wing bolts into Independent status.', faction: 'pragmatists', trust: 2, boltFactionId: 'gop_fiscal_hawks' }
+    ],
+  },
+  {
+    id: 'event_civil_rights_ultimatum',
+    category: 'faction-crisis',
+    targetFactionId: 'dem_black_coalition',
+    allowedWeeks: CAMPAIGN_STANDARD_WEEKS,
+    excludeWeek13: false,
+    isOctoberSurprise: false,
+    title: 'Civil Rights Coalition Secession Ultimatum',
+    body: 'Civil rights leaders issue an emergency ultimatum after a watered-down voting-rights compromise, threatening an independent break.',
+    choices: [
+      { label: 'Restore full voting-rights protections to platform', effect: 'Civil rights coalition stands firm (+10 Happiness, -20 Friction).', faction: 'organizers', trust: 9, reaffirmFactionId: 'dem_black_coalition' },
+      { label: 'Accept the watered-down compromise', effect: 'Civil rights coalition secedes into Independent status.', faction: 'pragmatists', trust: 2, boltFactionId: 'dem_black_coalition' }
+    ],
+  },
+  {
     id: 'winter-relief-coordination',
     category: 'campaign',
     allowedWeeks: CAMPAIGN_STANDARD_WEEKS,

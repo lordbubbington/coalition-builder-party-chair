@@ -966,7 +966,39 @@
     amendment.adopted = chosen.name;
     conv.amendmentsVoted += 1;
 
-    game.lastNote = `Convention adopts platform plank: "${chosen.name}". ${chosen.factionName} rallies (+7 Happiness), while opponents express dissent (-4 Happiness).`;
+    // REC-04: Track rejected platform planks & check for Primary Defeat + Platform Rejection Convention Revolt
+    conv.rejectedFactionNames = Array.isArray(conv.rejectedFactionNames) ? conv.rejectedFactionNames : [];
+    if (opposed?.factionName) conv.rejectedFactionNames.push(opposed.factionName);
+    const nomineeFactionId = conv.nominee?.factionId || game.presidentialPrimaries?.nominees?.[playerParty]?.factionId || null;
+    const walkedOutNames = [];
+    factions.forEach((f) => {
+      if (!f || f.partyId !== playerParty) return;
+      const matchesRejected = opposed?.factionName && f.name.toLowerCase().includes(opposed.factionName.toLowerCase().split(' ')[0]);
+      const candidateLost = Boolean(nomineeFactionId && f.id !== nomineeFactionId);
+      if (matchesRejected && candidateLost) {
+        const curH = Number(game.factionHappiness?.[f.id] ?? game.factionStandings?.[f.id] ?? f.happiness ?? 60);
+        const shock = -25; // REC-04: -20 to -30 Happiness shock
+        const nextH = clamp(curH + shock, 0, 100);
+        if (game.factionHappiness) game.factionHappiness[f.id] = nextH;
+        if (game.factionStandings) game.factionStandings[f.id] = nextH;
+        f.happiness = nextH;
+        f.frictionIndex = clamp((f.frictionIndex || 0) + 30, 0, 100);
+        if (nextH < 30 || f.frictionIndex >= 75) {
+          if (typeof window !== 'undefined' && window.PartyChairEngine && typeof window.PartyChairEngine.boltFaction === 'function') {
+            game = window.PartyChairEngine.boltFaction(game, f.id);
+          } else if (f.id !== 'dem_liberal_establishment' && f.id !== 'gop_maga') {
+            f.partyId = 'none';
+            f.ultimatumTurnsRemaining = null;
+            f.frictionIndex = 0;
+          }
+          walkedOutNames.push(f.name);
+        }
+      }
+    });
+
+    game.lastNote = walkedOutNames.length
+      ? `CONVENTION WALKOUT: After losing the nomination and platform plank "${opposed.name}", ${walkedOutNames.join(', ')} bolted to Independent status!`
+      : `Convention adopts platform plank: "${chosen.name}". ${chosen.factionName} rallies (+7 Happiness), while opponents express dissent (-4 Happiness).`;
     return game;
   }
 

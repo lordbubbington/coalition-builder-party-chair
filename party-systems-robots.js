@@ -789,6 +789,35 @@
     allocateSyntheticProportionalSeats,
     normalizeRobotCitizenshipState,
     createEra16Plugin,
+    evaluateRivalChairUltimatumResponse(game, faction, parentPartyId) {
+      if (!game || !faction || !parentPartyId) return { action: 'refuse', reason: 'missing_context' };
+      const org = game.organizations?.[parentPartyId];
+      const treasury = Number(org?.treasury ?? 0);
+      const curH = Number(game.factionHappiness?.[faction.id] ?? faction.happiness ?? 40);
+      const isAnchor = faction.id === 'dem_liberal_establishment' || faction.id === 'gop_maga' || Boolean(faction.isIroncladAnchor);
+      // AI chair weighs treasury, anchor status, and severity of alienation
+      const appeaseCost = 4.0;
+      const seedVal = Math.abs(
+        String(`${game.seed || 2028}:${game.year || 2028}:ai-ult:${parentPartyId}:${faction.id}`)
+          .split('')
+          .reduce((acc, ch) => ((acc * 31 + ch.charCodeAt(0)) | 0), 7)
+      ) % 100;
+      // Anchor factions are always appeased if affordable; non-anchors appeased ~45% when affordable & H >= 22
+      const canAfford = treasury >= appeaseCost;
+      const shouldAppease = canAfford && (isAnchor || (curH >= 22 && seedVal < 45));
+      if (shouldAppease) {
+        if (org) org.treasury = Math.max(0, Math.round((treasury - appeaseCost) * 10) / 10);
+        if (!game.factionHappiness) game.factionHappiness = {};
+        const nextH = Math.min(100, Math.round(curH + 18));
+        game.factionHappiness[faction.id] = nextH;
+        if (game.factionStandings) game.factionStandings[faction.id] = nextH;
+        faction.happiness = nextH;
+        faction.ultimatumTurnsRemaining = null;
+        faction.frictionIndex = Math.min(Number(faction.frictionIndex || 0), 40);
+        return { action: 'appease', cost: appeaseCost, nextHappiness: nextH };
+      }
+      return { action: 'refuse', cost: 0, nextHappiness: curH };
+    },
   };
 
   if (typeof window !== 'undefined') {

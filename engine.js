@@ -852,57 +852,69 @@ function getPartyKeyIssueStance(game, issueName) {
   return 5;
 }
 
-function computeFactionKeyIssuesDistance(game, faction) {
+function computeFactionKeyIssuesDistance(game, faction, partyIdOverride = null) {
   const ideals = getFactionKeyIssueIdeals(faction);
   if (ideals.length < 2) return 0;
-  const p0 = getPartyKeyIssueStance(game, ideals[0].name);
-  const p1 = getPartyKeyIssueStance(game, ideals[1].name);
-  return Math.hypot(p0 - ideals[0].ideal, p1 - ideals[1].ideal);
+  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  const targetPartyId = partyIdOverride || faction?.partyId || playerPartyId;
+  if (targetPartyId === playerPartyId || targetPartyId === 'player') {
+    const p0 = getPartyKeyIssueStance(game, ideals[0].name);
+    const p1 = getPartyKeyIssueStance(game, ideals[1].name);
+    return Math.hypot(p0 - ideals[0].ideal, p1 - ideals[1].ideal);
+  }
+  const rival = (game.rivals || []).find((r) => r && (r.id === targetPartyId || r.baseTemplateId === targetPartyId));
+  const rEcon = clamp(5.5 + Number(rival?.economic ?? 0) * 4.5, 1, 10);
+  const rSoc = clamp(5.5 + Number(rival?.social ?? 0) * 4.5, 1, 10);
+  const fEcon = Number(faction?.sliders?.economic ?? ideals[0].ideal ?? 5.5);
+  const fSoc = Number(faction?.sliders?.social ?? ideals[1].ideal ?? 5.5);
+  return Math.hypot(rEcon - fEcon, rSoc - fSoc);
 }
 
-// SUM-01: Faction Friction & Ultimatum Detachment Loop
+const RECOGNIZED_FRICTION_PARTIES = new Set(['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist', 'player']);
+
+// SUM-01 + REC-01 + REC-07: Two-Sided National Faction Friction & Ultimatum Detachment Loop
 function evaluateFactionFriction(game) {
-  const playerPartyId = game.player?.baseTemplateId || game.player?.id || 'people';
+  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
   const factions = game.factions || [];
   let updatedGame = { ...game };
 
   for (const f of factions) {
-    if (f.partyId !== playerPartyId) continue;
+    if (!f || !RECOGNIZED_FRICTION_PARTIES.has(f.partyId)) continue;
+    const isPlayerFaction = f.partyId === playerPartyId;
 
-    const curH = Number(updatedGame.factionHappiness?.[f.id] ?? updatedGame.factionHappiness?.[f.name] ?? 60);
+    const curH = Number(updatedGame.factionHappiness?.[f.id] ?? updatedGame.factionHappiness?.[f.name] ?? f.happiness ?? 60);
     let frictionDelta = 0;
 
-    // 1. Chronic Dissatisfaction: Happiness < 35 for 2 consecutive turns
+    // REC-07: Rebalanced low-happiness friction curve (<35: +30, <45: +15)
     if (curH < 35) {
       f.chronicLowTurns = (f.chronicLowTurns || 0) + 1;
-      if (f.chronicLowTurns >= 2) {
-        frictionDelta += 25;
-      }
+      frictionDelta += 30;
+    } else if (curH < 45) {
+      f.chronicLowTurns = 0;
+      frictionDelta += 15;
     } else {
       f.chronicLowTurns = 0;
     }
 
-    // 2. Platform Abandonment: Euclidean platform distance across 2 Key Issues > 4.5 pts
-    const dist = computeFactionKeyIssuesDistance(updatedGame, f);
-    if (dist > 4.5) {
+    // REC-07: Platform Abandonment threshold lowered from 4.5 to 3.2 Euclidean points
+    const dist = computeFactionKeyIssuesDistance(updatedGame, f, f.partyId);
+    if (dist > 3.2) {
       frictionDelta += 15;
     } else if (curH >= 60 && dist <= 2.5) {
-      // Cooling Down: Happiness >= 60 and platform distance <= 2.5
       frictionDelta -= 15;
     }
 
-    // Accumulate friction (0-100); REQ-193: Vanguard doctrine dampens founding faction friction by 40%
-    const isVanguardFounding = updatedGame.identityCrisis?.doctrine === 'vanguard'
+    const isVanguardFounding = isPlayerFaction
+      && updatedGame.identityCrisis?.doctrine === 'vanguard'
       && (updatedGame.identityCrisis?.foundingFactionIds || []).includes(f.id);
     if (isVanguardFounding && frictionDelta > 0) {
       frictionDelta = round(frictionDelta * 0.6, 1);
     }
     f.frictionIndex = clamp((f.frictionIndex || 0) + frictionDelta, 0, 100);
 
-    // 3. Ultimatum handling
+    // 3. Ultimatum handling (REC-07: remediation floor raised to Happiness >= 60; threshold lowered to 75)
     if (f.ultimatumTurnsRemaining !== null && f.ultimatumTurnsRemaining !== undefined) {
-      if (curH >= 50) {
-        // Remediated!
+      if (curH >= 60) {
         f.ultimatumTurnsRemaining = null;
         f.frictionIndex = Math.min(f.frictionIndex, 40);
         if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
@@ -918,6 +930,14 @@ function evaluateFactionFriction(game) {
         const note = `Ultimatum averted with ${f.name}: Happiness restored to ${curH}/100, Friction Index lowered to ${f.frictionIndex}.`;
         updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
       } else {
+        if (!isPlayerFaction && typeof window !== 'undefined' && window.PartySystemsRobots?.evaluateRivalChairUltimatumResponse) {
+          const aiResp = window.PartySystemsRobots.evaluateRivalChairUltimatumResponse(updatedGame, f, f.partyId);
+          if (aiResp && aiResp.action === 'appease') {
+            const note = `Rival Chair appeased ${f.name} (-$${aiResp.cost}M), averting a coalition bolt.`;
+            updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
+            continue;
+          }
+        }
         f.ultimatumTurnsRemaining -= 1;
         if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
           updatedGame.identityCrisis = {
@@ -926,16 +946,16 @@ function evaluateFactionFriction(game) {
           };
         }
         if (f.ultimatumTurnsRemaining <= 0) {
-          // Bolt!
           updatedGame = boltFaction(updatedGame, f.id);
         }
       }
-    } else if (f.frictionIndex >= 100) {
-      // Trigger 2-turn ultimatum
+    } else if (f.frictionIndex >= 75) {
       f.ultimatumTurnsRemaining = 2;
-      const note = `CRISIS: The ${f.name} has issued an official ULTIMATUM! Address core grievances within 2 turns or the faction will formally withdraw from the party.`;
+      const note = isPlayerFaction
+        ? `CRISIS: The ${f.name} has issued an official ULTIMATUM! Address core grievances within 2 turns or the faction will formally withdraw from the party.`
+        : `NATIONAL CRISIS: The ${f.name} has issued a secession ULTIMATUM to its parent party (${f.partyId})!`;
       updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
-      updatedGame.lastNote = note;
+      if (isPlayerFaction) updatedGame.lastNote = note;
     }
   }
 
@@ -973,34 +993,48 @@ function boltFaction(game, factionId) {
   if (factionId === 'dem_liberal_establishment' || factionId === 'gop_maga') {
     return triggerInternalAnchorCrisis(game, factionId);
   }
-  const playerPartyId = game.player?.baseTemplateId || game.player?.id || 'people';
+  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
   const factions = game.factions || [];
   const f = factions.find((x) => x.id === factionId);
   if (!f) return game;
+  const sourcePartyId = (f.partyId && f.partyId !== 'none' && f.partyId !== 'independent') ? f.partyId : playerPartyId;
 
-  // 1. Status update: shift to Unaffiliated
+  // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
+  f.formerPartyId = sourcePartyId;
+  f.boltedYear = game.year || 2028;
+  f.activelyCourting = true;
   f.partyId = 'none';
   f.ultimatumTurnsRemaining = null;
   f.frictionIndex = 0;
 
-  // 2. Voter Severance across all states into state.affiliations.independent
+  // 2. Voter Severance across all states from sourcePartyId into state.affiliations.independent
   const vm = game.voterModel;
   if (vm && Array.isArray(vm.states)) {
+    const _bfDiv = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
     vm.states.forEach((state) => {
       const fVoters = state.factions?.[factionId] || 0;
-      if (fVoters > 0) {
-        const shift = Math.round(fVoters);
-        state.affiliations[playerPartyId] = Math.max(0, (state.affiliations[playerPartyId] || 0) - shift);
-        state.affiliations.independent = (state.affiliations.independent || 0) + shift;
+      if (fVoters > 0 && state.affiliations) {
+        const shift = Math.round(fVoters / _bfDiv);
+        const deduct = Math.min(Number(state.affiliations[sourcePartyId] || 0), shift);
+        state.affiliations[sourcePartyId] = Math.max(0, Number(state.affiliations[sourcePartyId] || 0) - deduct);
+        state.affiliations.independent = Number(state.affiliations.independent || 0) + deduct;
+        if (['green', 'liberty', 'constitution', 'socialist', 'other'].includes(sourcePartyId)) {
+          state.affiliations.thirdParty = (state.affiliations.green || 0) + (state.affiliations.liberty || 0) + (state.affiliations.constitution || 0) + (state.affiliations.socialist || 0) + (state.affiliations.other || 0);
+        }
       }
     });
 
-    // Reconcile national party totals
-  const _bfMult = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
-  const statePlayerSum = vm.states.reduce((sum, s) => sum + (s.affiliations[playerPartyId] || 0), 0) * _bfMult;
-  const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations.independent || 0), 0) * _bfMult;
-    if (vm.affiliations[playerPartyId]) vm.affiliations[playerPartyId].representedVoters = statePlayerSum;
-    if (vm.affiliations.independent) vm.affiliations.independent.representedVoters = stateIndSum;
+    const _bfMult = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+    const stateSourceSum = vm.states.reduce((sum, s) => sum + (s.affiliations?.[sourcePartyId] || 0), 0);
+    const stateIndSum = vm.states.reduce((sum, s) => sum + (s.affiliations?.independent || 0), 0);
+    if (vm.affiliations?.[sourcePartyId]) {
+      vm.affiliations[sourcePartyId].sampleVoters = stateSourceSum;
+      vm.affiliations[sourcePartyId].representedVoters = stateSourceSum * _bfMult;
+    }
+    if (vm.affiliations?.independent) {
+      vm.affiliations.independent.sampleVoters = stateIndSum;
+      vm.affiliations.independent.representedVoters = stateIndSum * _bfMult;
+    }
   }
 
   // 3. Lawmaker Defection: sitting members and politicians belonging to this faction defect and become Independents (REQ-159)
@@ -1197,16 +1231,25 @@ function advanceToElectionNight(game) {
 
 // REQ-153: Coalition Summit Eligibility Check
 function checkSummitEligibility(game, factionId) {
-  const playerPartyId = game.player?.baseTemplateId || game.player?.id || 'people';
+  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
   const factions = game.factions || window.PartyChairData?.FACTIONS_CATALOG || [];
   const f = factions.find((x) => x.id === factionId);
   if (!f) return { eligible: false, reason: 'Faction not found.' };
   if (f.partyId === playerPartyId) {
     return { eligible: false, reason: 'The faction is already a member of your party.' };
   }
+  // REC-02 & REC-10: Strict Two-Step Secession Gate — must be Independent/Unaffiliated before signing a Coalition Accord
+  if (f.partyId !== 'none' && f.partyId !== 'independent' && f.partyId !== 'unaffiliated') {
+    return {
+      eligible: false,
+      reason: 'Faction must secede from its parent party and become Independent before a Coalition Accord can be signed.',
+      canCourt: Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50) < 50,
+    };
+  }
   const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
-  if (curH > 30) {
-    return { eligible: false, reason: 'The faction is satisfied with its current independent course (Happiness > 30) and refuses merger talks.' };
+  const courtshipScore = Number(game.factionCourtship?.[f.id]?.[playerPartyId] || 0);
+  if (f.partyId !== 'none' && curH > 30 && courtshipScore < 15) {
+    return { eligible: false, reason: 'The faction is satisfied with its current independent course (Happiness > 30) and refuses merger talks. Court them first to build goodwill.' };
   }
   const demands = generateMergerCoalitionDemands(game, factionId);
   if (demands && demands.blocked) {
@@ -9272,7 +9315,7 @@ function resolveEvent(game, choiceIndex) {
   const nextFactions = { ...game.factionStandings };
   nextFactions[choice.faction] = clamp((nextFactions[choice.faction] || 50) + (choice.trust || 0), 0, 100);
   if (choice.factionLoss) nextFactions[choice.factionLoss] = clamp((nextFactions[choice.factionLoss] || 50) - (choice.loss || 0), 0, 100);
-  const next = {
+  let next = {
     ...game,
     treasury: Math.max(0, round(game.treasury + (choice.money || 0))),
     memberships: Math.max(1, game.memberships + (choice.membership || 0)),
@@ -9284,6 +9327,21 @@ function resolveEvent(game, choiceIndex) {
     lastNote: choice.effect,
     eventLog: [...game.eventLog, { year: game.year, title: event.title, choice: choice.label }].slice(-20),
   };
+  if (choice.reaffirmFactionId && Array.isArray(next.factions)) {
+    const tf = next.factions.find((f) => f && f.id === choice.reaffirmFactionId);
+    if (tf) {
+      const curH = Number(next.factionHappiness?.[tf.id] ?? tf.happiness ?? 50);
+      const nextH = clamp(curH + 10, 0, 100);
+      next.factionHappiness = { ...(next.factionHappiness || {}), [tf.id]: nextH };
+      next.factionStandings = { ...(next.factionStandings || {}), [tf.id]: nextH };
+      tf.happiness = nextH;
+      tf.frictionIndex = clamp((tf.frictionIndex || 0) - 20, 0, 100);
+      if (nextH >= 60) tf.ultimatumTurnsRemaining = null;
+    }
+  }
+  if (choice.boltFactionId) {
+    next = boltFaction(next, choice.boltFactionId);
+  }
   return applyRivalEventResponses(next, event);
 }
 
@@ -13941,6 +13999,84 @@ function startNextCycleInternal(game) {
     applyFactionHappinessDelta(game, f.id, deltaH);
   });
 
+  // REC-08: Electoral Disaster Exodus across all major parties (non-anchor factions losing House + Senate + Presidency)
+  const pendingExodusBoltIds = [];
+  ['people', 'heritage'].forEach((pid) => {
+    const pHouse = sittingList.filter((m) => m.office === 'house' && (m.party === pid || m.caucus === pid)).length >= 218;
+    const pSen = sittingList.filter((m) => m.office === 'senate' && (m.party === pid || m.caucus === pid)).length >= 50;
+    const pPres = governing === pid;
+    const prevP = game.lastCycleControlByParty?.[pid];
+    const lostAllThree = prevP
+      ? (prevP.house && !pHouse && prevP.senate && !pSen && prevP.pres && !pPres)
+      : (pid === playerIdentity && houseLost && senateLost && presLost);
+    if (lostAllThree) {
+      (game.factions || []).forEach((f) => {
+        if (!f || f.partyId !== pid || f.isIroncladAnchor || f.id === 'dem_liberal_establishment' || f.id === 'gop_maga') return;
+        const curH = Number(nextFactionStandings[f.id] ?? f.happiness ?? 50);
+        const curC = Number(nextFactionConfidence[f.id] ?? f.confidence ?? 50);
+        const shockH = clamp(curH - 15, 0, 100);
+        const shockC = clamp(curC - 20, 1, 100);
+        nextFactionStandings[f.id] = shockH;
+        nextFactionConfidence[f.id] = shockC;
+        f.happiness = shockH;
+        f.confidence = shockC;
+        if (shockC < 25 && hash(`exodus:${game.seed}:${nextYear}:${f.id}`) < 0.35) {
+          pendingExodusBoltIds.push(f.id);
+        }
+      });
+    }
+  });
+
+  // REC-09: Campaign Resource Starvation (+25 Neglect Friction for factions with $0 funding in competitive races)
+  if (typeof window !== 'undefined' && window.CampaignOverhaul?.evaluateFactionResourceStarvation) {
+    const starvedIds = window.CampaignOverhaul.evaluateFactionResourceStarvation(game);
+    starvedIds.forEach((fid) => {
+      const f = (game.factions || []).find((x) => x && x.id === fid);
+      if (f) {
+        f.frictionIndex = clamp((f.frictionIndex || 0) + 25, 0, 100);
+      }
+    });
+  }
+
+  // REC-12: Unaffiliated Active Bidding (+5 courtship affinity bonus to ideologically closest party each cycle)
+  const nextFactionCourtship = JSON.parse(JSON.stringify(game.factionCourtship || {}));
+  const activePartySliders = [
+    { id: playerIdentity, econ: clamp(5.5 + Number(game.player?.economic || 0) * 4.5, 1, 10), soc: clamp(5.5 + Number(game.player?.social || 0) * 4.5, 1, 10) },
+    ...(game.rivals || []).map((r) => ({ id: r.id, econ: clamp(5.5 + Number(r.economic || 0) * 4.5, 1, 10), soc: clamp(5.5 + Number(r.social || 0) * 4.5, 1, 10) })),
+  ];
+  (game.factions || []).forEach((f) => {
+    if (!f || f.partyId !== 'none') return;
+    f.activelyCourting = true;
+    const fEcon = Number(f.sliders?.economic ?? 5);
+    const fSoc = Number(f.sliders?.social ?? 5);
+    let bestParty = null;
+    let bestDist = Infinity;
+    activePartySliders.forEach((ps) => {
+      const d = Math.hypot(ps.econ - fEcon, ps.soc - fSoc);
+      if (d < bestDist) { bestDist = d; bestParty = ps.id; }
+    });
+    if (bestParty) {
+      if (!nextFactionCourtship[f.id]) nextFactionCourtship[f.id] = {};
+      nextFactionCourtship[f.id][bestParty] = clamp((nextFactionCourtship[f.id][bestParty] || 0) + 5, 0, 100);
+      f.closestAffinityPartyId = bestParty;
+    }
+  });
+  // Reset per-cycle red-line betrayal counters
+  (game.factions || []).forEach((f) => { if (f) f.redLinesCrossedThisCycle = 0; });
+
+  const nextLastCycleControlByParty = {
+    people: {
+      house: sittingList.filter((m) => m.office === 'house' && (m.party === 'people' || m.caucus === 'people')).length >= 218,
+      senate: sittingList.filter((m) => m.office === 'senate' && (m.party === 'people' || m.caucus === 'people')).length >= 50,
+      pres: governing === 'people',
+    },
+    heritage: {
+      house: sittingList.filter((m) => m.office === 'house' && (m.party === 'heritage' || m.caucus === 'heritage')).length >= 218,
+      senate: sittingList.filter((m) => m.office === 'senate' && (m.party === 'heritage' || m.caucus === 'heritage')).length >= 50,
+      pres: governing === 'heritage',
+    },
+  };
+
   const nextLastCycleControl = {
     house: currHouse,
     senate: currSenate,
@@ -14060,6 +14196,8 @@ function startNextCycleInternal(game) {
     pendingKingmakerNegotiations: [],
     pendingContingentElection: null,
     stateVoterDeltas: {},
+    factionCourtship: nextFactionCourtship,
+    lastCycleControlByParty: nextLastCycleControlByParty,
     lastCycleControl: nextLastCycleControl,
     year: nextYear,
     chairTurn: 0,
@@ -14175,6 +14313,9 @@ function startNextCycleInternal(game) {
       refreshed.founderLegacy.movementAuraCyclesRemaining -= 1;
     }
     checkFounderSuccessionTrigger(refreshed);
+  }
+  if (pendingExodusBoltIds.length) {
+    pendingExodusBoltIds.forEach((ebid) => { refreshed = boltFaction(refreshed, ebid); });
   }
   refreshed = processOrphanedFactionRehoming(refreshed);
 
@@ -15740,6 +15881,146 @@ function takeActionInternal(game, actionId, payload = {}) {
       activeAutopsyModal: !hasCoalitionModal,
     };
   }
+  // REC-02, REC-03, REC-06: Opposition Subversion, Courtship Dialogue, Independent Courting & Voluntary Expulsion
+  if (actionId === 'open-courtship-dialogue') {
+    const fid = payload?.factionId || payload?.id;
+    const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+    const f = (game.factions || []).find((x) => x && x.id === fid);
+    if (!f) return { ...game, lastNote: 'Target faction not found.' };
+    if (f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+      return { ...game, lastNote: 'Courtship Dialogue applies only to factions currently inside a rival party.' };
+    }
+    const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
+    if (curH >= 50) {
+      return { ...game, lastNote: `${f.name} is still loyal to its parent party (Happiness ${curH} >= 50). Destabilize them first.` };
+    }
+    const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
+    if (actionsLeft < 1) return { ...game, lastNote: 'No organizing actions remaining this cycle.' };
+    if ((game.treasury || 0) < 1.5) return { ...game, lastNote: 'Requires $1.5M to open backchannel courtship dialogue.' };
+    const nextH = clamp(curH - 6, 0, 100);
+    const nextFactions = (game.factions || []).map((x) => (x.id === fid ? { ...x, frictionIndex: clamp((x.frictionIndex || 0) + 12, 0, 100), happiness: nextH } : x));
+    const nextCourt = JSON.parse(JSON.stringify(game.factionCourtship || {}));
+    if (!nextCourt[fid]) nextCourt[fid] = {};
+    nextCourt[fid][playerPid] = clamp((nextCourt[fid][playerPid] || 0) + 12, 0, 100);
+    const note = `Opened backchannel Courtship Dialogue with ${f.name} (-$1.5M, +12 Goodwill, +12 Parent Friction, -6 Parent Happiness).`;
+    return {
+      ...game,
+      treasury: round(game.treasury - 1.5, 2),
+      organizingActionsRemaining: Math.max(0, actionsLeft - 1),
+      factions: nextFactions,
+      factionHappiness: { ...(game.factionHappiness || {}), [fid]: nextH },
+      factionStandings: { ...(game.factionStandings || {}), [fid]: nextH },
+      factionCourtship: nextCourt,
+      lastNote: note,
+      yearLog: [...(game.yearLog || []), { year: game.year, turn: (game.chairTurn || 0) + 1, action: note }].slice(-80),
+    };
+  }
+
+  if (actionId === 'drive-coalition-wedge') {
+    const fid = payload?.factionId || payload?.id;
+    const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+    const f = (game.factions || []).find((x) => x && x.id === fid);
+    if (!f || f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+      return { ...game, lastNote: 'Drive Coalition Wedge must target an opposition faction inside a rival party.' };
+    }
+    const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
+    if (curH >= 60) {
+      return { ...game, lastNote: `${f.name} is too unified (Happiness ${curH} >= 60) for wedge operations.` };
+    }
+    const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
+    if (actionsLeft < 1) return { ...game, lastNote: 'No organizing actions remaining this cycle.' };
+    if ((game.treasury || 0) < 2.0) return { ...game, lastNote: 'Drive Coalition Wedge requires $2.0M.' };
+    const nextH = clamp(curH - 10, 0, 100);
+    const nextFactions = (game.factions || []).map((x) => (x.id === fid ? { ...x, happiness: nextH, frictionIndex: clamp((x.frictionIndex || 0) + 20, 0, 100) } : x));
+    const note = `Drove a Coalition Wedge into ${f.name} (-$2.0M, -10 Parent Happiness, +20 Friction Index).`;
+    return {
+      ...game,
+      treasury: round(game.treasury - 2.0, 2),
+      organizingActionsRemaining: Math.max(0, actionsLeft - 1),
+      factions: nextFactions,
+      factionHappiness: { ...(game.factionHappiness || {}), [fid]: nextH },
+      factionStandings: { ...(game.factionStandings || {}), [fid]: nextH },
+      lastNote: note,
+      yearLog: [...(game.yearLog || []), { year: game.year, turn: (game.chairTurn || 0) + 1, action: note }].slice(-80),
+    };
+  }
+
+  if (actionId === 'subsidize-dissident-caucus') {
+    const fid = payload?.factionId || payload?.id;
+    const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+    const f = (game.factions || []).find((x) => x && x.id === fid);
+    if (!f || f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+      return { ...game, lastNote: 'Subsidize Dissident Caucus must target an opposition party faction.' };
+    }
+    if (f.ultimatumTurnsRemaining === null || f.ultimatumTurnsRemaining === undefined) {
+      return { ...game, lastNote: `${f.name} does not have an active ultimatum to accelerate.` };
+    }
+    const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
+    if (actionsLeft < 1) return { ...game, lastNote: 'No organizing actions remaining this cycle.' };
+    if ((game.treasury || 0) < 3.0) return { ...game, lastNote: 'Subsidize Dissident Caucus requires $3.0M.' };
+    const nextTurns = Math.max(0, Number(f.ultimatumTurnsRemaining) - 1);
+    const nextFactions = (game.factions || []).map((x) => (x.id === fid ? { ...x, ultimatumTurnsRemaining: nextTurns } : x));
+    let nextGame = {
+      ...game,
+      treasury: round(game.treasury - 3.0, 2),
+      organizingActionsRemaining: Math.max(0, actionsLeft - 1),
+      factions: nextFactions,
+      lastNote: `Subsidized dissident caucus inside ${f.name} (-$3.0M, ultimatum accelerated to ${nextTurns} turn${nextTurns === 1 ? '' : 's'} remaining).`,
+    };
+    if (nextTurns <= 0) {
+      nextGame = boltFaction(nextGame, fid);
+    }
+    return nextGame;
+  }
+
+  if (actionId === 'court-independent-faction') {
+    const fid = payload?.factionId || payload?.id;
+    const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+    const f = (game.factions || []).find((x) => x && x.id === fid);
+    if (!f || (f.partyId !== 'none' && f.partyId !== 'independent' && f.partyId !== 'unaffiliated')) {
+      return { ...game, lastNote: 'Court Independent Faction can only target Independent / Unaffiliated factions.' };
+    }
+    const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
+    if (actionsLeft < 1) return { ...game, lastNote: 'No organizing actions remaining this cycle.' };
+    if ((game.treasury || 0) < 1.5) return { ...game, lastNote: 'Court Independent Faction requires $1.5M.' };
+    const nextCourt = JSON.parse(JSON.stringify(game.factionCourtship || {}));
+    if (!nextCourt[fid]) nextCourt[fid] = {};
+    nextCourt[fid][playerPid] = clamp((nextCourt[fid][playerPid] || 0) + 15, 0, 100);
+    const note = `Courted Independent faction ${f.name} (-$1.5M, +15 Coalition Goodwill -> ${nextCourt[fid][playerPid]}/100).`;
+    return {
+      ...game,
+      treasury: round(game.treasury - 1.5, 2),
+      organizingActionsRemaining: Math.max(0, actionsLeft - 1),
+      factionCourtship: nextCourt,
+      lastNote: note,
+      yearLog: [...(game.yearLog || []), { year: game.year, turn: (game.chairTurn || 0) + 1, action: note }].slice(-80),
+    };
+  }
+
+  if (actionId === 'expel-faction') {
+    const fid = payload?.factionId || payload?.id;
+    const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+    const f = (game.factions || []).find((x) => x && x.id === fid);
+    if (!f || f.partyId !== playerPid) {
+      return { ...game, lastNote: 'Expel Faction can only target a faction inside your own party.' };
+    }
+    if (f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || f.isIroncladAnchor) {
+      return { ...game, lastNote: `${f.name} is an ironclad party anchor and cannot be expelled.` };
+    }
+    const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
+    if (actionsLeft < 1) return { ...game, lastNote: 'No organizing actions remaining this cycle.' };
+    let nextGame = {
+      ...game,
+      organizingActionsRemaining: Math.max(0, actionsLeft - 1),
+      cohabitationTurnoutDrag: 0,
+    };
+    nextGame = boltFaction(nextGame, fid);
+    const note = `PARTY PURGE: Voluntarily expelled ${f.name} into Independent status, eliminating cohabitation turnout drag.`;
+    nextGame.lastNote = note;
+    nextGame.yearLog = [...(nextGame.yearLog || []), { year: nextGame.year, turn: (nextGame.chairTurn || 0) + 1, action: note }].slice(-80);
+    return nextGame;
+  }
+
   if (actionId === 'convene-coalition-summit' || actionId === 'sign-coalition-accord') {
     const eligibility = checkSummitEligibility(game, payload.factionId);
     if (!eligibility.eligible && !payload.forceAccord) {
@@ -17494,6 +17775,33 @@ function takeActionInternal(game, actionId, payload = {}) {
     next.lastNote = isSuccess
       ? `${bill.name} enacted in ${targetStateName} (${targetStateId})! The legislation resonated strongly with local priorities (+${boost.toFixed(1)} state support). ${bill.effect}`
       : `${bill.name} enacted in ${targetStateName} (${targetStateId}), but triggered sharp regional backlash and voter pushback (${boost.toFixed(1)} state support). ${bill.effect}`;
+    // REC-05: Evaluate Legislative Red Line Betrayals (-25 Happiness, +35 Friction; 2 red lines in 1 cycle -> instant bolt)
+    const billRedLineText = `${bill.id || ''} ${bill.name || ''} ${bill.axis || ''} ${bill.effect || ''}`.toLowerCase();
+    const playerBillPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+    const billBetrayalBolts = [];
+    (next.factions || []).forEach((f) => {
+      if (!f || f.partyId !== playerBillPid) return;
+      const rls = Array.isArray(f.redLineIssues) ? f.redLineIssues : [];
+      const crossed = rls.some((rl) => {
+        const tokens = String(rl).toLowerCase().split('-').filter((t) => t.length >= 4);
+        return billRedLineText.includes(String(rl).toLowerCase()) || (tokens.length >= 2 && tokens.every((t) => billRedLineText.includes(t)));
+      });
+      if (crossed) {
+        const curH = Number(next.factionHappiness?.[f.id] ?? f.happiness ?? 60);
+        const newH = clamp(curH - 25, 0, 100);
+        next.factionHappiness = { ...(next.factionHappiness || {}), [f.id]: newH };
+        standings[f.id] = newH;
+        f.happiness = newH;
+        f.frictionIndex = clamp((f.frictionIndex || 0) + 35, 0, 100);
+        f.redLinesCrossedThisCycle = (f.redLinesCrossedThisCycle || 0) + 1;
+        if (f.redLinesCrossedThisCycle >= 2) {
+          billBetrayalBolts.push(f.id);
+        }
+      }
+    });
+    if (billBetrayalBolts.length) {
+      billBetrayalBolts.forEach((bfid) => { next = boltFaction(next, bfid); });
+    }
     // MAS-01 Phase 4 (Era #18): Evaluate Coalition Stability impact of legislative bills against partner red lines
     if (pseBillPass?.evaluateCoalitionStabilityImpact) {
       const billAxisStance = clamp(round(5.5 + Number(next.player?.[bill.axis] || 0) * 4.5, 2), 1, 10);
