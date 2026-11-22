@@ -1,8 +1,8 @@
 # Coalition Builder: Party Chair — Multi-Cycle Balance Audit Report
 
-**Date Generated:** 2026-11-21T21:56:56.431Z  
+**Date Generated:** 2026-11-21T22:19:33.355Z  
 **Simulated Range:** 2028 &rarr; 2046 (10 Consecutive 2-Year Cycles)  
-**Execution Runtime:** 37.9 seconds  
+**Execution Runtime:** 38.2 seconds  
 **Base Playable Party:** `people`
 
 ---
@@ -38,7 +38,7 @@
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
 | **1** | 2028 | presidential | 155,000,000 | $92M | 808 | 0 |
 | **5** | 2036 | presidential | 155,000,000 | $2M | 808 | 0 |
-| **10** | 2046 | midterm | 155,000,000 | $6M | 808 | 0 |
+| **10** | 2046 | midterm | 155,000,000 | $7M | 808 | 0 |
 
 ---
 

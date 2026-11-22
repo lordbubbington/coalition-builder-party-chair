@@ -2397,7 +2397,7 @@ function getHighestVoterShareStateForParty(game, partyId = 'player') {
   };
 }
 
-// v0.16.9: Mathematical Simulation Effects for all 8 Qualitative Candidate Traits
+// v0.16.9: Mathematical Simulation Effects for all 40 Qualitative Candidate Traits
 const CANDIDATE_TRAIT_EFFECTS = {
   'Rising Star': {
     donorViralityMultiplier: 1.5,
@@ -2430,6 +2430,139 @@ const CANDIDATE_TRAIT_EFFECTS = {
   'Undisciplined': {
     volatilityMultiplier: 1.65,
     unforcedGaffeOddsMultiplier: 2.5,
+  },
+  // Background & Roots
+  'Military Veteran': {
+    workingClassRuralAppeal: 2.2,
+    baselineDefenseFloor: 2.5,
+  },
+  'Union Stalwart': {
+    volunteerSurgeMultiplier: 1.25,
+    workingClassRuralAppeal: 2.5,
+  },
+  'Prosecutorial Edge': {
+    debatePerformanceMultiplier: 1.20,
+    vulnerabilityDelta: -10,
+  },
+  'Small-Town Pillar': {
+    baselineDefenseFloor: 3.0,
+    workingClassRuralAppeal: 1.5,
+  },
+  'Academic Theorist': {
+    debatePerformanceMultiplier: 1.10,
+    earnedMediaEfficiencyMultiplier: 1.10,
+  },
+  'K-Street Veteran': {
+    donorViralityMultiplier: 1.30,
+    baselineDefenseFloor: 1.5,
+  },
+  'Local Sports Legend': {
+    baselineDefenseFloor: 3.5,
+    suburbanSwingLift: 1.5,
+  },
+  'Grassroots Organizer': {
+    volunteerSurgeMultiplier: 1.30,
+    donorViralityMultiplier: 1.15,
+  },
+  'Self-Made Entrepreneur': {
+    suburbanSwingLift: 2.0,
+    donorViralityMultiplier: 1.20,
+  },
+  'Dynastic Name': {
+    earnedMediaEfficiencyMultiplier: 1.25,
+    baselineDefenseFloor: 2.0,
+  },
+  // Campaign & Media Style
+  'Sunday Show Fixture': {
+    earnedMediaEfficiencyMultiplier: 1.30,
+    debatePerformanceMultiplier: 1.08,
+  },
+  'Relentless Door-Knocker': {
+    volunteerSurgeMultiplier: 1.25,
+    baselineDefenseFloor: 2.5,
+  },
+  'Floor Speech Maverick': {
+    donorViralityMultiplier: 1.25,
+    earnedMediaEfficiencyMultiplier: 1.15,
+  },
+  'Oratorical Phenom': {
+    debatePerformanceMultiplier: 1.25,
+    volunteerSurgeMultiplier: 1.20,
+  },
+  'Digital Native': {
+    donorViralityMultiplier: 1.35,
+    volunteerSurgeMultiplier: 1.15,
+  },
+  'Media Darling': {
+    earnedMediaEfficiencyMultiplier: 1.25,
+    vulnerabilityDelta: -15,
+  },
+  'Quiet Diplomat': {
+    volatilityMultiplier: 0.70,
+    baselineDefenseFloor: 2.0,
+  },
+  'Cautious Deliberator': {
+    unforcedGaffeOddsMultiplier: 0.0,
+    volatilityMultiplier: 0.60,
+  },
+  'Populist Firebrand': {
+    workingClassRuralAppeal: 3.5,
+    donorViralityMultiplier: 1.20,
+    volatilityMultiplier: 1.25,
+  },
+  'Deep-Pocket Rolodex': {
+    donorViralityMultiplier: 1.40,
+    baselineDefenseFloor: 1.5,
+  },
+  // Legislative & Governance
+  'Machine Loyalist': {
+    volatilityMultiplier: 0.60,
+    baselineDefenseFloor: 2.5,
+  },
+  'Budget Hawk': {
+    suburbanSwingLift: 1.8,
+    vulnerabilityDelta: -10,
+  },
+  'Bipartisan Dealmaker': {
+    suburbanSwingLift: 3.0,
+    volatilityMultiplier: 0.75,
+  },
+  'Doctrinal Purist': {
+    volunteerSurgeMultiplier: 1.20,
+    scandalOddsMultiplier: 0.5,
+  },
+  'Committee Workhorse': {
+    baselineDefenseFloor: 3.0,
+    volatilityMultiplier: 0.70,
+  },
+  'Backbench Agitator': {
+    earnedMediaEfficiencyMultiplier: 1.15,
+    volatilityMultiplier: 1.30,
+  },
+  'Kingmaker Conduit': {
+    donorViralityMultiplier: 1.20,
+    suburbanSwingLift: 1.5,
+  },
+  'Statehouse Alum': {
+    volunteerSurgeMultiplier: 1.15,
+    baselineDefenseFloor: 2.0,
+  },
+  // Character & Volatility
+  'Gaffe Prone': {
+    unforcedGaffeOddsMultiplier: 1.8,
+    volatilityMultiplier: 1.35,
+  },
+  'Teflon Brand': {
+    vulnerabilityDelta: -35,
+    baselineDefenseFloor: 3.5,
+  },
+  'Charismatic Fundraiser': {
+    donorViralityMultiplier: 1.35,
+    earnedMediaEfficiencyMultiplier: 1.15,
+  },
+  'Principled Contrarian': {
+    suburbanSwingLift: 2.5,
+    volatilityMultiplier: 0.85,
   },
 };
 
@@ -2484,6 +2617,28 @@ function evaluateCandidateTraitEffects(candidate) {
     out.volatilityMultiplier *= 1.65;
     out.unforcedGaffeOddsMultiplier = out.unforcedGaffeOddsMultiplier === 0 ? 0 : (out.unforcedGaffeOddsMultiplier * 2.5);
   }
+
+  // Expanded qualitative traits dynamic evaluation
+  Object.entries(CANDIDATE_TRAIT_EFFECTS).forEach(([tName, fx]) => {
+    if (['Rising Star', 'Established Politician', 'Corrupt', 'Squeaky Clean', 'Polished', 'Rough', 'Disciplined', 'Undisciplined'].includes(tName)) return;
+    if (norm.has(tName.toLowerCase())) {
+      if (fx.donorViralityMultiplier !== undefined) out.donorViralityMultiplier *= fx.donorViralityMultiplier;
+      if (fx.volunteerSurgeMultiplier !== undefined) out.volunteerSurgeMultiplier *= fx.volunteerSurgeMultiplier;
+      if (fx.volatilityMultiplier !== undefined) out.volatilityMultiplier *= fx.volatilityMultiplier;
+      if (fx.baselineDefenseFloor !== undefined) out.baselineDefenseFloor += fx.baselineDefenseFloor;
+      if (fx.vulnerabilityDelta !== undefined) out.vulnerabilityDelta += fx.vulnerabilityDelta;
+      if (fx.scandalOddsMultiplier !== undefined) out.scandalOddsMultiplier *= fx.scandalOddsMultiplier;
+      if (fx.oppoImmunity !== undefined) out.oppoImmunity = out.oppoImmunity || fx.oppoImmunity;
+      if (fx.suburbanSwingLift !== undefined) out.suburbanSwingLift += fx.suburbanSwingLift;
+      if (fx.debatePerformanceMultiplier !== undefined) out.debatePerformanceMultiplier *= fx.debatePerformanceMultiplier;
+      if (fx.earnedMediaEfficiencyMultiplier !== undefined) out.earnedMediaEfficiencyMultiplier *= fx.earnedMediaEfficiencyMultiplier;
+      if (fx.workingClassRuralAppeal !== undefined) out.workingClassRuralAppeal += fx.workingClassRuralAppeal;
+      if (fx.unforcedGaffeOddsMultiplier !== undefined) {
+        out.unforcedGaffeOddsMultiplier = out.unforcedGaffeOddsMultiplier === 0 ? 0 : (out.unforcedGaffeOddsMultiplier * fx.unforcedGaffeOddsMultiplier);
+      }
+    }
+  });
+
   return out;
 }
 
@@ -7299,6 +7454,34 @@ function encodePolylineRing(points) {
   return out;
 }
 
+function clipPolygonHalfPlane(poly, a, b, c) {
+  const out = [];
+  const len = poly.length;
+  if (!len) return out;
+  const isInside = (p) => (a * p[0] + b * p[1] + c) >= -1e-9;
+  for (let i = 0; i < len; i += 1) {
+    const curr = poly[i];
+    const prev = poly[(i + len - 1) % len];
+    const currIn = isInside(curr);
+    const prevIn = isInside(prev);
+    if (currIn) {
+      if (!prevIn) {
+        const d1 = a * prev[0] + b * prev[1] + c;
+        const d2 = a * curr[0] + b * curr[1] + c;
+        const t = Math.abs(d1 - d2) > 1e-9 ? (d1 / (d1 - d2)) : 0;
+        out.push([prev[0] + t * (curr[0] - prev[0]), prev[1] + t * (curr[1] - prev[1])]);
+      }
+      out.push(curr);
+    } else if (prevIn) {
+      const d1 = a * prev[0] + b * prev[1] + c;
+      const d2 = a * curr[0] + b * curr[1] + c;
+      const t = Math.abs(d1 - d2) > 1e-9 ? (d1 / (d1 - d2)) : 0;
+      out.push([prev[0] + t * (curr[0] - prev[0]), prev[1] + t * (curr[1] - prev[1])]);
+    }
+  }
+  return out;
+}
+
 function generateStateDistrictSlices(stateShape, n) {
   const count = Math.max(1, Number(n) || 1);
   if (count <= 1) {
@@ -7349,11 +7532,43 @@ function generateStateDistrictSlices(stateShape, n) {
       const boxRing = [
         [x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0],
       ];
+
+      // Procedural Sutherland-Hodgman clipping against real state boundary polyline rings
+      const clippedRings = [];
+      let totalPts = 0;
+      let sumX = 0, sumY = 0;
+
+      rings.forEach((ring) => {
+        if (!ring || ring.length < 3) return;
+        let poly = clipPolygonHalfPlane(ring, 1, 0, -x0); // x >= x0
+        poly = clipPolygonHalfPlane(poly, -1, 0, x1);     // x <= x1
+        poly = clipPolygonHalfPlane(poly, 0, 1, -y0);     // y >= y0
+        poly = clipPolygonHalfPlane(poly, 0, -1, y1);     // y <= y1
+        if (poly.length >= 3) {
+          clippedRings.push(poly);
+          poly.forEach((pt) => {
+            sumX += pt[0];
+            sumY += pt[1];
+            totalPts += 1;
+          });
+        }
+      });
+
+      const qStr = clippedRings.length
+        ? clippedRings.map(encodePolylineRing).join('!')
+        : encodePolylineRing(boxRing);
+      const sliceCx = totalPts > 0
+        ? Math.round((sumX / totalPts) * 10) / 10
+        : Math.round(((x0 + x1) / 2) * 10) / 10;
+      const sliceCy = totalPts > 0
+        ? Math.round((sumY / totalPts) * 10) / 10
+        : Math.round(((y0 + y1) / 2) * 10) / 10;
+
       slices.push({
         districtNumber: dNum,
-        q: encodePolylineRing(boxRing),
-        cx: Math.round(((x0 + x1) / 2) * 10) / 10,
-        cy: Math.round(((y0 + y1) / 2) * 10) / 10,
+        q: qStr,
+        cx: sliceCx,
+        cy: sliceCy,
       });
     }
   }
@@ -7370,6 +7585,17 @@ function loadStateDistrictSlice(stateId, n, baseStateShape) {
       const loaded = window.loadDistrictSliceFromFile(stateId, count);
       if (loaded && Array.isArray(loaded)) return loaded;
     } catch { /* proceed to procedural fallback */ }
+  }
+  // Check if baseline map data already contains the exact district count for this state
+  const baselineMap = (typeof window !== 'undefined' && window.PartyChairData?.VERSION_03_MAPS);
+  const baselineDists = baselineMap?.districts?.filter((d) => d.stateId === stateId);
+  if (baselineDists && baselineDists.length === count) {
+    return baselineDists.map((d) => ({
+      districtNumber: d.districtNumber || Number(String(d.id).split('-')[1]) || 1,
+      q: d.q,
+      cx: d.cx,
+      cy: d.cy,
+    }));
   }
   const shape = baseStateShape || { q: '', cx: 500, cy: 250 };
   return generateStateDistrictSlices(shape, count);
@@ -10514,9 +10740,12 @@ function estimateRaceMarginInternal(game, raceKey, options = {}) {
   // REQ-118 & REQ-261: Decouple House Races from Statewide Lean (Pure District Leans + Full National Environment)
   if (kind === 'house') {
     const distId = parts[1];
-    const allDistricts = window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
-    const distObj = allDistricts.find((d) => d.id === distId);
-    const districtLean = distObj?.lean ?? 0;
+    const activeMap = game?.currentHouseMap || (game?.activeHouseMapKey ? game[game.activeHouseMapKey] : null);
+    const customDistList = activeMap?.modelDistricts || activeMap?.districts;
+    const allDistricts = customDistList || window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
+    const distObj = allDistricts.find((d) => d.id === distId || d.label === distId);
+    const rawLean = distObj?.leanPercent ?? distObj?.lean ?? 0;
+    const districtLean = (typeof rawLean === 'number' && Math.abs(rawLean) <= 1 && rawLean !== 0) ? -rawLean * 100 : rawLean;
     const nationalMargin = Number(game?.nationalEnvironment ?? 9);
     if (options.fundamentalsOnly || options.ignoreCandidates) {
       return districtLean + nationalMargin;
@@ -11023,7 +11252,7 @@ function buildForecasters(game) {
   });
 
   // 4. House Contests (all 435 legislative districts)
-  legislativeDistricts().forEach((district) => {
+  legislativeDistricts(game).forEach((district) => {
     const key = `house:${district.id}`;
     const margin = estimateRaceMarginInternal(game, key);
     const evalResult = evaluateRaceRatings(game, key, margin, natLean);
@@ -11353,12 +11582,24 @@ function pullCandidateFunds(game, raceKey, amount = null) {
 const SIMULATED_TRAIT_POOL = [
   'Rising Star', 'Established Politician', 'Corrupt', 'Squeaky Clean',
   'Polished', 'Rough', 'Disciplined', 'Undisciplined',
+  'Military Veteran', 'Union Stalwart', 'Prosecutorial Edge', 'Small-Town Pillar',
+  'Academic Theorist', 'K-Street Veteran', 'Local Sports Legend', 'Grassroots Organizer',
+  'Self-Made Entrepreneur', 'Dynastic Name', 'Sunday Show Fixture', 'Relentless Door-Knocker',
+  'Floor Speech Maverick', 'Oratorical Phenom', 'Digital Native', 'Media Darling',
+  'Quiet Diplomat', 'Cautious Deliberator', 'Populist Firebrand', 'Deep-Pocket Rolodex',
+  'Machine Loyalist', 'Budget Hawk', 'Bipartisan Dealmaker', 'Doctrinal Purist',
+  'Committee Workhorse', 'Backbench Agitator', 'Kingmaker Conduit', 'Statehouse Alum',
+  'Gaffe Prone', 'Teflon Brand', 'Charismatic Fundraiser', 'Principled Contrarian',
 ];
 
 // REQ-291: Chronological Age Engine Trait Age Gates
 const TRAIT_AGE_GATES = {
   'Rising Star': { maxAge: 59 }, // Under 60 strictly
   'Established Politician': { minAge: 40 },
+  'Digital Native': { maxAge: 52 },
+  'Committee Workhorse': { minAge: 45 },
+  'Machine Loyalist': { minAge: 38 },
+  'K-Street Veteran': { minAge: 38 },
 };
 
 function generateFreshPoliticianForSeat(opts = {}) {

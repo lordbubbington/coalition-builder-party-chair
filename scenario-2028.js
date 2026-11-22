@@ -6870,12 +6870,14 @@ const ELEVATED_FAME_OVERRIDES = {
 // REQ-128: Candidate Traits System mapped from POLITICIAN_TRAITS.md (585 sitting members)
 const SITTING_MEMBER_TRAITS_BY_ID = {
   "senate:AL:class-2": [
+    "Local Sports Legend",
     "Rough",
     "Undisciplined"
   ],
   "senate:AL:class-3": [
     "Rising Star",
-    "Polished"
+    "Polished",
+    "Committee Workhorse"
   ],
   "senate:AK:class-2": [
     "Rising Star",
@@ -6883,33 +6885,37 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:AK:class-3": [
-    "Established politician",
-    "Disciplined"
+    "Dynastic Name",
+    "Bipartisan Dealmaker",
+    "Principled Contrarian"
   ],
   "senate:AZ:class-3": [
+    "Military Veteran",
     "Squeaky Clean",
-    "Polished",
-    "Rising Star"
+    "Disciplined"
   ],
   "senate:AZ:class-1": [
-    "Rising Star",
-    "Rough"
+    "Military Veteran",
+    "Rough",
+    "Rising Star"
   ],
   "senate:AR:class-3": [
     "Squeaky Clean",
     "Polished"
   ],
   "senate:AR:class-2": [
-    "Rising Star",
-    "Disciplined"
+    "Military Veteran",
+    "Disciplined",
+    "Sunday Show Fixture"
   ],
   "senate:CA:class-3": [
     "Established politician",
     "Polished"
   ],
   "senate:CA:class-1": [
-    "Established politician",
-    "Polished"
+    "Prosecutorial Edge",
+    "Polished",
+    "Committee Workhorse"
   ],
   "senate:CO:class-3": [
     "Undisciplined"
@@ -6924,8 +6930,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:CT:class-1": [
-    "Rising Star",
-    "Polished"
+    "Floor Speech Maverick",
+    "Quiet Diplomat",
+    "Disciplined"
   ],
   "senate:DE:class-2": [
     "Established politician",
@@ -6936,21 +6943,24 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:FL:class-1": [
-    "Established politician",
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
     "Disciplined"
   ],
   "senate:FL:class-3": [
-    "Squeaky Clean",
-    "Established politician",
-    "Polished"
+    "Sunday Show Fixture",
+    "Polished",
+    "Established Politician"
   ],
   "senate:GA:class-2": [
     "Rising Star",
-    "Polished"
+    "Polished",
+    "Floor Speech Maverick"
   ],
   "senate:GA:class-3": [
-    "Rising Star",
-    "Polished"
+    "Oratorical Phenom",
+    "Grassroots Organizer",
+    "Disciplined"
   ],
   "senate:HI:class-3": [
     "Established politician",
@@ -6976,16 +6986,18 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "senate:IN:class-3": [
-    "Disciplined",
-    "Polished"
+    "Military Veteran",
+    "Quiet Diplomat",
+    "Disciplined"
   ],
   "senate:IN:class-1": [
     "Established politician",
     "Polished"
   ],
   "senate:IA:class-3": [
-    "Established politician",
-    "Rough"
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Established Politician"
   ],
   "senate:IA:class-2": [
     "Established politician"
@@ -6999,8 +7011,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "senate:KY:class-3": [
-    "Established politician",
-    "Undisciplined"
+    "Principled Contrarian",
+    "Budget Hawk",
+    "Rough"
   ],
   "senate:KY:class-2": [
     "Established politician",
@@ -7011,9 +7024,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "senate:LA:class-3": [
-    "Established politician",
     "Rough",
-    "Undisciplined"
+    "Sunday Show Fixture",
+    "Gaffe Prone"
   ],
   "senate:ME:class-2": [
     "Squeaky Clean",
@@ -7021,7 +7034,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:ME:class-1": [
-    "Established politician",
+    "Quiet Diplomat",
+    "Bipartisan Dealmaker",
     "Squeaky Clean"
   ],
   "senate:MD:class-3": [
@@ -7033,23 +7047,26 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "senate:MA:class-1": [
-    "Established politician",
-    "Disciplined"
+    "Academic Theorist",
+    "Committee Workhorse",
+    "Populist Firebrand"
   ],
   "senate:MA:class-2": [
     "Established politician",
     "Rough"
   ],
   "senate:MI:class-1": [
-    "Rising Star",
-    "Polished"
+    "Military Veteran",
+    "Disciplined",
+    "Rising Star"
   ],
   "senate:MI:class-2": [
     "Established politician",
     "Rough"
   ],
   "senate:MN:class-1": [
-    "Established politician",
+    "Prosecutorial Edge",
+    "Committee Workhorse",
     "Disciplined"
   ],
   "senate:MN:class-2": [
@@ -7066,8 +7083,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "senate:MO:class-1": [
-    "Rising Star",
-    "Polished"
+    "Prosecutorial Edge",
+    "Floor Speech Maverick",
+    "Sunday Show Fixture"
   ],
   "senate:MO:class-3": [
     "Rising Star",
@@ -7104,7 +7122,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "senate:NJ:class-2": [
-    "Established politician",
+    "Oratorical Phenom",
+    "Digital Native",
     "Polished"
   ],
   "senate:NJ:class-1": [
@@ -7119,11 +7138,13 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:NY:class-3": [
-    "Established politician",
-    "Disciplined"
+    "Machine Loyalist",
+    "Sunday Show Fixture",
+    "Established Politician"
   ],
   "senate:NY:class-1": [
-    "Established politician",
+    "Committee Workhorse",
+    "Disciplined",
     "Polished"
   ],
   "senate:NC:class-3": [
@@ -7142,12 +7163,14 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "senate:OH:class-1": [
-    "Established politician",
-    "Polished"
+    "Union Stalwart",
+    "Rough",
+    "Disciplined"
   ],
   "senate:OH:class-3": [
-    "Established politician",
-    "Rough"
+    "Military Veteran",
+    "Floor Speech Maverick",
+    "Populist Firebrand"
   ],
   "senate:OK:class-3": [
     "Established politician",
@@ -7167,7 +7190,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
   ],
   "senate:PA:class-3": [
     "Rough",
-    "Undisciplined"
+    "Populist Firebrand",
+    "Principled Contrarian"
   ],
   "senate:PA:class-1": [
     "Squeaky Clean",
@@ -7211,8 +7235,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:TX:class-1": [
-    "Established politician",
-    "Polished"
+    "Prosecutorial Edge",
+    "Floor Speech Maverick",
+    "Sunday Show Fixture"
   ],
   "senate:UT:class-3": [
     "Established politician",
@@ -7223,9 +7248,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "senate:VT:class-1": [
-    "Established politician",
-    "Squeaky Clean",
-    "Rough"
+    "Grassroots Organizer",
+    "Populist Firebrand",
+    "Doctrinal Purist"
   ],
   "senate:VT:class-3": [
     "Established politician",
@@ -7252,8 +7277,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "senate:WV:class-1": [
-    "Established politician",
-    "Rough"
+    "Self-Made Entrepreneur",
+    "Rough",
+    "Teflon Brand"
   ],
   "senate:WI:class-3": [
     "Established politician",
@@ -7288,12 +7314,14 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "governor:CA": [
-    "Established politician"
+    "Oratorical Phenom",
+    "Polished",
+    "Digital Native"
   ],
   "governor:CO": [
-    "Squeaky Clean",
-    "Established politician",
-    "Polished"
+    "Self-Made Entrepreneur",
+    "Digital Native",
+    "Bipartisan Dealmaker"
   ],
   "governor:CT": [
     "Established politician",
@@ -7304,13 +7332,14 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "governor:FL": [
-    "Rising Star",
-    "Polished"
+    "Military Veteran",
+    "Prosecutorial Edge",
+    "Disciplined"
   ],
   "governor:GA": [
-    "Squeaky Clean",
-    "Established politician",
-    "Polished"
+    "Small-Town Pillar",
+    "Machine Loyalist",
+    "Disciplined"
   ],
   "governor:HI": [
     "Squeaky Clean",
@@ -7321,7 +7350,8 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "governor:IL": [
-    "Established politician",
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
     "Polished"
   ],
   "governor:IN": [
@@ -7338,9 +7368,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "governor:KY": [
-    "Rising Star",
+    "Prosecutorial Edge",
     "Squeaky Clean",
-    "Polished"
+    "Bipartisan Dealmaker"
   ],
   "governor:LA": [
     "Rough",
@@ -7351,16 +7381,23 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Disciplined"
   ],
   "governor:MD": [
-    "Rising Star",
-    "Polished"
+    "Military Veteran",
+    "Oratorical Phenom",
+    "Rising Star"
   ],
   "governor:MA": [
     "Rising Star",
     "Polished"
   ],
-  "governor:MI": [],
+  "governor:MI": [
+    "Polished",
+    "Prosecutorial Edge",
+    "Disciplined",
+    "Rising Star"
+  ],
   "governor:MN": [
-    "Established politician",
+    "Military Veteran",
+    "Union Stalwart",
     "Rough"
   ],
   "governor:MS": [
@@ -7409,8 +7446,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Established politician"
   ],
   "governor:OH": [
-    "Squeaky Clean",
-    "Established politician"
+    "Small-Town Pillar",
+    "Prosecutorial Edge",
+    "Established Politician"
   ],
   "governor:OK": [
     "Established politician",
@@ -7421,8 +7459,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "governor:PA": [
-    "Rising Star",
-    "Polished"
+    "Prosecutorial Edge",
+    "Polished",
+    "Bipartisan Dealmaker"
   ],
   "governor:RI": [
     "Established politician",
@@ -7442,18 +7481,22 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "governor:TX": [
-    "Established politician"
+    "Prosecutorial Edge",
+    "Machine Loyalist",
+    "Established Politician"
   ],
   "governor:UT": [
-    "Squeaky Clean",
-    "Polished"
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Squeaky Clean"
   ],
   "governor:VT": [
-    "Squeaky Clean",
-    "Established politician"
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Teflon Brand"
   ],
   "governor:VA": [
-    "Rising Star",
+    "Self-Made Entrepreneur",
     "Polished",
     "Disciplined"
   ],
@@ -7466,7 +7509,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "governor:WI": [
-    "Polished"
+    "Academic Theorist",
+    "Quiet Diplomat",
+    "Squeaky Clean"
   ],
   "governor:WY": [
     "Squeaky Clean",
@@ -7501,8 +7546,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "house:AK-1": [
-    "Established politician",
-    "Polished"
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Squeaky Clean"
   ],
   "house:AZ-1": [
     "Polished"
@@ -7584,8 +7630,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:CA-11": [
-    "Polished",
-    "Disciplined"
+    "Machine Loyalist",
+    "Deep-Pocket Rolodex",
+    "Committee Workhorse"
   ],
   "house:CA-12": [
     "Rough"
@@ -8058,8 +8105,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:KY-4": [
-    "Squeaky Clean",
-    "Polished"
+    "Principled Contrarian",
+    "Budget Hawk",
+    "Rough"
   ],
   "house:KY-5": [
     "Established politician",
@@ -8095,7 +8143,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:ME-2": [
-    "Polished"
+    "Military Veteran",
+    "Principled Contrarian",
+    "Rough"
   ],
   "house:MD-1": [
     "Squeaky Clean",
@@ -8123,8 +8173,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Polished"
   ],
   "house:MD-8": [
-    "Squeaky Clean",
-    "Polished"
+    "Academic Theorist",
+    "Floor Speech Maverick",
+    "Prosecutorial Edge"
   ],
   "house:MA-1": [
     "Rough"
@@ -8391,9 +8442,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:NY-8": [
-    "Established politician",
-    "Polished",
-    "Disciplined"
+    "Oratorical Phenom",
+    "Machine Loyalist",
+    "Polished"
   ],
   "house:NY-9": [
     "Rough"
@@ -8412,8 +8463,10 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:NY-14": [
-    "Rising Star",
-    "Rough"
+    "Grassroots Organizer",
+    "Digital Native",
+    "Floor Speech Maverick",
+    "Rising Star"
   ],
   "house:NY-15": [
     "Polished",
@@ -8519,9 +8572,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:OH-4": [
-    "Established politician",
-    "Rough",
-    "Disciplined"
+    "Floor Speech Maverick",
+    "Backbench Agitator",
+    "Rough"
   ],
   "house:OH-5": [
     "Squeaky Clean",
@@ -8629,7 +8682,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Rough"
   ],
   "house:PA-8": [
-    "Rough"
+    "Union Stalwart",
+    "Prosecutorial Edge",
+    "Bipartisan Dealmaker"
   ],
   "house:PA-9": [
     "Rough"
@@ -8803,7 +8858,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Undisciplined"
   ],
   "house:TX-21": [
-    "Rough"
+    "Budget Hawk",
+    "Backbench Agitator",
+    "Doctrinal Purist"
   ],
   "house:TX-22": [
     "Polished"
@@ -8944,8 +9001,9 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
     "Squeaky Clean"
   ],
   "house:WA-7": [
-    "Established politician",
-    "Rough"
+    "Grassroots Organizer",
+    "Doctrinal Purist",
+    "Floor Speech Maverick"
   ],
   "house:WA-8": [
     "Disciplined"
@@ -8993,6 +9051,763 @@ const SITTING_MEMBER_TRAITS_BY_ID = {
   ],
   "house:WY-1": [
     "Rough"
+  ],
+  "Jon Ossoff": [
+    "Rising Star",
+    "Polished",
+    "Media Darling"
+  ],
+  "Gretchen Whitmer": [
+    "Polished",
+    "Prosecutorial Edge",
+    "Disciplined",
+    "Rising Star"
+  ],
+  "Cory Booker": [
+    "Oratorical Phenom",
+    "Digital Native",
+    "Polished"
+  ],
+  "Alexandria Ocasio-Cortez": [
+    "Grassroots Organizer",
+    "Digital Native",
+    "Floor Speech Maverick",
+    "Rising Star"
+  ],
+  "Andy Beshear": [
+    "Prosecutorial Edge",
+    "Squeaky Clean",
+    "Bipartisan Dealmaker"
+  ],
+  "Amy Klobuchar": [
+    "Prosecutorial Edge",
+    "Committee Workhorse",
+    "Disciplined"
+  ],
+  "J. D. Vance": [
+    "Military Veteran",
+    "Floor Speech Maverick",
+    "Populist Firebrand"
+  ],
+  "Nikki Haley": [
+    "Polished",
+    "Disciplined",
+    "Established Politician"
+  ],
+  "Marco Rubio": [
+    "Sunday Show Fixture",
+    "Polished",
+    "Established Politician"
+  ],
+  "Glenn Youngkin": [
+    "Self-Made Entrepreneur",
+    "Polished",
+    "Disciplined"
+  ],
+  "Butch Ware": [
+    "Academic Theorist",
+    "Doctrinal Purist",
+    "Rough"
+  ],
+  "Mike ter Maat": [
+    "Budget Hawk",
+    "Disciplined",
+    "Academic Theorist"
+  ],
+  "Chase Oliver": [
+    "Grassroots Organizer",
+    "Digital Native",
+    "Rising Star"
+  ],
+  "Jill Stein": [
+    "Doctrinal Purist",
+    "Grassroots Organizer",
+    "Established Politician"
+  ],
+  "Kshama Sawant": [
+    "Grassroots Organizer",
+    "Populist Firebrand",
+    "Doctrinal Purist"
+  ],
+  "Ajamu Baraka": [
+    "Grassroots Organizer",
+    "Doctrinal Purist",
+    "Rough"
+  ],
+  "Randall Terry": [
+    "Backbench Agitator",
+    "Populist Firebrand",
+    "Undisciplined"
+  ],
+  "Scott Bradley": [
+    "Academic Theorist",
+    "Disciplined",
+    "Doctrinal Purist"
+  ],
+  "Claudia De la Cruz": [
+    "Grassroots Organizer",
+    "Populist Firebrand",
+    "Rising Star"
+  ],
+  "Gloria La Riva": [
+    "Union Stalwart",
+    "Doctrinal Purist",
+    "Established Politician"
+  ],
+  "Spike Cohen": [
+    "Digital Native",
+    "Floor Speech Maverick",
+    "Polished"
+  ],
+  "Lisa Murkowski": [
+    "Dynastic Name",
+    "Bipartisan Dealmaker",
+    "Principled Contrarian"
+  ],
+  "Mary Peltola": [
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Squeaky Clean"
+  ],
+  "Katie Britt": [
+    "Rising Star",
+    "Polished",
+    "Committee Workhorse"
+  ],
+  "Tommy Tuberville": [
+    "Local Sports Legend",
+    "Rough",
+    "Undisciplined"
+  ],
+  "John Boozman": [
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Polished"
+  ],
+  "Tom Cotton": [
+    "Military Veteran",
+    "Disciplined",
+    "Sunday Show Fixture"
+  ],
+  "Mark Kelly": [
+    "Military Veteran",
+    "Squeaky Clean",
+    "Disciplined"
+  ],
+  "Ruben Gallego": [
+    "Military Veteran",
+    "Rough",
+    "Rising Star"
+  ],
+  "Adam Schiff": [
+    "Prosecutorial Edge",
+    "Polished",
+    "Committee Workhorse"
+  ],
+  "Alex Padilla": [
+    "Machine Loyalist",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "John Hickenlooper": [
+    "Self-Made Entrepreneur",
+    "Bipartisan Dealmaker",
+    "Polished"
+  ],
+  "Michael Bennet": [
+    "Quiet Diplomat",
+    "Budget Hawk",
+    "Cautious Deliberator"
+  ],
+  "Chris Murphy": [
+    "Floor Speech Maverick",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Richard Blumenthal": [
+    "Prosecutorial Edge",
+    "Committee Workhorse",
+    "Polished"
+  ],
+  "Chris Coons": [
+    "Quiet Diplomat",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "Lisa Blunt Rochester": [
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Polished"
+  ],
+  "Ashley Moody": [
+    "Prosecutorial Edge",
+    "Machine Loyalist",
+    "Polished"
+  ],
+  "Rick Scott": [
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
+    "Disciplined"
+  ],
+  "Raphael Warnock": [
+    "Oratorical Phenom",
+    "Grassroots Organizer",
+    "Disciplined"
+  ],
+  "Brian Schatz": [
+    "Quiet Diplomat",
+    "Digital Native",
+    "Disciplined"
+  ],
+  "Mazie Hirono": [
+    "Union Stalwart",
+    "Floor Speech Maverick",
+    "Rough"
+  ],
+  "Chuck Grassley": [
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Established Politician"
+  ],
+  "Josh Turek": [
+    "Local Sports Legend",
+    "Grassroots Organizer",
+    "Rising Star"
+  ],
+  "Jim Risch": [
+    "Prosecutorial Edge",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Mike Crapo": [
+    "Budget Hawk",
+    "Committee Workhorse",
+    "Disciplined"
+  ],
+  "Tammy Duckworth": [
+    "Military Veteran",
+    "Floor Speech Maverick",
+    "Disciplined"
+  ],
+  "Jim Banks": [
+    "Military Veteran",
+    "Disciplined",
+    "Statehouse Alum"
+  ],
+  "Todd Young": [
+    "Military Veteran",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Jerry Moran": [
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Disciplined"
+  ],
+  "Andy Barr": [
+    "K-Street Veteran",
+    "Budget Hawk",
+    "Polished"
+  ],
+  "Rand Paul": [
+    "Principled Contrarian",
+    "Budget Hawk",
+    "Rough"
+  ],
+  "Bill Cassidy": [
+    "Quiet Diplomat",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "John Kennedy": [
+    "Rough",
+    "Sunday Show Fixture",
+    "Gaffe Prone"
+  ],
+  "Ed Markey": [
+    "Grassroots Organizer",
+    "Floor Speech Maverick",
+    "Established Politician"
+  ],
+  "Elizabeth Warren": [
+    "Academic Theorist",
+    "Committee Workhorse",
+    "Populist Firebrand"
+  ],
+  "Angela Alsobrooks": [
+    "Prosecutorial Edge",
+    "Rising Star",
+    "Polished"
+  ],
+  "Chris Van Hollen": [
+    "Quiet Diplomat",
+    "Committee Workhorse",
+    "Disciplined"
+  ],
+  "Angus King": [
+    "Quiet Diplomat",
+    "Bipartisan Dealmaker",
+    "Squeaky Clean"
+  ],
+  "Troy Jackson": [
+    "Union Stalwart",
+    "Rough",
+    "Small-Town Pillar"
+  ],
+  "Elissa Slotkin": [
+    "Military Veteran",
+    "Disciplined",
+    "Rising Star"
+  ],
+  "Haley Stevens": [
+    "Union Stalwart",
+    "Committee Workhorse",
+    "Polished"
+  ],
+  "Josh Hawley": [
+    "Prosecutorial Edge",
+    "Floor Speech Maverick",
+    "Sunday Show Fixture"
+  ],
+  "Roger Wicker": [
+    "Military Veteran",
+    "Committee Workhorse",
+    "Disciplined"
+  ],
+  "Steve Daines": [
+    "Self-Made Entrepreneur",
+    "Sunday Show Fixture",
+    "Disciplined"
+  ],
+  "Tim Sheehy": [
+    "Military Veteran",
+    "Self-Made Entrepreneur",
+    "Rising Star"
+  ],
+  "Roy Cooper": [
+    "Prosecutorial Edge",
+    "Quiet Diplomat",
+    "Statehouse Alum"
+  ],
+  "Ted Budd": [
+    "Small-Town Pillar",
+    "Budget Hawk",
+    "Disciplined"
+  ],
+  "John Hoeven": [
+    "Self-Made Entrepreneur",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Kevin Cramer": [
+    "Sunday Show Fixture",
+    "Rough",
+    "Established Politician"
+  ],
+  "Deb Fischer": [
+    "Small-Town Pillar",
+    "Committee Workhorse",
+    "Cautious Deliberator"
+  ],
+  "Pete Ricketts": [
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
+    "Machine Loyalist"
+  ],
+  "Maggie Hassan": [
+    "Prosecutorial Edge",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "Andy Kim": [
+    "Quiet Diplomat",
+    "Grassroots Organizer",
+    "Squeaky Clean"
+  ],
+  "Ben Ray Lujan": [
+    "Machine Loyalist",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "Martin Heinrich": [
+    "Academic Theorist",
+    "Quiet Diplomat",
+    "Polished"
+  ],
+  "Catherine Cortez Masto": [
+    "Prosecutorial Edge",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Jacky Rosen": [
+    "Digital Native",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "Chuck Schumer": [
+    "Machine Loyalist",
+    "Sunday Show Fixture",
+    "Established Politician"
+  ],
+  "Kirsten Gillibrand": [
+    "Committee Workhorse",
+    "Disciplined",
+    "Polished"
+  ],
+  "Bernie Moreno": [
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
+    "Polished"
+  ],
+  "Sherrod Brown": [
+    "Union Stalwart",
+    "Rough",
+    "Relentless Door-Knocker"
+  ],
+  "James Lankford": [
+    "Committee Workhorse",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "Markwayne Mullin": [
+    "Local Sports Legend",
+    "Rough",
+    "Undisciplined"
+  ],
+  "Jeff Merkley": [
+    "Grassroots Organizer",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "Ron Wyden": [
+    "Committee Workhorse",
+    "Digital Native",
+    "Disciplined"
+  ],
+  "Dave McCormick": [
+    "Military Veteran",
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex"
+  ],
+  "John Fetterman": [
+    "Rough",
+    "Populist Firebrand",
+    "Principled Contrarian"
+  ],
+  "Jack Reed": [
+    "Military Veteran",
+    "Quiet Diplomat",
+    "Cautious Deliberator"
+  ],
+  "Sheldon Whitehouse": [
+    "Prosecutorial Edge",
+    "Floor Speech Maverick",
+    "Academic Theorist"
+  ],
+  "Tim Scott": [
+    "Oratorical Phenom",
+    "Charismatic Fundraiser",
+    "Polished"
+  ],
+  "Lindsey Graham": [
+    "Sunday Show Fixture",
+    "Prosecutorial Edge",
+    "Kingmaker Conduit"
+  ],
+  "Mike Rounds": [
+    "Small-Town Pillar",
+    "Quiet Diplomat",
+    "Statehouse Alum"
+  ],
+  "John Thune": [
+    "Machine Loyalist",
+    "Quiet Diplomat",
+    "Disciplined"
+  ],
+  "Marsha Blackburn": [
+    "Sunday Show Fixture",
+    "Floor Speech Maverick",
+    "Disciplined"
+  ],
+  "Bill Hagerty": [
+    "Self-Made Entrepreneur",
+    "K-Street Veteran",
+    "Disciplined"
+  ],
+  "Ted Cruz": [
+    "Prosecutorial Edge",
+    "Floor Speech Maverick",
+    "Sunday Show Fixture"
+  ],
+  "John Cornyn": [
+    "Prosecutorial Edge",
+    "Machine Loyalist",
+    "Disciplined"
+  ],
+  "Mike Lee": [
+    "Academic Theorist",
+    "Budget Hawk",
+    "Principled Contrarian"
+  ],
+  "Mitt Romney": [
+    "Self-Made Entrepreneur",
+    "Principled Contrarian",
+    "Polished"
+  ],
+  "Tim Kaine": [
+    "Quiet Diplomat",
+    "Small-Town Pillar",
+    "Statehouse Alum"
+  ],
+  "Mark Warner": [
+    "Self-Made Entrepreneur",
+    "Bipartisan Dealmaker",
+    "Deep-Pocket Rolodex"
+  ],
+  "Bernie Sanders": [
+    "Grassroots Organizer",
+    "Populist Firebrand",
+    "Doctrinal Purist"
+  ],
+  "Peter Welch": [
+    "Quiet Diplomat",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "Patty Murray": [
+    "Committee Workhorse",
+    "Grassroots Organizer",
+    "Disciplined"
+  ],
+  "Maria Cantwell": [
+    "Committee Workhorse",
+    "Digital Native",
+    "Statehouse Alum"
+  ],
+  "Jim Justice": [
+    "Self-Made Entrepreneur",
+    "Rough",
+    "Teflon Brand"
+  ],
+  "Shelley Moore Capito": [
+    "Dynastic Name",
+    "Bipartisan Dealmaker",
+    "Statehouse Alum"
+  ],
+  "Tammy Baldwin": [
+    "Grassroots Organizer",
+    "Committee Workhorse",
+    "Statehouse Alum"
+  ],
+  "Ron Johnson": [
+    "Self-Made Entrepreneur",
+    "Floor Speech Maverick",
+    "Rough"
+  ],
+  "John Barrasso": [
+    "Sunday Show Fixture",
+    "Machine Loyalist",
+    "Statehouse Alum"
+  ],
+  "Cynthia Lummis": [
+    "Small-Town Pillar",
+    "Budget Hawk",
+    "Statehouse Alum"
+  ],
+  "Josh Shapiro": [
+    "Prosecutorial Edge",
+    "Polished",
+    "Statehouse Alum"
+  ],
+  "Phil Scott": [
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Teflon Brand"
+  ],
+  "Spencer Cox": [
+    "Small-Town Pillar",
+    "Bipartisan Dealmaker",
+    "Squeaky Clean"
+  ],
+  "Wes Moore": [
+    "Military Veteran",
+    "Oratorical Phenom",
+    "Rising Star"
+  ],
+  "Ron DeSantis": [
+    "Military Veteran",
+    "Prosecutorial Edge",
+    "Disciplined"
+  ],
+  "Brian Kemp": [
+    "Small-Town Pillar",
+    "Machine Loyalist",
+    "Statehouse Alum"
+  ],
+  "Tony Evers": [
+    "Academic Theorist",
+    "Quiet Diplomat",
+    "Squeaky Clean"
+  ],
+  "JB Pritzker": [
+    "Self-Made Entrepreneur",
+    "Deep-Pocket Rolodex",
+    "Polished"
+  ],
+  "Jared Polis": [
+    "Self-Made Entrepreneur",
+    "Digital Native",
+    "Bipartisan Dealmaker"
+  ],
+  "Mike DeWine": [
+    "Small-Town Pillar",
+    "Prosecutorial Edge",
+    "Statehouse Alum"
+  ],
+  "Greg Abbott": [
+    "Prosecutorial Edge",
+    "Machine Loyalist",
+    "Established Politician"
+  ],
+  "Gavin Newsom": [
+    "Oratorical Phenom",
+    "Polished",
+    "Digital Native"
+  ],
+  "Tim Walz": [
+    "Military Veteran",
+    "Union Stalwart",
+    "Rough"
+  ],
+  "Katie Hobbs": [
+    "Grassroots Organizer",
+    "Quiet Diplomat",
+    "Statehouse Alum"
+  ],
+  "Joe Lombardo": [
+    "Small-Town Pillar",
+    "Disciplined",
+    "Bipartisan Dealmaker"
+  ],
+  "Eric Holcomb": [
+    "Military Veteran",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "Ken Paxton": [
+    "Prosecutorial Edge",
+    "Rough",
+    "Backbench Agitator"
+  ],
+  "Nancy Pelosi": [
+    "Machine Loyalist",
+    "Deep-Pocket Rolodex",
+    "Committee Workhorse"
+  ],
+  "Hakeem Jeffries": [
+    "Oratorical Phenom",
+    "Machine Loyalist",
+    "Polished"
+  ],
+  "Steve Scalise": [
+    "Machine Loyalist",
+    "Sunday Show Fixture",
+    "Statehouse Alum"
+  ],
+  "Jim Jordan": [
+    "Floor Speech Maverick",
+    "Backbench Agitator",
+    "Statehouse Alum"
+  ],
+  "Jamie Raskin": [
+    "Academic Theorist",
+    "Floor Speech Maverick",
+    "Statehouse Alum"
+  ],
+  "Pramila Jayapal": [
+    "Grassroots Organizer",
+    "Doctrinal Purist",
+    "Statehouse Alum"
+  ],
+  "Ro Khanna": [
+    "Academic Theorist",
+    "Digital Native",
+    "Bipartisan Dealmaker"
+  ],
+  "Thomas Massie": [
+    "Principled Contrarian",
+    "Budget Hawk",
+    "Rough"
+  ],
+  "Chip Roy": [
+    "Budget Hawk",
+    "Backbench Agitator",
+    "Doctrinal Purist"
+  ],
+  "Matt Gaetz": [
+    "Backbench Agitator",
+    "Floor Speech Maverick",
+    "Statehouse Alum"
+  ],
+  "Marjorie Taylor Greene": [
+    "Backbench Agitator",
+    "Populist Firebrand",
+    "Undisciplined"
+  ],
+  "Jared Golden": [
+    "Military Veteran",
+    "Principled Contrarian",
+    "Relentless Door-Knocker"
+  ],
+  "Matt Cartwright": [
+    "Union Stalwart",
+    "Prosecutorial Edge",
+    "Bipartisan Dealmaker"
+  ],
+  "Marcy Kaptur": [
+    "Union Stalwart",
+    "Small-Town Pillar",
+    "Relentless Door-Knocker"
+  ],
+  "Don Bacon": [
+    "Military Veteran",
+    "Bipartisan Dealmaker",
+    "Cautious Deliberator"
+  ],
+  "Tony Gonzales": [
+    "Military Veteran",
+    "Bipartisan Dealmaker",
+    "Disciplined"
+  ],
+  "Scott Perry": [
+    "Military Veteran",
+    "Budget Hawk",
+    "Backbench Agitator"
+  ],
+  "Lauren Boebert": [
+    "Backbench Agitator",
+    "Populist Firebrand",
+    "Undisciplined"
+  ],
+  "Ilhan Omar": [
+    "Grassroots Organizer",
+    "Populist Firebrand",
+    "Statehouse Alum"
+  ],
+  "Rashida Tlaib": [
+    "Grassroots Organizer",
+    "Union Stalwart",
+    "Statehouse Alum"
+  ],
+  "Rob Sand": [
+    "Prosecutorial Edge",
+    "Squeaky Clean",
+    "Media Darling"
+  ],
+  "Bob Menendez": [
+    "Established Politician",
+    "Undisciplined",
+    "K-Street Veteran"
   ]
 };
 

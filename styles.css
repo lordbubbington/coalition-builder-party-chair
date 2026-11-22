@@ -1078,9 +1078,10 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
 .v08-gradient-bar { height: 12px; border-radius: 6px; background: linear-gradient(to right, #1d5fb4 0%, #5c94dc 25%, #7c6fa5 50%, #d4656c 75%, #9a1d24 100%); margin: 8px 0; border: 1px solid #ffffff1a; }
 .v08-gradient-labels { display: flex; justify-content: space-between; font-family: Consolas, monospace; font-size: 11px; color: var(--muted); }
 
-/* Candidate Traits Engine (REQ-128) */
+/* Candidate Traits Engine (REQ-128 & Proposal 5: 40-Trait Qualitative Taxonomy) */
 .v14-traits-container { display: inline-flex; flex-wrap: wrap; gap: 4px; margin: 3px 0; vertical-align: middle; }
-.v14-trait-chip { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 999px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; line-height: 1.3; }
+.v14-trait-chip { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 999px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; line-height: 1.3; background: #334155; color: #f8fafc; border: 1px solid #475569; }
+/* Canonical 8 Traits */
 .v14-trait-rising-star { background: #fbbf24; color: #0f172a; border: 1px solid #d97706; }
 .v14-trait-established-politician { background: #94a3b8; color: #0f172a; border: 1px solid #64748b; }
 .v14-trait-corrupt { background: #f59e0b; color: #451a03; border: 1px solid #b45309; }
@@ -1089,6 +1090,136 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
 .v14-trait-rough { background: #a16207; color: #fef3c7; border: 1px solid #78350f; }
 .v14-trait-disciplined { background: #2563eb; color: #ffffff; border: 1px solid #1d4ed8; }
 .v14-trait-undisciplined { background: #dc2626; color: #ffffff; border: 1px solid #991b1b; }
+/* Background & Roots (10 Traits) */
+.v14-trait-military-veteran { background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6; }
+.v14-trait-union-stalwart { background: #1e3a8a; color: #fef08a; border: 1px solid #60a5fa; }
+.v14-trait-prosecutorial-edge { background: #0f172a; color: #e2e8f0; border: 1px solid #94a3b8; }
+.v14-trait-small-town-pillar { background: #78350f; color: #fef3c7; border: 1px solid #b45309; }
+.v14-trait-academic-theorist { background: #312e81; color: #e0e7ff; border: 1px solid #6366f1; }
+.v14-trait-k-street-veteran { background: #334155; color: #e2e8f0; border: 1px solid #64748b; }
+.v14-trait-local-sports-legend { background: #9a3412; color: #ffedd5; border: 1px solid #ea580c; }
+.v14-trait-grassroots-organizer { background: #065f46; color: #d1fae5; border: 1px solid #10b981; }
+.v14-trait-self-made-entrepreneur { background: #134e4a; color: #ccfbf1; border: 1px solid #14b8a6; }
+.v14-trait-dynastic-name { background: #581c87; color: #fae8ff; border: 1px solid #a855f7; }
+/* Campaign & Media Style (10 Traits) */
+.v14-trait-sunday-show-fixture { background: #075985; color: #e0f2fe; border: 1px solid #38bdf8; }
+.v14-trait-relentless-door-knocker { background: #365314; color: #ecfccb; border: 1px solid #84cc16; }
+.v14-trait-floor-speech-maverick { background: #991b1b; color: #fee2e2; border: 1px solid #ef4444; }
+.v14-trait-oratorical-phenom { background: #5b21b6; color: #fef08a; border: 1px solid #8b5cf6; }
+.v14-trait-digital-native { background: #86198f; color: #fae8ff; border: 1px solid #e879f9; }
+.v14-trait-media-darling { background: #0369a1; color: #f0f9ff; border: 1px solid #0ea5e9; }
+.v14-trait-quiet-diplomat { background: #334155; color: #e2e8f0; border: 1px solid #94a3b8; }
+.v14-trait-cautious-deliberator { background: #3f3f46; color: #f4f4f5; border: 1px solid #71717a; }
+.v14-trait-populist-firebrand { background: #7f1d1d; color: #fef2f2; border: 1px solid #dc2626; }
+.v14-trait-deep-pocket-rolodex { background: #064e3b; color: #fef08a; border: 1px solid #059669; }
+/* Legislative & Governance (8 Traits) */
+.v14-trait-machine-loyalist { background: #172554; color: #bfdbfe; border: 1px solid #3b82f6; }
+.v14-trait-budget-hawk { background: #0c4a6e; color: #bae6fd; border: 1px solid #0284c7; }
+.v14-trait-bipartisan-dealmaker { background: #4c1d95; color: #ede9fe; border: 1px solid #a78bfa; }
+.v14-trait-doctrinal-purist { background: #881337; color: #ffe4e6; border: 1px solid #fb7185; }
+.v14-trait-committee-workhorse { background: #292524; color: #e7e5e4; border: 1px solid #78716c; }
+.v14-trait-backbench-agitator { background: #7c2d12; color: #ffedd5; border: 1px solid #f97316; }
+.v14-trait-kingmaker-conduit { background: #713f12; color: #fef9c3; border: 1px solid #eab308; }
+.v14-trait-statehouse-alum { background: #1e3a8a; color: #eff6ff; border: 1px solid #60a5fa; }
+/* Character & Volatility (4 Traits) */
+.v14-trait-gaffe-prone { background: #b45309; color: #fffbeb; border: 1px solid #f59e0b; }
+.v14-trait-teflon-brand { background: #0f766e; color: #f0fdfa; border: 1px solid #2dd4bf; }
+.v14-trait-charismatic-fundraiser { background: #047857; color: #fef3c7; border: 1px solid #34d399; }
+.v14-trait-principled-contrarian { background: #312e81; color: #cffafe; border: 1px solid #818cf8; }
+
+/* Proposal 1: Politician Historical Bios Card */
+.v18-politician-bio-card {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(226, 189, 112, 0.22);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.v18-politician-bio-card .v18-bio-row {
+  margin-bottom: 3px;
+}
+.v18-politician-bio-card .v18-bio-row:last-child {
+  margin-bottom: 0;
+}
+.v18-politician-bio-card strong {
+  color: var(--gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+/* Proposal 4: 50-State Political Geography & Bellwether Counties Card */
+.v18-political-geography-card {
+  margin: 14px 0;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-left: 3px solid #38bdf8;
+  border-radius: 8px;
+}
+.v18-geo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.v18-geo-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+.v18-geo-coalitions {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.v18-geo-terrain {
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 4px 0 10px;
+  color: var(--text);
+}
+.v18-bellwether-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+.v18-bellwether-item {
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.v18-bellwether-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+  color: var(--gold);
+  font-size: 12px;
+}
+.v18-bellwether-seat {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.v18-bellwether-profile {
+  color: var(--text-muted);
+  font-size: 11px;
+}
 
 /* State Legislative Slate Contestation (REQ-114) */
 .v14-slate-card { padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: #141f2d; margin-bottom: 12px; }
