@@ -747,8 +747,9 @@
     });
 
     // 5. U.S. House Districts (All 435 Districts)
-    representatives.forEach((rep) => {
-      const stateId = rep.stateId || (rep.id ? rep.id.split('-')[0] : 'PA');
+    representatives.forEach((rep, repIdx) => {
+      const distId = rep.districtId || rep.district || rep.id || `${rep.stateId || 'AL'}-${repIdx + 1}`;
+      const stateId = rep.stateId || (distId ? String(distId).split('-')[0] : 'PA');
       const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
       const duration = getStateReportingDuration(stateId);
       const margin = Number(rep.margin !== undefined ? rep.margin : (rep.partyId === 'people' ? 8 : -8));
@@ -760,11 +761,11 @@
       };
 
       const raceDef = {
-        id: `house:${rep.id}`,
+        id: `house:${distId}`,
         raceKind: 'house',
-        raceId: rep.id,
-        name: rep.id,
-        code: rep.id,
+        raceId: distId,
+        name: distId,
+        code: distId,
         stateId,
         seats: 1,
         closeMinutes: close,

@@ -369,11 +369,26 @@
     let pool = DEBATE_QUESTION_BANK.filter((q) => !asked.has(q.id));
     if (pool.length < 3) pool = [...DEBATE_QUESTION_BANK];
 
+    // Resolve any debate question issueId retired by the active Party System era
+    const eraSwapMap = {};
+    try {
+      const activeEraId = game?.partySystems?.currentEraId || game?.partySystems?.era;
+      const psd = typeof window !== 'undefined' ? window.PartySystemsData : null;
+      const eraObj = psd?.ALL_ERAS_BY_ID?.[activeEraId] || (psd?.ERA_CATALOG || []).find((e) => e && e.id === activeEraId);
+      if (eraObj && Array.isArray(eraObj.issueSwaps)) {
+        eraObj.issueSwaps.forEach((sw) => {
+          if (sw && sw.retireId && sw.add && sw.add.id) eraSwapMap[sw.retireId] = sw.add.id;
+        });
+      }
+    } catch (_) {}
+
     const seed = game?.seed || 1;
     const picked = [];
     for (let i = 0; i < 3 && pool.length > 0; i++) {
       const idx = Math.floor(hashFloat(`${seed}:${year}:deb:m${month}:q${i}`) * pool.length);
-      picked.push(pool.splice(idx, 1)[0]);
+      const rawQ = pool.splice(idx, 1)[0];
+      const mappedIssueId = eraSwapMap[rawQ.issueId] || rawQ.issueId;
+      picked.push(mappedIssueId !== rawQ.issueId ? { ...rawQ, issueId: mappedIssueId } : rawQ);
     }
 
     const pId = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');

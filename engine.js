@@ -8696,19 +8696,24 @@ function realignVotingBlocksBetweenElections(game, outcome) {
       }
     });
 
-    // 4. Rebalance net difference with independent swing factions (Zero-Sum Invariant)
+    // 4. Rebalance net difference with independent swing factions (Zero-Sum Invariant + Independent Floor)
     const netSwingDiff = totalStateGain - totalStateLoss;
     const swingFactions = catalog.filter((f) => f.partyId === 'independent' || f.id.startsWith('swg_'));
+    const stateTotalFactions = Object.values(state.factions || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+    const minSwingFloor = Math.round(stateTotalFactions * 0.08);
+    const targetSwingHealthy = Math.round(stateTotalFactions * 0.12);
 
     if (netSwingDiff > 0 && swingFactions.length > 0) {
-      // More voters joined parties than left; deduct excess from swing factions
+      // More voters joined parties than left; deduct excess from swing factions without breaching 8% floor
       const availableSwing = swingFactions.reduce((s, f) => s + (state.factions[f.id] || 0), 0);
-      let remainingDeduct = Math.min(netSwingDiff, availableSwing);
+      const maxDeductible = Math.max(0, availableSwing - minSwingFloor);
+      let remainingDeduct = Math.min(netSwingDiff, maxDeductible);
+      const unabsorbedGain = Math.max(0, netSwingDiff - remainingDeduct);
       swingFactions.forEach((f, idx) => {
         const cur = state.factions[f.id] || 0;
         const portion = (idx === swingFactions.length - 1)
           ? remainingDeduct
-          : (availableSwing > 0 ? Math.round(netSwingDiff * (cur / availableSwing)) : Math.round(netSwingDiff / swingFactions.length));
+          : (availableSwing > 0 ? Math.round(remainingDeduct * (cur / availableSwing)) : Math.round(remainingDeduct / swingFactions.length));
         const deducted = Math.min(cur, portion);
         state.factions[f.id] = cur - deducted;
         remainingDeduct -= deducted;
@@ -8721,6 +8726,23 @@ function realignVotingBlocksBetweenElections(game, outcome) {
           remainingDeduct -= d;
           if (remainingDeduct <= 0) break;
         }
+      }
+      // If swing floor capped the deduction, claw back unabsorbed gain proportionally from gaining parties to stay zero-sum
+      if (unabsorbedGain > 0) {
+        const gainingFactions = trackedParties
+          .filter(({ id }) => (partyDeltas[id] || 0) > 0)
+          .flatMap(({ id }) => catalog.filter((f) => f.partyId === id));
+        const gTot = gainingFactions.reduce((s, f) => s + (state.factions[f.id] || 0), 0);
+        let clawLeft = Math.min(unabsorbedGain, gTot);
+        gainingFactions.forEach((f, idx) => {
+          if (clawLeft <= 0) return;
+          const cur = state.factions[f.id] || 0;
+          const cut = (idx === gainingFactions.length - 1)
+            ? Math.min(cur, clawLeft)
+            : Math.min(cur, Math.round(unabsorbedGain * (cur / Math.max(1, gTot))));
+          state.factions[f.id] = cur - cut;
+          clawLeft -= cut;
+        });
       }
     } else if (netSwingDiff < 0 && swingFactions.length > 0) {
       // More voters left parties than joined; add excess to swing factions
@@ -8735,7 +8757,37 @@ function realignVotingBlocksBetweenElections(game, outcome) {
       });
     }
 
-    // 5. Reconcile state affiliations directly from state.factions
+    // Natural dealignment / generational replenishment: keep independent swing pool healthy over multi-decade saves
+    if (swingFactions.length > 0 && stateTotalFactions > 0) {
+      const curSwingNow = swingFactions.reduce((s, f) => s + (state.factions[f.id] || 0), 0);
+      if (curSwingNow < targetSwingHealthy) {
+        const majorFactions = catalog.filter((f) => f.partyId === 'people' || f.partyId === 'heritage');
+        const majorTot = majorFactions.reduce((s, f) => s + (state.factions[f.id] || 0), 0);
+        const replenishTarget = Math.min(targetSwingHealthy - curSwingNow, Math.round(majorTot * 0.015));
+        if (replenishTarget > 0 && majorTot > 0) {
+          let moved = 0;
+          majorFactions.forEach((f) => {
+            const cur = state.factions[f.id] || 0;
+            const d = Math.min(cur, Math.round(replenishTarget * (cur / majorTot)));
+            if (d > 0) {
+              state.factions[f.id] = cur - d;
+              moved += d;
+            }
+          });
+          if (moved > 0) {
+            let addLeft = moved;
+            swingFactions.forEach((f, idx) => {
+              const share = (idx === swingFactions.length - 1) ? addLeft : Math.round(moved / swingFactions.length);
+              state.factions[f.id] = (state.factions[f.id] || 0) + share;
+              addLeft -= share;
+            });
+          }
+        }
+      }
+    }
+
+    // 5. Reconcile state affiliations directly from state.factions (preserving Custom Party 'player' voters)
+    const prevPlayerAff = Math.max(0, Number(stAff.player || 0));
     const sumF = (pid) => catalog.filter((f) => f.partyId === pid).reduce((s, f) => s + (state.factions[f.id] || 0), 0);
     const sumDem = sumF('people');
     const sumRep = sumF('heritage');
@@ -8745,7 +8797,11 @@ function realignVotingBlocksBetweenElections(game, outcome) {
     const sumCon = sumF('constitution');
     const sumSoc = sumF('socialist');
     const sumOther = catalog.filter((f) => f.partyId === 'unaffiliated' || f.partyId === 'none').reduce((s, f) => s + (state.factions[f.id] || 0), 0);
-    const sumPlayer = sumF('player');
+    const dynamicPlayerFactions = (Array.isArray(game?.factions) ? game.factions : []).filter((f) => f && f.partyId === 'player');
+    const sumPlayer = Math.max(
+      sumF('player'),
+      dynamicPlayerFactions.reduce((s, f) => s + (state.factions[f.id] || 0), 0)
+    );
 
     const _realignDiv = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
     stAff.people = Math.round(sumDem / _realignDiv);
@@ -8756,8 +8812,19 @@ function realignVotingBlocksBetweenElections(game, outcome) {
     stAff.constitution = Math.round(sumCon / _realignDiv);
     stAff.socialist = Math.round(sumSoc / _realignDiv);
     stAff.other = Math.round(sumOther / _realignDiv);
-    stAff.player = Math.round(sumPlayer / _realignDiv);
+    // Preserve Custom Party player voters when no player faction exists in state.factions
+    stAff.player = sumPlayer > 0 ? Math.round(sumPlayer / _realignDiv) : prevPlayerAff;
     stAff.thirdParty = (stAff.green || 0) + (stAff.liberty || 0) + (stAff.constitution || 0) + (stAff.socialist || 0) + (stAff.other || 0);
+
+    // Enforce exact state voter conservation (sum of non-thirdParty affiliations === state.sampleVoters)
+    const nonTpKeys = Object.keys(stAff).filter((k) => k !== 'thirdParty');
+    const nonTpSum = nonTpKeys.reduce((s, k) => s + (Number(stAff[k]) || 0), 0);
+    if (nonTpSum > 0 && Math.abs(nonTpSum - (Number(state.sampleVoters) || 0)) > 0) {
+      state.sampleVoters = nonTpSum;
+      if (voterModel.voterScale === '1:1' || _realignDiv === 1) {
+        state.representedVoters = nonTpSum;
+      }
+    }
 
     state.affiliations = stAff;
   });
@@ -11331,7 +11398,30 @@ function generateFreshPoliticianForSeat(opts = {}) {
 
 
 // v0.16.9 (Fix #10): Seed realistic starting ages on all sittingMembers & politicians, age +2/cycle, retire 80+
-function computeDeterministicStartAge(entity) {
+const REAL_WORLD_BIRTH_YEARS = {
+  'Jon Ossoff': 1987, 'Alexandria Ocasio-Cortez': 1989, 'JD Vance': 1984, 'J.D. Vance': 1984,
+  'Pete Buttigieg': 1982, 'Josh Shapiro': 1973, 'Gretchen Whitmer': 1971, 'Gavin Newsom': 1967,
+  'Andy Beshear': 1977, 'Wes Moore': 1978, 'Ron DeSantis': 1978, 'Marco Rubio': 1971,
+  'Ted Cruz': 1970, 'Josh Hawley': 1979, 'Tom Cotton': 1977, 'Katie Britt': 1982,
+  'Maxwell Frost': 1997, 'Ro Khanna': 1976, 'Hakeem Jeffries': 1970, 'Mike Johnson': 1972,
+  'Bernie Sanders': 1941, 'Elizabeth Warren': 1949, 'Chuck Schumer': 1950, 'Amy Klobuchar': 1960,
+  'Cory Booker': 1969, 'Raphael Warnock': 1969, 'Ruben Gallego': 1979, 'Elissa Slotkin': 1976,
+  'Sarah McBride': 1990, 'Greg Abbott': 1957, 'Glenn Youngkin': 1967, 'Brian Kemp': 1963,
+  'Nikki Haley': 1972, 'Vivek Ramaswamy': 1985, 'Tim Walz': 1964, 'Kamala Harris': 1964,
+  'Donald Trump': 1946, 'Joe Biden': 1942, 'Nancy Pelosi': 1940, 'Mitch McConnell': 1942,
+  'John Thune': 1961, 'Mark Kelly': 1964, 'Chris Murphy': 1973, 'Brian Schatz': 1972,
+  'Jared Polis': 1975, 'JB Pritzker': 1965, 'J.B. Pritzker': 1965, 'Maura Healey': 1971,
+  'Sarah Huckabee Sanders': 1982, 'Kristi Noem': 1971, 'Tim Scott': 1965, 'Rand Paul': 1963,
+  'Lisa Murkowski': 1957, 'Susan Collins': 1952, 'John Fetterman': 1969, 'Tammy Baldwin': 1962,
+  'Tina Kotek': 1966, 'Ashley Moody': 1975, 'Norma Torres': 1965, 'Brooke Lierman': 1979,
+  'Spike Cohen': 1982, 'Chase Oliver': 1985, 'Jill Stein': 1950, 'Cornel West': 1953,
+};
+
+function computeDeterministicStartAge(entity, refYear = 2028) {
+  const realBirthYear = entity?.name ? REAL_WORLD_BIRTH_YEARS[String(entity.name).trim()] : undefined;
+  if (Number.isFinite(realBirthYear)) {
+    return clamp(Math.round(Number(refYear || 2028) - realBirthYear), 25, 90);
+  }
   const key = String(entity?.id || entity?.name || 'pol');
   const h = Math.abs(version01Hash(`age:${key}`)) % 100;
   const office = String(entity?.office || '');
@@ -11349,7 +11439,7 @@ function ensureAndAdvancePoliticianAges(game, deltaYears = 0) {
     const out = [];
     for (const item of list) {
       if (!item || typeof item !== 'object') continue;
-      const baseAge = Number.isFinite(Number(item.age)) ? Number(item.age) : computeDeterministicStartAge(item);
+      const baseAge = Number.isFinite(Number(item.age)) ? Number(item.age) : computeDeterministicStartAge(item, year);
       const nextAge = baseAge + deltaYears;
       const birthYear = Number(item.birthYear !== undefined ? item.birthYear : (year - baseAge));
       const prevLongevity = Number(item.careerLongevity !== undefined ? item.careerLongevity : (item.isIncumbent || item.incumbent ? 6 : 0));
@@ -11370,6 +11460,11 @@ function ensureAndAdvancePoliticianAges(game, deltaYears = 0) {
       if (isSitting && retired) {
         continue;
       }
+      const retiredYear = retired ? (item.retiredYear || year) : null;
+      // Prune long-retired politicians (>4 years) from non-sitting pool to prevent unbounded RAM/save growth
+      if (!isSitting && retired && (year - retiredYear) >= 4) {
+        continue;
+      }
 
       // REQ-291: Age-gated traits aging out
       let activeTraits = Array.isArray(item.traits) ? item.traits.slice() : [];
@@ -11386,14 +11481,25 @@ function ensureAndAdvancePoliticianAges(game, deltaYears = 0) {
         return tName;
       }).filter(Boolean);
 
-      out.push({
+      const updatedItem = {
         ...item,
         age: nextAge,
         birthYear,
         careerLongevity: nextLongevity,
         traits: activeTraits,
         retired,
-      });
+      };
+      if (retired) {
+        if (item.office || item.currentOffice) {
+          updatedItem.formerOffice = item.formerOffice || item.office || item.currentOffice;
+        }
+        updatedItem.office = null;
+        updatedItem.currentOffice = null;
+        updatedItem.isIncumbent = false;
+        updatedItem.incumbent = false;
+        updatedItem.retiredYear = retiredYear;
+      }
+      out.push(updatedItem);
     }
     return out;
   };
@@ -17796,9 +17902,72 @@ function advanceRivalOrganizations(game) {
   return { organizations, generatedMembers, generationCounter, rivals };
 }
 
+let _storagePersistRequested = false;
+function requestPersistentStorageOnce() {
+  if (_storagePersistRequested) return;
+  _storagePersistRequested = true;
+  try {
+    if (typeof navigator !== 'undefined' && navigator.storage && typeof navigator.storage.persist === 'function') {
+      navigator.storage.persist().catch(() => {});
+    }
+  } catch (_) {}
+}
+
+async function saveAutosaveToIndexedDB(compactedGame) {
+  if (!compactedGame) return false;
+  requestPersistentStorageOnce();
+  const db = await openSavesIndexedDB();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
+      tx.objectStore(SAVE_IDB_STORE).put({
+        slot: 0,
+        label: 'Autosave',
+        savedAt: new Date().toISOString(),
+        game: compactedGame,
+      });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    } catch (_) {
+      resolve(false);
+    }
+  });
+}
+
+async function loadGameAsync() {
+  const lsGame = loadGame();
+  const db = await openSavesIndexedDB();
+  if (!db) return lsGame;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
+      const req = tx.objectStore(SAVE_IDB_STORE).get(0);
+      req.onsuccess = () => {
+        const rec = req.result;
+        if (rec && rec.game) {
+          const idbGame = normalizeGame(rec.game);
+          if (idbGame) {
+            if (!lsGame || (Number(idbGame.year || 0) > Number(lsGame.year || 0))) {
+              resolve(idbGame);
+              return;
+            }
+          }
+        }
+        resolve(lsGame);
+      };
+      req.onerror = () => resolve(lsGame);
+    } catch (_) {
+      resolve(lsGame);
+    }
+  });
+}
+
 function saveGame(game) {
   try {
     const compacted = compactGameForSave(game);
+    // Always persist full compacted autosave to IndexedDB (hundreds of MB - GB quota)
+    saveAutosaveToIndexedDB(compacted).catch(() => {});
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(compacted));
       if (typeof window !== 'undefined') window.__saveQuotaError = false;
@@ -17808,6 +17977,7 @@ function saveGame(game) {
         localStorage.setItem(SAVE_KEY, JSON.stringify(ultraCompacted));
         if (typeof window !== 'undefined') window.__saveQuotaError = false;
       } catch (__) {
+        // IndexedDB autosave remains intact even if 5MB localStorage is full
         if (typeof window !== 'undefined') window.__saveQuotaError = true;
       }
     }
@@ -18676,20 +18846,54 @@ function compactGameForSave(game, options = {}) {
     });
     copy.simulatedPrimaries = compactedPrimaries;
   }
-  // Cap statewideOfficesHistory to the most recent 6 cycles (2 in ultra mode)
+  // Cap statewideOfficesHistory to recent 6 cycles, keeping full detail for last 2 (1 in ultra) and summarizing older cycles
   const maxSwHist = ultra ? 2 : 6;
-  if (copy.statewideOfficesHistory && typeof copy.statewideOfficesHistory === 'object') {
-    if (Array.isArray(copy.statewideOfficesHistory) && copy.statewideOfficesHistory.length > maxSwHist) {
-      copy.statewideOfficesHistory = copy.statewideOfficesHistory.slice(-maxSwHist);
-    } else if (!Array.isArray(copy.statewideOfficesHistory)) {
-      const hKeys = Object.keys(copy.statewideOfficesHistory).sort((a, b) => Number(a) - Number(b));
-      if (hKeys.length > maxSwHist) {
-        const trimmed = {};
-        hKeys.slice(-maxSwHist).forEach((k) => { trimmed[k] = copy.statewideOfficesHistory[k]; });
-        copy.statewideOfficesHistory = trimmed;
+  const fullSwCycles = ultra ? 1 : 2;
+  const slimSwEntry = (entry) => {
+    if (!entry || typeof entry !== 'object') return entry;
+    if (entry._slimmed) return entry;
+    const partyTotals = {};
+    const countRecord = (rec) => {
+      if (!rec || typeof rec !== 'object') return;
+      const p = rec.party || rec.partyId || rec.winner;
+      if (p) partyTotals[p] = (partyTotals[p] || 0) + 1;
+    };
+    if (Array.isArray(entry)) {
+      entry.forEach(countRecord);
+      return { _slimmed: true, partyTotals };
+    }
+    Object.values(entry).forEach((val) => {
+      if (Array.isArray(val)) val.forEach(countRecord);
+      else if (val && typeof val === 'object') {
+        if (val.party || val.partyId || val.winner) countRecord(val);
+        else Object.values(val).forEach(countRecord);
       }
+    });
+    return { _slimmed: true, year: entry.year, partyTotals };
+  };
+  if (copy.statewideOfficesHistory && typeof copy.statewideOfficesHistory === 'object') {
+    if (Array.isArray(copy.statewideOfficesHistory)) {
+      const kept = copy.statewideOfficesHistory.slice(-maxSwHist);
+      const splitIdx = Math.max(0, kept.length - fullSwCycles);
+      copy.statewideOfficesHistory = kept.map((entry, idx) => (idx < splitIdx ? slimSwEntry(entry) : entry));
+    } else {
+      const hKeys = Object.keys(copy.statewideOfficesHistory).sort((a, b) => Number(a) - Number(b));
+      const keptKeys = hKeys.slice(-maxSwHist);
+      const splitIdx = Math.max(0, keptKeys.length - fullSwCycles);
+      const trimmed = {};
+      keptKeys.forEach((k, idx) => {
+        trimmed[k] = idx < splitIdx ? slimSwEntry(copy.statewideOfficesHistory[k]) : copy.statewideOfficesHistory[k];
+      });
+      copy.statewideOfficesHistory = trimmed;
     }
   }
+  // Prune superseded decennial House maps ('2030 map', '2040 map', etc.) while preserving activeHouseMapKey & currentHouseMap
+  const activeMapKey = copy.activeHouseMapKey || '';
+  Object.keys(copy).forEach((k) => {
+    if (/^\d{4} map$/.test(k) && k !== activeMapKey) {
+      delete copy[k];
+    }
+  });
   // Prune retired politicians from serialized save (elders & pastPresidents are preserved separately)
   if (Array.isArray(copy.politicians)) {
     copy.politicians = copy.politicians.filter((p) => p && !p.retired);
@@ -19124,6 +19328,7 @@ window.PartyChairEngine = {
   isMajorParty,
   legislativeDistricts,
   loadGame,
+  loadGameAsync,
   migrateSave,
   nationalPoll,
   normalizeGame,

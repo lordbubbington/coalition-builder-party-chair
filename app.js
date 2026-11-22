@@ -9,7 +9,9 @@ const MAPS = window.PartyChairData.VERSION_03_MAPS;
 const VOTER_MODEL = window.PartyChairData.VERSION_05_VOTER_MODEL;
 
 const app = document.querySelector('#app');
-let game = loadGame();
+let game = (typeof window.PartyChairEngine.loadGameAsync === 'function')
+  ? await window.PartyChairEngine.loadGameAsync()
+  : loadGame();
 if (game && V07 && (!game.sittingMembers?.length || !game.trust || !game.leadershipRoles)) {
   game = V07.hydrateV07GameState(game);
 }
