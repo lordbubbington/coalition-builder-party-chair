@@ -4535,6 +4535,21 @@ function createGame(options = {}) {
     seats: foundingLegislature.seats.player,
     organizations: Object.fromEntries(game.rivals.map((party) => [party.id, { ...game.organizations[party.id], seats: foundingLegislature.seats[party.id] ?? 0 }])),
   };
+  // Bug #4: Align Turn 1 sittingMembers House seats with foundingLegislature.representatives
+  if (Array.isArray(game.representatives) && game.representatives.length === 435 && Array.isArray(game.sittingMembers)) {
+    const canonCreateParty = (pid) => (pid === 'player' && !game.player?.custom ? (game.player?.baseTemplateId || 'people') : (pid || 'people'));
+    const createRepsByDist = new Map(game.representatives.map((r) => [r.districtId || r.id, r]));
+    game.sittingMembers = game.sittingMembers.map((m) => {
+      if (m && m.office === 'house') {
+        const rep = createRepsByDist.get(m.districtId || m.district);
+        if (rep) {
+          const party = canonCreateParty(rep.partyId || rep.party);
+          return { ...m, party, partyId: party, caucus: party, rawParty: party === 'people' ? 'D' : party === 'heritage' ? 'R' : 'I' };
+        }
+      }
+      return m;
+    });
+  }
   game.partyApprovals = computeUnifiedPartyApproval(game);
   game.forecasters = buildForecasters(game);
   game.stateFederalism = computeAllStateFederalism(game);
@@ -11585,12 +11600,20 @@ function replenishVacantSittingMembers(game, nextYear) {
         { stateId: st.id, class: 1, party: Number(st.leanPercent || st.lean || 0) >= 0 ? 'people' : 'heritage' },
         { stateId: st.id, class: 2, party: Number(st.leanPercent || st.lean || 0) >= 0 ? 'people' : 'heritage' },
       ]);
+  const canonicalParty = (pid) => {
+    if (!pid) return 'people';
+    if (pid === 'player' && !game.player?.custom) return game.player?.baseTemplateId || 'people';
+    return pid;
+  };
+  const recentSenResults = Array.isArray(game.lastElection?.senate) ? game.lastElection.senate : [];
   mapsSen.forEach((seat) => {
     const cls = Number(seat.class || seat.senateClass || 3);
     const stSens = sitting.filter((m) => m.office === 'senate' && m.stateId === seat.stateId);
     const exists = stSens.some((m) => Number(m.senateClass || m.class) === cls) || stSens.length >= 2;
     if (!exists) {
-      const partyId = seat.party || 'people';
+      const recentWin = recentSenResults.find((r) => r.stateId === seat.stateId && Number(r.senateClass || r.class) === cls);
+      const priorHolder = (game.politicians || []).find((p) => p && (p.formerOffice === 'senate' || p.office === 'senate') && p.stateId === seat.stateId && Number(p.senateClass || p.class) === cls);
+      const partyId = canonicalParty(recentWin?.winner || priorHolder?.party || priorHolder?.partyId || seat.party || 'people');
       pushReplacement(generateFreshPoliticianForSeat({
         office: 'senate', stateId: seat.stateId, senateClass: cls, partyId, year: nextYear, seed, salt: `sen-repl-${cls}`, isIncumbent: true,
       }));
@@ -11602,7 +11625,8 @@ function replenishVacantSittingMembers(game, nextYear) {
     const exists = sitting.some((m) => m.office === 'house' && (m.districtId === d.id || m.district === d.id));
     if (!exists) {
       const rep = (game.representatives || []).find((r) => r.districtId === d.id || r.id === d.id);
-      const partyId = rep?.partyId || (Number(d.lean || 0) >= 0 ? 'people' : 'heritage');
+      const rawPid = rep?.partyId || rep?.party || (Number(d.lean || 0) >= 0 ? 'people' : 'heritage');
+      const partyId = canonicalParty(rawPid);
       pushReplacement(generateFreshPoliticianForSeat({
         office: 'house', stateId: d.stateId, districtId: d.id, partyId, year: nextYear, seed, salt: `house-repl-${d.id}`, isIncumbent: true,
       }));
@@ -11692,18 +11716,22 @@ function rebalanceFactionHappinessTowardEquilibrium(game) {
   const env = Number(game.nationalEnvironment || 0);
   const govParty = game.governingParty || 'heritage';
 
+  // Balance #5: Simplified piecewise happiness curve to shake up factions & increase party churn:
+  // > 80: -10 | 50..80: -5 | 30..50: +5 | < 30: -5
+  const curveHappiness = (cur) => {
+    let delta = 0;
+    if (cur > 80) delta = -10;
+    else if (cur >= 50) delta = -5;
+    else if (cur >= 30) delta = 5;
+    else delta = -5;
+    return clamp(round(cur + delta, 1), 0, 100);
+  };
   const touchedFSKeys = new Set();
-  catalog.forEach((f) => {
-    const cur = Number(nextFH[f.id] ?? nextFS[f.id] ?? f.startingHappiness ?? 50);
-    // Natural equilibrium centered on faction's baseline, nudged by macro environment & party governing status
-    const baseEq = Number(f.startingHappiness ?? 50);
-    let alignShift = 0;
-    if (f.partyId === 'people') alignShift = env * 0.45 + (govParty === 'people' ? 3 : -2);
-    else if (f.partyId === 'heritage') alignShift = -env * 0.45 + (govParty === 'heritage' ? 3 : -2);
-    else alignShift = (Math.abs(env) > 4 ? 4 : -1); // Minor/unaffiliated factions stir during polarized wave environments
-    const targetEq = clamp(round(baseEq * 0.65 + 50 * 0.35 + alignShift, 1), 22, 78);
-    // Pull 25% toward equilibrium each cycle (Option B)
-    const nextVal = clamp(round(cur + (targetEq - cur) * 0.25, 1), 5, 96);
+  const allFactionsForCurve = Array.isArray(game.factions) && game.factions.length ? game.factions : catalog;
+  allFactionsForCurve.forEach((f) => {
+    if (!f || !f.id) return;
+    const cur = Number(nextFH[f.id] ?? nextFS[f.id] ?? f.happiness ?? f.startingHappiness ?? 50);
+    const nextVal = curveHappiness(cur);
     nextFH[f.id] = nextVal;
     nextFS[f.id] = nextVal;
     touchedFSKeys.add(f.id);
@@ -11712,7 +11740,7 @@ function rebalanceFactionHappinessTowardEquilibrium(game) {
   });
   Object.keys(nextFS).forEach((k) => {
     if (!touchedFSKeys.has(k) && typeof nextFS[k] === 'number' && Number.isFinite(nextFS[k])) {
-      nextFS[k] = clamp(round(nextFS[k] + (55 - nextFS[k]) * 0.25, 1), 5, 96);
+      nextFS[k] = curveHappiness(nextFS[k]);
     }
   });
 
@@ -14544,37 +14572,94 @@ function resolveVersion01GeneralElection(game) {
     }
   }
 
+  const canonicalElectionParty = (pid) => {
+    if (!pid) return 'people';
+    if (pid === 'player' && !game.player?.custom) return game.player?.baseTemplateId || 'people';
+    return pid;
+  };
+  const repsByDistrict = new Map(
+    (Array.isArray(result.representatives) ? result.representatives : []).map((r) => [r.districtId || r.id, r])
+  );
   const nextSittingMembers = (game.sittingMembers || []).map((m) => {
-    if (m.office === 'senate' && (m.senateClass === activeSenateClass || m.class === activeSenateClass)) {
+    if (m.office === 'senate' && (Number(m.senateClass || m.class) === Number(activeSenateClass))) {
       const raceRes = senateResults.find((r) => r.stateId === m.stateId);
       if (raceRes) {
-        const winningParty = raceRes.winner;
-        return {
-          ...m,
-          party: winningParty,
-          partyId: winningParty,
-          caucus: winningParty,
-          rawParty: winningParty === 'people' ? 'D' : winningParty === 'heritage' ? 'R' : 'I',
-          electionYear: game.year,
-        };
+        const winningParty = canonicalElectionParty(raceRes.winner);
+        if (winningParty !== canonicalElectionParty(m.party || m.partyId)) {
+          return generateFreshPoliticianForSeat({
+            office: 'senate',
+            stateId: m.stateId,
+            senateClass: Number(m.senateClass || m.class || activeSenateClass),
+            partyId: winningParty,
+            year: game.year,
+            seed: game.seed || 2028,
+            salt: `sen-flip-${m.stateId}-${game.year}`,
+            isIncumbent: true,
+          });
+        }
+        return { ...m, party: winningParty, partyId: winningParty, caucus: winningParty, electionYear: game.year };
       }
     }
     if (m.office === 'governor') {
       const govRes = governorResults.find((r) => r.stateId === m.stateId);
       if (govRes) {
-        const winningParty = govRes.winner;
-        return {
-          ...m,
-          party: winningParty,
-          partyId: winningParty,
-          caucus: winningParty,
-          rawParty: winningParty === 'people' ? 'D' : winningParty === 'heritage' ? 'R' : 'I',
-          electionYear: game.year,
-        };
+        const winningParty = canonicalElectionParty(govRes.winner);
+        if (winningParty !== canonicalElectionParty(m.party || m.partyId)) {
+          return generateFreshPoliticianForSeat({
+            office: 'governor',
+            stateId: m.stateId,
+            partyId: winningParty,
+            year: game.year,
+            seed: game.seed || 2028,
+            salt: `gov-flip-${m.stateId}-${game.year}`,
+            isIncumbent: true,
+          });
+        }
+        return { ...m, party: winningParty, partyId: winningParty, caucus: winningParty, electionYear: game.year };
+      }
+    }
+    if (m.office === 'house') {
+      const distKey = m.districtId || m.district;
+      const repRes = distKey ? repsByDistrict.get(distKey) : null;
+      if (repRes) {
+        const winningParty = canonicalElectionParty(repRes.partyId || repRes.party);
+        if (winningParty !== canonicalElectionParty(m.party || m.partyId)) {
+          return generateFreshPoliticianForSeat({
+            office: 'house',
+            stateId: m.stateId || repRes.stateId,
+            districtId: distKey,
+            partyId: winningParty,
+            year: game.year,
+            seed: game.seed || 2028,
+            salt: `house-flip-${distKey}-${game.year}`,
+            isIncumbent: true,
+          });
+        }
+        return { ...m, party: winningParty, partyId: winningParty, caucus: winningParty, electionYear: game.year };
       }
     }
     return m;
   });
+
+  // Balance #1: Post-election independent trust decay (incumbent/cycle fatigue)
+  if (result.trust && typeof result.trust === 'object') {
+    result.trust = {
+      ...result.trust,
+      independents: clamp(round((Number(result.trust.independents ?? 50)) - 4, 1), 0, 100),
+    };
+  }
+  if (result.rivalTrust && typeof result.rivalTrust === 'object') {
+    const nextRivalTrust = { ...result.rivalTrust };
+    Object.keys(nextRivalTrust).forEach((rk) => {
+      if (nextRivalTrust[rk] && typeof nextRivalTrust[rk] === 'object') {
+        nextRivalTrust[rk] = {
+          ...nextRivalTrust[rk],
+          independents: clamp(round((Number(nextRivalTrust[rk].independents ?? 50)) - 4, 1), 0, 100),
+        };
+      }
+    });
+    result.rivalTrust = nextRivalTrust;
+  }
 
   const election = {
     ...(result.lastElection || {}),
@@ -18124,7 +18209,10 @@ function advanceRivalOrganizations(game) {
     }
     const payroll = leaders.reduce((sum, id) => sum + (memberFor(game, id)?.salary || 0), 0);
     const expenses = 1.2 + chapterCount * 0.2 + payroll;
-    let treasury = round(previous.treasury + income - expenses);
+    // Bug #5: Deduct realistic election-cycle campaign spending and apply a soft reserve cap ($350M)
+    const campaignSpend = (game.year % 2 === 0) ? round(Math.max(0, previous.treasury * 0.28), 1) : 0;
+    const rawTreasury = round(previous.treasury + income - expenses - campaignSpend, 1);
+    let treasury = clamp(rawTreasury, 0, 350);
     let memberships = Math.round(previous.memberships * 1.025 + 2);
 
     // Rival committees invest in the largest electoral regions where their field presence is weakest.
@@ -18571,6 +18659,27 @@ function normalizeGame(parsed) {
     ready.representatives = foundingLegislature.representatives;
     ready.seats = foundingLegislature.seats.player;
     ready.organizations = Object.fromEntries(ready.rivals.map((party) => [party.id, { ...ready.organizations[party.id], seats: foundingLegislature.seats[party.id] }]));
+  }
+  // Bug #4: Align initial 2028 sittingMembers House seats with ready.representatives using canonical party IDs
+  if (Array.isArray(ready.representatives) && ready.representatives.length === 435 && Array.isArray(ready.sittingMembers)) {
+    const canonInitParty = (pid) => (pid === 'player' && !ready.player?.custom ? (ready.player?.baseTemplateId || 'people') : (pid || 'people'));
+    const initRepsByDist = new Map(ready.representatives.map((r) => [r.districtId || r.id, r]));
+    ready.sittingMembers = ready.sittingMembers.map((m) => {
+      if (m && m.office === 'house') {
+        const rep = initRepsByDist.get(m.districtId || m.district);
+        if (rep) {
+          const p = canonInitParty(rep.partyId || rep.party);
+          return {
+            ...m,
+            party: p,
+            partyId: p,
+            caucus: p,
+            rawParty: p === 'people' ? 'D' : p === 'heritage' ? 'R' : 'I',
+          };
+        }
+      }
+      return m;
+    });
   }
   ready.campaign = {
     active: false,

@@ -416,3 +416,9 @@ Please see [**TBD_UPDATES.md**](file:///c:/Users/rober/.gemini/antigravity/scrat
 ### 📌 Pinned Reminder (`NOTE-04` — Nov 12, 2026): Massive Updates Protocol
 - **Owner Direction:** *"The Party System mechanic will be a massive one - this should be a level above huge, called massive, that are their own update, and that I send you instructions on over a period of days, not in one message. Remind me to continue massive updates AFTER we send any update that didn't include a massive update"*
 - **Status:** **`MAS-01: The Party Systems Evolution Engine`** has successfully completed and shipped in **Version 0.16.0**. After future releases that do not include a Massive update, proactively remind the owner when a new Massive update is in development.
+
+### 📌 Pinned Reminder (`NOTE-05` — Nov 21, 2026): Two-Trigger 40-Year Party Systems
+- **Owner Direction:** *"Party systems last about 40 years in real life, we're just halfway through one now (according to my definition, at least). We're going to fix this eventually by adding a two trigger party system, with the first half of each era integrating elements from the prior era, before a massive shift halfway through."*
+- **Design Plan to Revisit:** Structure each ~40-year Party System era around two sequential triggers:
+  1. **Phase 1 Trigger (Years 1–20 / First Half):** Transitional synthesis that integrates institutions, coalitions, and residual issue axes from the prior era alongside early emerging fault lines.
+  2. **Phase 2 Trigger (Midpoint ~Year 20 / Second Half):** A massive mid-era realignment shift that breaks the transitional synthesis, reshuffles coalitions/factions decisively, and sets up the eventual transition to the next Party System.

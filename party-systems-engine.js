@@ -1731,16 +1731,135 @@
         nextTiers.green = Math.max(4, Number(nextTiers.green || 1));
         game.partyTiers = nextTiers;
 
-        // Permanently lift Green Party baseShare by +10.0%
+        // Permanently elevate Green Party baseShare toward 30% major-party contender benchmark
         if (game.player && !game.player.custom && game.player.baseTemplateId === 'green') {
-          game.player = { ...game.player, baseShare: round(Number(game.player.baseShare || 2) + 10.0, 2) };
+          game.player = { ...game.player, baseShare: Math.max(30.0, round(Number(game.player.baseShare || 2) + 25.0, 2)) };
         }
         if (Array.isArray(game.rivals)) {
           game.rivals = game.rivals.map((r) => (
             r.id === 'green' || r.baseTemplateId === 'green'
-              ? { ...r, baseShare: round(Number(r.baseShare || 2) + 10.0, 2) }
+              ? { ...r, baseShare: Math.max(30.0, round(Number(r.baseShare || 2) + 25.0, 2)) }
               : r
           ));
+        }
+
+        // Balance #2: Massive Green Transition Crucible upset — form new Green Party factions and
+        // shift voters out of BOTH Democratic and Republican factions toward a 30% Green / 34% Dem / 34% Rep
+        // partisan split (leaving ~2% for other minor parties while preserving independents & 1:1 conservation).
+        const psdGreen = getPSData();
+        const newGreenDefs = Array.isArray(psdGreen?.ECOLOGICAL_COLLAPSE_GREEN_FACTIONS) && psdGreen.ECOLOGICAL_COLLAPSE_GREEN_FACTIONS.length
+          ? psdGreen.ECOLOGICAL_COLLAPSE_GREEN_FACTIONS
+          : [
+              { id: 'grn_eco_liberals', name: 'Eco-Liberals', partyId: 'green', category: 'minor', sliders: { economic: 3.5, social: 2.2, governance: 4.5 }, pull: { economic: -0.35, social: -0.6, climate: 0.92, local: 0.0 }, happiness: 74, confidence: 64 },
+              { id: 'grn_eco_fascists', name: 'Eco-Nationalists', partyId: 'green', category: 'minor', sliders: { economic: 5.0, social: 8.2, governance: 8.8 }, pull: { economic: 0.0, social: 0.7, climate: 0.95, local: -0.6 }, happiness: 64, confidence: 58 },
+            ];
+        if (!Array.isArray(game.factions)) game.factions = [];
+        const existingFacIds = new Set(game.factions.map((f) => f && f.id).filter(Boolean));
+        const greenFactionIds = [];
+        newGreenDefs.forEach((def) => {
+          if (!def || !def.id) return;
+          greenFactionIds.push(def.id);
+          if (!existingFacIds.has(def.id)) {
+            existingFacIds.add(def.id);
+            game.factions.push({ ...def, partyId: 'green' });
+            if (game.factionHappiness) game.factionHappiness[def.id] = def.happiness ?? 70;
+            if (game.factionStandings) game.factionStandings[def.id] = def.happiness ?? 70;
+            if (game.factionConfidence) game.factionConfidence[def.id] = def.confidence ?? 62;
+          }
+        });
+        // Include any existing Green factions too
+        game.factions.filter((f) => f && f.partyId === 'green').forEach((f) => {
+          if (!greenFactionIds.includes(f.id)) greenFactionIds.push(f.id);
+        });
+
+        const vm = game.voterModel;
+        if (vm && Array.isArray(vm.states) && greenFactionIds.length > 0) {
+          const demFacIds = new Set(game.factions.filter((f) => f && f.partyId === 'people').map((f) => f.id));
+          const repFacIds = new Set(game.factions.filter((f) => f && f.partyId === 'heritage').map((f) => f.id));
+          const div = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+
+          vm.states.forEach((st) => {
+            if (!st || !st.factions) return;
+            const stF = st.factions;
+            const curDem = Object.entries(stF).reduce((s, [fid, v]) => s + (demFacIds.has(fid) ? (Number(v) || 0) : 0), 0);
+            const curRep = Object.entries(stF).reduce((s, [fid, v]) => s + (repFacIds.has(fid) ? (Number(v) || 0) : 0), 0);
+            const curGrn = Object.entries(stF).reduce((s, [fid, v]) => s + (greenFactionIds.includes(fid) ? (Number(v) || 0) : 0), 0);
+            const combinedMajorAndGreen = curDem + curRep + curGrn;
+            if (combinedMajorAndGreen <= 0) return;
+
+            // Target 30/34/34 of the 98% partisan pool (30/98 = 30.61% Green, 34/98 = 34.69% Dem, 34/98 = 34.69% Rep)
+            const targetGrn = Math.round(combinedMajorAndGreen * (30 / 98));
+            const targetDem = Math.round(combinedMajorAndGreen * (34 / 98));
+            const targetRep = Math.max(0, combinedMajorAndGreen - targetGrn - targetDem);
+
+            let movedToGreen = 0;
+            // Scale Democratic factions toward targetDem
+            if (curDem > targetDem && curDem > 0) {
+              const demCut = curDem - targetDem;
+              let demCutLeft = demCut;
+              const demEntries = Object.keys(stF).filter((fid) => demFacIds.has(fid) && (Number(stF[fid]) || 0) > 0);
+              demEntries.forEach((fid, idx) => {
+                const v = Number(stF[fid]) || 0;
+                const cut = idx === demEntries.length - 1 ? Math.min(v, demCutLeft) : Math.min(v, Math.round(demCut * (v / curDem)));
+                stF[fid] = v - cut;
+                demCutLeft -= cut;
+                movedToGreen += cut;
+              });
+            }
+            // Scale Republican factions toward targetRep
+            if (curRep > targetRep && curRep > 0) {
+              const repCut = curRep - targetRep;
+              let repCutLeft = repCut;
+              const repEntries = Object.keys(stF).filter((fid) => repFacIds.has(fid) && (Number(stF[fid]) || 0) > 0);
+              repEntries.forEach((fid, idx) => {
+                const v = Number(stF[fid]) || 0;
+                const cut = idx === repEntries.length - 1 ? Math.min(v, repCutLeft) : Math.min(v, Math.round(repCut * (v / curRep)));
+                stF[fid] = v - cut;
+                repCutLeft -= cut;
+                movedToGreen += cut;
+              });
+            }
+            // Distribute moved voters across new & existing Green factions
+            if (movedToGreen > 0) {
+              let addLeft = movedToGreen;
+              greenFactionIds.forEach((gid, idx) => {
+                const share = idx === greenFactionIds.length - 1 ? addLeft : Math.round(movedToGreen / greenFactionIds.length);
+                stF[gid] = (Number(stF[gid]) || 0) + share;
+                addLeft -= share;
+              });
+            }
+
+            // Reconcile state affiliations immediately
+            st.affiliations = st.affiliations || {};
+            const newDem = Object.entries(stF).reduce((s, [fid, v]) => s + (demFacIds.has(fid) ? (Number(v) || 0) : 0), 0);
+            const newRep = Object.entries(stF).reduce((s, [fid, v]) => s + (repFacIds.has(fid) ? (Number(v) || 0) : 0), 0);
+            const newGrn = Object.entries(stF).reduce((s, [fid, v]) => s + (greenFactionIds.includes(fid) ? (Number(v) || 0) : 0), 0);
+            st.affiliations.people = Math.round(newDem / div);
+            st.affiliations.heritage = Math.round(newRep / div);
+            st.affiliations.green = Math.round(newGrn / div);
+            st.affiliations.thirdParty = (st.affiliations.green || 0) + (st.affiliations.liberty || 0) + (st.affiliations.constitution || 0) + (st.affiliations.socialist || 0) + (st.affiliations.other || 0);
+          });
+
+          // Reconcile national voterModel.factions & affiliations
+          const natF = {};
+          let totDem = 0, totRep = 0, totGrn = 0, totTp = 0;
+          vm.states.forEach((st) => {
+            Object.entries(st.factions || {}).forEach(([fid, v]) => { natF[fid] = (natF[fid] || 0) + (Number(v) || 0); });
+            totDem += Number(st.affiliations?.people || 0);
+            totRep += Number(st.affiliations?.heritage || 0);
+            totGrn += Number(st.affiliations?.green || 0);
+            totTp += Number(st.affiliations?.thirdParty || 0);
+          });
+          vm.factions = natF;
+          const scale = (vm.voterScale === '1:1' || Number(vm.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+          if (vm.affiliations?.people) { vm.affiliations.people.sampleVoters = totDem; vm.affiliations.people.representedVoters = totDem * scale; }
+          if (vm.affiliations?.heritage) { vm.affiliations.heritage.sampleVoters = totRep; vm.affiliations.heritage.representedVoters = totRep * scale; }
+          if (vm.affiliations?.green) { vm.affiliations.green.sampleVoters = totGrn; vm.affiliations.green.representedVoters = totGrn * scale; }
+          if (vm.affiliations?.thirdParty) {
+            vm.affiliations.thirdParty.sampleVoters = totTp;
+            vm.affiliations.thirdParty.representedVoters = totTp * scale;
+            if (vm.affiliations.thirdParty.byParty) vm.affiliations.thirdParty.byParty.green = totGrn;
+          }
         }
 
         // Rebalance Super PAC pools so Clean-Tech out-funds Fossil 2:1 immediately
