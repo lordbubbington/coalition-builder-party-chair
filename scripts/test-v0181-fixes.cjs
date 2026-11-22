@@ -48,7 +48,7 @@ test('#1 ElectionNightEngine exports evaluateElectionNightAt & getBroadcastSnaps
 
 test('#2 Campaign Overhaul lift & pollingMissReport feed into presidentialStateMargin', () => {
   let g = Eng.createGame('people', { seed: 202801 });
-  g = Eng.takeAction(g, 'start-campaign');
+  g = Eng.takeAction(g, 'finish-presidential-primary');
   const baseMargin = Eng.presidentialStateMargin(g, 'PA');
   g = CO.executeNewCampaignAction(g, 'campaign-town-hall-barnstorm', { stateId: 'PA' });
   const liftedMargin = Eng.presidentialStateMargin(g, 'PA');
@@ -104,7 +104,7 @@ test('#11 Duplicate generateCoalitionDemands disambiguated', () => {
 
 test('#13/#15/#18/#19/#21/#22/#24/#26/#27/#29/#30/#31/#33/#35 Campaign Overhaul fixes', () => {
   let g = Eng.createGame('people', { seed: 202804 });
-  g = Eng.takeAction(g, 'start-campaign');
+  g = Eng.takeAction(g, 'finish-presidential-primary');
   // #15 Theme once per month
   const t1 = CO.selectCampaignTheme(g, 'cost-of-living');
   assert.strictEqual(t1.campaign.themeSelectedThisMonth, true);
@@ -139,7 +139,8 @@ test('#13/#15/#18/#19/#21/#22/#24/#26/#27/#29/#30/#31/#33/#35 Campaign Overhaul 
 test('#47-#53 Presidential Primary anti-spam, stage guards, re-entry guard, primaryOrder preserve, DNC 15% fallback', () => {
   let g = Eng.createGame('people', { seed: 202805 });
   g = Eng.takeAction(g, 'start-presidential-primary');
-  assert.strictEqual(g.activePresidentialPrimary.stage, 'order');
+  assert.strictEqual(g.activePresidentialPrimary.stage, 'debates');
+  g = { ...g, activePresidentialPrimary: { ...g.activePresidentialPrimary, stage: 'order' } };
   // #48 Filter blocked in order stage
   const fOrder = Eng.takeAction(g, 'filter-primary-support', { candidateId: g.activePresidentialPrimary.candidates[0].id });
   assert.strictEqual(fOrder.activePresidentialPrimary.interventionsCount, 0);

@@ -72,9 +72,9 @@
     const existingReport = game?.pollingMissReport || game?.lastElection?.pollingMissReport;
     if (!options.forceNew && existingReport && existingReport.stateErrors && Number(existingReport.year || game?.year) === Number(game?.year || 2028)) {
       return {
-        correlatedRegionalError: existingReport.regionalErrors || {},
+        correlatedRegionalError: existingReport.regionalRealized || existingReport.regionalErrors || {},
         statePollingErrors: { ...existingReport.stateErrors },
-        nationalError: existingReport.recalculatedNationalMiss ?? existingReport.nationalMiss ?? 0,
+        nationalError: existingReport.realizedNationalMiss ?? existingReport.recalculatedNationalMiss ?? existingReport.nationalMiss ?? 0,
         source: 'campaign-overhaul-unified',
       };
     }

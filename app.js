@@ -826,7 +826,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.18.1)
+// Delegated Click Listener for Party Focus Type Switchers (Bugfix v0.18.2)
 if (typeof document !== 'undefined') {
   document.addEventListener('click', (event) => {
     const btn = event.target?.closest ? event.target.closest('[data-set-additional-type]') : null;
@@ -1866,7 +1866,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.1</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.2</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1891,7 +1891,7 @@ function setupMarkup() {
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.18.1 · Faction Systems Release · Local autosave</p>
+          <p class="setup-foot">Version 0.18.2 · Faction Systems Release · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -3635,15 +3635,15 @@ function step4WorkMarkup() {
             : `Select 1 appointed Party Leader for +25 Fame, +8 faction confidence, and +2.0 turnout across their home overlapping region.`}</p>
           <div class="inline-controls">
             ${partyLeaderPool.length ? `
-              <select id="keynote-speaker">
+              <select id="keynote-speaker-2" data-dup-id="keynote-speaker">
                 ${partyLeaderPool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.region)}</option>`).join('')}
               </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
+              <button type="button" class="button button-small button-gold" id="select-keynote-3" data-dup-id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
             ` : `
-              <select id="keynote-speaker" disabled>
+              <select id="keynote-speaker-4" data-dup-id="keynote-speaker" disabled>
                 <option>[ Appoint Party Leaders in Leadership Menu to Select Keynote ]</option>
               </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote" disabled>Name Keynote</button>
+              <button type="button" class="button button-small button-gold" id="select-keynote-5" data-dup-id="select-keynote" disabled>Name Keynote</button>
             `}
           </div>
         </div>
@@ -3664,11 +3664,11 @@ function step4WorkMarkup() {
           <p>Deploy an appointed party leader to a specific state (+1–2 state chapters, +3 Fame, +memberships).</p>
           <div class="inline-controls">
             ${partyLeaderPool.length ? `
-              <select id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
+              <select id="tour-member-6" data-dup-id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
               <select id="tour-state">${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('tour-state', mapState) ? 'selected' : ''}>${s.id} · ${safe(s.name)}</option>`).join('')}</select>
               <button type="button" class="button button-small" data-action="tour" ${disabled ? 'disabled' : ''}>Deploy</button>
             ` : `
-              <select id="tour-member" disabled><option>[ Appoint Party Leaders in Leadership Menu to Deploy Tours ]</option></select>
+              <select id="tour-member-7" data-dup-id="tour-member" disabled><option>[ Appoint Party Leaders in Leadership Menu to Deploy Tours ]</option></select>
               <button type="button" class="button button-small" data-action="tour" disabled>Deploy</button>
             `}
           </div>
@@ -4693,7 +4693,8 @@ function leaderDeploymentModalMarkup() {
     const leanText = isComplete
       ? `${qualLean} (${Math.abs(margin) < 0.05 ? 'EVEN' : `${margin > 0 ? 'D+' : 'R+'}${Math.abs(margin).toFixed(1)}`})`
       : qualLean;
-    const title = `${state.name} (${state.id}) · Partisan Lean: ${leanText}${targetTag}${assignedTag}`;
+    const _depStName = state.name || window.PartyChairData?.STATES?.find((s) => s.id === state.id)?.name || state.id;
+    const title = `${_depStName} (${state.id}) · Partisan Lean: ${leanText}${targetTag}${assignedTag}`;
     return `<path style="fill:${fillColor}" class="map-state-shape ${isTarget ? 'target-state-highlight' : ''}" d="${state.q.split('!').map(decodePath).join('')}" data-deploy-state="${state.id}" tabindex="0"><title>${safe(title)}</title></path>`;
   }).join('');
   const labels = stateRows.map((state) => `<text x="${state.cx}" y="${state.cy}" class="map-label" pointer-events="none">${state.id}</text>`).join('');
@@ -4902,7 +4903,7 @@ function campaignPollingMapMarkup() {
           📊 Commission Race Poll ($1.0M)
         </button>
         <button type="button" class="btn btn-secondary button button-secondary" id="btn-view-commissioned-polls" data-action="open-commissioned-polls">
-          📋 Commissioned polls (${(game.commissionedPolls || []).length})
+          📋 Commissioned polls (${Array.isArray(game.commissionedPolls) ? game.commissionedPolls.length : (game.commissionedPolls && typeof game.commissionedPolls === 'object' ? Object.keys(game.commissionedPolls).length : 0)})
         </button>
         <span style="font-size:12px;color:var(--muted)">Poll any contested battleground race to uncover internal margin intelligence.</span>
       </div>
@@ -4977,14 +4978,16 @@ function commissionPollModalMarkup() {
 }
 
 function commissionedPollsModalMarkup() {
-  const polls = game?.commissionedPolls || [];
+  const polls = Array.isArray(game?.commissionedPolls)
+    ? game.commissionedPolls
+    : (game?.commissionedPolls && typeof game.commissionedPolls === 'object' ? Object.values(game.commissionedPolls).filter((v) => v && typeof v === 'object') : []);
 
   return `
     <div class="v08-modal-overlay" id="commissioned-polls-modal-overlay">
       <div class="v08-modal-content" style="max-width:850px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
           <div>
-            <div class="eyebrow">Polling Archive · Campaign 2028</div>
+            <div class="eyebrow">Polling Archive · Campaign ${game?.year || 2028}</div>
             <h2 style="margin:2px 0;font-family:'Iowan Old Style',Palatino,Georgia,serif;font-size:24px">Commissioned Internal Surveys Archive</h2>
             <p style="margin:4px 0 0;color:var(--muted);font-size:13px">
               Review historical survey tracking and top-line margins across battleground races polled by your campaign.
@@ -5099,7 +5102,7 @@ function campaignDashboardMarkup() {
         </div>
       </section>
 
-      ${isOctoberSurpriseWeek && currentEvent
+      ${isOctoberSurpriseWeek && !c.octoberSurpriseResolved && !c.eventResolved && currentEvent
         ? `<section class="v08-october-surprise">
             <span class="v08-breaking-tag">🚨 BREAKING NEWS · OCTOBER SURPRISE (MONTH 4)</span>
             <h3 class="v08-surprise-title">${safe(currentEvent.title)}</h3>
@@ -5423,13 +5426,15 @@ function v0180CampaignWarRoomMarkup() {
     ? window.PartySystemsEngine.getActiveIssuesForGame(game)
     : (window.PartyChairData?.VERSION_021_ISSUES || window.PartyChairData?.ISSUES || []);
   const statesList = (window.PartyChairData?.STATES || []).slice().sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
-  const defaultState = window.__v0181SelectedState || c.recommendedStates?.[0] || 'PA';
+  const _normRecSt = (x) => (typeof x === 'string' ? x : (x?.stateId || x?.id || x?.code || ''));
+  const defaultState = _normRecSt(window.__v0181SelectedState) || _normRecSt(c.recommendedStates?.[0]) || 'PA';
   const satVal = Number(c.stateSaturation?.[defaultState] || 0);
   const satTier = CO.getSaturationTier ? CO.getSaturationTier(satVal) : { label: 'Fresh', effMult: 1 };
   const allFactions = (game.factions || []).slice(0, 40);
   const rivalParties = (game.rivals || []).filter((r) => r && r.id);
   const defaultRival = window.__v0181SelectedRival || rivalParties[0]?.id || (pId === 'people' ? 'heritage' : 'people');
-  const defaultBlitz = (c.recommendedStates && c.recommendedStates.length >= 3) ? c.recommendedStates.slice(0, 3) : ['PA', 'MI', 'WI'];
+  const _recIds = (c.recommendedStates || []).map(_normRecSt).filter(Boolean);
+  const defaultBlitz = _recIds.length >= 3 ? _recIds.slice(0, 3) : ['PA', 'MI', 'WI'];
 
   return `
     <section class="panel section-panel v0180-war-room" style="margin-top:14px;border:1px solid rgba(226,189,112,0.35);">
@@ -5439,7 +5444,7 @@ function v0180CampaignWarRoomMarkup() {
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Persuasion Efficiency: <b>${Math.round(eff.persuasion * 100)}%</b> · Turnout Efficiency: <b>${Math.round(eff.turnout * 100)}%</b></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span class="badge" style="background:rgba(148,163,184,0.16);color:#cbd5e1;padding:4px 10px;border-radius:999px;font-size:11px;">Airwaves (${safe(defaultState)}): <b>${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}%)</b></span>
+          <span data-v0182-sat-badge class="badge" style="background:rgba(148,163,184,0.16);color:#cbd5e1;padding:4px 10px;border-radius:999px;font-size:11px;">Airwaves (${safe(defaultState)}): <b>${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}%)</b></span>
           <span class="badge" style="background:rgba(226,189,112,0.18);color:#e2bd70;padding:4px 10px;border-radius:999px;font-weight:700;">Actions Remaining: ${actionsLeft} / ${maxActs}</span>
         </div>
       </div>
@@ -5455,7 +5460,7 @@ function v0180CampaignWarRoomMarkup() {
         </label>
         <label style="font-size:12px;">Target Faction:
           <select id="v0180-faction-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
-            ${allFactions.map((f) => `<option value="${safe(f.id)}">${safe(f.name || f.id)}</option>`).join('')}
+            ${allFactions.map((f) => `<option value="${safe(f.id)}" ${f.id === (window.__v0181SelectedFaction || allFactions[0]?.id) ? 'selected' : ''}>${safe(f.name || f.id)}</option>`).join('')}
           </select>
         </label>
         <label style="font-size:12px;">Target Rival:
@@ -5487,7 +5492,7 @@ function v0180CampaignWarRoomMarkup() {
         ${c.themeSelectedThisMonth
           ? `<span style="font-size:12px;color:#86efac;">Active: <b>${safe(c.activeThemeName || c.activeThemeId)}</b></span>`
           : `<select id="v0180-theme-select" style="padding:4px 8px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
-              ${issues.map((i) => `<option value="${safe(i.id)}">${safe(i.name || i.id)}${(c.usedThemes || []).includes(i.id) ? ' (Used — Stale Penalty)' : ''}</option>`).join('')}
+              ${issues.map((i) => `<option value="${safe(i.id)}">${safe(i.label || i.name || i.id)}${(c.usedThemes || []).includes(i.id) ? ' (Used — Stale Penalty)' : ''}</option>`).join('')}
             </select>
             <button type="button" class="button button-secondary" data-v0180-action="select-campaign-theme">Set Theme</button>`}
       </div>
@@ -5533,7 +5538,11 @@ function v0180CampaignWarRoomMarkup() {
           <div style="font-weight:700;font-size:13px;">[${safe(cr.trait)}] ${safe(cr.title)}</div>
           <div style="font-size:12px;margin:3px 0 6px;">${safe(cr.headline)}</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${(cr.choices || []).map((ch) => `<button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-crisis" data-crisis-id="${safe(cr.id)}" data-choice-id="${safe(ch.id)}">${safe(ch.label)}</button>`).join('')}
+            ${(cr.choices || []).map((ch) => {
+              const chCost = Number(ch.cost || 0);
+              const cantAfford = chCost > 0 && Number(game.treasury || 0) < chCost;
+              return `<button type="button" class="button button-secondary" data-v0180-action="resolve-campaign-crisis" data-crisis-id="${safe(cr.id)}" data-choice-id="${safe(ch.id)}" ${cantAfford ? 'disabled' : ''}>${safe(ch.label)}${cantAfford ? ` (Need $${chCost}M)` : ''}</button>`;
+            }).join('')}
           </div>
         </div>
       `).join('')}
@@ -6507,7 +6516,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.18.1 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.18.2 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}</div>
@@ -6825,7 +6834,8 @@ function statesTabMarkup() {
   return `
     <section class="panel section-panel">
       <div class="section-heading">
-        <div><div class="eyebrow">Fullscreen 50-State Directory</div><h2>States, Chapters & Sitting Officials</h2></div>
+        <div><div class="eyebrow">Fullscreen 50-State Directory</div><h2>States, Chapters & Sitting Officials</h2>
+${Object.values(game?.chapters || {}).reduce((a, b) => a + (Number(b) || 0), 0) === 0 ? '<div style="font-size:12px;color:#fcd34d;margin:6px 0;">Tip: Establish your first state chapter to unlock recurring chapter fundraising and 3-cycle turnout cushions.</div>' : ''}</div>
         <span class="turnout-chip">${totalPlayerStateChapters().toLocaleString()} Total Player Chapters</span>
       </div>
 
@@ -7005,7 +7015,7 @@ function jointVictoryCompactsMarkup(game) {
       .map((p) => ({
         id: `compact-${p.id}`,
         pacName: p.name,
-        term: `2028 Cycle · ${p.petIssueLabel || p.petIssue || 'Targeted'} Media Reserve`,
+        term: `${game?.year || 2028} Cycle · ${p.petIssueLabel || p.petIssue || 'Targeted'} Media Reserve`,
         reserve: `$${(p.poolMillions || p.pool || 8.0).toFixed(1)}M`,
         status: 'pending',
       }));
@@ -7052,7 +7062,7 @@ function jointVictoryCompactsMarkup(game) {
             <div class="v13-compact-row">
               <div class="v13-compact-info">
                 <span class="v13-compact-name">${safe(c.pacName || c.name || 'Joint Steering Partner')}</span>
-                <span class="v13-compact-term">${safe(c.term || '2028 Cycle Agreement')}</span>
+                <span class="v13-compact-term">${safe(c.term || `${game?.year || 2028} Cycle Agreement`)}</span>
               </div>
               <div class="v13-compact-meta">
                 <span class="v13-compact-reserve">${safe(c.reserve || c.reserveAmount || '$0.0M')}</span>
@@ -7563,7 +7573,7 @@ function factionsTabMarkup() {
         </div>
       </section>
 
-      <!-- Active Coalition Compacts Widget (SUM-04 & SUM-06) -->
+      <!-- Active Coalition Compacts Widget -->
       ${activeCompactsWidgetMarkup()}
 
       <!-- Demographic Voting-Bloc Representation Disclaimer -->
@@ -7843,14 +7853,14 @@ function getMorningWireHeadline(game) {
   const year = game.year || 2028;
   const isCamp = Boolean(game.campaign?.active);
   const actionsRem = game.organizingActionsRemaining ?? 20;
-  const phaseLabel = isCamp ? `CAMPAIGN MONTH ${game.campaign.week}/5 · ${game.campaign.weeklyActionsLeft ?? 5}/5 ACTIONS REMAINING` : `ORGANIZING PHASE · ${actionsRem} ACTIONS REMAINING`;
+  const phaseLabel = isCamp ? `CAMPAIGN MONTH ${game.campaign.month || game.campaign.week}/5 · ${game.campaign.monthlyActionsLeft ?? game.campaign.weeklyActionsLeft ?? 8}/${game.campaign.maxMonthlyActions || 8} ACTIONS REMAINING` : `ORGANIZING PHASE · ${actionsRem} ACTIONS REMAINING`;
   const presLead = (game.phase === 'complete')
     ? (game.lastElection?.presidential ? `${game.lastElection.presidential.winnerName || 'Winner'} claims Electoral College victory` : 'Election concluded')
     : (game.forecasters?.cooked?.rating || 'Ossoff-Vance battleground remains tight across Sunbelt and Rust Belt');
 
   const isMinor = !['people', 'heritage'].includes(game.player?.baseTemplateId);
   const customOrMinor = game.player?.custom
-    ? `${safe(game.player.name)} surges as autonomous third force in 2028 landscape`
+    ? `${safe(game.player.name)} surges as autonomous third force in ${game?.year || 2028} landscape`
     : (isMinor ? `${safe(game.player.name)} mounts nationwide 50-state ballot access offensive` : null);
   const story = customOrMinor || presLead;
 
@@ -8800,8 +8810,8 @@ function campaignMarkup() {
         <span class="status-divider"></span>
         <span>${game.phase === 'organizing' ? `${game?.year || 2028} · THE RECRUITMENT PHASE (${game.organizingActionsRemaining ?? 20} Actions Remaining)` : game.campaign?.active ? `${game?.year || 2028} · CAMPAIGN MONTH ${game.campaign.week}/5` : `${game?.year || 2028} · ELECTION COMPLETE`}</span>
         ${window.PartySystemsUI ? window.PartySystemsUI.renderTopBarEraBadge(game) : ''}
-        <button type="button" class="text-button" id="open-primary-archive">Primary Archive</button>
-        <button type="button" class="text-button" id="open-save-slots">Saves (5 Slots)</button>
+        <button type="button" class="text-button" id="open-primary-archive-8" data-dup-id="open-primary-archive">Primary Archive</button>
+        <button type="button" class="text-button" id="open-save-slots-9" data-dup-id="open-save-slots">Saves (5 Slots)</button>
         <button type="button" class="text-button" id="new-game">New party</button>
       </div>
     </header>
@@ -8812,7 +8822,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.1</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.2</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -8824,7 +8834,7 @@ function campaignMarkup() {
           ${window.PartySystemsUI?.renderCoalitionStabilityHud ? window.PartySystemsUI.renderCoalitionStabilityHud(game) : ''}
           <span class="v07-happiness-pill">Sitting Member Happiness: <b>${Math.round(game.sittingMemberHappiness ?? 70)}/100</b></span>
           ${game.campaign?.active
-            ? `<span class="v07-happiness-pill">Campaign Actions: <b>${game.campaign.weeklyActionsLeft ?? 5}/5</b></span>
+            ? `<span class="v07-happiness-pill">Campaign Actions: <b>${game.campaign.monthlyActionsLeft ?? game.campaign.weeklyActionsLeft ?? 8}/${game.campaign.maxMonthlyActions || 8}</b></span>
                <span class="v07-happiness-pill">Wave Momentum: <b>${game.campaign.waveMomentum >= 0 ? 'D' : 'R'}+${Math.abs(game.campaign.waveMomentum || 0).toFixed(1)}</b></span>`
             : `<span class="v07-happiness-pill">Recruitment Actions Remaining: <b>${game.organizingActionsRemaining ?? 20}/20</b></span>`}
         </div>
@@ -8867,7 +8877,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.1</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.2</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
@@ -8915,10 +8925,49 @@ function syncGameSessionState() {
 // ============================================================================
 
 let electionNightInterval = null;
+let primaryAutoPlayInterval = null;
+
+function stopPrimaryAutoPlayback() {
+  if (primaryAutoPlayInterval) {
+    clearInterval(primaryAutoPlayInterval);
+    primaryAutoPlayInterval = null;
+  }
+}
+
+function ensurePrimaryAutoPlayback() {
+  const p = game?.activePresidentialPrimary;
+  if (!game || game.phase !== 'presidential-primary' || !p || p.stage === 'complete' || p.paused || p.autoPlay === false) {
+    stopPrimaryAutoPlayback();
+    return;
+  }
+  const speed = [1, 2, 4].includes(Number(p.speed)) ? Number(p.speed) : 1;
+  const stepMs = Math.max(1200, Math.round((Number(p.intervalMs) || 8000) / speed));
+  if (primaryAutoPlayInterval && primaryAutoPlayInterval._stepMs === stepMs) return;
+  stopPrimaryAutoPlayback();
+  const handle = setInterval(() => {
+    const curP = game?.activePresidentialPrimary;
+    if (!game || game.phase !== 'presidential-primary' || !curP || curP.stage === 'complete' || curP.paused || curP.autoPlay === false) {
+      stopPrimaryAutoPlayback();
+      return;
+    }
+    game = window.PartyChairEngine.takeAction(game, 'advance-primary-day', {});
+    if (typeof saveGame === 'function') saveGame(game);
+    if (typeof render === 'function') render();
+    if (!game?.activePresidentialPrimary || game.activePresidentialPrimary.stage === 'complete') {
+      stopPrimaryAutoPlayback();
+    }
+  }, stepMs);
+  handle._stepMs = stepMs;
+  primaryAutoPlayInterval = handle;
+}
 
 function buildElectionHoverTooltipHtml(race, snapEval) {
   if (!race) return '';
   const pct = snapEval ? Math.round(snapEval.pct) : (race.isCalled ? 100 : 0);
+  const isNotOpenYet = Boolean(snapEval && snapEval.isOpen === false && !snapEval.isCalled && pct === 0);
+  if (isNotOpenYet) {
+    return `<div style="font-weight:700;font-size:12.5px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.14);padding-bottom:3px;">${safe(race.name || race.stateId || race.code || 'Race')} <span style="opacity:0.75;font-weight:500;">· Polls Open</span></div><div style="font-size:12px;opacity:0.85;">Polls not closed yet — awaiting returns.</div>`;
+  }
   const shares = snapEval?.currentShares || snapEval?.liveShares || race.finalShares || race.shares || null;
   let rowsHtml = '';
   if (shares && typeof shares === 'object' && Object.keys(shares).length > 0) {
@@ -8970,13 +9019,13 @@ function ensureElectionHoverTooltipBound() {
     let snapEval = null;
     if (rowEl) {
       const rid = rowEl.getAttribute('data-race-id');
-      snapEval = (snap.theCountRaces || []).find((r) => r.id === rid) || snap.raceEvaluations?.[rid] || null;
+      snapEval = (snap.theCountRaces || []).find((r) => r.id === rid) || (snap.raceEvaluations || []).find((r) => r.id === rid) || null;
       race = allRaces.find((r) => r.id === rid) || snapEval;
     } else if (stateEl) {
       const stId = stateEl.getAttribute('data-desk-state');
       race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab)
         || allRaces.find((r) => r.stateId === stId);
-      if (race) snapEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id] || null;
+      if (race) snapEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || (snap.raceEvaluations || []).find((r) => r.id === race.id) || null;
     }
     if (!race) return;
     tip.innerHTML = buildElectionHoverTooltipHtml(race, snapEval);
@@ -8994,7 +9043,7 @@ function ensureElectionHoverTooltipBound() {
   });
 }
 
-// v0.18.1 (QA Fix #1): In-place DOM patching during Election Night playback — zero innerHTML wipes or flicker
+// v0.18.2 (QA Fix #1): In-place DOM patching during Election Night playback — zero innerHTML wipes or flicker
 function patchElectionNightLiveDOM() {
   if (typeof document === 'undefined' || !game?.electionNight?.active) return;
   const enEngine = window.ElectionNightEngine;
@@ -9004,39 +9053,51 @@ function patchElectionNightLiveDOM() {
   const mapMode = game.electionNight.mapMode || 'called';
   const allRaces = game.electionNight.timeline.races || [];
 
-  // 1. Patch clock text if present
+  // 1 (#4): Patch clock text directly from snap.clockLabel
   const clockEl = document.querySelector('.desk-clock, [data-en-clock]');
-  if (clockEl && enEngine.formatSimTime) {
-    clockEl.textContent = enEngine.formatSimTime(game.electionNight.elapsedMinutes || 0);
+  if (clockEl && snap.clockLabel) {
+    clockEl.textContent = snap.clockLabel;
   }
 
-  // 1b (#37): Patch EV / Senate / House scoreboard & Sallow Forecast & Call Ticker in-place
-  const evDem = document.querySelector('[data-en-ev="people"], .desk-ev-dem');
-  const evRep = document.querySelector('[data-en-ev="heritage"], .desk-ev-rep');
-  if (evDem && snap.evTotals) evDem.textContent = String(snap.evTotals.people || 0);
-  if (evRep && snap.evTotals) evRep.textContent = String(snap.evTotals.heritage || 0);
+  // 1b (#2): Patch EV / Senate / House scoreboard, Sallow Forecast, and Call Ticker from snap.scoreboard / snap.forecast / snap.calls
+  const sb = snap.scoreboard || {};
+  const evDem = document.querySelector('[data-en-ev="people"]');
+  const evRep = document.querySelector('[data-en-ev="heritage"]');
+  if (evDem && sb.president) evDem.textContent = String(sb.president.people || 0);
+  if (evRep && sb.president) evRep.textContent = String(sb.president.heritage || 0);
   const senDem = document.querySelector('[data-en-senate="people"]');
   const senRep = document.querySelector('[data-en-senate="heritage"]');
-  if (senDem && snap.senateTotals) senDem.textContent = String(snap.senateTotals.people || 0);
-  if (senRep && snap.senateTotals) senRep.textContent = String(snap.senateTotals.heritage || 0);
+  if (senDem && sb.senate) senDem.textContent = String(sb.senate.people || 0);
+  if (senRep && sb.senate) senRep.textContent = String(sb.senate.heritage || 0);
   const hseDem = document.querySelector('[data-en-house="people"]');
   const hseRep = document.querySelector('[data-en-house="heritage"]');
-  if (hseDem && snap.houseTotals) hseDem.textContent = String(snap.houseTotals.people || 0);
-  if (hseRep && snap.houseTotals) hseRep.textContent = String(snap.houseTotals.heritage || 0);
-  const forecastEl = document.querySelector('[data-en-sallow-forecast], .sallow-forecast-prob');
-  if (forecastEl && snap.sallowForecast?.headline) forecastEl.textContent = snap.sallowForecast.headline;
-  const tickerEl = document.querySelector('[data-en-call-ticker], .desk-call-ticker');
-  if (tickerEl && Array.isArray(snap.recentCalls) && snap.recentCalls.length > 0) {
-    const latest = snap.recentCalls[0];
-    tickerEl.textContent = latest.headline || `${latest.name}: ${getElectionPartyShort(latest.winner)} Projected Winner`;
+  if (hseDem && sb.house) hseDem.textContent = String(sb.house.people || 0);
+  if (hseRep && sb.house) hseRep.textContent = String(sb.house.heritage || 0);
+  const presOddsEl = document.querySelector('[data-en-sallow-forecast="president"]');
+  if (presOddsEl && snap.forecast?.presidentialWinOdds) {
+    const o = snap.forecast.presidentialWinOdds;
+    const dEl = presOddsEl.querySelector('[data-en-odds-dem]');
+    const rEl = presOddsEl.querySelector('[data-en-odds-rep]');
+    if (dEl) dEl.textContent = `Democrat: ${o.people || 0}%`;
+    if (rEl) rEl.textContent = `Republican: ${o.heritage || 0}%`;
+  } else {
+    const forecastEl = document.querySelector('[data-en-sallow-forecast]');
+    if (forecastEl && snap.forecast?.medianSeatsDem !== undefined) {
+      forecastEl.textContent = `${snap.forecast.medianSeatsDem} seats`;
+    }
+  }
+  const tickerEl = document.querySelector('[data-en-call-ticker]');
+  if (tickerEl && Array.isArray(snap.calls) && snap.calls.length > 0) {
+    const latest = snap.calls[0];
+    tickerEl.textContent = `${latest.name}: Called for ${getElectionPartyShort(latest.winnerPartyId)} (${latest.timestampLabel || ''})`;
   }
 
-  // 2. Patch SVG state fills & opacities in-place
+  // 2 (#3): Patch SVG state fills & opacities in-place using Array.find on raceEvaluations
   document.querySelectorAll('[data-desk-state]').forEach((pathEl) => {
     const stId = pathEl.getAttribute('data-desk-state');
     const race = allRaces.find((r) => r.stateId === stId && r.raceKind === activeTab);
     if (!race) return;
-    const stEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || snap.raceEvaluations?.[race.id];
+    const stEval = (snap.theCountRaces || []).find((r) => r.id === race.id) || (snap.raceEvaluations || []).find((r) => r.id === race.id);
     const isOpen = (game.electionNight.elapsedMinutes || 0) >= (race.closeMinutes || 0);
     const pct = stEval ? stEval.pct : 0;
     const isCalled = stEval ? stEval.isCalled : false;
@@ -9056,11 +9117,20 @@ function patchElectionNightLiveDOM() {
     }
   });
 
-  // 3. Patch "The Count" race rows in-place without touching scroll position
-  (snap.theCountRaces || []).forEach((r) => {
-    const row = document.querySelector(`.the-count-row[data-race-id="${r.id}"]`);
-    if (!row) return;
+  // 3 (#35): Patch existing "The Count" race rows AND append newly opened states in-place without wiping scroll
+  const countContainer = document.querySelector('.the-count-list');
+  (snap.theCountRaces || []).filter((r) => r.raceKind === activeTab).forEach((r) => {
+    let row = document.querySelector(`.the-count-row[data-race-id="${r.id}"]`);
     const col = getElectionPartyColor(r.liveLeader);
+    if (!row && countContainer) {
+      const div = document.createElement('div');
+      div.className = 'the-count-row';
+      div.setAttribute('data-race-id', r.id);
+      div.innerHTML = `<span class="count-code">${safe(r.code)}</span><span class="count-name">${safe(r.name)}</span><span class="count-lead" style="color:${col}">${safe(getElectionPartyShort(r.liveLeader))} +${Math.abs(r.liveLead).toFixed(1)}</span><span class="count-progress"><span class="count-progress-fill" style="width:${Math.round(r.pct)}%;background:${col}"></span></span><span class="count-status ${r.isCalled ? 'called' : 'pct'}">${r.isCalled ? 'CALLED' : `${Math.round(r.pct)}%`}</span>`;
+      countContainer.appendChild(div);
+      return;
+    }
+    if (!row) return;
     const leadEl = row.querySelector('.count-lead');
     const fillEl = row.querySelector('.count-progress-fill');
     const statEl = row.querySelector('.count-status');
@@ -9068,6 +9138,32 @@ function patchElectionNightLiveDOM() {
     if (fillEl) { fillEl.style.width = `${Math.round(r.pct)}%`; fillEl.style.background = col; }
     if (statEl) { statEl.textContent = r.isCalled ? 'CALLED' : `${Math.round(r.pct)}%`; statEl.className = `count-status ${r.isCalled ? 'called' : 'pct'}`; }
   });
+
+  // 4 (#34): Prepend newly called races into the "Just Called" feed in-place
+  const calledFeed = document.querySelector('.just-called-list, .just-called-feed');
+  if (calledFeed && Array.isArray(snap.calls)) {
+    snap.calls.slice(0, 20).reverse().forEach((c) => {
+      if (calledFeed.querySelector(`.just-called-item[data-call-id="${c.id}"]`)) return;
+      const qn = calledFeed.querySelector('.quiet-note');
+      if (qn) qn.remove();
+      const item = document.createElement('div');
+      item.className = 'just-called-item';
+      item.setAttribute('data-call-id', c.id);
+      const pCol = getElectionPartyColor(c.winnerPartyId);
+      const pSh = getElectionPartyShort(c.winnerPartyId);
+      item.innerHTML = `<div class="just-called-row"><div class="just-called-left"><span class="just-called-badge">${safe(String(c.raceKind || '').toUpperCase().slice(0, 4))}</span><span class="just-called-name">${safe(c.name)}</span></div><div class="just-called-right"><span class="just-called-party-pill" style="background:${pCol}">${safe(pSh)}${c.electoralVotes ? ` · ${c.electoralVotes} EV` : ''}</span><span class="just-called-time">${safe(c.timestampLabel || '')}</span></div></div>`;
+      calledFeed.prepend(item);
+    });
+  }
+
+  // 5 (#36): Update Breaking Call banner in-place when a clinch occurs mid-broadcast
+  const breakHost = document.querySelector('[data-en-breaking-host]');
+  if (breakHost && snap.breakingCall && !game.electionNight.breakingBannerDismissed) {
+    if (breakHost.getAttribute('data-breaking-key') !== snap.breakingCall.headline) {
+      breakHost.setAttribute('data-breaking-key', snap.breakingCall.headline);
+      breakHost.innerHTML = `<div class="breaking-call-banner" style="margin:8px 0;padding:10px 14px;border-radius:8px;background:rgba(226,189,112,0.16);border:1px solid #e2bd70;font-weight:700;">★ ${safe(snap.breakingCall.stamp || 'BREAKING')}: ${safe(snap.breakingCall.headline)}</div>`;
+    }
+  }
 }
 
 function ensureElectionNightPlayback() {
@@ -9189,7 +9285,7 @@ function renderElectionNightScreen() {
     { id: 'senate', label: 'Senate' },
     { id: 'house', label: 'House' },
     { id: 'governors', label: 'Governors' },
-    { id: 'statewide', label: 'Statewide Exec' },
+    { id: 'statewide_executive', label: 'Statewide Exec' },
     { id: 'state_leg', label: 'State Legislatures' },
   ];
 
@@ -9201,10 +9297,11 @@ function renderElectionNightScreen() {
   const stateRows = MAPS.states.filter((s) => s.id !== 'DC');
 
   const mapGeometry = stateRows.map((state) => {
+    const _enStName = state.name || window.PartyChairData?.STATES?.find((s) => s.id === state.id)?.name || state.id;
     const race = timeline.races.find((r) => r.raceKind === activeTab && r.stateId === state.id);
     let fillColor = '#22304F';
     let fillOpacity = 0.5;
-    let title = `${state.name} (${state.id})`;
+    let title = `${_enStName} (${state.id})`;
 
     if (race) {
       const stateEval = snapshot.raceEvaluations.find((re) => re.id === race.id);
@@ -9217,13 +9314,13 @@ function renderElectionNightScreen() {
       if (!isOpen) {
         fillColor = '#22304F';
         fillOpacity = 0.45;
-        title = `${state.name} (${state.id}) · Polls close at ${enEngine.formatSimTime(race.closeMinutes)} · Too early to call`;
+        title = `${_enStName} (${state.id}) · Polls close at ${enEngine.formatSimTime(race.closeMinutes)} · Too early to call`;
       } else {
         fillOpacity = Math.round((0.40 + 0.60 * (pct / 100)) * 100) / 100;
         if (isCalled) {
           fillColor = getElectionPartyColor(race.finalWinner);
           fillOpacity = 1.0;
-          title = `${state.name} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}CALLED for ${getElectionPartyShort(race.finalWinner)} · 100% counted`;
+          title = `${_enStName} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}CALLED for ${getElectionPartyShort(race.finalWinner)} · 100% counted`;
         } else {
           if (mapMode === 'margin') {
             const intensity = Math.min(1, lead / 15);
@@ -9232,13 +9329,13 @@ function renderElectionNightScreen() {
           } else {
             fillColor = getElectionPartyColor(leader);
           }
-          title = `${state.name} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}Leading: ${getElectionPartyShort(leader)} +${lead.toFixed(1)}% · ${Math.round(pct)}% counted`;
+          title = `${_enStName} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}Leading: ${getElectionPartyShort(leader)} +${lead.toFixed(1)}% · ${Math.round(pct)}% counted`;
         }
       }
     } else {
       fillColor = '#1a2432';
       fillOpacity = 0.35;
-      title = `${state.name} (${state.id}) · No contest in this chamber`;
+      title = `${_enStName} (${state.id}) · No contest in this chamber`;
     }
 
     return `<path style="fill:${fillColor};fill-opacity:${fillOpacity}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-desk-state="${state.id}" tabindex="0"><title>${safe(title)}</title></path>`;
@@ -9248,7 +9345,7 @@ function renderElectionNightScreen() {
   const mapSvg = `<svg class="desk-map-svg" viewBox="${MAPS.viewBox}" role="img" aria-label="Election Night Live Results Map">${mapGeometry}${mapLabels}</svg>`;
 
   // 5. "The Count" Live Closest-First Table for Active Tab
-  const seoNightResults = (activeTab === 'statewide')
+  const seoNightResults = (activeTab === 'statewide' || activeTab === 'statewide_executive')
     ? (game.statewideOfficesHistory?.[game.year] || (window.ElectionNightEngine?.resolveStatewideOffices ? window.ElectionNightEngine.resolveStatewideOffices(game, game.year).results : []))
     : [];
   const activeTabRaces = snapshot.theCountRaces.filter((r) => r.raceKind === activeTab);
@@ -9297,7 +9394,7 @@ function renderElectionNightScreen() {
   if (activeTab === 'senate') { thresholdLabel = '51 to win'; totalCap = 100; tabTitle = 'The U.S. Senate'; }
   else if (activeTab === 'house') { thresholdLabel = '218 to win'; totalCap = 435; tabTitle = 'The U.S. House'; }
   else if (activeTab === 'governors') { thresholdLabel = 'Governor Control'; totalCap = 50; tabTitle = 'The Governorships'; }
-  else if (activeTab === 'statewide') {
+  else if (activeTab === 'statewide' || activeTab === 'statewide_executive') {
     const seoDem = seoNightResults.filter((r) => r.winner === 'people').length;
     const seoRep = seoNightResults.filter((r) => r.winner === 'heritage').length;
     tabScore.people = seoDem;
@@ -9326,9 +9423,9 @@ function renderElectionNightScreen() {
           <span>Projections, not calls</span>
         </div>
         <div class="forecast-grid">
-          <div class="forecast-odds-row">
-            <span style="color:#3b82f6;font-weight:700">Democrat: ${demOdd}%</span>
-            <span style="color:#ef4444;font-weight:700">Republican: ${repOdd}%</span>
+          <div class="forecast-odds-row" data-en-sallow-forecast="president">
+            <span style="color:#3b82f6;font-weight:700" data-en-odds-dem>Democrat: ${demOdd}%</span>
+            <span style="color:#ef4444;font-weight:700" data-en-odds-rep>Republican: ${repOdd}%</span>
           </div>
           <div class="forecast-bar">
             <div class="forecast-fill" style="width:${demOdd}%;background:#3b82f6"></div>
@@ -9352,7 +9449,7 @@ function renderElectionNightScreen() {
             <span style="color:var(--gold);font-weight:700">Hung: ${odds.hung || 0}%</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:4px;">
-            Median Democratic projection: <b style="color:#f1f5f9">${fc.medianSeatsDem} seats</b> (80% confidence: ${fc.range80Dem[0]}–${fc.range80Dem[1]})
+            Median Democratic projection: <b style="color:#f1f5f9" data-en-sallow-forecast>${fc.medianSeatsDem} seats</b> (80% confidence: ${fc.range80Dem[0]}–${fc.range80Dem[1]})
           </div>
         </div>
       </div>
@@ -9391,11 +9488,19 @@ function renderElectionNightScreen() {
   const completionMarkup = snapshot.isFinished ? `
     <div class="final-decision-card">
       <div class="final-eyebrow">ALL RETURNS COUNTED</div>
-      <div class="final-headline">${timeline.isPresidential ? `${safe(timeline.races.find(r => r.raceKind === 'president')?.finalWinner === 'people' ? 'Democrats' : 'Republicans')} Win the White House` : 'Midterm Election Resolution Complete'}</div>
+      <div class="final-headline">${timeline.isPresidential ? (() => {
+        const demEv = snapshot.scoreboard?.president?.people || 0;
+        const repEv = snapshot.scoreboard?.president?.heritage || 0;
+        const thirdEv = snapshot.scoreboard?.president?.third || 0;
+        if (demEv >= 270) return 'Democrats Win the White House';
+        if (repEv >= 270) return 'Republicans Win the White House';
+        if (thirdEv >= 270) return `${safe(game?.player?.name || 'Third Party')} Wins the White House`;
+        return 'Electoral College Deadlock — 12th Amendment Contingent Election';
+      })() : 'Midterm Election Resolution Complete'}</div>
       <div class="final-summary">
         ${timeline.isPresidential ? `Final Electoral College: ${snapshot.scoreboard.president.people} Dem · ${snapshot.scoreboard.president.heritage} GOP` : `Senate: ${snapshot.scoreboard.senate.people} Dem · ${snapshot.scoreboard.senate.heritage} GOP | House: ${snapshot.scoreboard.house.people} Dem · ${snapshot.scoreboard.house.heritage} GOP`}
       </div>
-${en.completed ? v0180PollingMissBannerMarkup() : ''}
+${(game?.electionNight?.completed || snapshot.isFinished) ? v0180PollingMissBannerMarkup() : ''}
       <button type="button" class="button button-gold desk-complete-btn" id="desk-btn-complete">See the full results →</button>
     </div>
   ` : `
@@ -9410,8 +9515,14 @@ ${en.completed ? v0180PollingMissBannerMarkup() : ''}
       <header class="decision-desk-header">
         <div class="desk-header-left">
           ${statusPill}
-          <span class="desk-clock">${snapshot.clockLabel}</span>
+          <span class="desk-clock" data-en-clock>${snapshot.clockLabel}</span>
           <span class="desk-title">DECISION DESK · NOV 7, ${game?.year || 2028}</span>
+          <span class="badge" style="font-size:11px;margin-left:8px;background:rgba(15,23,42,0.7);padding:3px 8px;border-radius:6px;">
+            ${timeline.isPresidential ? `EV: <b data-en-ev="people">${snapshot.scoreboard.president.people}</b>–<b data-en-ev="heritage">${snapshot.scoreboard.president.heritage}</b> · ` : ''}
+            Sen: <b data-en-senate="people">${snapshot.scoreboard.senate.people}</b>–<b data-en-senate="heritage">${snapshot.scoreboard.senate.heritage}</b> ·
+            House: <b data-en-house="people">${snapshot.scoreboard.house.people}</b>–<b data-en-house="heritage">${snapshot.scoreboard.house.heritage}</b>
+          </span>
+          <span data-en-call-ticker style="font-size:11px;margin-left:8px;opacity:0.85;">${snapshot.calls[0] ? safe(`${snapshot.calls[0].name}: ${getElectionPartyShort(snapshot.calls[0].winnerPartyId)}`) : 'Awaiting first calls'}</span>
         </div>
         <div class="desk-phases">
           ${phaseMarkup}
@@ -9424,6 +9535,7 @@ ${en.completed ? v0180PollingMissBannerMarkup() : ''}
           </div>
         </div>
       </header>
+      <div data-en-breaking-host></div>
 
       ${breakingMarkup}
 
@@ -9565,6 +9677,7 @@ function bindElectionNightControls() {
   document.querySelector('#desk-btn-complete')?.addEventListener('click', () => {
     dispatchAction('election-night-complete');
     stopElectionNightPlayback();
+    if (game && typeof saveGame === 'function') saveGame(game);
     render();
   });
 }
@@ -9577,9 +9690,10 @@ function renderPrimarySvgMap(stateResults = {}) {
     const res = stateResults[state.id];
     const fill = res?.winnerColor || '#22304F';
     const opacity = res ? 0.95 : 0.38;
+    const _primStName = state.name || window.PartyChairData?.STATES?.find((s) => s.id === state.id)?.name || state.id;
     const title = res
-      ? `${state.name} (${state.id}) · Winner: ${res.winnerName} (${res.shares?.[res.winnerId] || 0}% · ${res.totalDelegates || 0} del)`
-      : `${state.name} (${state.id}) · Upcoming Primary`;
+      ? `${_primStName} (${state.id}) · Winner: ${res.winnerName} (${res.shares?.[res.winnerId] || 0}% · ${res.totalDelegates || 0} del)`
+      : `${_primStName} (${state.id}) · Upcoming Primary`;
     return `<path style="fill:${fill};fill-opacity:${opacity}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}"><title>${safe(title)}</title></path>`;
   }).join('');
   const labels = stateRows.map((s) => `<text x="${s.cx}" y="${s.cy}" class="map-label" pointer-events="none">${s.id}</text>`).join('');
@@ -9598,6 +9712,22 @@ function renderPrimarySvgMap(stateResults = {}) {
 function renderPresidentialPrimaryScreen() {
   const p = game?.activePresidentialPrimary;
   if (!p) return '';
+  const _autoBar = p.stage !== 'complete' ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;margin-bottom:12px;border-radius:10px;background:rgba(15,23,42,0.85);border:1px solid rgba(226,189,112,0.4);">
+      <div style="font-size:12.5px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.paused ? '#f59e0b' : '#22c55e'};margin-right:6px;"></span>
+        <b>${p.paused ? 'PRIMARY BROADCAST PAUSED' : 'AUTO-PLAYING PRESIDENTIAL PRIMARY'}</b>
+        <span style="opacity:0.8;margin-left:8px;">Sit back and watch the primaries unfold (~2–3 min at 1×), or pause anytime.</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="button button-secondary" style="font-size:11.5px;padding:4px 10px;" data-v0182-primary="primary-toggle-pause">${p.paused ? '▶ Resume' : '⏸ Pause'}</button>
+        <button type="button" class="button ${(p.speed || 1) === 1 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="1">1×</button>
+        <button type="button" class="button ${p.speed === 2 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="2">2×</button>
+        <button type="button" class="button ${p.speed === 4 ? 'button-gold' : 'button-secondary'}" style="font-size:11.5px;padding:4px 8px;" data-v0182-primary="primary-set-speed" data-speed="4">4×</button>
+        <button type="button" class="button button-secondary" style="font-size:11.5px;padding:4px 10px;" data-v0182-primary="primary-skip-to-end">Skip to Nominee ⏭</button>
+      </div>
+    </div>
+  ` : '';
   const activeCands = (p.candidates || []).slice().sort((a, b) => Number(b.delegates || 0) - Number(a.delegates || 0) || Number(b.nationalPoll || 0) - Number(a.nationalPoll || 0));
   const curDay = p.schedule?.[p.scheduleIndex] || null;
   const statesToday = curDay?.states || [];
@@ -9746,11 +9876,11 @@ function renderPresidentialPrimaryScreen() {
       <div class="topbar-actions">
         <span style="--party:${game.player.color}" class="status-party">${safe(game.player.name)}</span>
         <span>${p.year} · PRESIDENTIAL PRIMARY (${p.interventionsCount === 0 ? 'Neutral' : `${p.interventionsCount} Interventions`})</span>
-        <button type="button" class="text-button" id="open-primary-archive">Primary Archive</button>
-        <button type="button" class="text-button" id="open-save-slots">Saves (5 Slots)</button>
+        <button type="button" class="text-button" id="open-primary-archive-10" data-dup-id="open-primary-archive">Primary Archive</button>
+        <button type="button" class="text-button" id="open-save-slots-11" data-dup-id="open-save-slots">Saves (5 Slots)</button>
       </div>
     </header>
-    <main class="screen campaign-screen">
+    <main class="screen campaign-screen">${_autoBar}
       ${stagePanel}
       <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:14px;align-items:start">
         <section class="panel section-panel">
@@ -9850,7 +9980,8 @@ function renderSaveSlotsModalMarkup() {
 }
 
 function render() {
-  if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip) _tip.style.display = 'none'; }
+  if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip && _tip.style) _tip.style.display = 'none'; }
+  if (typeof ensurePrimaryAutoPlayback === 'function') ensurePrimaryAutoPlayback();
   syncGameSessionState();
   if (game && V07 && (!game.sittingMembers?.length || !game.trust || !game.leadershipRoles)) {
     game = V07.hydrateV07GameState(game);
@@ -9862,6 +9993,12 @@ function render() {
     return;
   }
   stopElectionNightPlayback();
+  if (game && game.phase === 'presidential-primary' && game.activePresidentialPrimary) {
+    app.innerHTML = renderPresidentialPrimaryScreen();
+    if (game) saveGame(game);
+    bind();
+    return;
+  }
   app.innerHTML = game ? campaignMarkup() : setupMarkup();
   if (game) saveGame(game);
   bind();
@@ -9909,24 +10046,17 @@ function dispatchAction(actionId, payload = {}) {
 }
 
 function bind() {
+  const nameInput = document.querySelector('#custom-party-name');
+  const leaderInput = document.querySelector('#custom-leader-name');
+  const colorInput = document.querySelector('#custom-party-color');
   document.querySelectorAll('[data-template]').forEach((button) => button.addEventListener('click', () => {
     selectedTemplate = button.dataset.template;
     custom = false;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
-  const customToggle = document.querySelector('#custom-mode');
-  if (customToggle) customToggle.addEventListener('change', () => {
-    custom = customToggle.checked;
-    if (custom && !customIssuePositions) customIssuePositions = null;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
-    if (nameInput) customPartyName = nameInput.value;
-    render();
-  });
   document.querySelectorAll('[data-leader-archetype]').forEach((button) => button.addEventListener('click', () => {
     selectedLeaderArchetype = button.dataset.leaderArchetype;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
@@ -9979,7 +10109,6 @@ function bind() {
 
   document.querySelectorAll('[data-custom-cat]').forEach((button) => button.addEventListener('click', () => {
     customIssueCategory = button.dataset.customCat;
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
     render();
   }));
@@ -10050,22 +10179,17 @@ function bind() {
 
   const start = document.querySelector('#start-game');
   if (start) start.addEventListener('click', () => {
-    const nameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
     if (nameInput) customPartyName = nameInput.value;
-    const leaderInput = document.querySelector('#custom-leader-name') || document.querySelector('#leader-name');
     if (leaderInput) customLeaderName = leaderInput.value;
     const colorInput = document.querySelector('#custom-party-color-hex')
       || document.querySelector('#custom-party-color')
-      || document.querySelector('#party-color-hex')
-      || document.querySelector('#party-color');
     if (colorInput) customPartyColor = colorInput.value;
 
     const isCustomMode = custom || selectedTemplate === 'custom';
     const customName = (customPartyName || '').trim();
     if (isCustomMode && !customName) {
-      const customNameInput = document.querySelector('#custom-party-name') || document.querySelector('#party-name');
-      customNameInput?.focus();
-      customNameInput?.classList.add('invalid');
+      nameInput?.focus();
+      nameInput?.classList.add('invalid');
       return;
     }
 
@@ -10301,10 +10425,6 @@ function bind() {
   });
 
   // Major Priorities Confirmation Modal & Lock Handlers (REQ-97)
-  document.querySelector('#btn-request-lock-priorities')?.addEventListener('click', () => {
-    majorPrioritiesConfirmModalOpen = true;
-    render();
-  });
   document.querySelector('#btn-lock-major-priorities-confirm')?.addEventListener('click', () => {
     majorPrioritiesConfirmModalOpen = false;
     game.prioritiesLocked = true;
@@ -10341,10 +10461,6 @@ function bind() {
     priorityIssueCategory = button.dataset.priorityCat;
     render();
   }));
-  document.querySelector('#allow-extra-regions')?.addEventListener('change', (e) => {
-    allowExtraRegions = e.target.checked;
-    render();
-  });
   document.querySelectorAll('[data-toggle-issue-priority]').forEach((button) => button.addEventListener('click', () => {
     dispatchAction('toggle-issue-priority', { issueId: button.dataset.toggleIssuePriority });
     render();
@@ -10403,8 +10519,8 @@ function bind() {
   });
 
   // Step 4: Keynote Speaker, Recruit Bridge & Actions
-  document.querySelector('#select-keynote')?.addEventListener('click', () => {
-    const memberId = document.querySelector('#keynote-speaker')?.value;
+  document.querySelector('[data-dup-id="select-keynote"]')?.addEventListener('click', () => {
+    const memberId = document.querySelector('[data-dup-id="keynote-speaker"]')?.value;
     if (memberId) {
       dispatchAction('select-keynote-speaker', { memberId });
       render();
@@ -10437,14 +10553,13 @@ function bind() {
     if (action === 'chapter') {
       payload.stateId = document.querySelector('#chapter-state')?.value || mapState;
     }
-    if (action === 'summit') payload.factionId = document.querySelector('#summit-faction')?.value;
     if (action === 'introduce-bill') {
       payload.billId = document.querySelector('#bill-choice')?.value;
       payload.stateId = document.querySelector('#bill-state')?.value;
     }
     if (action === 'endorse-bill') payload.factionId = document.querySelector('#bill-endorser')?.value;
     if (action === 'tour') {
-      payload.memberId = document.querySelector('#tour-member')?.value;
+      payload.memberId = document.querySelector('[data-dup-id="tour-member"]')?.value;
       payload.stateId = document.querySelector('#tour-state')?.value;
       payload.actionId = 'member-tour';
     }
@@ -10452,7 +10567,6 @@ function bind() {
       payload.stateId = document.querySelector('#reg-state')?.value || mapState;
     }
     if (action === 'persuade-independent-caucus' || action === 'court-politician') {
-      const targetId = document.querySelector('#ind-caucus-target')?.value || document.querySelector('#court-target')?.value;
       payload.memberId = targetId;
       payload.targetId = targetId;
       payload.leadershipRoleId = document.querySelector('#court-role-select')?.value;
@@ -10548,7 +10662,7 @@ function bind() {
       });
       game.roster = [...new Set([...(game.roster || []), payload.targetId])];
       game.recruited = [...new Set([...(game.recruited || game.roster || []), payload.targetId])];
-      game.lastNote = `Courted lawmaker ${payload.targetId} to defect to ${game.player?.name || 'your party'}.`;
+      game.lastNote = `Courted lawmaker ${payload.targetId} to defect to ${safe(game.player?.name || 'your party')}.`;
     }
     render();
   }));
@@ -10674,10 +10788,6 @@ function bind() {
     customFoundingStateId = e.target.value;
     render();
   });
-  document.querySelector('#custom-schism-parent')?.addEventListener('change', (e) => {
-    customSchismParent = e.target.value;
-    render();
-  });
   document.querySelector('#custom-100k-name')?.addEventListener('input', (e) => {
     custom100kName = e.target.value;
   });
@@ -10686,9 +10796,6 @@ function bind() {
   });
   document.querySelector('#custom-100k-soc')?.addEventListener('input', (e) => {
     custom100kSliders.social = parseFloat(e.target.value);
-  });
-  document.querySelector('#custom-100k-gov')?.addEventListener('input', (e) => {
-    custom100kSliders.governance = parseFloat(e.target.value);
   });
 
   // Draft-of-7 Priorities Controls (REQ-230, REQ-231)
@@ -10790,10 +10897,6 @@ function bind() {
   }));
 
   // Strategic Priorities Lock-In (REQ-69)
-  document.querySelector('#confirm-lock-priorities')?.addEventListener('click', () => {
-    dispatchAction('lock-priorities', {});
-    render();
-  });
 
   // State Subview & Registration Sorting (REQ-66)
   document.querySelectorAll('[data-state-subview]').forEach((button) => button.addEventListener('click', () => {
@@ -10952,9 +11055,11 @@ function bind() {
     if (window.PartyChairEngine?.startNextCycle) {
       game = window.PartyChairEngine.startNextCycle(game);
       if (V07 && game) game = V07.hydrateV07GameState(game);
+      if (game && typeof saveGame === 'function') saveGame(game);
       render();
     } else {
       dispatchAction('start-next-cycle');
+      if (game && typeof saveGame === 'function') saveGame(game);
       render();
     }
   });
@@ -11013,6 +11118,7 @@ function bind() {
     if (window.PartyChairEngine?.advanceCampaignWeek) {
       game = window.PartyChairEngine.advanceCampaignWeek(game);
       if (V07 && game) game = V07.hydrateV07GameState(game);
+      if (game && typeof saveGame === 'function') saveGame(game);
       render();
     }
   });
@@ -11020,9 +11126,11 @@ function bind() {
     if (window.PartyChairEngine?.applyCampaignEventChoice) {
       game = window.PartyChairEngine.applyCampaignEventChoice(game, Number(btn.dataset.campaignEventChoice));
       if (V07 && game) game = V07.hydrateV07GameState(game);
+      if (game && typeof saveGame === 'function') saveGame(game);
       render();
     } else {
       dispatchAction('resolve-campaign-event', { choiceIndex: Number(btn.dataset.campaignEventChoice) });
+      if (game && typeof saveGame === 'function') saveGame(game);
       render();
     }
   }));
@@ -11150,10 +11258,6 @@ function bind() {
       dispatchAction('vet-or-oppo', { mode: 'oppo', stateId });
       render();
     }
-  });
-  document.querySelector('#action-caucus-retreat')?.addEventListener('click', () => {
-    dispatchAction('caucus-retreat', {});
-    render();
   });
   document.querySelector('#action-volunteer-drive')?.addEventListener('click', () => {
     const stateId = document.querySelector('#volunteer-state-select')?.value || 'PA';
@@ -11412,6 +11516,7 @@ function bind() {
     }
     if (btn) btn.dataset.confirmArmed = '';
     if (typeof stopElectionNightPlayback === 'function') stopElectionNightPlayback();
+    if (typeof stopPrimaryAutoPlayback === 'function') stopPrimaryAutoPlayback();
     {
       Object.keys(localStorage).filter((k) => k.startsWith('partyChairGame.save.')).forEach((k) => localStorage.removeItem(k));
       game = null;
@@ -11427,7 +11532,7 @@ function bind() {
       render();
     }
   });
-  document.querySelector('#open-primary-archive')?.addEventListener('click', () => {
+  document.querySelector('[data-dup-id="open-primary-archive"]')?.addEventListener('click', () => {
     primaryArchiveOpen = true;
     render();
   });
@@ -11470,7 +11575,7 @@ function bind() {
     else if (act === 'finish') dispatchAction('finish-presidential-primary', {});
     render();
   }));
-  document.querySelector('#open-save-slots')?.addEventListener('click', async () => {
+  document.querySelector('[data-dup-id="open-save-slots"]')?.addEventListener('click', async () => {
     saveSlotsModalOpen = true;
     if (window.PartyChairEngine?.listSaveSlotsAsync) {
       cachedSaveSlots = await window.PartyChairEngine.listSaveSlotsAsync();
@@ -11624,20 +11729,42 @@ window.PartyChairApp = {
 };
 
 render();
-})();
 
-// v0.18.1: Delegated Campaign War Room action bindings
+// v0.18.2: Delegated Campaign War Room action bindings
 if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
   window.__v0180WarRoomBound = true;
   document.addEventListener('change', (e) => {
     if (e.target?.id === 'v0180-state-select') {
       window.__v0181SelectedState = e.target.value;
-      if (typeof render === 'function') render();
+      const satBadge = document.querySelector('[data-v0182-sat-badge]');
+      const CO = window.CampaignOverhaul;
+      if (satBadge && CO && game?.campaign) {
+        const stId = e.target.value;
+        const tier = CO.getSaturationTier ? CO.getSaturationTier(Number(game.campaign.stateSaturation?.[stId] || 0)) : { label: 'Fresh', effMult: 1 };
+        satBadge.innerHTML = `Airwaves (${safe(stId)}): <b>${safe(tier.label)} (${Math.round((tier.effMult || 1) * 100)}%)</b>`;
+      }
     } else if (e.target?.id === 'v0180-rival-select') {
       window.__v0181SelectedRival = e.target.value;
+    } else if (e.target?.id === 'v0180-faction-select') {
+      window.__v0181SelectedFaction = e.target.value;
     }
   });
   document.addEventListener('click', (e) => {
+    const primCtrlBtn = e.target?.closest?.('[data-v0182-primary]');
+    if (primCtrlBtn && game) {
+      const pAct = primCtrlBtn.getAttribute('data-v0182-primary');
+      const spd = primCtrlBtn.getAttribute('data-speed');
+      game = window.PartyChairEngine.takeAction(game, pAct, spd ? { speed: Number(spd) } : {});
+      if (typeof saveGame === 'function') saveGame(game);
+      if (typeof render === 'function') render();
+      return;
+    }
+    const primStateBtn = e.target?.closest?.('[data-primary-state]');
+    if (primStateBtn && game?.activePresidentialPrimary) {
+      primaryFilterStatePick = primStateBtn.getAttribute('data-primary-state');
+      if (typeof render === 'function') render();
+      return;
+    }
     const pinBtn = e.target?.closest?.('[data-v0180-toggle-pins]');
     if (pinBtn) {
       window.__v0181ShowRivalPins = !window.__v0181ShowRivalPins;
@@ -11650,7 +11777,8 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
     const stateSel = document.getElementById('v0180-state-select');
     const facSel = document.getElementById('v0180-faction-select');
     const rivalSel = document.getElementById('v0180-rival-select');
-    const targetState = stateSel?.value || window.__v0181SelectedState || (game.campaign?.recommendedStates?.[0]) || 'PA';
+    const _normRecId = (x) => (typeof x === 'string' ? x : (x?.stateId || x?.id || x?.code || ''));
+    const targetState = stateSel?.value || _normRecId(window.__v0181SelectedState) || _normRecId(game.campaign?.recommendedStates?.[0]) || 'PA';
     const targetFaction = facSel?.value || 'ind_moderates';
     const targetRival = rivalSel?.value || window.__v0181SelectedRival || undefined;
     let payload = { stateId: targetState, factionId: targetFaction, partyId: targetRival };
@@ -11670,10 +11798,13 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
       payload = { politicianId: btn.getAttribute('data-id'), stateId: targetState };
     } else if (act === 'resolve-final-blitz') {
       const picks = [0, 1, 2].map((i) => document.getElementById(`v0180-blitz-${i}`)?.value).filter(Boolean);
-      payload = { stateIds: picks.length ? picks : (game.campaign?.recommendedStates || ['PA', 'MI', 'WI']).slice(0, 3) };
+      const _fbBlitz = (game.campaign?.recommendedStates || []).map(_normRecId).filter(Boolean).slice(0, 3);
+      payload = { stateIds: picks.length ? picks : (_fbBlitz.length ? _fbBlitz : ['PA', 'MI', 'WI']) };
     }
     game = window.PartyChairEngine.takeAction(game, act, payload);
     if (typeof saveGame === 'function') saveGame(game);
     if (typeof render === 'function') render();
   });
 }
+
+})();

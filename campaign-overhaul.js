@@ -134,7 +134,8 @@
           ? Number(rival.treasury)
           : (isMajor ? 65.0 : 10.0);
       }
-      const avail = Math.max(0, Number(nextRivalTreasuries[rival.id] || 0));
+      const monthlyRefill = month > 1 ? (isMajor ? 14.0 : 2.5) : 0;
+      const avail = round(Math.max(0, Number(nextRivalTreasuries[rival.id] || 0)) + monthlyRefill, 2);
       const desiredBudget = isMajor
         ? round(12 + hashFloat(`${seed}:${year}:m${month}:b:${rival.id}`) * 10, 1)
         : round(1.5 + hashFloat(`${seed}:${year}:m${month}:b:${rival.id}`) * 3.0, 1);
@@ -223,7 +224,10 @@
   // 3. MONTHLY NARRATIVE FRAMING ("THEME OF THE MONTH")
   // ==========================================================================
   function selectCampaignTheme(game, issueId) {
-    if (!game?.campaign || !issueId) return game;
+    if (!game?.campaign?.active || (game.phase && game.phase !== 'campaign' && game.phase !== 'general-campaign')) {
+      return { ...game, lastNote: 'Theme of the Month can only be set during the active General Election Campaign.' };
+    }
+    if (!issueId) return game;
     if (game.campaign.themeSelectedThisMonth) {
       return { ...game, lastNote: 'Theme of the Month has already been set for this month.' };
     }
@@ -237,14 +241,22 @@
     const allIssues = global.PartySystemsEngine?.getActiveIssuesForGame
       ? global.PartySystemsEngine.getActiveIssuesForGame(game)
       : (global.PartyChairData?.VERSION_021_ISSUES || global.PartyChairData?.ISSUES || []);
-    const issueObj = allIssues.find((i) => i.id === issueId) || { id: issueId, name: issueId, importance: 0.65, baseline: 0 };
-    const playerStance = Number(game.issuePositions?.[issueId] ?? game.platform?.[issueId] ?? 0);
-    const rawMedian = issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline ?? issueObj.defaultPosition ?? 0;
-    const nationalMedian = Number.isFinite(Number(rawMedian)) ? Number(rawMedian) : 0;
+    const issueObj = allIssues.find((i) => i.id === issueId) || { id: issueId, label: issueId, name: issueId, importance: 0.7 };
+    const issueDisplayName = issueObj.label || issueObj.name || issueId;
+    const playerStance = Number(game.issuePositions?.[issueId] ?? game.platform?.[issueId] ?? 5.5);
+    // #6: Compute national median on the 1-10 issue scale from issue.defaults (people/heritage midpoint)
+    let nationalMedian = 5.5;
+    if (issueObj.defaults && typeof issueObj.defaults === 'object') {
+      const vals = [issueObj.defaults.people, issueObj.defaults.heritage].map(Number).filter(Number.isFinite);
+      if (vals.length > 0) nationalMedian = round(vals.reduce((s, v) => s + v, 0) / vals.length, 2);
+    } else if (Number.isFinite(Number(issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline))) {
+      nationalMedian = Number(issueObj.medianStance ?? issueObj.nationalMedian ?? issueObj.baseline);
+    }
     const alignmentDist = Math.abs(playerStance - nationalMedian);
-    const rawSalience = issueObj.salience ?? issueObj.importance ?? issueObj.weight ?? (issueObj.priority ? issueObj.priority / 10 : 0.65);
+    const highSalienceCats = new Set(['Economy & Affordability', 'Healthcare & Safety Net', 'Immigration & Borders', 'Democracy & Institutions']);
+    const rawSalience = issueObj.salience ?? issueObj.importance ?? (highSalienceCats.has(issueObj.category) ? 0.8 : 0.65);
     const salience = Number.isFinite(Number(rawSalience)) ? (Number(rawSalience) > 1 ? Number(rawSalience) / 10 : Number(rawSalience)) : 0.65;
-    const isImportantAgreement = salience >= 0.6 && alignmentDist <= 0.45;
+    const isImportantAgreement = salience >= 0.6 && alignmentDist <= 1.25;
 
     let baseLift = isImportantAgreement ? 1.5 : 0.75;
     let indTrustDelta = isImportantAgreement ? 2 : 0;
@@ -287,7 +299,7 @@
     });
 
     usedThemes.push(issueId);
-    const note = `Theme of Month ${month} (${eff.name}): ${issueObj.name || issueId} (${scaledLift >= 0 ? '+' : ''}${scaledLift}% persuasion lift).${noteSuffix}`;
+    const note = `Theme of Month ${month} (${eff.name}): ${issueDisplayName} (${scaledLift >= 0 ? '+' : ''}${scaledLift}% persuasion lift).${noteSuffix}`;
     return {
       ...game,
       trust: nextTrust,
@@ -295,7 +307,7 @@
       campaign: {
         ...game.campaign,
         activeThemeId: issueId,
-        activeThemeName: issueObj.name || issueId,
+        activeThemeName: issueDisplayName,
         themeSelectedThisMonth: true,
         usedThemes,
         themePersuasionLift: round((game.campaign.themePersuasionLift || 0) + scaledLift, 2),
@@ -309,42 +321,42 @@
   // 4. INTERACTIVE GENERAL ELECTION DEBATES (36-QUESTION ROTATING BANK)
   // ==========================================================================
   const DEBATE_QUESTION_BANK = [
-    { id: 'dq_inflation', category: 'Economy', issueId: 'inflation', prompt: 'Grocery and housing costs remain top-of-mind for families. What concrete step will your party take in the first 100 days?' },
-    { id: 'dq_taxes', category: 'Economy', issueId: 'tax-policy', prompt: 'Should high-income brackets and corporate profits face higher rates to fund deficit reduction?' },
-    { id: 'dq_debt', category: 'Economy', issueId: 'national-debt', prompt: 'With federal debt servicing climbing, would your party cut spending, raise revenue, or protect entitlement programs?' },
-    { id: 'dq_trade', category: 'Economy', issueId: 'trade-tariffs', prompt: 'Do broad tariffs protect American manufacturing workers, or do they act as a hidden sales tax on consumers?' },
-    { id: 'dq_labor', category: 'Economy', issueId: 'labor-unions', prompt: 'Should federal law make union organizing faster across service and tech industries?' },
+    { id: 'dq_inflation', category: 'Economy', issueId: 'cost-of-living', prompt: 'Grocery and housing costs remain top-of-mind for families. What concrete step will your party take in the first 100 days?' },
+    { id: 'dq_taxes', category: 'Economy', issueId: 'taxes-spending', prompt: 'Should high-income brackets and corporate profits face higher rates to fund deficit reduction?' },
+    { id: 'dq_debt', category: 'Economy', issueId: 'taxes-spending', prompt: 'With federal debt servicing climbing, would your party cut spending, raise revenue, or protect entitlement programs?' },
+    { id: 'dq_trade', category: 'Economy', issueId: 'business-regulation', prompt: 'Do broad tariffs protect American manufacturing workers, or do they act as a hidden sales tax on consumers?' },
+    { id: 'dq_labor', category: 'Economy', issueId: 'minimum-wage', prompt: 'Should federal law make union organizing faster across service and tech industries?' },
     { id: 'dq_minwage', category: 'Economy', issueId: 'minimum-wage', prompt: 'Where should the federal minimum wage floor sit—or should wage policy be left strictly to states?' },
-    { id: 'dq_healthcare', category: 'Healthcare', issueId: 'healthcare-cost', prompt: 'Millions still face high deductibles and medical debt. Will your party expand public coverage or strengthen private market competition?' },
-    { id: 'dq_pharma', category: 'Healthcare', issueId: 'drug-pricing', prompt: 'How far should Medicare go in negotiating prescription drug prices without chilling biomedical innovation?' },
-    { id: 'dq_mentalhealth', category: 'Healthcare', issueId: 'mental-health', prompt: 'Communities face a mental health and addiction crisis. How will your party fund treatment capacity?' },
-    { id: 'dq_nato', category: 'Foreign Policy', issueId: 'nato-global-security', prompt: 'Should the United States maintain ironclad NATO defense commitments even if European allies lag on defense spending?' },
-    { id: 'dq_china', category: 'Foreign Policy', issueId: 'china-competition', prompt: 'How do you deter aggression in the Indo-Pacific without triggering a catastrophic trade or military clash?' },
+    { id: 'dq_healthcare', category: 'Healthcare', issueId: 'health-coverage', prompt: 'Millions still face high deductibles and medical debt. Will your party expand public coverage or strengthen private market competition?' },
+    { id: 'dq_pharma', category: 'Healthcare', issueId: 'prescription-drugs', prompt: 'How far should Medicare go in negotiating prescription drug prices without chilling biomedical innovation?' },
+    { id: 'dq_mentalhealth', category: 'Healthcare', issueId: 'health-coverage', prompt: 'Communities face a mental health and addiction crisis. How will your party fund treatment capacity?' },
+    { id: 'dq_nato', category: 'Foreign Policy', issueId: 'nato-global-security-hegemony', prompt: 'Should the United States maintain ironclad NATO defense commitments even if European allies lag on defense spending?' },
+    { id: 'dq_china', category: 'Foreign Policy', issueId: 'foreign-policy', prompt: 'How do you deter aggression in the Indo-Pacific without triggering a catastrophic trade or military clash?' },
     { id: 'dq_defense', category: 'Foreign Policy', issueId: 'defense-spending', prompt: 'Is the Pentagon budget bloated and overdue for audit cuts, or essential for global deterrence?' },
-    { id: 'dq_ai', category: 'Technology', issueId: 'frontier-ai-oversight', prompt: 'Frontier AI systems are reshaping white-collar jobs and national security. Does your party back federal safety standards or light-touch deregulation?' },
-    { id: 'dq_antitrust', category: 'Technology', issueId: 'tech-antitrust', prompt: 'Should the Justice Department break up dominant digital platforms and social-media monopolies?' },
-    { id: 'dq_privacy', category: 'Technology', issueId: 'data-privacy', prompt: 'Will your party pass a binding national data-privacy bill curbing algorithmic tracking?' },
-    { id: 'dq_climate', category: 'Energy & Climate', issueId: 'climate-change', prompt: 'How fast should the U.S. transition off fossil fuels while keeping electricity affordable and grids reliable?' },
-    { id: 'dq_publiclands', category: 'Energy & Climate', issueId: 'federal-public-lands', prompt: 'Should federal public lands be opened for domestic oil, gas, and critical-mineral extraction, or permanently conserved?' },
-    { id: 'dq_nuclear', category: 'Energy & Climate', issueId: 'nuclear-energy', prompt: 'Should the federal government fast-track next-generation nuclear power plants to meet surging grid demand?' },
-    { id: 'dq_immigration', category: 'Immigration', issueId: 'immigration-border', prompt: 'How do you balance strict border enforcement with legal pathways for workers and long-term residents?' },
-    { id: 'dq_asylum', category: 'Immigration', issueId: 'border-security', prompt: 'What reforms to the asylum court system will your party champion to clear multi-year backlogs?' },
-    { id: 'dq_housing', category: 'Housing', issueId: 'housing-yimby', prompt: 'Homeownership feels out of reach for young voters. Should federal funds incentivize cities to abolish restrictive zoning?' },
-    { id: 'dq_transit', category: 'Infrastructure', issueId: 'infrastructure-rural', prompt: 'Should federal infrastructure dollars prioritize high-speed rail and metro transit or highways and rural bridges?' },
-    { id: 'dq_courts', category: 'Governance', issueId: 'judicial-reform', prompt: 'Public trust in the federal judiciary is polarized. Do you support term limits, ethics codes, or keeping the current structure intact?' },
-    { id: 'dq_voting', category: 'Governance', issueId: 'voting-democracy', prompt: 'Should Congress set uniform national standards for mail-in voting and voter ID, or defer to state legislatures?' },
-    { id: 'dq_money', category: 'Governance', issueId: 'campaign-finance', prompt: 'How would your party curb dark-money Super PACs and restore accountability to campaign finance?' },
-    { id: 'dq_education', category: 'Education', issueId: 'education-schools', prompt: 'Should federal dollars expand universal pre-K and public-school pay, or fund school-choice vouchers?' },
-    { id: 'dq_studentdebt', category: 'Education', issueId: 'higher-ed', prompt: 'How should Washington tackle soaring college tuition—loan forgiveness, vocational grants, or university accountability?' },
-    { id: 'dq_crime', category: 'Justice', issueId: 'policing-crime', prompt: 'How will your party bring down violent crime while maintaining civil-rights accountability in policing?' },
-    { id: 'dq_guns', category: 'Rights', issueId: 'gun-policy', prompt: 'Where does your party draw the line between Second Amendment protections and federal gun-safety rules?' },
-    { id: 'dq_abortion', category: 'Rights', issueId: 'reproductive-rights', prompt: 'Should reproductive healthcare access be codified nationwide by Congress or decided state-by-state?' },
+    { id: 'dq_ai', category: 'Technology', issueId: 'frontier-ai-oversight-compute', prompt: 'Frontier AI systems are reshaping white-collar jobs and national security. Does your party back federal safety standards or light-touch deregulation?' },
+    { id: 'dq_antitrust', category: 'Technology', issueId: 'business-regulation', prompt: 'Should the Justice Department break up dominant digital platforms and social-media monopolies?' },
+    { id: 'dq_privacy', category: 'Technology', issueId: 'frontier-ai-oversight-compute', prompt: 'Will your party pass a binding national data-privacy bill curbing algorithmic tracking?' },
+    { id: 'dq_climate', category: 'Energy & Climate', issueId: 'climate-action', prompt: 'How fast should the U.S. transition off fossil fuels while keeping electricity affordable and grids reliable?' },
+    { id: 'dq_publiclands', category: 'Energy & Climate', issueId: 'federal-public-lands-energy', prompt: 'Should federal public lands be opened for domestic oil, gas, and critical-mineral extraction, or permanently conserved?' },
+    { id: 'dq_nuclear', category: 'Energy & Climate', issueId: 'energy-mix', prompt: 'Should the federal government fast-track next-generation nuclear power plants to meet surging grid demand?' },
+    { id: 'dq_immigration', category: 'Immigration', issueId: 'immigration-visas', prompt: 'How do you balance strict border enforcement with legal pathways for workers and long-term residents?' },
+    { id: 'dq_asylum', category: 'Immigration', issueId: 'border-enforcement', prompt: 'What reforms to the asylum court system will your party champion to clear multi-year backlogs?' },
+    { id: 'dq_housing', category: 'Housing', issueId: 'nimbyism-housing', prompt: 'Homeownership feels out of reach for young voters. Should federal funds incentivize cities to abolish restrictive zoning?' },
+    { id: 'dq_transit', category: 'Infrastructure', issueId: 'taxes-spending', prompt: 'Should federal infrastructure dollars prioritize high-speed rail and metro transit or highways and rural bridges?' },
+    { id: 'dq_courts', category: 'Governance', issueId: 'democracy-checks', prompt: 'Public trust in the federal judiciary is polarized. Do you support term limits, ethics codes, or keeping the current structure intact?' },
+    { id: 'dq_voting', category: 'Governance', issueId: 'voting-rules', prompt: 'Should Congress set uniform national standards for mail-in voting and voter ID, or defer to state legislatures?' },
+    { id: 'dq_money', category: 'Governance', issueId: 'campaign-finance-reform', prompt: 'How would your party curb dark-money Super PACs and restore accountability to campaign finance?' },
+    { id: 'dq_education', category: 'Education', issueId: 'church-state-schools', prompt: 'Should federal dollars expand universal pre-K and public-school pay, or fund school-choice vouchers?' },
+    { id: 'dq_studentdebt', category: 'Education', issueId: 'church-state-schools', prompt: 'How should Washington tackle soaring college tuition—loan forgiveness, vocational grants, or university accountability?' },
+    { id: 'dq_crime', category: 'Justice', issueId: 'criminal-justice-reform', prompt: 'How will your party bring down violent crime while maintaining civil-rights accountability in policing?' },
+    { id: 'dq_guns', category: 'Rights', issueId: 'criminal-justice-reform', prompt: 'Where does your party draw the line between Second Amendment protections and federal gun-safety rules?' },
+    { id: 'dq_abortion', category: 'Rights', issueId: 'abortion', prompt: 'Should reproductive healthcare access be codified nationwide by Congress or decided state-by-state?' },
     { id: 'dq_socialsec', category: 'Entitlements', issueId: 'cost-of-living', prompt: 'Social Security trust funds face long-term shortfalls. Will your party lift the payroll tax cap or raise the retirement age?' },
-    { id: 'dq_agriculture', category: 'Rural', issueId: 'agriculture', prompt: 'Family farms are squeezed by consolidation and weather volatility. What is your plan for rural America?' },
-    { id: 'dq_childcare', category: 'Families', issueId: 'childcare', prompt: 'Working parents pay more for childcare than rent. Do you back an expanded Child Tax Credit or direct childcare subsidies?' },
-    { id: 'dq_crypto', category: 'Finance', issueId: 'financial-regulation', prompt: 'How tightly should federal regulators police Wall Street leverage and digital asset markets?' },
-    { id: 'dq_veterans', category: 'Veterans', issueId: 'veterans-affairs', prompt: 'How will you modernize VA healthcare and expand community-care options for veterans?' },
-    { id: 'dq_closing', category: 'Closing', issueId: 'unity-vision', prompt: 'In 60 seconds: why should an undecided Independent voter trust your coalition with the next four years?' },
+    { id: 'dq_agriculture', category: 'Rural', issueId: 'federal-public-lands-energy', prompt: 'Family farms are squeezed by consolidation and weather volatility. What is your plan for rural America?' },
+    { id: 'dq_childcare', category: 'Families', issueId: 'snap-food-aid', prompt: 'Working parents pay more for childcare than rent. Do you back an expanded Child Tax Credit or direct childcare subsidies?' },
+    { id: 'dq_crypto', category: 'Finance', issueId: 'monetary-policy', prompt: 'How tightly should federal regulators police Wall Street leverage and digital asset markets?' },
+    { id: 'dq_veterans', category: 'Veterans', issueId: 'defense-spending', prompt: 'How will you modernize VA healthcare and expand community-care options for veterans?' },
+    { id: 'dq_closing', category: 'Closing', issueId: 'institutional-trust', prompt: 'In 60 seconds: why should an undecided Independent voter trust your coalition with the next four years?' },
   ];
 
   function buildDebateEvent(game, month) {
@@ -668,8 +680,10 @@
     if (!c) return game;
     if ((c.monthlyActionsLeft ?? 0) < 1) return { ...game, lastNote: 'No campaign actions remaining this month.' };
     const dossiers = Array.isArray(c.oppoDossiers) ? c.oppoDossiers : [];
-    const target = dossiers.find((d) => d.id === dossierId && !d.detonated);
-    if (!target) return game;
+    const anyMatch = dossiers.find((d) => d.id === dossierId);
+    if (!anyMatch) return { ...game, lastNote: 'Opposition research dossier not found.' };
+    if (anyMatch.detonated) return { ...game, lastNote: `Opposition dossier on ${anyMatch.targetName} (${anyMatch.stateId}) has already been released.` };
+    const target = anyMatch;
 
     const month = clamp(Number(c.month || 1), 1, 5);
     const isOctoberSurprise = month === 5;
@@ -736,6 +750,10 @@
 
     const month = clamp(Number(c.month || 1), 1, 5);
     const eff = getMonthEfficiency(month);
+    const validStSet = new Set([...(global.PartyChairData?.STATES || []).map((s) => s.id), 'DC']);
+    if (!validStSet.has(stateId)) {
+      return { ...game, lastNote: `Invalid state code "${stateId}" for surrogate deployment.` };
+    }
     const stObj = (global.PartyChairData?.STATES || []).find((s) => s.id === stateId);
     const homeMatch = sur.stateId === stateId || (Array.isArray(sur.regions) && stObj && sur.regions.includes(stObj.region));
     const synergyMult = homeMatch ? 1.5 : 1.0;
@@ -835,17 +853,38 @@
   function getTossUpWatchRaces(game) {
     const states = global.PartyChairData?.STATES || [];
     const eng = global.PartyChairEngine;
+    const isPresYear = (Number(game?.year || 2028) % 4) === 0;
     const list = [];
-    states.forEach((st) => {
+    if (isPresYear) {
+      states.forEach((st) => {
+        let rawMargin = Number(st.leanPercent ?? (Number(st.lean || 0) * -100));
+        if (eng && typeof eng.presidentialStateMargin === "function") { try { rawMargin = Number(eng.presidentialStateMargin(game, st.id)); } catch (_) {} }
+        const m = round(Math.abs(rawMargin), 1);
+        if (m <= 4.5) list.push({ stateId: st.id, stateName: st.name, office: "Presidential", ev: st.ev || 5, margin: m });
+      });
+    }
+    (Array.isArray(game?.activeSenateRaces) ? game.activeSenateRaces : []).forEach((r) => {
+      const st = states.find((s) => s.id === (r?.state || r?.stateId));
+      if (!st) return;
       let rawMargin = Number(st.leanPercent ?? (Number(st.lean || 0) * -100));
-      if (eng && typeof eng.presidentialStateMargin === 'function') {
-        try { rawMargin = Number(eng.presidentialStateMargin(game, st.id)); } catch (_) {}
-      }
+      if (eng && typeof eng.presidentialStateMargin === "function") { try { rawMargin = Number(eng.presidentialStateMargin(game, st.id)); } catch (_) {} }
       const m = round(Math.abs(rawMargin), 1);
-      if (m <= 4.5) {
-        list.push({ stateId: st.id, stateName: st.name, office: (game?.year || 2028) % 4 === 0 ? 'Presidential' : 'Statewide', ev: st.ev || 5, margin: m });
-      }
+      if (m <= 4.5) list.push({ stateId: st.id, stateName: st.name, office: "Senate", ev: st.ev || 5, margin: m });
     });
+    (Array.isArray(game?.activeGubernatorialStates) ? game.activeGubernatorialStates : []).forEach((stId) => {
+      const st = states.find((s) => s.id === stId);
+      if (!st) return;
+      let rawMargin = Number(st.leanPercent ?? (Number(st.lean || 0) * -100));
+      if (eng && typeof eng.presidentialStateMargin === "function") { try { rawMargin = Number(eng.presidentialStateMargin(game, st.id)); } catch (_) {} }
+      const m = round(Math.abs(rawMargin), 1);
+      if (m <= 4.5) list.push({ stateId: st.id, stateName: st.name, office: "Governor", ev: st.ev || 5, margin: m });
+    });
+    if (!list.length) {
+      states.forEach((st) => {
+        const m = round(Math.abs(Number(st.leanPercent ?? (Number(st.lean || 0) * -100))), 1);
+        if (m <= 4.5) list.push({ stateId: st.id, stateName: st.name, office: isPresYear ? "Presidential" : "Senate/Gov", ev: st.ev || 5, margin: m });
+      });
+    }
     return list.sort((a, b) => a.margin - b.margin).slice(0, 6);
   }
 
@@ -930,8 +969,9 @@
     const month = clamp(Number(c.month || c.week || 1), 1, 5);
     if (month !== 5) return { ...game, lastNote: 'Final 72 Hours Blitz is only available in Month 5 (October).' };
     if (c.finalBlitzCompleted) return { ...game, lastNote: 'Final 72 Hours Blitz has already been completed this cycle.' };
-    const stops = Array.from(new Set((Array.isArray(stateIds) ? stateIds : []).filter(Boolean))).slice(0, 3);
-    if (!stops.length) return { ...game, lastNote: 'Select at least 1 target state for the Final 72 Hours Blitz.' };
+    const validStSet = new Set([...(global.PartyChairData?.STATES || []).map((s) => s.id), 'DC']);
+    const stops = Array.from(new Set((Array.isArray(stateIds) ? stateIds : []).filter((id) => validStSet.has(id)))).slice(0, 3);
+    if (!stops.length) return { ...game, lastNote: 'Select at least 1 valid U.S. state for the Final 72 Hours Blitz.' };
     const eff = getMonthEfficiency(5); // 300% turnout
     const nextBlitz = { ...(c.finalBlitzEffects || {}) };
     stops.forEach((stId) => {
@@ -957,6 +997,9 @@
   function executeNewCampaignAction(game, actionId, payload = {}) {
     const c = game?.campaign;
     if (!c) return null;
+    if (!c.active || (game.phase && game.phase !== 'campaign' && game.phase !== 'general-campaign')) {
+      return { ...game, lastNote: 'Campaign War Room actions are only available during the active General Election Campaign.' };
+    }
     if ((c.monthlyActionsLeft ?? 0) < 1) {
       return { ...game, lastNote: 'No campaign actions remaining this month (8/8 spent).' };
     }
@@ -1157,6 +1200,7 @@
 
   function applyDynamicCorruptTraitsOnStart(game) {
     if (!game || typeof game !== 'object') return game;
+    if (game._dynamicCorruptInitialized) return game;
     const seed = game.seed || 1;
     const corruptDecision = new Map();
     const decide = (key) => {
@@ -1171,7 +1215,7 @@
     const nextPols = Array.isArray(game.politicians)
       ? game.politicians.map((p) => applyCorruptTraitToRecord(p, decide(p.name || p.id)))
       : game.politicians;
-    return { ...game, sittingMembers: nextSM, politicians: nextPols };
+    return { ...game, _dynamicCorruptInitialized: true, sittingMembers: nextSM, politicians: nextPols };
   }
 
   function rollNewPoliticianCorruptTrait(pol, seed = 1, salt = '') {

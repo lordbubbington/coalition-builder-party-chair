@@ -853,7 +853,7 @@
 
     const calls = [];
     const callsByRaceId = {};
-    const callsByKind = { president: [], senate: [], house: [], governors: [], state_leg: [] };
+    const callsByKind = { president: [], senate: [], house: [], governors: [], state_leg: [], statewide_executive: [] };
 
     // Scoreboard seat/EV accumulators by tab and party
     const scoreboard = {
@@ -862,6 +862,7 @@
       house: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 435 },
       governors: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 0 },
       state_leg: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalChambers: 0 },
+      statewide_executive: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 0 },
     };
 
     // Evaluate every race
@@ -889,6 +890,7 @@
         };
         calls.push(callObj);
         callsByRaceId[race.id] = callObj;
+        if (!callsByKind[race.raceKind]) callsByKind[race.raceKind] = [];
         callsByKind[race.raceKind].push(callObj);
 
         // Accumulate called scoreboards
@@ -1081,7 +1083,8 @@
       const coStateLift = coMod?.getCampaignStateLift ? Number(coMod.getCampaignStateLift(game, office.stateId) || 0) : 0;
       const playerSignSeo = (game.player?.baseTemplateId === 'heritage') ? -1 : 1;
       const pollErrSeo = Number(game.pollingMissReport?.stateErrors?.[office.stateId] ?? game.lastElection?.pollingMissReport?.stateErrors?.[office.stateId] ?? 0);
-      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + (coStateLift * 0.55 * playerSignSeo) + pollErrSeo + noise).toFixed(2));
+      const downballotSeo = Number(game.campaign?.debateDownballotBoost || 0) * playerSignSeo;
+      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + (coStateLift * 0.55 * playerSignSeo) + downballotSeo + pollErrSeo + noise).toFixed(2));
       let peopleShare = Number(Math.max(5, Math.min(95, 50 + margin / 2)).toFixed(2));
       let heritageShare = Number((100 - peopleShare).toFixed(2));
       const shares = { people: peopleShare, heritage: heritageShare };
