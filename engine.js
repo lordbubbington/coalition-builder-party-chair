@@ -1295,9 +1295,48 @@ function synchronizePoliticianPartyWithFaction(game) {
   const nextCandidates = (game.candidates || []).map(updateMember);
   const nextPoliticians = game.politicians ? (game.politicians || []).map(updateMember) : undefined;
 
+  // Bug #4: Keep game.representatives and House sittingMembers 1:1 synced (deduped by districtId)
+  let nextReps = game.representatives;
+  let alignedSitting = nextSitting;
+  if (Array.isArray(game.representatives) && game.representatives.length > 0) {
+    const repDistSet = new Set(game.representatives.map((r) => r && (r.districtId || r.id)).filter(Boolean));
+    const seenHouseDist = new Set();
+    alignedSitting = nextSitting.filter((m) => {
+      if (!m || m.office !== 'house') return true;
+      const dKey = m.districtId || m.district;
+      if (!dKey || !repDistSet.has(dKey) || seenHouseDist.has(dKey)) return false;
+      seenHouseDist.add(dKey);
+      return true;
+    });
+    const hByDist = new Map(
+      alignedSitting
+        .filter((m) => m && m.office === 'house')
+        .map((m) => [m.districtId || m.district, m])
+    );
+    nextReps = game.representatives.map((r) => {
+      const dKey = r.districtId || r.id;
+      const hm = hByDist.get(dKey);
+      if (!hm) {
+        if (dKey && typeof generateFreshPoliticianForSeat === 'function') {
+          const rParty = r.partyId || r.party || 'people';
+          const fresh = generateFreshPoliticianForSeat({
+            office: 'house', stateId: r.stateId || String(dKey).split('-')[0], districtId: dKey,
+            partyId: rParty, year: game.year || 2028, seed: game.seed || 2028, salt: 'sync-' + dKey, isIncumbent: true,
+          });
+          alignedSitting.push(fresh);
+          hByDist.set(dKey, fresh);
+        }
+        return r;
+      }
+      const p = hm.party || hm.partyId || r.partyId;
+      return { ...r, party: p, partyId: p };
+    });
+  }
+
   return {
     ...game,
-    sittingMembers: nextSitting,
+    sittingMembers: alignedSitting,
+    representatives: nextReps,
     rosterMembers: nextRoster,
     candidates: nextCandidates,
     ...(nextPoliticians ? { politicians: nextPoliticians } : {}),
@@ -15501,6 +15540,15 @@ function resolveVersion01GeneralElection(game) {
   // Run redistricting immediately post-election before advancing the calendar year.
   if (game.year % 10 === 0) {
     finalElectionState = runDecennialRedistricting(finalElectionState, game.year);
+    // Bug #4: Prune obsolete pre-redistricting House seats & immediately replenish new districts 1:1 with representatives
+    if (Array.isArray(finalElectionState.currentHouseMap) && finalElectionState.currentHouseMap.length === 435) {
+      const validDists = new Set(finalElectionState.currentHouseMap.map((d) => d.id));
+      finalElectionState = {
+        ...finalElectionState,
+        sittingMembers: (finalElectionState.sittingMembers || []).filter((m) => !m || m.office !== 'house' || validDists.has(m.districtId || m.district)),
+      };
+      finalElectionState = replenishVacantSittingMembers(finalElectionState, game.year);
+    }
   }
 
   // MAS-01: Track Independent Presidential victory & dispatch onElectionResolve era hook
