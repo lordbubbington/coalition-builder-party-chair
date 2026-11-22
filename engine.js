@@ -19263,7 +19263,7 @@ function takeActionInternal(game, actionId, payload = {}) {
     };
   }
   if (game.actionsLeft <= 0 || game.lastElection?.year === game.year) return game;
-  const next = { ...game, actionsLeft: game.actionsLeft - 1 };
+  let next = { ...game, actionsLeft: game.actionsLeft - 1 };
   if (typeof next.organizingActionsRemaining === 'number') {
     next.organizingActionsRemaining = Math.max(0, next.organizingActionsRemaining - 1);
   }
