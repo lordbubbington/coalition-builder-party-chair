@@ -309,12 +309,16 @@
     const progress = getPresidentialBallotProgress(game, resolvedId);
     if (progress.remaining.length === 0) return false;
 
-    if (stateId) {
+    // Bug #27: Multi-state petition drive falls back to next remaining uncertified state if requested stateId is already certified
+    let effectiveStateId = stateId;
+    if (effectiveStateId) {
       const access = game.ballotAccess?.[resolvedId];
-      if (access && (access.presidential?.[stateId] || access[stateId])) return false;
+      if (access && (access.presidential?.[effectiveStateId] || access[effectiveStateId])) {
+        effectiveStateId = progress.remaining[0] || null;
+      }
     }
 
-    const refState = stateId || progress.remaining[0] || 'PA';
+    const refState = effectiveStateId || progress.remaining[0] || 'PA';
     const costInfo = calculatePetitionCost(game, refState, bufferTier, resolvedId);
     const treasury = Number(game.treasury || 0);
     const actions = (game.campaign?.active) ? Number(game.campaign.weeklyActionsLeft || 0) : Number(game.actionsLeft || 0);

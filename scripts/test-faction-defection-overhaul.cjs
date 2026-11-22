@@ -71,7 +71,7 @@ test('REC-01 & REC-07: Two-sided rival faction friction, rebalanced curve, ultim
 // REC-02 & REC-10: Strict Two-Step Secession Pipeline (no direct party-to-party Summit Accord)
 test('REC-02 & REC-10: Prohibit direct party-to-party Summit Accords; allow Courtship (<50) -> Bolt -> Summit', () => {
   let g = Eng.createGame('people', { seed: 880102 });
-  const rivalFac = g.factions.find((f) => f.partyId === 'heritage' && f.id !== 'gop_maga');
+  const rivalFac = g.factions.find((f) => f.id === 'gop_suburban_moderates') || g.factions.find((f) => f.partyId === 'heritage' && f.id !== 'gop_maga');
   g.factionHappiness[rivalFac.id] = 20;
 
   // Direct Summit MUST be blocked while faction is still in 'heritage'
@@ -98,7 +98,7 @@ test('REC-03 & REC-06: drive-coalition-wedge, subsidize-dissident-caucus, court-
   let g = Eng.createGame('people', { seed: 880103 });
   g.treasury = 100;
   g.organizingActionsRemaining = 10;
-  const rivalFac = g.factions.find((f) => f.partyId === 'heritage' && f.id !== 'gop_maga');
+  const rivalFac = g.factions.find((f) => f.id === 'gop_suburban_moderates') || g.factions.find((f) => f.partyId === 'heritage' && f.id !== 'gop_maga');
   g.factionHappiness[rivalFac.id] = 52;
   rivalFac.frictionIndex = 40;
 

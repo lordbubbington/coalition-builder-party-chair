@@ -1699,12 +1699,12 @@ function customPartyCreatorMarkup() {
       'Democratic Factions': cat.filter((f) => f.partyId === 'people'),
       'Republican Factions': cat.filter((f) => f.partyId === 'heritage'),
       'Minor Party Factions': cat.filter((f) => ['liberty', 'green', 'constitution', 'socialist'].includes(f.partyId)),
-      'Swing & Independent Wings': cat.filter((f) => f.partyId === 'independent' || f.partyId === 'none' || String(f.id).startsWith('swg_')),
+      'Swing & Independent Wings': cat.filter((f) => ['independent', 'none', 'unaffiliated'].includes(f.partyId) || String(f.id).startsWith('swg_')),
     };
 
     coalitionSectionHtml = `
       <div class="custom-drawer-section">
-        <div class="custom-drawer-section-title">04 / Starting Factions Picker (Pairwise ≤ 2.0 Econ & Social)</div>
+        <div class="custom-drawer-section-title">04 / Starting Factions Picker (Select ≥ 1 Faction · Centroid Compatibility)</div>
         <div class="playstyle-advisory-banner">
           <b>${advisoryLabel}</b> (${(totalVotersChosen / 1000000).toFixed(2)}M Voters · ${customSelectedFactionIds.length} Factions Selected)
         </div>
@@ -1722,16 +1722,25 @@ function customPartyCreatorMarkup() {
 
                   let isPairwiseIncompatible = false;
                   let conflictName = '';
-                  if (!isSelected && !isAnchor) {
-                    for (const prevId of customSelectedFactionIds) {
-                      const prevF = factionMap.get(prevId);
-                      if (!prevF) continue;
-                      const pEcon = prevF.sliders?.economic ?? prevF.economic ?? 5;
-                      const pSoc = prevF.sliders?.social ?? prevF.social ?? 5;
-                      if (Math.abs(fEcon - pEcon) > 2.0 + 1e-9 || Math.abs(fSoc - pSoc) > 2.0 + 1e-9) {
-                        isPairwiseIncompatible = true;
-                        conflictName = prevF.name;
-                        break;
+                  if (!isSelected && !isAnchor && customSelectedFactionIds.length > 0) {
+                    const sameSchismParent = customOrigin === 'major_schism' && customSchismParent && f.partyId === customSchismParent;
+                    if (!sameSchismParent) {
+                      const centroidTol = (customOrigin === 'executive_third_way' || customOrigin === 'civic_reform') ? 3.2 : (customOrigin === 'major_schism' ? 3.5 : 2.8);
+                      let sumEcon = 0; let sumSoc = 0; let cnt = 0;
+                      for (const prevId of customSelectedFactionIds) {
+                        const prevF = factionMap.get(prevId);
+                        if (!prevF) continue;
+                        sumEcon += (prevF.sliders?.economic ?? prevF.economic ?? 5);
+                        sumSoc += (prevF.sliders?.social ?? prevF.social ?? 5);
+                        cnt++;
+                      }
+                      if (cnt > 0) {
+                        const meanEcon = sumEcon / cnt;
+                        const meanSoc = sumSoc / cnt;
+                        if (Math.abs(fEcon - meanEcon) > centroidTol + 1e-9 || Math.abs(fSoc - meanSoc) > centroidTol + 1e-9) {
+                          isPairwiseIncompatible = true;
+                          conflictName = 'selected coalition centroid';
+                        }
                       }
                     }
                   }
@@ -1900,7 +1909,8 @@ function setupMarkup() {
             </button>
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
-          <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
+          ${isCustomMode && customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0) ? '<p style="color:#f59e0b;font-size:12.5px;margin:8px 0 4px">Select at least one starting faction (including extremist or unaffiliated wings), or choose "Not a Major Movement" to build a custom 100K faction.</p>' : ''}
+          <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
           <p class="setup-foot">Version 0.18.2 · Faction Systems Release · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
@@ -10120,7 +10130,17 @@ function render() {
     bind();
     return;
   }
-  app.innerHTML = game ? campaignMarkup() : setupMarkup();
+  const gameOverOverlay = (game && game.gameOver) ? `
+    <div id="party-collapse-gameover-modal" style="position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,0.88);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="max-width:520px;width:100%;background:#0f172a;border:2px solid #ef4444;border-radius:12px;padding:28px;color:#f8fafc;box-shadow:0 24px 60px rgba(0,0,0,0.65);text-align:center">
+        <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#f87171;font-weight:700;margin-bottom:8px">Game Over · ${safe(String(game.year || 2028))}</div>
+        <h2 style="margin:0 0 12px;font-size:24px;color:#fff">${safe(game.gameOverTitle || 'Party Collapsed — All Factions Lost')}</h2>
+        <p style="margin:0 0 22px;font-size:14.5px;line-height:1.55;color:#cbd5e1">${safe(game.gameOverMessage || 'Every faction in your party has abandoned the coalition. Without a base of support, your party has collapsed.')}</p>
+        <button type="button" id="btn-gameover-new-party" class="button button-gold" style="padding:12px 24px;font-size:14px;font-weight:700">Return to Party Setup</button>
+      </div>
+    </div>
+  ` : '';
+  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay;
   if (game) saveGame(game);
   bind();
   renderTutorial();
@@ -10322,6 +10342,9 @@ function bind() {
         render();
         return;
       }
+    } else if (isCustomMode && (!Array.isArray(customSelectedFactionIds) || customSelectedFactionIds.length === 0)) {
+      render();
+      return;
     }
 
     const archetypeChoice = custom ? selectedLeaderArchetype : null;
@@ -10788,6 +10811,13 @@ function bind() {
     render();
   }));
 
+  document.querySelector('#btn-gameover-new-party')?.addEventListener('click', () => {
+    try { localStorage.removeItem('partyChairGame.save.v16.2'); } catch (_) {}
+    game = null;
+    resetCustomPartySetupDefaults();
+    render();
+  });
+
   // Custom Party Creator controls (REQ-235 - REQ-242)
   document.querySelector('#btn-create-custom-party')?.addEventListener('click', () => {
     selectedTemplate = 'custom';
@@ -10797,6 +10827,13 @@ function bind() {
   document.querySelectorAll('[data-custom-origin]').forEach((card) => card.addEventListener('click', () => {
     customOrigin = card.dataset.customOrigin;
     render();
+  }));
+  // Bug #8: Wire Major-Party Schism parent radio buttons so Republican Party can be selected
+  document.querySelectorAll('input[name="schism-parent"]').forEach((radio) => radio.addEventListener('change', () => {
+    if (radio.checked) {
+      customSchismParent = radio.value;
+      render();
+    }
   }));
   document.querySelectorAll('[data-custom-emblem]').forEach((btn) => btn.addEventListener('click', () => {
     customSelectedEmblem = btn.dataset.customEmblem;

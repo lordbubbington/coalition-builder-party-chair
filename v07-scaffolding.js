@@ -540,22 +540,25 @@
       ? Number((isPlayerArg ? (pollMap.player ?? pollMap[resolvedKey]) : pollMap[resolvedKey]) ?? 0)
       : 0;
 
-    // Tier 4: Debate-Qualified Contender (>= 15% Polling or Pres Vote)
-    if ((lastPresShare !== null && lastPresShare >= 15.0) || livePollShare >= 15.0) {
+    const fullBallotStates = countFullBallotStatesForParty(game, resolvedKey);
+    const presBallotCount = Object.values(game?.ballotAccess?.[resolvedKey]?.presidential || {}).filter(Boolean).length;
+    const federalSeats = houseSeats + senateSeats;
+
+    // Tier 4: Debate-Qualified Contender (>= 12% Polling/Pres Vote OR 40+ pres ballot states & 12+ federal seats)
+    if ((lastPresShare !== null && lastPresShare >= 12.0) || livePollShare >= 12.0 || (presBallotCount >= 40 && federalSeats >= 12)) {
       return 4;
     }
 
-    // Tier 3: Federally Recognized Party (>= 5% Pres Vote)
-    if (lastPresShare !== null && lastPresShare >= 5.0) {
+    // Tier 3: Federally Recognized Party (>= 3.5% Pres Vote OR 25+ pres ballot states & 5+ federal seats)
+    if ((lastPresShare !== null && lastPresShare >= 3.5) || (presBallotCount >= 25 && federalSeats >= 5)) {
       return 3;
     }
 
-    // Tier 2: Ballot-Qualified Minor (>= 2% Pres Vote OR sustaining multi-state ballot access across 10+ states)
-    const fullBallotStates = countFullBallotStatesForParty(game, resolvedKey);
+    // Tier 2: Ballot-Qualified Minor (>= 1.5% Pres Vote OR sustaining multi-state ballot access across 10+ states OR 2+ Senate / 5+ House)
     const retainedCount = Array.isArray(game?.retainedBallotStates?.[resolvedKey]) ? game.retainedBallotStates[resolvedKey].length : 0;
     const legAccessCount = Object.values(game?.ballotAccess?.[resolvedKey]?.leg || {}).filter(Boolean).length;
-    const hasSustainedBallot = retainedCount >= 10 || legAccessCount >= 10 || ((game?.elections || []).length > 0 && fullBallotStates >= 10);
-    if ((lastPresShare !== null && lastPresShare >= 2.0) || hasSustainedBallot) {
+    const hasSustainedBallot = retainedCount >= 10 || legAccessCount >= 10 || presBallotCount >= 15 || ((game?.elections || []).length > 0 && fullBallotStates >= 10);
+    if ((lastPresShare !== null && lastPresShare >= 1.5) || hasSustainedBallot || senateSeats >= 2 || houseSeats >= 5) {
       return 2;
     }
 
