@@ -42,12 +42,12 @@ const E = ctx.window.PartyChairEngine;
 const CO = ctx.window.CampaignOverhaul;
 
 console.log('====================================================================');
-console.log(' VERSION 0.18.2 CAMPAIGN PHASE OVERHAUL & 1:1 SCALE SUITE');
+console.log(' VERSION 0.18.3 CAMPAIGN PHASE OVERHAUL & 1:1 SCALE SUITE');
 console.log('====================================================================');
 
 // 1. Version & 1:1 Voter Scale
 let g = E.createGame({ baseTemplateId: 'people' });
-check('Version stamped as 0.18.2', g.version === '0.18.2', g.version);
+check('Version stamped as 0.18.3', g.version === '0.18.3', g.version);
 check('Native 1:1 Voter Scale: sampleVoters === representedVoters === 155,000,000',
   g.voterModel.sampleVoters === 155000000 && g.voterModel.representedVoters === 155000000,
   `sample=${g.voterModel.sampleVoters}, rep=${g.voterModel.representedVoters}`);

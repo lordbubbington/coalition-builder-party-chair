@@ -114,6 +114,64 @@
     return 1.0;
   }
 
+  // REQ-302: Candidate Electability Trait Modifiers & Regression Score
+  const CANDIDATE_ELECTABILITY_TRAIT_MODIFIERS = {
+    'Rising Star': 12,
+    'Polished': 10,
+    'Disciplined': 10,
+    'Squeaky Clean': 8,
+    'Established politician': (partyId) => (['green', 'socialist'].includes(partyId) ? -15 : 6),
+    'Rough': (partyId) => (['heritage', 'socialist'].includes(partyId) ? 4 : -6),
+    'Undisciplined': -18,
+    'Corrupt': -25,
+  };
+
+  /**
+   * REQ-302: Weighted Candidate Electability Regression Formula
+   * Electability = (Fame * 0.25) + (Popularity * 0.35) + TraitModifiers - (IdeologicalDistance * 12)
+   */
+  function calculateCandidateElectability(cand, partyId, gameOrState = null) {
+    if (!cand) return 50.0;
+    const fame = Number(cand.fame ?? 40);
+    const popularity = Number(cand.popularity ?? (typeof cand.approval === 'number' ? cand.approval : 55));
+    const traits = Array.isArray(cand.traits)
+      ? cand.traits.map((t) => (typeof t === 'string' ? t.trim() : (t?.name || t?.id || '')))
+      : [];
+
+    let traitMod = 0;
+    if (traits.some((t) => t.toLowerCase() === 'rising star')) traitMod += 12;
+    if (traits.some((t) => t.toLowerCase() === 'polished')) traitMod += 10;
+    if (traits.some((t) => t.toLowerCase() === 'disciplined')) traitMod += 10;
+    if (traits.some((t) => t.toLowerCase() === 'squeaky clean')) traitMod += 8;
+    if (traits.some((t) => t.toLowerCase() === 'established politician')) {
+      traitMod += ['green', 'socialist'].includes(partyId) ? -15 : 6;
+    }
+    if (traits.some((t) => t.toLowerCase() === 'rough')) {
+      traitMod += ['heritage', 'socialist'].includes(partyId) ? 4 : -6;
+    }
+    if (traits.some((t) => t.toLowerCase() === 'undisciplined')) traitMod -= 18;
+    if (traits.some((t) => t.toLowerCase() === 'corrupt')) traitMod -= 25;
+
+    let distance = 0;
+    const stances = gameOrState?.parties?.[partyId]?.platformStances;
+    if (stances && cand.issuePositions && Object.keys(cand.issuePositions).length > 0) {
+      const diffs = Object.keys(stances).map((k) => Math.abs(Number(stances[k] || 5.5) - Number(cand.issuePositions[k] || 5.5)));
+      distance = diffs.reduce((a, b) => a + b, 0) / Math.max(1, diffs.length);
+    } else if (cand.ideologyScore !== undefined) {
+      const partyIdeal = partyId === 'people' ? 3.5 : partyId === 'heritage' ? 7.5 : partyId === 'liberty' ? 5.0 : partyId === 'socialist' ? 1.5 : partyId === 'green' ? 2.0 : partyId === 'constitution' ? 8.5 : 5.5;
+      distance = Math.abs(Number(cand.ideologyScore) - partyIdeal);
+    } else if (cand.sliders && cand.sliders.economic !== undefined) {
+      const partyIdeal = partyId === 'people' ? 3.5 : partyId === 'heritage' ? 7.5 : partyId === 'liberty' ? 5.0 : partyId === 'socialist' ? 1.5 : partyId === 'green' ? 2.0 : partyId === 'constitution' ? 8.5 : 5.5;
+      const candAvg = (Number(cand.sliders.economic || 5) + Number(cand.sliders.social || 5)) / 2;
+      distance = Math.abs(candAvg - partyIdeal);
+    } else {
+      distance = 1.0;
+    }
+
+    const score = (fame * 0.25) + (popularity * 0.35) + traitMod - (distance * 12);
+    return round(clamp(score, 0, 100), 1);
+  }
+
   function getVulnerabilityTier(score) {
     const s = Number(score) || 0;
     if (s <= 20) return 'Clean';
@@ -548,5 +606,7 @@
     vetCandidateAction,
     evaluateCampaignScandals,
     resolveScandalCrisis,
+    calculateCandidateElectability,
+    CANDIDATE_ELECTABILITY_TRAIT_MODIFIERS,
   };
 });

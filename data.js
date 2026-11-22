@@ -14708,7 +14708,246 @@ function getStatePartyDeltas(gameOrStateId, stateIdOrPartyId, partyIdOrNull) {
   return plat.deltas;
 }
 
+// REQ-299 / REQ-301: Behavioral strategy profiles for canonical parties
+const DEFAULT_STRATEGY_PROFILES = {
+  heritage: {
+    ruthlessness: 0.85,
+    primaryInterventionism: 0.80,
+    factionRiskAversion: 0.25,
+    geographicConcentration: 0.85,
+    negativeAdPropensity: 0.80,
+    ideologicalRigidity: 0.70,
+    triageFocus: 0.85,
+  },
+  people: {
+    ruthlessness: 0.30,
+    primaryInterventionism: 0.35,
+    factionRiskAversion: 0.85,
+    geographicConcentration: 0.30,
+    negativeAdPropensity: 0.35,
+    ideologicalRigidity: 0.45,
+    dilutionBias: 0.75,
+  },
+  liberty: {
+    ruthlessness: 0.20,
+    primaryInterventionism: 0.00, // STRICT 0.00 invariant under all seeds
+    factionRiskAversion: 0.15,
+    geographicConcentration: 0.80,
+    negativeAdPropensity: 0.20,
+    ideologicalRigidity: 0.95,
+    ballotPriority: 0.90,
+    bastionFocus: 0.80,
+  },
+  green: {
+    ruthlessness: 0.70,
+    primaryInterventionism: 0.95,
+    factionRiskAversion: 0.40,
+    geographicConcentration: 0.65,
+    negativeAdPropensity: 0.65,
+    ideologicalRigidity: 0.95,
+    antiCorporateBias: 0.90,
+    litmusPurity: 0.95,
+  },
+  socialist: {
+    ruthlessness: 0.80,
+    primaryInterventionism: 0.92,
+    factionRiskAversion: 0.30,
+    geographicConcentration: 0.85,
+    negativeAdPropensity: 0.75,
+    ideologicalRigidity: 0.95,
+    laborDensityFocus: 0.85,
+    classStruggleBias: 0.95,
+  },
+  constitution: {
+    ruthlessness: 0.65,
+    primaryInterventionism: 0.60,
+    factionRiskAversion: 0.20,
+    geographicConcentration: 0.85,
+    negativeAdPropensity: 0.50,
+    ideologicalRigidity: 0.90,
+    theocraticInvariance: 0.90,
+    heartlandFocus: 0.85,
+  },
+  default: {
+    ruthlessness: 0.50,
+    primaryInterventionism: 0.50,
+    factionRiskAversion: 0.50,
+    geographicConcentration: 0.50,
+    negativeAdPropensity: 0.50,
+    ideologicalRigidity: 0.50,
+  },
+};
+
+/**
+ * REQ-301: Dynamic Strategy Profile Generator for Custom & Post-Breakup Parties
+ * Generates calibrated weights derived from founding charter traits and leading faction sliders.
+ */
+function generateDynamicPartyStrategyProfile(party, game = null) {
+  if (!party) return { ...DEFAULT_STRATEGY_PROFILES.default };
+  const partyId = typeof party === 'string' ? party : (party.id || party.baseTemplateId || 'custom');
+  if (DEFAULT_STRATEGY_PROFILES[partyId]) {
+    const canonical = { ...DEFAULT_STRATEGY_PROFILES[partyId] };
+    if (partyId === 'liberty') {
+      canonical.primaryInterventionism = 0.00;
+    }
+    return canonical;
+  }
+
+  // Baseline starting weights for custom / post-breakup movements
+  let ruthlessness = 0.50;
+  let primaryInterventionism = 0.50;
+  let factionRiskAversion = 0.50;
+  let geographicConcentration = 0.50;
+  let negativeAdPropensity = 0.50;
+  let ideologicalRigidity = 0.50;
+  let ballotPriority = 0.50;
+
+  // Extract charter traits if present (on party or game.player or party.charterTraits)
+  const traits = Array.isArray(party.charterTraits)
+    ? party.charterTraits
+    : (Array.isArray(party.charterTraitIds)
+      ? party.charterTraitIds
+      : (Array.isArray(game?.player?.charterTraits) ? game.player.charterTraits : []));
+  const traitIds = traits.map((t) => (typeof t === 'string' ? t.toLowerCase().trim() : (t?.id || '').toLowerCase().trim()));
+
+  if (traitIds.includes('no_super_pac_pledge')) {
+    negativeAdPropensity -= 0.20;
+    ideologicalRigidity += 0.15;
+    ballotPriority += 0.15;
+  }
+  if (traitIds.includes('big_tent_pragmatism')) {
+    ruthlessness -= 0.20;
+    primaryInterventionism -= 0.25;
+    factionRiskAversion += 0.30;
+    geographicConcentration -= 0.20;
+    negativeAdPropensity -= 0.15;
+    ideologicalRigidity -= 0.30;
+  }
+  if (traitIds.includes('doctrinal_vanguard')) {
+    ruthlessness += 0.20;
+    primaryInterventionism += 0.30;
+    factionRiskAversion -= 0.25;
+    geographicConcentration += 0.15;
+    negativeAdPropensity += 0.20;
+    ideologicalRigidity += 0.35;
+  }
+  if (traitIds.includes('state_first_federation')) {
+    primaryInterventionism -= 0.20;
+    geographicConcentration += 0.25;
+    ruthlessness -= 0.15;
+    ballotPriority += 0.20;
+  }
+
+  // Factor in leading faction sliders if available
+  const catalog = (typeof getFactionsCatalog === 'function' ? getFactionsCatalog() : window?.PartyChairData?.FACTIONS_CATALOG) || [];
+  const partyFactions = catalog.filter((f) => f.partyId === partyId || (partyId === 'player' && f.partyId === 'people'));
+  if (partyFactions.length > 0) {
+    const leadingFaction = partyFactions.find((f) => f.status === 'leading' || f.status === 'major') || partyFactions[0];
+    if (leadingFaction?.sliders) {
+      const { economic = 5, social = 5, governance = 5 } = leadingFaction.sliders;
+      // High economic deregulation + low social regulation = libertarian pull
+      if (economic >= 8.0 && social <= 3.0) {
+        primaryInterventionism = Math.min(primaryInterventionism, 0.10);
+        ballotPriority = Math.max(ballotPriority, 0.85);
+        ideologicalRigidity = Math.max(ideologicalRigidity, 0.85);
+      }
+      // Low economic (socialist)
+      if (economic <= 2.5) {
+        ideologicalRigidity = Math.max(ideologicalRigidity, 0.85);
+        primaryInterventionism = Math.max(primaryInterventionism, 0.80);
+      }
+      // High social (traditionalist / theocratic)
+      if (social >= 8.0) {
+        ideologicalRigidity = Math.max(ideologicalRigidity, 0.80);
+      }
+    }
+  }
+
+  // Strict Libertarian Invariant: If party has liberty base or id, primaryInterventionism is strictly 0.00
+  if (partyId === 'liberty' || party.baseTemplateId === 'liberty') {
+    primaryInterventionism = 0.00;
+  }
+
+  const clampVal = (val) => Math.max(0.05, Math.min(0.95, Math.round(val * 100) / 100));
+
+  return {
+    ruthlessness: clampVal(ruthlessness),
+    primaryInterventionism: (partyId === 'liberty' || party.baseTemplateId === 'liberty') ? 0.00 : clampVal(primaryInterventionism),
+    factionRiskAversion: clampVal(factionRiskAversion),
+    geographicConcentration: clampVal(geographicConcentration),
+    negativeAdPropensity: clampVal(negativeAdPropensity),
+    ideologicalRigidity: clampVal(ideologicalRigidity),
+    ballotPriority: clampVal(ballotPriority),
+  };
+}
+
+// REQ-306: Platform Stance tuning weights (wMood, wFac, wDoc)
+const PARTY_PLATFORM_TUNING_WEIGHTS = {
+  heritage: { wMood: 0.15, wFac: 0.35, wDoc: 0.50 },
+  people: { wMood: 0.45, wFac: 0.45, wDoc: 0.10 },
+  liberty: { wMood: 0.00, wFac: 0.20, wDoc: 0.80 },
+  green: { wMood: 0.05, wFac: 0.30, wDoc: 0.65 },
+  socialist: { wMood: 0.05, wFac: 0.30, wDoc: 0.65 },
+  constitution: { wMood: 0.10, wFac: 0.30, wDoc: 0.60 },
+  default: { wMood: 0.25, wFac: 0.35, wDoc: 0.40 },
+};
+
+// REQ-299 / REQ-311: Universal Party Actions Catalog (42 Canonical Actions)
+const UNIVERSAL_PARTY_ACTIONS_CATALOG = [
+  // Phase 1: Organizing & Recruitment (Steps 1–5)
+  { actionType: 'SET_PLATFORM_STANCE', phase: 'organizing', step: 1, consumesAction: false, description: 'Adjust 1 of 40 platform issue positions (1.0 to 10.0).' },
+  { actionType: 'LOCK_IN_PRIORITIES', phase: 'organizing', step: 2, consumesAction: false, description: 'Lock in 3 Major Strategic Quests and 3-7 Party Focus slots.' },
+  { actionType: 'SELECT_MAIN_PRIORITY', phase: 'organizing', step: 2, consumesAction: false, description: 'Select 1 Major Strategic Quest from offered hand.' },
+  { actionType: 'DESELECT_MAIN_PRIORITY', phase: 'organizing', step: 2, consumesAction: false, description: 'Deselect 1 Major Strategic Quest.' },
+  { actionType: 'SET_PARTY_FOCUS', phase: 'organizing', step: 2, consumesAction: false, description: 'Set an issue, state, or region focus slot.' },
+  { actionType: 'REDRAW_PRIORITIES_HAND', phase: 'organizing', step: 2, consumesAction: true, description: 'Redraw offered hand of Strategic Quests.' },
+  { actionType: 'RECRUIT_CANDIDATE', phase: 'organizing', step: 3, consumesAction: true, costMillions: 1.0, description: 'Recruit candidate for Senate or Governor primary.' },
+  { actionType: 'ENDORSE_PRIMARY_CANDIDATE', phase: 'organizing', step: 3, consumesAction: true, costMillions: 0.1, description: 'Endorse candidate in contested primary race (+10% poll, faction shift).' },
+  { actionType: 'FILTER_PRIMARY_SUPPORT', phase: 'organizing', step: 3, consumesAction: true, costMillions: 0.1, description: 'Filter party capital, staff, and donor conduit assets to favored primary candidate.' },
+  { actionType: 'PROMOTE_STATEHOUSE_STANDOUT', phase: 'organizing', step: 3, consumesAction: true, costMillions: 0.5, description: 'Promote a state legislative standout to congressional or gubernatorial candidate.' },
+  { actionType: 'CONTEST_STATE_SLATE', phase: 'organizing', step: 4, consumesAction: true, description: 'Contest an unheld state legislative chamber ($1M-$5M scaled by EV).' },
+  { actionType: 'SET_STATE_LEGISLATIVE_SLATE_TIER', phase: 'organizing', step: 4, consumesAction: true, description: 'Adjust bicameral state legislative slate tier (0 to 5).' },
+  { actionType: 'EXECUTE_MACHINE_OPERATION', phase: 'organizing', step: 5, consumesAction: true, description: 'Deploy 1 of 8 Party Machine operations across the 50 states.' },
+  { actionType: 'APPOINT_LEADERSHIP_ROLE', phase: 'organizing', step: 0, consumesAction: false, description: 'Appoint candidate to 1 of 14 Constitutional or Machine leadership hierarchy roles.' },
+  { actionType: 'RESPOND_COALITION_DEMAND', phase: 'organizing', step: 0, consumesAction: false, description: 'Accept, refuse, or fake compliance with faction ultimatum demand.' },
+
+  // Phase 2: Presidential Primaries & Convention
+  { actionType: 'PRESIDENTIAL_PRIMARY_ADVANCE_WAVE', phase: 'primary', consumesAction: false, description: 'Advance primary calendar wave.' },
+  { actionType: 'PRESIDENTIAL_PRIMARY_STEP_ASIDE', phase: 'primary', consumesAction: false, description: 'Pressure vulnerable incumbent to voluntarily step aside.' },
+  { actionType: 'PRESIDENTIAL_PRIMARY_STAND_BY', phase: 'primary', consumesAction: false, description: 'Stand firmly by vulnerable incumbent against primary challenge.' },
+  { actionType: 'PRESIDENTIAL_PRIMARY_CHAIR_STRATEGY', phase: 'primary', consumesAction: false, description: 'Execute Chair primary strategy: Neutrality, Back Candidate, Broker Consolidation.' },
+  { actionType: 'CONVENTION_VOTE_PLANK', phase: 'convention', consumesAction: false, description: 'Cast factional delegate votes on contested platform floor amendment.' },
+  { actionType: 'CONVENTION_SELECT_VP', phase: 'convention', consumesAction: false, description: 'Select Vice Presidential running mate.' },
+  { actionType: 'CONVENTION_DELIVER_KEYNOTE', phase: 'convention', consumesAction: false, description: 'Deliver national convention keynote address.' },
+  { actionType: 'CONVENTION_BROKER_DEAL', phase: 'convention', consumesAction: false, description: 'Broker delegate coalition deal at multi-ballot convention.' },
+  { actionType: 'CONVENTION_FINALIZE', phase: 'convention', consumesAction: false, description: 'Finalize convention proceedings and crown nominee ticket.' },
+  { actionType: 'FINISH_PRESIDENTIAL_PRIMARY', phase: 'primary', consumesAction: false, description: 'Conclude primary season and transition to campaign phase.' },
+
+  // Phase 3: Campaign Operations (June–October)
+  { actionType: 'SET_MONTHLY_THEME', phase: 'campaign', consumesAction: false, description: 'Establish monthly Theme of the Month issue focus.' },
+  { actionType: 'BUY_AIRWAVES_BLITZ', phase: 'campaign', consumesAction: true, description: 'Purchase television, radio, and digital ad blitz in target state.' },
+  { actionType: 'DEPLOY_SURROGATE', phase: 'campaign', consumesAction: true, description: 'Deploy high-fame surrogate to rally voters in target state.' },
+  { actionType: 'MOBILIZE_GOTV_DRIVE', phase: 'campaign', consumesAction: true, description: 'Fund field offices and grassroots GOTV turnout infrastructure.' },
+  { actionType: 'INVESTIGATE_OPPO', phase: 'campaign', consumesAction: true, costMillions: 1.5, description: 'Commission opposition research dossier against rival candidate.' },
+  { actionType: 'DETONATE_OPPO_DOSSIER', phase: 'campaign', consumesAction: true, description: 'Detonate completed opposition research dossier in battleground airwaves.' },
+  { actionType: 'RESOLVE_CRISIS_DECISION', phase: 'campaign', consumesAction: false, description: 'Handle candidate trait scandal crisis.' },
+  { actionType: 'FINAL_72H_BLITZ', phase: 'campaign', consumesAction: false, description: 'Deploy remaining treasury in Final 72 Hours Blitz across battlegrounds.' },
+  { actionType: 'RESOLVE_DEBATE_STAGE_EVENT', phase: 'campaign', consumesAction: false, description: 'Resolve presidential or downballot debate stage event.' },
+  { actionType: 'VET_CANDIDATE', phase: 'organizing', consumesAction: true, costMillions: 0.5, description: 'Vet prospective candidate for hidden liabilities and scandals.' },
+  { actionType: 'RESOLVE_SCANDAL_CRISIS', phase: 'campaign', consumesAction: false, description: 'Resolve media scandal crisis for vetting system.' },
+  { actionType: 'RESOLVE_BALLOT_CRISIS', phase: 'organizing', consumesAction: false, description: 'Resolve state statutory ballot access challenge or litigation.' },
+  { actionType: 'ENACT_STATE_VOTING_LAW', phase: 'organizing', consumesAction: true, description: 'Enact state voting reform or signature threshold alteration.' },
+  { actionType: 'ACCEPT_JOINT_COMPACT', phase: 'organizing', consumesAction: false, description: 'Formally accept Super PAC Joint Victory Compact.' },
+  { actionType: 'REJECT_JOINT_COMPACT', phase: 'organizing', consumesAction: false, description: 'Reject Super PAC Joint Victory Compact offer.' },
+  { actionType: 'RENEGE_JOINT_COMPACT', phase: 'campaign', consumesAction: false, description: 'Renege on terms of active Super PAC compact.' },
+  { actionType: 'ADVANCE_CAMPAIGN_MONTH', phase: 'campaign', consumesAction: false, description: 'Advance campaign calendar to next monthly turn.' },
+];
+
 window.PartyChairData = Object.assign(window.PartyChairData || {}, {
+  DEFAULT_STRATEGY_PROFILES,
+  generateDynamicPartyStrategyProfile,
+  PARTY_PLATFORM_TUNING_WEIGHTS,
+  UNIVERSAL_PARTY_ACTIONS_CATALOG,
   ALL_PARTY_FACTIONS,
   BILLS,
   CAMPAIGN_STANDARD_WEEKS,
