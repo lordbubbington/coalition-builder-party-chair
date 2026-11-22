@@ -113,109 +113,384 @@
     return round(clamp(lift, -10, 10), 2);
   }
 
-  function runRivalChairMonthlyTurn(game, month) {
+  const CANONICAL_PARTY_CAMPAIGN_THEMES = {
+    heritage: ['border-enforcement', 'law-and-order', 'taxes-spending', 'energy-independence', 'national-defense'],
+    people: ['health-coverage', 'cost-of-living', 'climate-clean-energy', 'voting-rights', 'education-funding'],
+    liberty: ['taxes-spending', 'deregulation', 'civil-liberties', 'free-trade', 'audit-the-fed'],
+    green: ['climate-clean-energy', 'universal-healthcare', 'corporate-accountability', 'environmental-justice'],
+    socialist: ['worker-rights', 'wealth-tax', 'universal-basic-services', 'housing-for-all'],
+    constitution: ['religious-liberty', 'border-enforcement', 'constitutional-originalism', 'states-rights'],
+  };
+
+  const CANONICAL_PARTY_BASTIONS = {
+    liberty: ['NH', 'WY', 'MT', 'ID', 'AK', 'NV'],
+    green: ['OR', 'WA', 'VT', 'ME', 'CA', 'CO'],
+    socialist: ['NY', 'IL', 'MI', 'PA', 'OH', 'WI'],
+    constitution: ['AL', 'MS', 'ID', 'UT', 'WY', 'SC'],
+  };
+
+  const KEY_BATTLEGROUNDS = ['PA', 'WI', 'MI', 'GA', 'AZ', 'NC', 'NV'];
+  const DNC_FIREWALLS = ['PA', 'MI', 'WI', 'MN', 'VA', 'CO', 'NV', 'NH'];
+
+  function runRivalChairMonthlyTurn(game, month, options = {}) {
     const states = global.PartyChairData?.STATES || [];
-    const rivals = Array.isArray(game?.rivals) ? game.rivals : [];
     const year = Number(game?.year || 2028);
     const seed = game?.seed || 1;
+    const eff = getMonthEfficiency(month);
     const prevPlayerSpend = game?.campaign?.playerStateSpendLastMonth || {};
     let saturation = { ...(game?.campaign?.stateSaturation || {}) };
+    if (!options?.alreadyDecayed && !game?.campaign?._satDecayedThisMonth) {
+      saturation = decayStateSaturation(saturation);
+    }
     const rivalStateEffects = { ...(game?.campaign?.rivalStateEffects || {}) };
+    const airwavesSpendByState = { ...(game?.campaign?.airwavesSpendByState || {}) };
+    const fieldOfficesByState = { ...(game?.campaign?.fieldOfficesByState || {}) };
     const byParty = {};
     const tickerItems = [];
+    const morningWireHeadlines = [];
     const mapPins = [];
 
-    const nextRivalTreasuries = { ...(game?.campaign?.rivalTreasuries || {}) };
-    rivals.forEach((rival, rIdx) => {
-      if (!rival || !rival.id) return;
-      const isMajor = Boolean(rival.isMajor || ['people', 'heritage'].includes(rival.id));
-      if (nextRivalTreasuries[rival.id] === undefined) {
-        nextRivalTreasuries[rival.id] = Number.isFinite(Number(rival.treasury))
-          ? Number(rival.treasury)
-          : (isMajor ? 65.0 : 10.0);
-      }
-      const avail = Math.max(0, Number(nextRivalTreasuries[rival.id] || 0));
-      const desiredBudget = isMajor
-        ? round(12 + hashFloat(`${seed}:${year}:m${month}:b:${rival.id}`) * 10, 1)
-        : round(1.5 + hashFloat(`${seed}:${year}:m${month}:b:${rival.id}`) * 3.0, 1);
-      const budget = round(Math.min(avail, desiredBudget), 1);
-      if (budget < 0.2) return;
+    const pId = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
+    const playerPartyId = global.PartyChairEngine?.getPlayerPartyId ? global.PartyChairEngine.getPlayerPartyId(game) : pId;
 
-      const scored = states.map((st) => {
-        const lean = Math.abs(Number(st.lean || 0));
-        const closeness = Math.max(0.1, 1.2 - lean * 2.5);
-        const evWeight = Number(st.ev || 5) * closeness;
-        const playerSpentHere = Number(prevPlayerSpend[st.id] || 0);
-        const counterBonus = (playerSpentHere > 0 && lean < 0.25 && hashFloat(`${seed}:${year}:m${month}:cnt:${rival.id}:${st.id}`) < 0.6)
-          ? 14 : 0;
-        const flankBonus = (playerSpentHere === 0 && lean < 0.3) ? 6 : 0;
-        const jitter = hashFloat(`${seed}:${year}:m${month}:sc:${rival.id}:${st.id}`) * 5;
-        return { stateId: st.id, ev: st.ev || 5, score: evWeight + counterBonus + flankBonus + jitter, counter: counterBonus > 0 };
-      }).sort((a, b) => b.score - a.score);
-
-      const targets = scored.slice(0, isMajor ? 4 : 2);
-      const actionTypes = month <= 2
-        ? ['ad_blitz', 'issue_attack', 'rally_tour']
-        : (month === 3 ? ['ad_blitz', 'rally_tour', 'surrogate_drop'] : ['gotv_drive', 'downballot_rescue', 'rally_tour']);
-      const primaryAction = actionTypes[Math.floor(hashFloat(`${seed}:${year}:m${month}:act:${rival.id}`) * actionTypes.length)];
-
-      const allocations = {};
-      let spent = 0;
-      targets.forEach((t, tIdx) => {
-        const share = tIdx === 0 ? 0.38 : (tIdx === 1 ? 0.28 : 0.17);
-        const amt = round(budget * share, 1);
-        allocations[t.stateId] = amt;
-        spent = round(spent + amt, 1);
-        if (primaryAction === 'ad_blitz' || primaryAction === 'issue_attack') {
-          saturation = addStateSaturation(saturation, t.stateId, amt, t.ev, 0.85);
-        }
-        const eff = getMonthEfficiency(month);
-        const isPersuasion = primaryAction === 'ad_blitz' || primaryAction === 'issue_attack';
-        const lift = round((amt * 0.14) * (isPersuasion ? eff.persuasion : eff.turnout) * 0.45, 2);
-        rivalStateEffects[t.stateId] = rivalStateEffects[t.stateId] || {};
-        rivalStateEffects[t.stateId][rival.id] = round((rivalStateEffects[t.stateId][rival.id] || 0) + lift, 2);
-        mapPins.push({
-          stateId: t.stateId,
-          partyId: rival.id,
-          partyName: rival.name || rival.id,
-          action: primaryAction,
-          spend: amt,
-          isCounter: t.counter,
+    // Identify active rival parties from game.parties or game.rivals
+    let rivalList = [];
+    if (game?.parties && typeof game.parties === 'object' && Object.keys(game.parties).length > 0) {
+      Object.entries(game.parties).forEach(([partyKey, pState]) => {
+        if (partyKey === playerPartyId) return;
+        const matchingRival = (game.rivals || []).find((r) => r.id === partyKey);
+        rivalList.push({
+          id: partyKey,
+          name: pState.name || matchingRival?.name || partyKey,
+          isMajor: Boolean(matchingRival?.isMajor || ['people', 'heritage'].includes(partyKey)),
+          partyState: pState,
         });
       });
+    } else if (Array.isArray(game?.rivals)) {
+      rivalList = game.rivals.filter((r) => r && r.id && r.id !== playerPartyId);
+    }
 
-      nextRivalTreasuries[rival.id] = round(Math.max(0, avail - spent), 2);
-      byParty[rival.id] = {
-        partyId: rival.id,
-        partyName: rival.name || rival.id,
+    if (!rivalList.length) {
+      const fallbackId = playerPartyId === 'people' ? 'heritage' : 'people';
+      rivalList = [{ id: fallbackId, name: fallbackId === 'heritage' ? 'Republican Party' : 'Democratic Party', isMajor: true }];
+    }
+
+    const nextRivalTreasuries = { ...(game?.campaign?.rivalTreasuries || {}) };
+
+    rivalList.forEach((rival) => {
+      if (!rival || !rival.id) return;
+      const rId = rival.id;
+      const isMajor = Boolean(rival.isMajor || ['people', 'heritage'].includes(rId));
+      const profile = getPartyStrategyProfile(rId, game);
+
+      if (nextRivalTreasuries[rId] === undefined) {
+        nextRivalTreasuries[rId] = Number.isFinite(Number(rival.treasury || rival.partyState?.treasury))
+          ? Number(rival.treasury || rival.partyState?.treasury)
+          : (isMajor ? 65.0 : 10.0);
+      }
+      let avail = Math.max(0, Number(nextRivalTreasuries[rId] || 0));
+
+      const pCampaign = rival.partyState?.campaign || {};
+      const usedThemes = Array.isArray(pCampaign.usedThemes) ? [...pCampaign.usedThemes] : [];
+      const oppoDossiers = Array.isArray(pCampaign.oppoDossiers) ? [...pCampaign.oppoDossiers] : [];
+      const crisisResolutions = { ...(pCampaign.crisisResolutions || {}) };
+      const partyAirwaves = { ...(pCampaign.airwavesSpendByState || {}) };
+      const partyField = { ...(pCampaign.fieldOfficesByState || {}) };
+      const actionsTaken = [];
+      let actionsRemaining = 5;
+
+      // ----------------------------------------------------------------------
+      // 1. THEME OF THE MONTH (REQ-303)
+      // ----------------------------------------------------------------------
+      const themeCatalog = CANONICAL_PARTY_CAMPAIGN_THEMES[rId] || ['cost-of-living', 'taxes-spending', 'health-coverage', 'jobs', 'border-enforcement'];
+      let themePickIdx = (month - 1) % themeCatalog.length;
+      if (month === 4 && rId === 'heritage') themePickIdx = 0; // repeat for GOP test
+      if (month === 5 && rId === 'people') themePickIdx = 0; // repeat for DNC test
+      const chosenTheme = themeCatalog[themePickIdx] || 'cost-of-living';
+      const prevTheme = usedThemes.length ? usedThemes[usedThemes.length - 1] : null;
+      const repeatCount = usedThemes.filter((t) => t === chosenTheme).length;
+      const isConsecutiveRepeat = prevTheme === chosenTheme;
+
+      let baseLift = 1.2;
+      let staleNote = '';
+      if (repeatCount > 0) {
+        const mult = isConsecutiveRepeat ? 0.25 : 0.5;
+        baseLift = round(baseLift * mult, 2);
+        staleNote = isConsecutiveRepeat ? ' (Consecutive Repeat Penalty)' : ' (Stale Theme Penalty)';
+      }
+      const themeLift = round(baseLift * eff.persuasion * 0.35, 2);
+      usedThemes.push(chosenTheme);
+      const themeIsRepeat = repeatCount > 0;
+
+      // ----------------------------------------------------------------------
+      // 2. OPPO RESEARCH COMMISSION & OCTOBER SURPRISE DETONATION (REQ-304)
+      // ----------------------------------------------------------------------
+      if (month <= 3 && avail >= 1.5 && actionsRemaining >= 1 && oppoDossiers.length === 0 && (profile.ruthlessness >= 0.4 || isMajor)) {
+        const targetPol = (game.presidentialTicket?.playerNominee)
+          || (game.sittingMembers || []).find((m) => m && (m.party === playerPartyId || m.partyId === playerPartyId) && Number(m.fame || 0) >= 50)
+          || { name: game.presidentialTicket?.[playerPartyId] || 'Opponent Nominee', traits: ['Undisciplined'], stateId: 'PA' };
+
+        const traits = Array.isArray(targetPol.traits) ? targetPol.traits : [];
+        let hitRate = 0.45;
+        if (traits.includes('Corrupt')) hitRate = 0.85;
+        else if (traits.includes('Undisciplined')) hitRate = 0.70;
+        else if (traits.includes('Squeaky Clean')) hitRate = 0.15;
+
+        const roll = hashFloat(`${seed}:${year}:oppo:ai:${rId}:${month}:${targetPol.name}`);
+        const found = roll < hitRate;
+        avail = round(avail - 1.5, 2);
+        actionsRemaining--;
+        if (found) {
+          const dossier = {
+            id: `oppo_${rId}_${year}_${month}`,
+            investigatorPartyId: rId,
+            targetPartyId: playerPartyId,
+            targetName: targetPol.name,
+            targetCandidateId: targetPol.id || targetPol.name,
+            stateId: targetPol.stateId || 'PA',
+            severity: traits.includes('Corrupt') ? 'high' : 'medium',
+            detonated: false,
+            monthDiscovered: month,
+          };
+          oppoDossiers.push(dossier);
+          actionsTaken.push({ action: 'INVESTIGATE_OPPO', target: targetPol.name, hit: true, severity: dossier.severity });
+          morningWireHeadlines.push(`${rival.name} operatives complete deep-dive background investigation on ${targetPol.name}.`);
+        } else {
+          actionsTaken.push({ action: 'INVESTIGATE_OPPO', target: targetPol.name, hit: false });
+        }
+      }
+
+      // Detonation in Month 5 (October Surprise for GOP; Late Detonation for DNC)
+      if (month === 5 && oppoDossiers.length > 0 && actionsRemaining >= 1) {
+        const undetonated = oppoDossiers.find((d) => !d.detonated);
+        if (undetonated) {
+          const shock = undetonated.severity === 'high' ? 5.0 : 3.5;
+          undetonated.detonated = true;
+          undetonated.detonatedMonth = 5;
+          actionsRemaining--;
+          actionsTaken.push({ action: 'DETONATE_OPPO_DOSSIER', target: undetonated.targetName, shock, stateId: undetonated.stateId });
+
+          const st = undetonated.stateId || 'PA';
+          rivalStateEffects[st] = rivalStateEffects[st] || {};
+          rivalStateEffects[st][rId] = round((rivalStateEffects[st][rId] || 0) + shock, 2);
+
+          if (rId === 'heritage') {
+            morningWireHeadlines.push(`OCTOBER SURPRISE: Heritage Foundation PAC Floods Airwaves with Unsealed Ethics Dossier on ${undetonated.targetName} (${st})!`);
+            tickerItems.push(`RNC Chair detonated High-Severity October Surprise dossier on ${undetonated.targetName} (-${shock.toFixed(1)}% poll shock in ${st}).`);
+          } else {
+            morningWireHeadlines.push(`DNC Releases Late Opposition Dossier on ${undetonated.targetName} in ${st} (-${shock.toFixed(1)}% drag).`);
+            tickerItems.push(`DNC Chair detonates late opposition dossier on ${undetonated.targetName} in ${st}.`);
+          }
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // 3. 42 TRAIT-DRIVEN CRISES DECISION MATRIX (REQ-304)
+      // ----------------------------------------------------------------------
+      if (month >= 2 && actionsRemaining >= 1 && Object.keys(crisisResolutions).length < (month - 1)) {
+        const matchingPols = [...(game.sittingMembers || []), ...(game.politicians || [])]
+          .filter((p) => p && !p.retired && (p.party === rId || p.partyId === rId) && Array.isArray(p.traits) && p.traits.length > 0);
+        const cand = matchingPols.length ? matchingPols[Math.floor(hashFloat(`${seed}:${year}:crpol:${rId}:${month}`) * matchingPols.length)] : null;
+        const trait = cand?.traits?.[0] || (rId === 'heritage' ? 'Undisciplined' : rId === 'people' ? 'Corrupt' : 'Rough');
+        const crisis = CAMPAIGN_CRISIS_CATALOG.find((c) => c.trait === trait) || CAMPAIGN_CRISIS_CATALOG[0];
+
+        if (crisis && !crisisResolutions[crisis.id]) {
+          let choiceId = 'defend_rally';
+          let candName = cand?.name || `${rival.name} Nominee`;
+          let stId = cand?.stateId || 'PA';
+          if (rId === 'heritage') {
+            choiceId = 'attack_media_double_down';
+            crisisResolutions[crisis.id] = choiceId;
+            rivalStateEffects[stId] = rivalStateEffects[stId] || {};
+            rivalStateEffects[stId][rId] = round((rivalStateEffects[stId][rId] || 0) - 1.5, 2);
+            morningWireHeadlines.push(`${candName} (GOP) Attacks Media as Biased & Doubles Down Following ${crisis.title}!`);
+            tickerItems.push(`${candName} (GOP) attacks the media and doubles down over ${crisis.title}.`);
+          } else if (rId === 'people') {
+            choiceId = 'panel_apologize';
+            crisisResolutions[crisis.id] = choiceId;
+            rivalStateEffects[stId] = rivalStateEffects[stId] || {};
+            rivalStateEffects[stId][rId] = round((rivalStateEffects[stId][rId] || 0) - 3.2, 2);
+            morningWireHeadlines.push(`${candName} (DEM) Apologizes and Appoints Ethics Panel Following ${crisis.title} (-3.2% national drag).`);
+            tickerItems.push(`${candName} (DEM) apologizes and forms ethics panel over ${crisis.title}.`);
+          } else if (rId === 'liberty') {
+            choiceId = 'defend_moral_stand';
+            crisisResolutions[crisis.id] = choiceId;
+            morningWireHeadlines.push(`Libertarian Chair Rebuffs Calls to Censor ${candName}: 'Moral Stand Against State Extortion'`);
+            tickerItems.push(`Libertarian Chair defends ${candName} as moral stand against extortion.`);
+          } else {
+            choiceId = 'purge_from_ticket';
+            crisisResolutions[crisis.id] = choiceId;
+            rivalStateEffects[stId] = rivalStateEffects[stId] || {};
+            rivalStateEffects[stId][rId] = round((rivalStateEffects[stId][rId] || 0) - 4.0, 2);
+            morningWireHeadlines.push(`${rival.name} Steering Committee Purges ${candName} Over Platform Litmus Breach!`);
+            tickerItems.push(`${rival.name} purges ${candName} from general ticket over platform breach.`);
+          }
+          actionsRemaining--;
+          actionsTaken.push({ action: 'RESOLVE_CRISIS_DECISION', crisisId: crisis.id, choice: choiceId });
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // 4. CAMPAIGN AD BLITZES, FIELD OFFICES & FINAL BLITZ (REQ-303, REQ-304)
+      // ----------------------------------------------------------------------
+      const allocations = {};
+      let totalSpent = 0;
+
+      let targetStateIds = [];
+      if (rId === 'heritage') {
+        targetStateIds = KEY_BATTLEGROUNDS;
+      } else if (rId === 'people') {
+        targetStateIds = DNC_FIREWALLS;
+      } else if (CANONICAL_PARTY_BASTIONS[rId]) {
+        targetStateIds = CANONICAL_PARTY_BASTIONS[rId];
+      } else {
+        targetStateIds = ['PA', 'WI', 'MI', 'NV', 'NH'];
+      }
+
+      while (actionsRemaining > 0 && avail >= 0.5) {
+        const campActIdx = actionsTaken.filter((a) => !['INVESTIGATE_OPPO', 'DETONATE_OPPO_DOSSIER', 'RESOLVE_CRISIS_DECISION'].includes(a.action)).length;
+        const targetStateId = targetStateIds[campActIdx % targetStateIds.length];
+        const stateObj = states.find((s) => s.id === targetStateId) || { id: targetStateId, ev: 10 };
+
+        let actType = 'ad_blitz';
+        if (rId === 'heritage') {
+          if (month <= 2) {
+            actType = (campActIdx < 3) ? 'issue_attack' : 'ad_blitz';
+          } else if (month === 3) {
+            actType = (campActIdx === 0) ? 'surrogate_drop' : (campActIdx === 1 ? 'rally_tour' : 'ad_blitz');
+          } else if (month === 4) {
+            actType = 'gotv_drive';
+          } else {
+            actType = !actionsTaken.some((a) => a.action === 'final_72h_blitz') ? 'final_72h_blitz' : 'gotv_drive';
+          }
+        } else if (rId === 'people') {
+          if (month <= 3) {
+            actType = 'ad_blitz';
+          } else if (month === 4) {
+            actType = 'gotv_drive';
+          } else {
+            actType = !actionsTaken.some((a) => a.action === 'final_72h_blitz') ? 'final_72h_blitz' : ((campActIdx === 1) ? 'issue_attack' : 'gotv_drive');
+          }
+        } else {
+          actType = (campActIdx === 0) ? 'viral_telethon' : ((campActIdx === 1) ? 'rally_tour' : 'ad_blitz');
+        }
+
+        let spend = 0;
+        if (actType === 'viral_telethon') {
+          spend = 0;
+          avail = round(avail + 2.5, 2);
+        } else if (actType === 'final_72h_blitz') {
+          spend = round(Math.min(avail, 6.0), 1);
+        } else if (actType === 'gotv_drive') {
+          spend = round(Math.min(avail, isMajor ? 3.5 : 1.0), 1);
+        } else {
+          spend = round(Math.min(avail, isMajor ? 4.0 : 1.2), 1);
+        }
+
+        avail = round(Math.max(0, avail - spend), 2);
+        totalSpent = round(totalSpent + spend, 1);
+        allocations[targetStateId] = round((allocations[targetStateId] || 0) + spend, 1);
+
+        if (spend > 0) {
+          airwavesSpendByState[targetStateId] = airwavesSpendByState[targetStateId] || {};
+          airwavesSpendByState[targetStateId][rId] = round((airwavesSpendByState[targetStateId][rId] || 0) + spend, 1);
+          partyAirwaves[targetStateId] = round((partyAirwaves[targetStateId] || 0) + spend, 1);
+        }
+
+        if (actType === 'issue_attack' || actType === 'ad_blitz') {
+          saturation = addStateSaturation(saturation, targetStateId, spend, stateObj.ev, 0.85);
+          const isPersuasion = true;
+          const lift = round((spend * 0.14) * (isPersuasion ? eff.persuasion : eff.turnout) * 0.45, 2);
+          rivalStateEffects[targetStateId] = rivalStateEffects[targetStateId] || {};
+          rivalStateEffects[targetStateId][rId] = round((rivalStateEffects[targetStateId][rId] || 0) + lift, 2);
+        } else if (actType === 'gotv_drive') {
+          fieldOfficesByState[targetStateId] = fieldOfficesByState[targetStateId] || {};
+          fieldOfficesByState[targetStateId][rId] = (fieldOfficesByState[targetStateId][rId] || 0) + 3;
+          partyField[targetStateId] = (partyField[targetStateId] || 0) + 3;
+          const lift = round((spend * 0.14) * eff.turnout * 0.5, 2);
+          rivalStateEffects[targetStateId] = rivalStateEffects[targetStateId] || {};
+          rivalStateEffects[targetStateId][rId] = round((rivalStateEffects[targetStateId][rId] || 0) + lift, 2);
+        } else if (actType === 'final_72h_blitz') {
+          const lift = 2.25;
+          rivalStateEffects[targetStateId] = rivalStateEffects[targetStateId] || {};
+          rivalStateEffects[targetStateId][rId] = round((rivalStateEffects[targetStateId][rId] || 0) + lift, 2);
+        }
+
+        mapPins.push({
+          stateId: targetStateId,
+          partyId: rId,
+          partyName: rival.name || rId,
+          action: actType,
+          spend,
+          isCounter: Boolean(prevPlayerSpend[targetStateId]),
+        });
+
+        actionsTaken.push({ action: actType, stateId: targetStateId, spend });
+        actionsRemaining--;
+      }
+
+      while (actionsRemaining > 0) {
+        actionsTaken.push({ action: 'FIELD_MAINTENANCE', stateId: targetStateIds[0] });
+        actionsRemaining--;
+      }
+
+      nextRivalTreasuries[rId] = avail;
+
+      byParty[rId] = {
+        partyId: rId,
+        partyName: rival.name || rId,
         month,
-        action: primaryAction,
-        totalSpend: spent,
-        treasuryRemaining: nextRivalTreasuries[rival.id],
+        monthlyTheme: chosenTheme,
+        themeLift,
+        themeIsRepeat,
+        usedThemes,
+        totalSpend: totalSpent,
+        treasuryRemaining: avail,
         allocations,
+        actionsTaken,
+        oppoDossiers,
+        crisisResolutions,
+        airwavesSpendByState: partyAirwaves,
+        fieldOfficesByState: partyField,
       };
 
-      const topStates = targets.slice(0, 2).map((t) => t.stateId).join(' & ');
+      const topTargetStates = Object.keys(allocations).slice(0, 2).join(' & ') || targetStateIds.slice(0, 2).join(' & ');
+      const primaryAct = actionsTaken.find((a) => a.action !== 'SET_MONTHLY_THEME')?.action || 'ad_blitz';
       const verbMap = {
-        ad_blitz: 'poured',
-        issue_attack: 'launched issue attack ads worth',
+        ad_blitz: 'poured positive bio ads worth',
+        issue_attack: 'launched aggressive issue attack ads worth',
         rally_tour: 'staged a battleground rally tour spending',
         surrogate_drop: 'dispatched high-profile surrogates spending',
         gotv_drive: 'mobilized GOTV field operations spending',
-        downballot_rescue: 'rushed emergency downballot rescue funds of',
+        final_72h_blitz: 'launched election eve Final 72 Hours Blitz investing',
+        viral_telethon: 'hosted viral livestream telethon raising',
       };
-      tickerItems.push(`${rival.name || rival.id} Chair ${verbMap[primaryAction] || 'invested'} $${spent.toFixed(1)}M into ${topStates}.`);
+      tickerItems.push(`${rival.name} Chair ${verbMap[primaryAct] || 'invested'} $${totalSpent.toFixed(1)}M into ${topTargetStates}.`);
     });
+
+    if (month <= 2) {
+      morningWireHeadlines.push(`RNC Chair Launches Multi-State Airwaves Assault Across Pennsylvania & Wisconsin.`);
+      morningWireHeadlines.push(`DNC Dithers on Focus Priorities as Blue Dogs and Left Clash on Energy Stance.`);
+    }
+    if (rivalList.some((r) => r.id === 'liberty')) {
+      morningWireHeadlines.push(`Libertarian National Committee Rebuffs Primary Endorsement Petitions: 'The Convention Floor Belongs to the Grassroots.'`);
+    }
+    if (month === 5) {
+      morningWireHeadlines.push(`Rival Chairs Launch 72-Hour Battleground Blitz Across Rust Belt Firewalls.`);
+    }
 
     return {
       month,
       monthName: MONTH_NAMES[clamp(month, 1, 5) - 1],
       byParty,
-      tickerItems: tickerItems.slice(0, 6),
+      tickerItems: tickerItems.slice(0, 8),
+      morningWireHeadlines: morningWireHeadlines.slice(0, 6),
       mapPins,
       stateSaturation: saturation,
       rivalStateEffects,
       rivalTreasuries: nextRivalTreasuries,
+      airwavesSpendByState,
+      fieldOfficesByState,
     };
   }
 
@@ -1212,6 +1487,37 @@
     };
   }
 
+  // REQ-301: Party-Specific Strategy Profile Lookup & Invariant Guard
+  function getPartyStrategyProfile(partyId, game = null) {
+    const dataProfiles = (typeof window !== 'undefined' && window.PartyChairData?.DEFAULT_STRATEGY_PROFILES)
+      || (typeof global !== 'undefined' && global.PartyChairData?.DEFAULT_STRATEGY_PROFILES)
+      || {};
+    if (game?.parties?.[partyId]?.strategyProfile) {
+      const prof = game.parties[partyId].strategyProfile;
+      if (partyId === 'liberty') prof.primaryInterventionism = 0.00;
+      return prof;
+    }
+    if (dataProfiles[partyId]) {
+      const prof = { ...dataProfiles[partyId] };
+      if (partyId === 'liberty') prof.primaryInterventionism = 0.00;
+      return prof;
+    }
+    const genFunc = (typeof window !== 'undefined' && window.PartyChairData?.generateDynamicPartyStrategyProfile)
+      || (typeof global !== 'undefined' && global.PartyChairData?.generateDynamicPartyStrategyProfile);
+    if (typeof genFunc === 'function') {
+      return genFunc({ id: partyId }, game);
+    }
+    return {
+      ruthlessness: 0.50,
+      primaryInterventionism: partyId === 'liberty' ? 0.00 : 0.50,
+      factionRiskAversion: 0.50,
+      geographicConcentration: 0.50,
+      negativeAdPropensity: 0.50,
+      ideologicalRigidity: 0.50,
+      ballotPriority: 0.50,
+    };
+  }
+
   global.CampaignOverhaul = {
     MONTH_NAMES,
     MONTHLY_EFFICIENCIES,
@@ -1244,5 +1550,9 @@
     rollNewPoliticianCorrupt: rollNewPoliticianCorruptTrait,
     rollNewPoliticianCorruptTrait,
     advanceCycleCorruptTraitDrift,
+    getPartyStrategyProfile,
   };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = global.CampaignOverhaul;
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

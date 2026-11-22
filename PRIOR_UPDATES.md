@@ -2099,3 +2099,56 @@ Categorized primarily by **Size** per workspace rules:
   - 9 v0.17.0 test suites (`test-v0170-*.cjs`): 92/92 passed (100%).
   - 5 regression test suites (`test-v0169-fixes.cjs`, `test-presidential-primaries.cjs`, `test-statewide-offices.cjs`, `test-v0165-bicameral-haven.cjs`, `test-v0162-integration.cjs`): 229/229 passed (100%).
 - **Executable Compilation:** Rebuilt self-contained Windows executable via `powershell -ExecutionPolicy Bypass -File .\build.ps1` to `dist/release/Coalition Builder - Party Chair.exe` and `dist/Coalition Builder - Party Chair.exe`.
+
+---
+
+## VERSION 0.18.3
+
+# Coalition Builder: Party Chair — Version 0.18.3
+
+Version 0.18.3 is a major systems release implementing the Symmetric Opponent Execution Engine (SOEE) Phase 3 campaign systems, autonomous rival chair campaign strategy, opposition research and October Surprises, trait-driven crises decision trees, and War Room intelligence telemetry, as specified in `SYMMETRIC_OPPONENT_AI_DESIGN.md`.
+
+Categorized primarily by **Size** per workspace rules:
+
+### 1. Massive Requirements (1 Requirement)
+
+1. **REQ-300: Autonomous Opponent Chair AI Engine & Cycle Pipeline Orchestrator (Massive | `engine.js`, `campaign-overhaul.js`, `app.js`):**
+   - Implemented `PartyChairEngine.simulateOpponentPhase(game, phaseName, options)` orchestrating synchronous turns for all rival chairs alongside the player across Phase 1 (`organizing`) and Phase 3 (`campaign`).
+   - Phase 1 executes 20-action organizing loops for all active rival parties, tuning platforms, selecting quests and focuses, contesting unheld state legislative slates, and appointing 14 leadership bench positions while strictly conserving 155,000,000 represented voters.
+   - Phase 3 synchronizes `game.campaign` and `game.parties` dual-bindings, state airwaves spend, active field offices, and state saturation every campaign month.
+
+### 2. Large Requirements (2 Requirements)
+
+1. **REQ-303: Autonomous 5-Month Campaign Strategy & Strategic Airwaves AI (Large | `campaign-overhaul.js`, `engine.js`):**
+   - Implemented 5 campaign actions per month per rival party across Months 1–5 under the steep Persuasion vs. Turnout Efficiency curve (June: 300% persuasion / 25% turnout; October: 25% persuasion / 300% turnout).
+   - Distinct party ad strategies: GOP (`heritage`) pours 65%+ issue attack ads early into key battlegrounds (`PA`, `WI`, `MI`, `AZ`, `GA`), driving airwaves into Crowded (>35) and Saturated (>65) tiers; DNC (`people`) protects firewall states with early bio ads, holding negative attack ads until October; Third parties run small-dollar viral telethons, battleground rallies, and wedge buys in home bastions and ballot-access states.
+   - Autonomous Theme of the Month selection with repeat stale messaging penalties (50%–75% reduction on repeated themes).
+
+2. **REQ-304: AI Crisis Management, Oppo Research Detonation & Debate Decision Matrix (Large | `campaign-overhaul.js`, `candidate-vetting.js`):**
+   - AI opposition investigations in Months 1–3 targeting vulnerable nominees; GOP holds dossiers until Month 5 October Surprise detonation (-5.0% / -3.5% poll shock); DNC delays detonation.
+   - Automated archetype decision trees for 42 trait-driven crises (GOP: "Attack the Media & Double Down"; DNC: "Appoint Independent Panel & Apologize"; Libertarian: "Defend as Moral Stand"; Green/Socialist: "Purge Candidate from Party Ticket").
+   - Final 72 Hours Blitz in Month 5 allocating cash across top battlegrounds for a +2.25% election eve turnout surge.
+
+### 3. Small Requirements (1 Requirement)
+
+1. **REQ-310: Opponent Intelligence Telemetry, Morning Wire & Trail Ticker UI Feed (Small | `app.js`, `campaign-overhaul.js`):**
+   - Cable-news styled Morning Wire breaking news feed in the Campaign War Room.
+   - Dynamic Campaign Trail Ticker logging monthly rival ad blitzes and investments.
+   - Interactive State Airwaves & Ground Balance inspection card detailing rival ad spend, field offices, opposition dossier drag, and saturation tiers (`Open`, `Crowded`, `Saturated`, `Ad Fatigue`).
+
+---
+
+### 4. Release Packaging & Verification
+
+- **Version Bump:** Promoted version to `0.18.3` across `package.json`, `engine.js`, `app.js`, `build.js`, `index.html`.
+- **Save Compatibility:** Save key updated to `partyChairGame.save.v18.3` with backward-compatible migration supporting `v18.2`, `v16.2`, `v16.1`, `v16.0`, and prior version save keys.
+- **Automated Verification Matrix:**
+  - `test-soee-campaign.cjs`: 8/8 passed (100%).
+  - `test-soee-agent1.cjs`: 8/8 passed (100%).
+  - `test-oppai-personas.cjs`: 38/38 passed (100%).
+  - `test-oppai-primary-simulator.cjs`: 31/31 passed (100%).
+  - `test-oppai-strategic-memory.cjs`: 22/22 passed (100%).
+  - `test-v0180-campaign-overhaul.cjs`: 24/24 passed (100%).
+  - `test-v0181-fixes.cjs`: 12/12 passed (100%).
+  - `test-v0182-fixes.cjs`: 6/6 passed (100%).
+- **Executable Compilation:** Rebuilt self-contained Windows executable via `powershell -ExecutionPolicy Bypass -File .\build.ps1` to `dist/release/Coalition Builder - Party Chair.exe` and `dist/Coalition Builder - Party Chair.exe`.

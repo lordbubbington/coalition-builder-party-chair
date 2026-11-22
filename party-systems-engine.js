@@ -342,7 +342,13 @@
   function resolvePartyPositionsMap(game, partyId = null) {
     const playerKey = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
     if (!partyId || partyId === 'player' || partyId === playerKey) {
+      if (game?.parties?.[playerKey]?.platformStances && Object.keys(game.parties[playerKey].platformStances).length) {
+        return game.parties[playerKey].platformStances;
+      }
       return game?.issuePositions || game?.player?.issuePositions || {};
+    }
+    if (game?.parties?.[partyId]?.platformStances && Object.keys(game.parties[partyId].platformStances).length) {
+      return game.parties[partyId].platformStances;
     }
     if (game?.partyIssuePositions?.[partyId]) {
       return game.partyIssuePositions[partyId];
@@ -2351,6 +2357,10 @@
             : nextGame.partySystems.eraState?.robotChairChoiceCompleted,
         },
       };
+    }
+
+    if (typeof window !== 'undefined' && window.PartyChairEngine?.syncPartyStateWithLegacy) {
+      window.PartyChairEngine.syncPartyStateWithLegacy(nextGame);
     }
 
     return nextGame;

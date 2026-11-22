@@ -1874,7 +1874,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.2</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.3</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1899,7 +1899,7 @@ function setupMarkup() {
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.18.2 · Faction Systems Release · Local autosave</p>
+          <p class="setup-foot">Version 0.18.3 · Opponent AI & Campaign Telemetry · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -5416,7 +5416,8 @@ function v0180CampaignWarRoomMarkup() {
   const eff = CO.getMonthEfficiency(month);
   const actionsLeft = c.monthlyActionsLeft ?? c.weeklyActionsLeft ?? 8;
   const maxActs = c.maxMonthlyActions ?? 8;
-  const ticker = (c.rivalActivity?.tickerItems || []).slice(0, 6);
+  const ticker = (c.rivalActivity?.tickerItems || []).slice(0, 8);
+  const morningWire = (c.rivalActivity?.morningWireHeadlines || c.morningWireHeadlines || []).slice(0, 6);
   const mapPins = c.rivalActivity?.mapPins || [];
   const showPins = Boolean(window.__v0181ShowRivalPins);
   const surrogates = CO.getEligibleSurrogates(game);
@@ -5476,11 +5477,63 @@ function v0180CampaignWarRoomMarkup() {
         <button type="button" class="button button-secondary" style="font-size:11px;padding:4px 8px;" data-v0180-toggle-pins="1">${showPins ? 'Hide' : 'Show'} Rival Map Pins (${mapPins.length})</button>
       </div>
 
+      ${(() => {
+        const selStObj = statesList.find((s) => s.id === defaultState) || { id: defaultState, name: defaultState, ev: 10 };
+        const airSpend = c.airwavesSpendByState?.[defaultState] || {};
+        const fieldOff = c.fieldOfficesByState?.[defaultState] || {};
+        const oppoShock = Number(c.oppoStateEffects?.[defaultState] || 0);
+        const totalAirSpend = Object.values(airSpend).reduce((s, v) => s + Number(v || 0), 0);
+        const totalOffices = Object.values(fieldOff).reduce((s, v) => s + Number(v || 0), 0);
+        const satBadgeBg = satTier.id === 'open' ? 'rgba(74,222,128,0.16)' : satTier.id === 'crowded' ? 'rgba(250,204,21,0.16)' : satTier.id === 'saturated' ? 'rgba(249,115,22,0.16)' : 'rgba(239,68,68,0.16)';
+        const satBadgeColor = satTier.id === 'open' ? '#86efac' : satTier.id === 'crowded' ? '#fde047' : satTier.id === 'saturated' ? '#fdba74' : '#fca5a5';
+
+        return `
+          <div style="background:rgba(15,23,42,0.65);border:1px solid rgba(148,163,184,0.25);border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+              <div style="font-size:12.5px;font-weight:700;color:#e2bd70;letter-spacing:0.04em;">
+                STATE AIRWAVES &amp; GROUND BALANCE · ${safe(defaultState)} (${safe(selStObj.name)}, ${selStObj.ev || 10} EV)
+              </div>
+              <span class="badge" style="background:${satBadgeBg};color:${satBadgeColor};padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;">
+                ${safe(satTier.label)} (${Math.round((satTier.effMult || 1) * 100)}% Ad Eff · ${satTier.costMult}x Cost)
+              </span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;font-size:12px;">
+              <div style="background:rgba(30,41,59,0.55);padding:8px 10px;border-radius:6px;">
+                <div style="font-weight:700;color:#93c5fd;margin-bottom:4px;">Airwaves Ad Spending ($${totalAirSpend.toFixed(1)}M Total)</div>
+                ${Object.keys(airSpend).length ? Object.entries(airSpend).map(([pid, amt]) => `<div>• ${safe(pid)}: <b>$${Number(amt).toFixed(1)}M</b></div>`).join('') : '<div style="color:var(--text-muted);font-style:italic;">No ad buys yet</div>'}
+              </div>
+              <div style="background:rgba(30,41,59,0.55);padding:8px 10px;border-radius:6px;">
+                <div style="font-weight:700;color:#86efac;margin-bottom:4px;">Active Field Offices (${totalOffices} Total)</div>
+                ${Object.keys(fieldOff).length ? Object.entries(fieldOff).map(([pid, cnt]) => `<div>• ${safe(pid)}: <b>${cnt} offices</b></div>`).join('') : '<div style="color:var(--text-muted);font-style:italic;">No ground offices established</div>'}
+              </div>
+              ${oppoShock > 0 ? `
+                <div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);padding:8px 10px;border-radius:6px;">
+                  <div style="font-weight:700;color:#fca5a5;margin-bottom:4px;">Opposition Dossier Drag</div>
+                  <div>• Active Poll Shock: <b>-${oppoShock.toFixed(1)}%</b></div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      })()}
+
       ${showPins && mapPins.length ? `
         <div style="background:rgba(30,41,59,0.65);border:1px solid rgba(148,163,184,0.25);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;">
           <b>Rival Chair Map Pins (Month ${month}):</b>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
             ${mapPins.slice(0, 16).map((pin) => `<span class="badge" style="background:rgba(248,113,113,0.16);color:#fecaca;padding:2px 7px;border-radius:6px;">${safe(pin.stateId)}: ${safe(pin.partyName)} (${safe(pin.action)}, $${Number(pin.spend || 0).toFixed(1)}M${pin.isCounter ? ' · Counter' : ''})</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${morningWire.length ? `
+        <div style="background:linear-gradient(135deg, rgba(30,41,59,0.92), rgba(15,23,42,0.96));border:1px solid rgba(239,68,68,0.4);border-left:4px solid #ef4444;border-radius:8px;padding:9px 12px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span class="badge" style="background:#ef4444;color:#ffffff;font-size:10px;font-weight:900;letter-spacing:0.08em;padding:2px 6px;border-radius:4px;">THE MORNING WIRE</span>
+            <span style="font-size:11px;color:#94a3b8;font-weight:600;">CABLE &amp; CAMPAIGN TRAIL INTELLIGENCE</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${morningWire.map((hl) => `<div style="font-size:12px;color:#f1f5f9;line-height:1.4;">• ${safe(hl)}</div>`).join('')}
           </div>
         </div>
       ` : ''}
@@ -6549,7 +6602,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.18.2 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.18.3 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}</div>
@@ -8890,7 +8943,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.2</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.3</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -8945,7 +8998,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.2</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.3</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
