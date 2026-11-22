@@ -5099,7 +5099,7 @@ function campaignDashboardMarkup() {
         </div>
       </section>
 
-      ${isOctoberSurpriseWeek && currentEvent
+      ${isOctoberSurpriseWeek && !c.octoberSurpriseResolved && !c.eventResolved && currentEvent
         ? `<section class="v08-october-surprise">
             <span class="v08-breaking-tag">🚨 BREAKING NEWS · OCTOBER SURPRISE (MONTH 4)</span>
             <h3 class="v08-surprise-title">${safe(currentEvent.title)}</h3>
@@ -8955,6 +8955,10 @@ function ensurePrimaryAutoPlayback() {
 function buildElectionHoverTooltipHtml(race, snapEval) {
   if (!race) return '';
   const pct = snapEval ? Math.round(snapEval.pct) : (race.isCalled ? 100 : 0);
+  const isNotOpenYet = Boolean(snapEval && snapEval.isOpen === false && !snapEval.isCalled && pct === 0);
+  if (isNotOpenYet) {
+    return `<div style="font-weight:700;font-size:12.5px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.14);padding-bottom:3px;">${safe(race.name || race.stateId || race.code || 'Race')} <span style="opacity:0.75;font-weight:500;">· Polls Open</span></div><div style="font-size:12px;opacity:0.85;">Polls not closed yet — awaiting returns.</div>`;
+  }
   const shares = snapEval?.currentShares || snapEval?.liveShares || race.finalShares || race.shares || null;
   let rowsHtml = '';
   if (shares && typeof shares === 'object' && Object.keys(shares).length > 0) {
@@ -9127,7 +9131,7 @@ function patchElectionNightLiveDOM() {
   });
 
   // 4 (#34): Prepend newly called races into the "Just Called" feed in-place
-  const calledFeed = document.querySelector('.just-called-feed');
+  const calledFeed = document.querySelector('.just-called-list, .just-called-feed');
   if (calledFeed && Array.isArray(snap.calls)) {
     snap.calls.slice(0, 20).reverse().forEach((c) => {
       if (calledFeed.querySelector(`.just-called-item[data-call-id="${c.id}"]`)) return;
@@ -9486,7 +9490,7 @@ function renderElectionNightScreen() {
       <div class="final-summary">
         ${timeline.isPresidential ? `Final Electoral College: ${snapshot.scoreboard.president.people} Dem · ${snapshot.scoreboard.president.heritage} GOP` : `Senate: ${snapshot.scoreboard.senate.people} Dem · ${snapshot.scoreboard.senate.heritage} GOP | House: ${snapshot.scoreboard.house.people} Dem · ${snapshot.scoreboard.house.heritage} GOP`}
       </div>
-${en.completed ? v0180PollingMissBannerMarkup() : ''}
+${(game?.electionNight?.completed || snapshot.isFinished) ? v0180PollingMissBannerMarkup() : ''}
       <button type="button" class="button button-gold desk-complete-btn" id="desk-btn-complete">See the full results →</button>
     </div>
   ` : `
@@ -9964,7 +9968,7 @@ function renderSaveSlotsModalMarkup() {
 }
 
 function render() {
-  if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip) _tip.style.display = 'none'; }
+  if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip && _tip.style) _tip.style.display = 'none'; }
   if (typeof ensurePrimaryAutoPlayback === 'function') ensurePrimaryAutoPlayback();
   syncGameSessionState();
   if (game && V07 && (!game.sittingMembers?.length || !game.trust || !game.leadershipRoles)) {
@@ -9977,6 +9981,12 @@ function render() {
     return;
   }
   stopElectionNightPlayback();
+  if (game && game.phase === 'presidential-primary' && game.activePresidentialPrimary) {
+    app.innerHTML = renderPresidentialPrimaryScreen();
+    if (game) saveGame(game);
+    bind();
+    return;
+  }
   app.innerHTML = game ? campaignMarkup() : setupMarkup();
   if (game) saveGame(game);
   bind();
@@ -10024,6 +10034,9 @@ function dispatchAction(actionId, payload = {}) {
 }
 
 function bind() {
+  const nameInput = document.querySelector('#custom-party-name');
+  const leaderInput = document.querySelector('#custom-leader-name');
+  const colorInput = document.querySelector('#custom-party-color');
   document.querySelectorAll('[data-template]').forEach((button) => button.addEventListener('click', () => {
     selectedTemplate = button.dataset.template;
     custom = false;
@@ -10163,8 +10176,8 @@ function bind() {
     const isCustomMode = custom || selectedTemplate === 'custom';
     const customName = (customPartyName || '').trim();
     if (isCustomMode && !customName) {
-      customNameInput?.focus();
-      customNameInput?.classList.add('invalid');
+      nameInput?.focus();
+      nameInput?.classList.add('invalid');
       return;
     }
 
@@ -11699,7 +11712,6 @@ window.PartyChairApp = {
 };
 
 render();
-})();
 
 // v0.18.2: Delegated Campaign War Room action bindings
 if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
@@ -11775,3 +11787,5 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
     if (typeof render === 'function') render();
   });
 }
+
+})();

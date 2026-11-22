@@ -92,7 +92,7 @@ test('#10/#11/#12/#26/#34/#35/#36 Election Night statewide_executive tab, 270 EV
   assert.ok(appSrc.includes("id: 'statewide_executive'"), '#10 statewide_executive tab ID matched');
   assert.ok(!appSrc.includes("timeline.races.find(r => r.raceKind === 'president')?.finalWinner"), '#11 no first-state Alabama winner bug');
   assert.ok(appSrc.includes('data-en-sallow-forecast="president"'), '#12 Presidential Sallow Forecast live hook');
-  assert.ok(appSrc.includes('data-en-breaking-host') && appSrc.includes('.just-called-feed') && appSrc.includes('.the-count-list'), '#34-#36 live feeds wired');
+  assert.ok(appSrc.includes('data-en-breaking-host') && appSrc.includes('.just-called-list') && appSrc.includes('.the-count-list'), '#34-#36 live feeds wired');
 });
 
 test('#14/#15/#16/#18/#19/#20/#37/#38 Campaign Overhaul guards, 36/36 canonical debate IDs, rival refill, unified polling error, valid states, oppo dup', () => {

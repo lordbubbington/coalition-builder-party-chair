@@ -3532,7 +3532,7 @@ function processOrphanedFactionRehoming(game) {
           return dEcon <= 2.5 && dSoc <= 2.5;
         });
 
-        if (isCompatible && seededUnit(`${game?.seed || 2028}:${game?.year || 2028}:rehome:${m?.id || ''}:${cand?.id || ''}`) < rehomeChance) {
+        if (isCompatible && seededUnit(`${game?.seed || 2028}:${game?.year || 2028}:rehome:${f?.id || ''}:${rival?.id || ''}`) < rehomeChance) {
           f.partyId = rival.id;
           f.seekingPartyHome = false;
           f.selloutGrudge.rehomedPartyId = rival.id;
@@ -12977,7 +12977,7 @@ function applyCampaignEventChoice(game, choiceIndex) {
   const nextCampaign = {
     ...game.campaign,
     eventResolved: true,
-    octoberSurpriseResolved: ev.isOctoberSurprise ? true : game.campaign.octoberSurpriseResolved,
+    octoberSurpriseResolved: (ev.isOctoberSurprise || game.campaign.week === 4) ? true : game.campaign.octoberSurpriseResolved,
     waveBonus: clamp((game.campaign.waveBonus || 0) + waveDelta, -5, 5),
     weeklyLog: [...(game.campaign.weeklyLog || []), `Month ${game.campaign.week}${ev.isOctoberSurprise ? ' OCTOBER SURPRISE' : ''}: ${ev.title} — ${choice.label}`].slice(-30),
   };
@@ -17974,6 +17974,8 @@ function normalizeGame(parsed) {
     ready = window.PartyChairV07.hydrateV07GameState(ready);
   }
   ready.schema = 7;
+  if (parsed.activePresidentialPrimary) ready.activePresidentialPrimary = parsed.activePresidentialPrimary;
+  if (parsed.phase === 'presidential-primary' || parsed.phase === 'election-night') ready.phase = parsed.phase;
   ready.version = '0.18.2';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
