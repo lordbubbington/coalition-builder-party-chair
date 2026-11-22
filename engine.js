@@ -11238,9 +11238,10 @@ function generateFreshPoliticianForSeat(opts = {}) {
     isIncumbent = false,
   } = opts;
   const data = window.PartyChairData || {};
-  const names = data.VERSION_01_RACE_CANDIDATE_NAMES || {
-    first: ['Avery', 'Jordan', 'Morgan', 'Riley', 'Casey', 'Taylor', 'Quinn', 'Cameron', 'Skyler', 'Drew', 'Parker', 'Reese', 'Elena', 'Marcus', 'Devon', 'Claire'],
-    last: ['Bennett', 'Caldwell', 'Diaz', 'Ellis', 'Foster', 'Grant', 'Hayes', 'Irwin', 'James', 'Kim', 'Lane', 'Monroe', 'Vance', 'Patel', 'Brooks', 'Rivera'],
+  const _baseNames = data.VERSION_01_RACE_CANDIDATE_NAMES || { first: [], last: [] };
+  const names = {
+    first: Array.from(new Set([...(_baseNames.first || []), 'Avery', 'Jordan', 'Morgan', 'Riley', 'Casey', 'Taylor', 'Quinn', 'Cameron', 'Skyler', 'Drew', 'Parker', 'Reese', 'Elena', 'Marcus', 'Devon', 'Claire', 'Hannah', 'Nathan', 'Maya', 'Lucas', 'Sofia', 'Ethan', 'Nora', 'Caleb', 'Tessa', 'Owen', 'Lydia', 'Gabriel', 'Priya', 'Isaac', 'Audrey', 'Julian', 'Naomi', 'Adrian', 'Simone', 'Victor', 'Rachel', 'malcolm'.replace(/^m/,'M'), 'Valerie', 'Wesley', 'Carmen', 'Grant', 'Bianca', 'Trevor', 'Keiko', 'Derrick', 'Sonia', 'Arthur'])),
+    last: Array.from(new Set([...(_baseNames.last || []), 'Bennett', 'Caldwell', 'Diaz', 'Ellis', 'Foster', 'Grant', 'Hayes', 'Irwin', 'James', 'Kim', 'Lane', 'Monroe', 'Patel', 'Brooks', 'Rivera', 'Morales', 'Kowalski', 'Sullivan', 'Gallagher', 'Okafor', 'Nguyen', 'Chavez', 'Lindqvist', 'Bauer', 'Castillo', 'Romano', 'Henderson', 'Delgado', 'Whitaker', 'Sato', 'Alvarez', 'McAllister', 'Vargas', 'Thornton', 'Cho', 'Kramer', 'Pacheco', 'Sinclair', 'Mendez', 'Fletcher', 'Keller', 'Serrano', 'Walsh', 'Horton', 'Ramos', 'Pruitt', 'Callahan', 'Benson'])),
   };
   const hStr = `${seed}:${year}:${office}:${stateId}:${districtId || officeId || senateClass || ''}:${partyId}:${factionId || ''}:${salt}`;
   const h1 = Math.abs(Math.round(version01Hash(hStr) * 100000));
@@ -11466,14 +11467,38 @@ function replenishVacantSittingMembers(game, nextYear) {
   });
 
   const existingPols = Array.isArray(game.politicians) ? game.politicians.slice() : [];
+  const polIds = new Set(existingPols.map((p) => p && p.id).filter(Boolean));
   if (newlyGenerated.length > 0) {
-    const polIds = new Set(existingPols.map((p) => p && p.id).filter(Boolean));
     newlyGenerated.forEach((m) => {
       if (m && m.id && !polIds.has(m.id)) {
         polIds.add(m.id);
         existingPols.push(m);
       }
     });
+  }
+  // Replenish non-sitting bench/challenger pool when active politicians dip below baseline (~820)
+  const BENCH_FLOOR = 820;
+  let activePolCount = existingPols.filter((p) => p && !p.retired).length;
+  const benchStates = STATES.filter((s) => s.id !== 'DC');
+  const benchParties = ['people', 'heritage', 'people', 'heritage', 'green', 'liberty'];
+  const toSpawn = Math.min(80, Math.max(0, BENCH_FLOOR - activePolCount));
+  for (let i = 0; i < toSpawn && benchStates.length > 0; i++) {
+    const st = benchStates[(i * 7 + (nextYear || 2030)) % benchStates.length];
+    const partyId = benchParties[i % benchParties.length];
+    const fresh = generateFreshPoliticianForSeat({
+      office: 'house',
+      stateId: st.id,
+      partyId,
+      year: nextYear,
+      seed,
+      salt: `bench-repl-${nextYear}-${i}`,
+      isIncumbent: false,
+    });
+    if (fresh && fresh.id && !polIds.has(fresh.id)) {
+      polIds.add(fresh.id);
+      existingPols.push(fresh);
+      activePolCount++;
+    }
   }
   return { ...game, sittingMembers: sitting, politicians: existingPols };
 }
@@ -11503,6 +11528,7 @@ function rebalanceFactionHappinessTowardEquilibrium(game) {
   const env = Number(game.nationalEnvironment || 0);
   const govParty = game.governingParty || 'heritage';
 
+  const touchedFSKeys = new Set();
   catalog.forEach((f) => {
     const cur = Number(nextFH[f.id] ?? nextFS[f.id] ?? f.startingHappiness ?? 50);
     // Natural equilibrium centered on faction's baseline, nudged by macro environment & party governing status
@@ -11516,7 +11542,14 @@ function rebalanceFactionHappinessTowardEquilibrium(game) {
     const nextVal = clamp(round(cur + (targetEq - cur) * 0.25, 1), 5, 96);
     nextFH[f.id] = nextVal;
     nextFS[f.id] = nextVal;
-    if (f.name) nextFS[f.name] = nextVal;
+    touchedFSKeys.add(f.id);
+    if (f.name) { nextFS[f.name] = nextVal; touchedFSKeys.add(f.name); }
+    if (f.legacyId) { nextFS[f.legacyId] = nextVal; touchedFSKeys.add(f.legacyId); }
+  });
+  Object.keys(nextFS).forEach((k) => {
+    if (!touchedFSKeys.has(k) && typeof nextFS[k] === 'number' && Number.isFinite(nextFS[k])) {
+      nextFS[k] = clamp(round(nextFS[k] + (55 - nextFS[k]) * 0.25, 1), 5, 96);
+    }
   });
 
   return {
@@ -16349,8 +16382,9 @@ function takeActionInternal(game, actionId, payload = {}) {
     const axisDelta = isPillar7Or8 ? 0 : ((nextPlayer[issue.axis] || 0) - (game.player[issue.axis] || 0));
     if (!isPillar7Or8) {
       FACTIONS.forEach((faction) => {
+        if (!faction || !faction.pull || !Number.isFinite(faction.pull[issue.axis])) return;
         const affinityDelta = (faction.pull[issue.axis] - (game.player[issue.axis] || 0)) * axisDelta * 12;
-        nextStandings[faction.id] = clamp(round((nextStandings[faction.id] || 55) + affinityDelta, 1), 0, 100);
+        nextStandings[faction.id] = applyScaledFactionHappinessDelta(nextStandings[faction.id] ?? 55, affinityDelta);
       });
     }
     const currentTrust = window.PartyChairV07 ? window.PartyChairV07.normalizeTrust(game.trust || game.player?.trust) : { supporters: 88, independents: 50, opponents: 12 };
@@ -18395,7 +18429,7 @@ function deduplicatePoliticiansList(polList) {
   const out = [];
   polList.forEach((p) => {
     if (!p || !p.name) return;
-    const key = p.name.trim().toLowerCase();
+    const key = String(p.id || '').startsWith('gen-') ? ('id:' + p.id) : p.name.trim().toLowerCase();
     if (!byName.has(key)) {
       byName.set(key, out.length);
       out.push({ ...p });
