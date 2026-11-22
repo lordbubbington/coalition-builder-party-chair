@@ -2576,7 +2576,7 @@
 
             // Mirror voter transfer into st.factions (0 variance)
             if (st.factions && typeof st.factions === 'object') {
-              const _modScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              const _modScale = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
               const totalGainVoters = modGainSample * _modScale;
               const existingFids = Object.keys(st.factions).filter((fid) => !fid.startsWith('mod_') && (st.factions[fid] || 0) > 0);
               const existingSum = existingFids.reduce((acc, fid) => acc + (st.factions[fid] || 0), 0);
@@ -2871,7 +2871,7 @@
 
             const regDef = regCatalog.find((r) => r.id === regId);
             if (regDef?.faction && st.factions && typeof st.factions === 'object') {
-              const _regScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              const _regScale = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
               const pullTotal = regSampleGain * _regScale;
               const existingFids = Object.keys(st.factions).filter((fid) => !fid.startsWith('reg_fac_') && (st.factions[fid] || 0) > 0);
               const existingSum = existingFids.reduce((acc, fid) => acc + (st.factions[fid] || 0), 0);
@@ -3043,7 +3043,7 @@
             st.affiliations.green = (st.affiliations.green || 0) + actualShift;
 
             if (st.factions && typeof st.factions === 'object') {
-              const _ecoScale = (next.voterModel?.voterScale === '1:1' || Number(next.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
+              const _ecoScale = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
               let greenFactionPool = actualShift * _ecoScale;
               legacyGreenIds.forEach((oldId) => {
                 if (st.factions[oldId]) {

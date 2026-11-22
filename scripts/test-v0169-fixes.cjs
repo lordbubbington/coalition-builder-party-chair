@@ -133,16 +133,19 @@ const polNoAge = (gRos.politicians || []).filter((p) => !Number.isFinite(p.age))
 check('Fix #10: 0 sittingMembers & 0 politicians missing starting age at 2028',
   smNoAge === 0 && polNoAge === 0, `smNoAge=${smNoAge}, polNoAge=${polNoAge}`);
 let gAge = gRos;
+const initPolIds = new Set(gAge.politicians.map((p) => p.id));
 const initAvgAge = gAge.politicians.reduce((a, p) => a + p.age, 0) / gAge.politicians.length;
 for (let i = 0; i < 6; i++) {
   gAge = { ...gAge, phase: 'complete' };
   gAge = E.startNextCycle(gAge);
 }
-const afterAvgAge = gAge.politicians.reduce((a, p) => a + p.age, 0) / gAge.politicians.length;
+const origCohort = gAge.politicians.filter((p) => initPolIds.has(p.id));
+const afterAvgAge = origCohort.reduce((a, p) => a + p.age, 0) / origCohort.length;
 const retiredCount = gAge.politicians.filter((p) => p.retired).length;
-check('Fix #10: Politicians age +12 years over 6 cycles & elderly politicians retire',
-  Math.abs((afterAvgAge - initAvgAge) - 12) < 1.5 && retiredCount > 0,
-  `avgAge ${initAvgAge.toFixed(1)}->${afterAvgAge.toFixed(1)}, retired=${retiredCount}`);
+const activeCount = gAge.politicians.filter((p) => !p.retired).length;
+check('Fix #10: Politicians age +12 years over 6 cycles & elderly politicians retire (with active pool replenished)',
+  Math.abs((afterAvgAge - initAvgAge) - 12) < 1.5 && retiredCount > 0 && activeCount >= gRos.politicians.length * 0.9,
+  `origAvgAge ${initAvgAge.toFixed(1)}->${afterAvgAge.toFixed(1)}, retired=${retiredCount}, active=${activeCount}`);
 
 // Fix #11: compactGameForSave prunes old simulatedPrimaries & statewideOfficesHistory
 const gSave = E.createGame({ baseTemplateId: 'people' });
