@@ -32,7 +32,16 @@ This document maintains the persistent design backlog of future change requests,
 | **Tiny** | **0** | **0** | **0** | All pending | ⏳ Gathering Proposals (0 Tiny pending) |
 
 > **📌 Pipeline Status:**
+> - **Version 0.18.3 (Shipped Opponent AI & Campaign Telemetry Release):** Fully implemented and verified per [**SYMMETRIC_OPPONENT_AI_DESIGN.md**](SYMMETRIC_OPPONENT_AI_DESIGN.md) across **4 requirements (`REQ-300`, `REQ-303`, `REQ-304`, `REQ-310` — 1 Massive, 2 Large, 1 Small)**. Delivers Autonomous Opponent Chair AI Engine & Cycle Pipeline Orchestrator (`REQ-300`), Autonomous 5-Month Campaign Strategy & Strategic Airwaves AI (`REQ-303`), AI Crisis Management, Oppo Research Detonation & Debate Decision Matrix (`REQ-304`), and Opponent Intelligence Telemetry, Morning Wire & Trail Ticker UI Feed (`REQ-310`).
 > - **Version 0.17.0 (Shipped Landmark Build):** Fully implemented and verified per [**VERSION_0.17.0_DESIGN.md**](VERSION_0.17.0_DESIGN.md) across **12 requirements (`REQ-287` through `REQ-298` — 2 Large, 4 Medium, 6 Small)**. Features Faction-Tied Super PACs & Swing PAC Ecosystem (`REQ-290`), State Party Platform Elasticity (`REQ-298`), Faction Growth Profiles & Voter Registration Shaping (`REQ-287`), Modular Filtering Support Toolkit (`REQ-288`), Endorsement Repercussions & Escalation Ladder (`REQ-289`), Faction Power-vs-Size Attrition (`REQ-296`), Politician Age Engine Delta (`REQ-291`), Coalition Demands Framework & Modules (`REQ-292`–`REQ-295`), and Faction Cohesion Metric (`REQ-297`).
+
+### Version 0.18.3 Sized Inventory Matrix (Shipped in v0.18.3)
+| Req ID | Title | Size | Status | Target Build |
+| :--- | :--- | :---: | :---: | :---: |
+| **REQ-300** | Autonomous Opponent Chair AI Engine & Cycle Pipeline Orchestrator | Massive | ✅ Shipped | v0.18.3 |
+| **REQ-303** | Autonomous 5-Month Campaign Strategy & Strategic Airwaves AI | Large | ✅ Shipped | v0.18.3 |
+| **REQ-304** | AI Crisis Management, Oppo Research Detonation & Debate Decision Matrix | Large | ✅ Shipped | v0.18.3 |
+| **REQ-310** | Opponent Intelligence Telemetry, Morning Wire & Trail Ticker UI Feed | Small | ✅ Shipped | v0.18.3 |
 
 ### Version 0.17.0 Sized Inventory Matrix (Shipped in v0.17.0)
 | Req ID | Title | Size | Status | Target Build |

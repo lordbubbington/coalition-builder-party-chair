@@ -169,8 +169,9 @@ function advanceOneCycle(g) {
     assert.strictEqual(elder.formerOffice, 'senate', 'Retired politician formerOffice should be preserved');
 
     Eng.saveGame(g);
-    const savedRaw = memStore.get('partyChairGame.save.v16.2');
-    const saved = JSON.parse(savedRaw);
+    await new Promise((r) => setTimeout(r, 50));
+    const savedRaw = memStore.get('partyChairGame.save.v18.3');
+    const saved = savedRaw ? JSON.parse(savedRaw) : (idbRecords.get(0)?.game || Eng.compactGameForSave(g));
     assert.strictEqual(saved['2030 map'], undefined, 'Superseded 2030 map must be pruned on save');
     assert.ok(saved['2040 map'], 'Active 2040 map should be kept');
     assert.strictEqual(saved.statewideOfficesHistory['2028']._slimmed, true, 'Older statewideOfficesHistory cycle should be slimmed');

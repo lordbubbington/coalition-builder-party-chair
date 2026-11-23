@@ -538,6 +538,217 @@
     return clamp(round(app, 1), 0.1, cap);
   }
 
+  /**
+   * REQ-309: Multi-Cycle Strategic Memory & Inter-Cycle Ideological Adaptation Engine
+   * Records post-election performance metrics (seats gained/lost, electoral votes, popular vote share) per party.
+   */
+  function recordPartyPerformanceMetrics(game, electionOutcome = null) {
+    if (!game) return game;
+    const election = electionOutcome || game.lastElection || (Array.isArray(game.elections) && game.elections.length ? game.elections[game.elections.length - 1] : null);
+    if (!election) return game;
+
+    const year = Number(election.year || game.year || 2028);
+    const isPresidential = (year % 4 === 0);
+
+    const memory = game.strategicMemory || {
+      cycleCount: 0,
+      historyByParty: {},
+    };
+    if (!memory.historyByParty) memory.historyByParty = {};
+
+    const parties = ['people', 'heritage', 'liberty', 'green', 'socialist', 'constitution'];
+    if (game.player?.custom) parties.push('player');
+
+    // House seats
+    const sittingList = Array.isArray(game.sittingMembers) ? game.sittingMembers : [];
+    const repList = Array.isArray(game.representatives) ? game.representatives : [];
+    const houseList = repList.length ? repList : sittingList.filter((m) => m.office === 'house');
+
+    // Senate seats
+    const senateList = sittingList.filter((m) => m.office === 'senate');
+
+    // State leg chambers
+    const stateLegs = game.stateLegislatures || {};
+
+    parties.forEach((pId) => {
+      const pHistory = memory.historyByParty[pId] || [];
+      const prevEntry = pHistory.length ? pHistory[pHistory.length - 1] : null;
+
+      // Popular vote share
+      let voteShare = 0;
+      if (election.popularVotePercentage?.[pId] !== undefined) {
+        voteShare = Number(election.popularVotePercentage[pId]);
+      } else if (election.nationalVote?.[pId] !== undefined) {
+        voteShare = Number(election.nationalVote[pId]);
+      } else if (election.presidentialResults) {
+        const shares = Object.values(election.presidentialResults).map((st) => Number(st?.[pId] || 0)).filter((v) => v > 0);
+        voteShare = shares.length ? round(shares.reduce((a, b) => a + b, 0) / shares.length, 1) : 0;
+      }
+
+      // Electoral votes
+      const ev = isPresidential ? Number(election.evByParty?.[pId] ?? (election.presidential?.evByParty?.[pId] ?? 0)) : 0;
+      const wonPresidency = isPresidential && (election.presidentialWinner === pId || ev >= 270);
+
+      // House seats
+      const houseSeats = houseList.filter((r) => (r.partyId === pId || r.party === pId || r.caucus === pId)).length;
+      const prevHouse = prevEntry ? prevEntry.houseSeats : houseSeats;
+      const houseSeatDelta = houseSeats - prevHouse;
+      const wonHouse = houseSeats >= 218;
+
+      // Senate seats
+      const senateSeats = senateList.filter((s) => (s.partyId === pId || s.party === pId || s.caucus === pId)).length;
+      const prevSenate = prevEntry ? prevEntry.senateSeats : senateSeats;
+      const senateSeatDelta = senateSeats - prevSenate;
+      const wonSenate = senateSeats >= 50;
+
+      // State leg chambers
+      let stateLegChambers = 0;
+      Object.values(stateLegs).forEach((chambers) => {
+        if (Array.isArray(chambers) && chambers.includes(pId)) stateLegChambers++;
+      });
+      if (game.stateHouseSeatCounts) {
+        const heldStates = Object.keys(game.stateHouseSeatCounts).filter((s) => (game.stateHouseSeatCounts[s]?.[pId] || 0) > 0).length;
+        stateLegChambers = Math.max(stateLegChambers, heldStates);
+      }
+
+      const entry = {
+        year,
+        cycleType: isPresidential ? 'presidential' : 'midterm',
+        popularVoteShare: round(voteShare, 1),
+        electoralVotes: ev,
+        wonPresidency,
+        houseSeats,
+        houseSeatDelta,
+        wonHouse,
+        senateSeats,
+        senateSeatDelta,
+        wonSenate,
+        stateLegChambers,
+        timestamp: Date.now(),
+      };
+
+      const filtered = pHistory.filter((h) => h.year !== year);
+      filtered.push(entry);
+      memory.historyByParty[pId] = filtered;
+    });
+
+    memory.cycleCount = (memory.cycleCount || 0) + 1;
+    game.strategicMemory = memory;
+    return game;
+  }
+
+  /**
+   * REQ-309: Inter-Cycle Ideological Adaptation Engine
+   * Evaluates performance history at cycle boundary (2030, 2032+) and adapts party strategy profiles and faction standing.
+   */
+  function adaptPartyIdeologicalPersonas(game) {
+    if (!game) return game;
+    const memory = game.strategicMemory;
+    if (!memory || !memory.historyByParty) return game;
+
+    const dataProfiles = (typeof window !== 'undefined' && window.PartyChairData?.DEFAULT_STRATEGY_PROFILES)
+      || (typeof global !== 'undefined' && global.PartyChairData?.DEFAULT_STRATEGY_PROFILES)
+      || {};
+
+    const parties = ['people', 'heritage', 'liberty', 'green', 'socialist', 'constitution'];
+    if (game.player?.custom) parties.push('player');
+
+    parties.forEach((pId) => {
+      const pHistory = memory.historyByParty[pId];
+      if (!Array.isArray(pHistory) || !pHistory.length) return;
+
+      const latest = pHistory[pHistory.length - 1];
+      const prev = pHistory.length > 1 ? pHistory[pHistory.length - 2] : null;
+
+      const partyState = game.parties?.[pId];
+      const curProfile = partyState?.strategyProfile || { ...(dataProfiles[pId] || dataProfiles.default || {}) };
+
+      // Determine loss / win condition
+      const isMajor = ['people', 'heritage'].includes(pId);
+      const lostPresidency = latest.cycleType === 'presidential' && !latest.wonPresidency;
+      const lostHouseSeats = latest.houseSeatDelta < 0;
+      const lostSevereHouse = latest.houseSeatDelta <= -8;
+      const lostVoteShare = prev ? (latest.popularVoteShare < prev.popularVoteShare) : false;
+
+      const isLosingParty = isMajor
+        ? (lostSevereHouse || (lostPresidency && lostHouseSeats))
+        : (lostVoteShare || (latest.stateLegChambers < (prev?.stateLegChambers || 0)));
+
+      const isWinningParty = isMajor
+        ? (latest.wonPresidency || (!lostPresidency && latest.houseSeatDelta >= 5))
+        : (!lostVoteShare && latest.popularVoteShare >= 3.0);
+
+      // Faction reshuffling & confidence shift
+      const catalog = (game.factions && game.factions.length) ? game.factions : [];
+      const partyFactions = catalog.filter((f) => f.partyId === pId);
+
+      if (isLosingParty) {
+        // Faction Reshuffle: Establishment loses standing (-5 to -8), insurgent base agitates
+        partyFactions.forEach((f) => {
+          const isEst = f.id.includes('establishment') || f.name.toLowerCase().includes('establishment') || f.name.toLowerCase().includes('moderate');
+          const delta = isEst ? -6 : -2;
+          if (game.factionHappiness?.[f.id] !== undefined) {
+            game.factionHappiness[f.id] = clamp(round(game.factionHappiness[f.id] + delta, 1), 10, 100);
+          }
+          if (partyState?.factionHappiness?.[f.id] !== undefined) {
+            partyState.factionHappiness[f.id] = clamp(round(partyState.factionHappiness[f.id] + delta, 1), 10, 100);
+          }
+          if (game.factionConfidence?.[f.id] !== undefined) {
+            game.factionConfidence[f.id] = clamp(round(game.factionConfidence[f.id] + delta, 1), 10, 100);
+          }
+        });
+
+        // Strategic Profile Adaptation
+        if (pId === 'heritage') {
+          curProfile.ruthlessness = clamp(round((curProfile.ruthlessness || 0.85) + 0.05, 2), 0.50, 0.95);
+          curProfile.negativeAdPropensity = clamp(round((curProfile.negativeAdPropensity || 0.80) + 0.05, 2), 0.40, 0.95);
+          curProfile.primaryInterventionism = clamp(round((curProfile.primaryInterventionism || 0.80) + 0.03, 2), 0.50, 0.95);
+        } else if (pId === 'people') {
+          curProfile.factionRiskAversion = clamp(round((curProfile.factionRiskAversion || 0.85) + 0.05, 2), 0.50, 0.95);
+          if (lostVoteShare) {
+            curProfile.primaryInterventionism = clamp(round((curProfile.primaryInterventionism || 0.35) + 0.05, 2), 0.20, 0.65);
+          } else {
+            curProfile.ideologicalRigidity = clamp(round((curProfile.ideologicalRigidity || 0.45) - 0.05, 2), 0.20, 0.60);
+          }
+        } else if (pId === 'green' || pId === 'socialist') {
+          curProfile.ideologicalRigidity = clamp(round((curProfile.ideologicalRigidity || 0.95) + 0.02, 2), 0.80, 0.98);
+          curProfile.primaryInterventionism = clamp(round((curProfile.primaryInterventionism || 0.92) + 0.02, 2), 0.80, 0.98);
+        } else if (pId === 'constitution') {
+          curProfile.geographicConcentration = clamp(round((curProfile.geographicConcentration || 0.85) + 0.02, 2), 0.60, 0.95);
+        }
+
+      } else if (isWinningParty) {
+        // Establishment consolidation: +4 to +6 confidence
+        partyFactions.forEach((f) => {
+          const isEst = f.id.includes('establishment') || f.name.toLowerCase().includes('establishment');
+          const delta = isEst ? 5 : 2;
+          if (game.factionHappiness?.[f.id] !== undefined) {
+            game.factionHappiness[f.id] = clamp(round(game.factionHappiness[f.id] + delta, 1), 10, 100);
+          }
+          if (partyState?.factionHappiness?.[f.id] !== undefined) {
+            partyState.factionHappiness[f.id] = clamp(round(partyState.factionHappiness[f.id] + delta, 1), 10, 100);
+          }
+          if (game.factionConfidence?.[f.id] !== undefined) {
+            game.factionConfidence[f.id] = clamp(round(game.factionConfidence[f.id] + delta, 1), 10, 100);
+          }
+        });
+
+        curProfile.factionRiskAversion = clamp(round((curProfile.factionRiskAversion || 0.50) * 0.95 + 0.02, 2), 0.15, 0.85);
+      }
+
+      // CRITICAL INVARIANT: Libertarian Party (liberty) primary interventionism MUST be strictly 0.00
+      if (pId === 'liberty') {
+        curProfile.primaryInterventionism = 0.00;
+      }
+
+      if (partyState) {
+        partyState.strategyProfile = curProfile;
+      }
+    });
+
+    return game;
+  }
+
   return {
     calculateCertifiedPerformanceDrift,
     applyDemographicMigrationDrift,
@@ -548,6 +759,8 @@
     evaluateThirdPartyElasticitySurge,
     getTierScaledFavorabilityCap,
     applyTierScaledApprovalCap,
+    recordPartyPerformanceMetrics,
+    adaptPartyIdeologicalPersonas,
     SUN_BELT_STATES,
     RUST_BELT_STATES,
     MOUNTAIN_WEST_STATES,

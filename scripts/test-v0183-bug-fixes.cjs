@@ -93,7 +93,7 @@ async function test(name, fn) {
     const g2056 = { ...g2042, year: 2056, politicians: Array.from({ length: 800 }, (_, i) => ({ id: `old-${i}`, name: `Old ${i}`, retired: true, age: 86, fame: 20 })) };
     Eng.saveGame(g2056);
     // Simulate stale localStorage snapshot from 2042
-    localStorage.setItem('partyChairGame.save.v16.2', JSON.stringify(g2042));
+    localStorage.setItem('partyChairGame.save.v18.3', JSON.stringify(g2042));
     const loaded = await Eng.loadGameAsync();
     assert.strictEqual(loaded.year, 2056, `Expected 2056 from IndexedDB, got ${loaded.year}`);
     assert.strictEqual((loaded.politicians || []).filter((p) => String(p.id).startsWith('old-')).length, 0, 'Retired old-* politicians must be pruned on save');
