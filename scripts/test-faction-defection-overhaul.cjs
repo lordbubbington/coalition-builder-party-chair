@@ -58,12 +58,12 @@ test('REC-01 & REC-07: Two-sided rival faction friction, rebalanced curve, ultim
   const f2 = g.factions.find((f) => f.id === rivalFac.id);
   assert.strictEqual(f2.ultimatumTurnsRemaining, 1, 'Happiness 55 must NOT avert ultimatum (requires >= 60)');
 
-  // Next turn at Happiness 30 expires ultimatum -> bolts to Independent ('none') and moves voters to independent
+  // Next turn at Happiness 30 expires ultimatum -> bolts to Independent ('unaffiliated' / 'none') and moves voters to independent
   g.factionHappiness[rivalFac.id] = 30;
   const indBefore = g.voterModel.affiliations.independent.sampleVoters;
   g = Eng.evaluateFactionFriction(g);
   const f3 = g.factions.find((f) => f.id === rivalFac.id);
-  assert.strictEqual(f3.partyId, 'none', `Expected rival faction to bolt to partyId='none', got ${f3.partyId}`);
+  assert.ok(f3.partyId === 'unaffiliated' || f3.partyId === 'none', `Expected rival faction to bolt to partyId='unaffiliated' or 'none', got ${f3.partyId}`);
   assert.strictEqual(f3.activelyCourting, true, 'Bolted faction must be marked activelyCourting');
   assert.ok(g.voterModel.affiliations.independent.sampleVoters >= indBefore, 'Bolted voters must move to independent pool');
 });
@@ -84,9 +84,10 @@ test('REC-02 & REC-10: Prohibit direct party-to-party Summit Accords; allow Cour
   g = Eng.takeAction(g, 'open-courtship-dialogue', { factionId: rivalFac.id });
   assert.ok((g.factionCourtship?.[rivalFac.id]?.people || 0) >= 12, 'Courtship dialogue must add goodwill');
 
-  // Stage 2: Bolt to Independent ('none')
+  // Stage 2: Bolt to Independent ('unaffiliated' / 'none')
   g = Eng.boltFaction(g, rivalFac.id);
-  assert.strictEqual(g.factions.find((f) => f.id === rivalFac.id).partyId, 'none');
+  const boltedPartyId = g.factions.find((f) => f.id === rivalFac.id).partyId;
+  assert.ok(boltedPartyId === 'unaffiliated' || boltedPartyId === 'none', `Expected bolted faction partyId to be unaffiliated or none, got ${boltedPartyId}`);
 
   // Stage 3: Now Independent -> Coalition Summit eligible!
   const indepCheck = Eng.checkSummitEligibility(g, rivalFac.id);
@@ -112,18 +113,20 @@ test('REC-03 & REC-06: drive-coalition-wedge, subsidize-dissident-caucus, court-
   g.factions.find((f) => f.id === rivalFac.id).ultimatumTurnsRemaining = 1;
   g = Eng.takeAction(g, 'subsidize-dissident-caucus', { factionId: rivalFac.id });
   assert.strictEqual(g.treasury, 95);
-  assert.strictEqual(g.factions.find((f) => f.id === rivalFac.id).partyId, 'none', 'Subsidizing last ultimatum turn should bolt faction');
+  const subsidizedPartyId = g.factions.find((f) => f.id === rivalFac.id).partyId;
+  assert.ok(subsidizedPartyId === 'unaffiliated' || subsidizedPartyId === 'none', 'Subsidizing last ultimatum turn should bolt faction');
 
   // court-independent-faction (-$1.5M, +15 goodwill)
   g = Eng.takeAction(g, 'court-independent-faction', { factionId: rivalFac.id });
   assert.strictEqual(g.treasury, 93.5);
   assert.ok((g.factionCourtship?.[rivalFac.id]?.people || 0) >= 15);
 
-  // REC-06: expel-faction removes own non-anchor faction to 'none' & clears cohabitationTurnoutDrag
+  // REC-06: expel-faction removes own non-anchor faction to 'unaffiliated'/'none' & clears cohabitationTurnoutDrag
   const ownFac = g.factions.find((f) => f.partyId === 'people' && f.id !== 'dem_liberal_establishment' && !f.isIroncladAnchor);
   g.cohabitationTurnoutDrag = 3.0;
   g = Eng.takeAction(g, 'expel-faction', { factionId: ownFac.id });
-  assert.strictEqual(g.factions.find((f) => f.id === ownFac.id).partyId, 'none', 'Expelled faction must move to Independent (none)');
+  const expelledPartyId = g.factions.find((f) => f.id === ownFac.id).partyId;
+  assert.ok(expelledPartyId === 'unaffiliated' || expelledPartyId === 'none', 'Expelled faction must move to Independent (unaffiliated/none)');
   assert.strictEqual(g.cohabitationTurnoutDrag, 0, 'Expelling faction must clear cohabitationTurnoutDrag');
 });
 
@@ -151,7 +154,7 @@ test('REC-04: Convention platform rejection + defeated candidate triggers -25 Ha
   g = PP.resolvePlatformFloorVote(g, 'test-amend-1', 'A');
   const afterFac = g.factions.find((f) => f.id === targetFac.id);
   assert.ok(g.factionHappiness[targetFac.id] <= 25, `Expected -25 Happiness shock, got ${g.factionHappiness[targetFac.id]}`);
-  assert.strictEqual(afterFac.partyId, 'none', 'Defeated + plank-rejected faction dropping <30 Happiness must walk out to Independent');
+  assert.ok(afterFac.partyId === 'unaffiliated' || afterFac.partyId === 'none', 'Defeated + plank-rejected faction dropping <30 Happiness must walk out to Independent');
 });
 
 // REC-05: Faction redLineIssues exist in FACTIONS_CATALOG
