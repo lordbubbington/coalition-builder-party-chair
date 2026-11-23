@@ -264,7 +264,9 @@
       if (month === 5 && oppoDossiers.length > 0 && actionsRemaining >= 1) {
         const undetonated = oppoDossiers.find((d) => !d.detonated);
         if (undetonated) {
-          const shock = undetonated.severity === 'high' ? 5.0 : 3.5;
+          // [v0.18.4 MEDIA-SHOCKS]
+          const _msOctMult = global.MediaShocksSystem?.getOctoberSurpriseMultiplier ? global.MediaShocksSystem.getOctoberSurpriseMultiplier(game, rId, playerPartyId) : 1.0;
+          const shock = round((undetonated.severity === 'high' ? 5.0 : 3.5) * _msOctMult, 2);
           undetonated.detonated = true;
           undetonated.detonatedMonth = 5;
           actionsRemaining--;
@@ -547,7 +549,10 @@
         : ' Stale messaging penalty: selecting the same theme twice reduced lift by 50%.';
     }
 
-    const scaledLift = round(baseLift * eff.persuasion * 0.35, 2);
+    // [v0.18.4 MEDIA-SHOCKS]
+    const _msSalMult = global.MediaShocksSystem?.getIssueSalienceMultiplier ? global.MediaShocksSystem.getIssueSalienceMultiplier(game, issueId) : 1.0;
+    const _msAdMult = global.MediaShocksSystem?.getAdPersuasionMultiplier ? global.MediaShocksSystem.getAdPersuasionMultiplier(game) : 1.0;
+    const scaledLift = round(baseLift * eff.persuasion * 0.35 * _msSalMult * _msAdMult, 2);
     const nextTrust = {
       ...(game.trust || { supporters: 65, independents: 40, opponents: 12 }),
       independents: clamp(round((game.trust?.independents ?? 40) + indTrustDelta, 1), 0, 100),
@@ -732,7 +737,11 @@
     });
 
     if (isKnockout) persuasionShift += 1.5;
-    if (isGaffe) { persuasionShift -= 1.6; trustDelta -= 2; }
+    // [v0.18.4 MEDIA-SHOCKS]
+    const _msDebSal = global.MediaShocksSystem?.getDebateSalienceMultiplier ? global.MediaShocksSystem.getDebateSalienceMultiplier(game, debate.questions) : 1.0;
+    const _msGaffeVol = global.MediaShocksSystem?.getDigitalGaffeVolatilityMultiplier ? global.MediaShocksSystem.getDigitalGaffeVolatilityMultiplier(game) : 1.0;
+    if (isGaffe) { persuasionShift -= round(1.6 * _msGaffeVol, 2); trustDelta -= 2; }
+    persuasionShift = round(persuasionShift * _msDebSal, 2);
     if (debate.qualifiesThirdPartyBreakout) persuasionShift += 3.0;
 
     persuasionShift = round(persuasionShift, 2);
@@ -1307,14 +1316,17 @@
       const affectedIds = regionStates.length ? regionStates.map((s) => s.id) : [stateId];
       const factionId = payload.factionId || 'ind_moderates';
       const satTier = getSaturationTier(c.stateSaturation?.[stateId] || 0);
-      const persLift = round(1.1 * eff.persuasion * satTier.effMult * 0.4, 2);
+      // [v0.18.4 MEDIA-SHOCKS]
+      const _msAdPers = global.MediaShocksSystem?.getAdPersuasionMultiplier ? global.MediaShocksSystem.getAdPersuasionMultiplier(game) : 1.0;
+      const _msSatScale = global.MediaShocksSystem?.getAdSaturationScale ? global.MediaShocksSystem.getAdSaturationScale(game) : 1.0;
+      const persLift = round(1.1 * eff.persuasion * satTier.effMult * 0.4 * _msAdPers, 2);
       const memBoost = 4;
       let nextSat = { ...(c.stateSaturation || {}) };
       const nextStateEffects = { ...(c.actionStateEffects || {}) };
       const nextSpend = { ...(c.playerStateSpendLastMonth || {}) };
       affectedIds.forEach((sid) => {
         const mult = sid === stateId ? 1.0 : 0.45;
-        nextSat = addStateSaturation(nextSat, sid, round(cost / affectedIds.length, 2), 10, 0.5);
+        nextSat = addStateSaturation(nextSat, sid, round(cost / affectedIds.length, 2), 10, round(0.5 * _msSatScale, 3));
         nextStateEffects[sid] = round((nextStateEffects[sid] || 0) + persLift * mult, 2);
       });
       nextSpend[stateId] = round((nextSpend[stateId] || 0) + cost, 2);

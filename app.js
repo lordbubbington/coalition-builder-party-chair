@@ -3775,6 +3775,7 @@ function step4WorkMarkup() {
             `}
           </div>`;
         })()}
+        ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderOrganizingCards(game, disabled) : ''}
       </div>
     </section>`;
 }
@@ -5496,6 +5497,7 @@ function v0180CampaignWarRoomMarkup() {
         </div>
       </div>
 
+      ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderMediaBalanceBar(game) : ''}
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;padding:8px 10px;background:rgba(15,23,42,0.45);border-radius:8px;">
         <label style="font-size:12px;">Target State:
           <select id="v0180-state-select" style="margin-left:4px;padding:3px 6px;border-radius:6px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.35);">
@@ -7393,6 +7395,7 @@ function partyInfoTabMarkup() {
         ${snubbedHighFame.length ? `<div class="v07-backlash-warning" style="margin-bottom:12px">⚠ High-Fame Ambition Warning: <b>${snubbedHighFame.length}</b> politician(s) with Fame ≥ 75 have no major leadership role (${snubbedHighFame.slice(0, 5).map((m) => `${safe(m.name)} [${Math.round(m.fame)}]`).join(', ')}${snubbedHighFame.length > 5 ? ', …' : ''}). Appoint them below to stop Sitting Member Happiness decay.</div>` : ''}
         <div class="v07-role-grid">${rolesMarkup}</div>
       </section>
+      ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderMediaBalanceBar(game) : ''}
 
       <div class="main-grid">
         <div class="left-column">
@@ -8069,7 +8072,9 @@ function getMorningWireHeadline(game) {
     : (isMinor ? `${safe(game.player.name)} mounts nationwide 50-state ballot access offensive` : null);
   const story = customOrMinor || presLead;
 
-  const dynamicChyron = window.PartyChairData?.getDynamicCableNewsChyron ? window.PartyChairData.getDynamicCableNewsChyron(game) : null;
+  // [v0.18.4 MEDIA-SHOCKS]
+  const msChyron = window.MediaShocksSystem?.getChyronOverride ? window.MediaShocksSystem.getChyronOverride(game) : null;
+  const dynamicChyron = msChyron || (window.PartyChairData?.getDynamicCableNewsChyron ? window.PartyChairData.getDynamicCableNewsChyron(game) : null);
   const tagLabel = dynamicChyron ? dynamicChyron.categoryLabel : 'THE BELTWAY RUNDOWN';
   const headlineText = dynamicChyron ? dynamicChyron.headline : `DISPATCH: ${story} — Field directors report high voter interest as ballot retention deadlines approach.`;
 
@@ -9019,6 +9024,7 @@ function campaignMarkup() {
         <span class="status-divider"></span>
         <span>${game.phase === 'organizing' ? `${game?.year || 2028} · THE RECRUITMENT PHASE (${game.organizingActionsRemaining ?? 20} Actions Remaining)` : game.campaign?.active ? `${game?.year || 2028} · CAMPAIGN MONTH ${game.campaign.week}/5` : `${game?.year || 2028} · ELECTION COMPLETE`}</span>
         ${window.PartySystemsUI ? window.PartySystemsUI.renderTopBarEraBadge(game) : ''}
+        ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderTopHudPill(game) : ''}
         <button type="button" class="text-button" id="open-primary-archive-8" data-dup-id="open-primary-archive">Primary Archive</button>
         <button type="button" class="text-button" id="open-save-slots-9" data-dup-id="open-save-slots">Saves (5 Slots)</button>
         <button type="button" class="text-button" id="new-game">New party</button>
@@ -12008,6 +12014,8 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
     }
   });
   document.addEventListener('click', (e) => {
+    // [v0.18.4 MEDIA-SHOCKS]
+    if (window.MediaShocksSystem?.handleUiClick?.(e, () => game, (g) => { game = g; }, typeof saveGame === 'function' ? saveGame : null, typeof render === 'function' ? render : null)) return;
     const primCtrlBtn = e.target?.closest?.('[data-v0182-primary]');
     if (primCtrlBtn && game) {
       const pAct = primCtrlBtn.getAttribute('data-v0182-primary');
