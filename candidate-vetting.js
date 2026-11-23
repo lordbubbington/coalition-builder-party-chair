@@ -280,17 +280,43 @@
       ...(game.sittingMembers || []),
       ...(game.generatedMembers || []),
     ];
-    // Also check primaryFields
+    // Also check primaryFields (flattening nested { [raceId]: { [partyId]: Candidate[] } })
     if (game.primaryFields) {
-      Object.values(game.primaryFields).forEach((fList) => {
-        if (Array.isArray(fList)) pools.push(...fList);
+      Object.values(game.primaryFields).forEach((raceParties) => {
+        if (Array.isArray(raceParties)) {
+          pools.push(...raceParties);
+        } else if (raceParties && typeof raceParties === 'object') {
+          Object.values(raceParties).forEach((fList) => {
+            if (Array.isArray(fList)) pools.push(...fList);
+          });
+        }
       });
     }
 
-    pol = pools.find((c) => (c.id === candidateId || c.name === candidateId));
+    pol = pools.find((c) => (c && (c.id === candidateId || c.name === candidateId)));
+    if (!pol && typeof candidateId === 'string' && candidateId.includes(':')) {
+      const parts = candidateId.split(':');
+      if (parts.length >= 3) {
+        const pKey = parts[parts.length - 2];
+        const idx = parseInt(parts[parts.length - 1], 10);
+        const raceKey = parts.slice(0, parts.length - 2).join(':');
+        if (!isNaN(idx)) {
+          pol = game.primaryFields?.[raceKey]?.[pKey]?.[idx];
+          if (!pol) {
+            const engine = typeof PartyChairEngine !== 'undefined' ? PartyChairEngine : (typeof window !== 'undefined' && window.PartyChairEngine ? window.PartyChairEngine : (typeof globalThis !== 'undefined' && globalThis.PartyChairEngine ? globalThis.PartyChairEngine : null));
+            if (engine && typeof engine.version01CandidateField === 'function') {
+              const field = engine.version01CandidateField(game, raceKey, pKey);
+              if (field && field[idx]) pol = field[idx];
+            }
+          }
+        }
+      }
+    }
     if (!pol) {
       // Create minimal politician wrapper if not found in standard arrays
-      pol = { id: candidateId, name: payload.candidateName || candidateId };
+      pol = { id: candidateId, name: payload.candidateName || 'Primary Candidate' };
+    } else if (!pol.name) {
+      pol.name = payload.candidateName || 'Primary Candidate';
     }
 
     const record = getOrAssignCandidateVulnerability(game, pol);

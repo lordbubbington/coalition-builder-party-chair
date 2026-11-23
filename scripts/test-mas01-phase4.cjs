@@ -226,7 +226,7 @@ async function runTests() {
     assert(Boolean(mmpDistrict.mmpSummary) && mmpDistrict.mmpSummary.mmpActive === true, 'calculateDistrictElection executes Nationwide MMP under Era #18');
     const totalMmpHouse = Object.values(mmpDistrict.mmpSummary.houseSeatsByParty).reduce((a, b) => a + b, 0);
     const totalMmpSenate = Object.values(mmpDistrict.mmpSummary.senateSeatsByParty).reduce((a, b) => a + b, 0);
-    assert(totalMmpHouse === 435, `Nationwide MMP House seats sum strictly to 435 (got ${totalMmpHouse})`);
+    assert(totalMmpHouse === 870, `Nationwide MMP House seats sum strictly to 870 (got ${totalMmpHouse})`);
     assert(totalMmpSenate === 100, `Nationwide MMP Senate seats sum strictly to 100 (got ${totalMmpSenate})`);
 
     // Full Election Resolution triggers National Coalition Bargaining Modal

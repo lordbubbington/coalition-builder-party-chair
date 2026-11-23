@@ -5199,8 +5199,29 @@ function campaignDashboardMarkup() {
         ${requests.length
           ? `<div class="v08-requests-grid">
               ${requests.map((req) => {
-                const risk = req.riskLevel || 'med';
+                const isPacDemand = req.sourceType === 'superpac' || Boolean(req.pacId);
                 const isPending = req.status === 'pending';
+                if (isPacDemand) {
+                  return `
+                  <article class="v08-request-card">
+                    <div class="v08-request-header">
+                      <b>${safe(req.pacName || 'Allied Super PAC')}</b>
+                      <span class="v08-risk-tag v08-risk-pac">SUPER PAC DEMAND</span>
+                    </div>
+                    <small style="color:var(--muted)">Policy Alignment · Issue: <b>${safe(req.petIssueLabel || 'Platform Stance')}</b></small>
+                    <p style="margin:4px 0 8px;font-size:13px;line-height:1.4">${safe(req.label || req.summary || req.text || '')}</p>
+                    <div class="v08-request-actions">
+                      ${isPending
+                        ? `<button type="button" class="button button-small button-gold" data-approve-funding="${req.id}">Align & Accept</button>
+                           <button type="button" class="button button-small" data-refuse-funding="${req.id}">Refuse</button>`
+                        : req.status === 'approved'
+                          ? `<span class="v08-badge-approved">Aligned (Ad surge unlocked)</span>`
+                          : `<span class="v08-badge-refused">Refused (PAC standing lowered)</span>`}
+                    </div>
+                  </article>`;
+                }
+                const risk = req.riskLevel || 'med';
+                const amt = Number(req.amount || 0);
                 return `
                   <article class="v08-request-card">
                     <div class="v08-request-header">
@@ -5211,10 +5232,10 @@ function campaignDashboardMarkup() {
                     <p style="margin:4px 0 8px;font-size:13px;line-height:1.4">${safe(req.label || req.text || '')}</p>
                     <div class="v08-request-actions">
                       ${isPending
-                        ? `<button type="button" class="button button-small button-gold" data-approve-funding="${req.id}" ${game.treasury < req.amount ? 'disabled' : ''}>Approve ($${req.amount}M)</button>
+                        ? `<button type="button" class="button button-small button-gold" data-approve-funding="${req.id}" ${game.treasury < amt ? 'disabled' : ''}>Approve ($${amt}M)</button>
                            <button type="button" class="button button-small" data-refuse-funding="${req.id}">Refuse</button>`
                         : req.status === 'approved'
-                          ? `<span class="v08-badge-approved">Approved ($${req.amount}M allocated)</span>`
+                          ? `<span class="v08-badge-approved">Approved ($${amt}M allocated)</span>`
                           : `<span class="v08-badge-refused">Refused (Candidate aggrieved)</span>`}
                     </div>
                   </article>`;
@@ -8975,7 +8996,7 @@ function campaignMarkup() {
     { id: 'states', label: 'States', eyebrow: '50-State Directory' },
     { id: 'forecast', label: 'Forecast', eyebrow: 'Election Projections & Forecasts' },
     { id: 'party-info', label: 'Party Information', eyebrow: 'Party Standing & Metrics' },
-    { id: 'factions', label: 'Factions', eyebrow: '38 National Factions & State Allocations' },
+    { id: 'factions', label: 'Factions', eyebrow: `${(game?.factions || []).length || 37} National Factions & State Allocations` },
   ];
 
   let viewportContent = '';
@@ -10178,7 +10199,7 @@ function render() {
   }
   stopElectionNightPlayback();
   if (game && game.phase === 'presidential-primary' && game.activePresidentialPrimary) {
-    app.innerHTML = renderPresidentialPrimaryScreen();
+    app.innerHTML = renderPresidentialPrimaryScreen() + renderSaveSlotsModalMarkup() + renderPrimaryArchiveModalMarkup();
     if (game) saveGame(game);
     bind();
     return;
@@ -10193,7 +10214,7 @@ function render() {
       </div>
     </div>
   ` : '';
-  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay;
+  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay + renderSaveSlotsModalMarkup() + (game ? renderPrimaryArchiveModalMarkup() : '');
   if (game) saveGame(game);
   bind();
   renderTutorial();
@@ -10764,6 +10785,8 @@ function bind() {
       payload.stateId = document.querySelector('#reg-state')?.value || mapState;
     }
     if (action === 'persuade-independent-caucus' || action === 'court-politician') {
+      const targetId = button.dataset.targetId || document.querySelector('#ind-caucus-target')?.value || '';
+      if (!targetId) return;
       payload.memberId = targetId;
       payload.targetId = targetId;
       payload.leadershipRoleId = document.querySelector('#court-role-select')?.value;
@@ -10773,7 +10796,7 @@ function bind() {
       payload.stateId = document.querySelector('#fundraise-state')?.value || mapState;
     }
     if (action === 'launch-petition-drive') {
-      payload.stateId = document.querySelector()?.value || null;
+      payload.stateId = button.dataset.stateId || document.querySelector('#petition-state')?.value || null;
       payload.bufferTier = document.querySelector('#petition-buffer')?.value || 'prudent';
     }
     if (action === 'enact-state-voting-law') {

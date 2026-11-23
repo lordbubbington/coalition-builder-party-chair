@@ -630,52 +630,14 @@
       constituencyHouse[normPid] = (constituencyHouse[normPid] || 0) + 1;
     });
 
-    const houseMMP = allocateMMPSeats(rawVotes, constituencyHouse, 435, thresholdPct);
+    const MMP_TOTAL_HOUSE_SEATS = 870;
+    const houseMMP = allocateMMPSeats(rawVotes, constituencyHouse, MMP_TOTAL_HOUSE_SEATS, thresholdPct);
     const senateMMP = allocateMMPSeats(rawVotes, senateSeatsByParty || {}, 100, thresholdPct);
 
-    // Rebalance districtResults party assignments so summed representatives match MMP 435 seats exactly
-    const targetPool = [];
-    Object.entries(houseMMP.finalSeats)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([pid, count]) => {
-        const enginePid = (pid === playerKey) ? 'player' : pid;
-        for (let i = 0; i < count; i += 1) {
-          targetPool.push(enginePid);
-        }
-      });
-
-    // Keep constituency seats for each party first, then fill compensatory seats cleanly
-    const remainingQuota = {};
-    Object.entries(houseMMP.finalSeats).forEach(([pid, count]) => {
-      const enginePid = (pid === playerKey) ? 'player' : pid;
-      remainingQuota[enginePid] = count;
-    });
-
-    const unassignedIndices = [];
-    districts.forEach((d, idx) => {
-      const curPid = d.partyId;
-      if ((remainingQuota[curPid] || 0) > 0) {
-        remainingQuota[curPid] -= 1;
-        d.mmpSeatType = 'constituency';
-      } else {
-        unassignedIndices.push(idx);
-      }
-    });
-
-    const compensatoryPool = [];
-    Object.entries(remainingQuota)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([enginePid, cnt]) => {
-        for (let i = 0; i < cnt; i += 1) compensatoryPool.push(enginePid);
-      });
-
-    unassignedIndices.forEach((dIdx, i) => {
-      const assignedPid = compensatoryPool[i];
-      if (assignedPid && districts[dIdx]) {
-        districts[dIdx].partyId = assignedPid;
-        districts[dIdx].mmpSeatType = 'party-list';
-        districts[dIdx].electoralSystem = 'mmp';
-      }
+    // Preserve all 435 constituency district winners intact
+    districts.forEach((d) => {
+      d.mmpSeatType = 'constituency';
+      d.electoralSystem = 'mmp';
     });
 
     // Rebuild seats object keyed by engine party IDs ('player' + rival IDs)
@@ -695,6 +657,8 @@
       senateSeatsByParty: senateMMP.finalSeats,
       qualifiedPartyIds: houseMMP.qualifiedPartyIds,
       engineHouseSeats: nextEngineSeats,
+      totalHouseSeats: 870,
+      houseMajorityThreshold: 436,
     };
   }
 
@@ -869,6 +833,9 @@
     const senateSeats = mmpSummary?.senateSeatsByParty || {};
     const voteShares = mmpSummary?.nationalVoteShares || {};
 
+    const totalHouseSeats = mmpSummary?.totalHouseSeats || Object.values(houseSeats).reduce((a, b) => a + Number(b || 0), 0) || 870;
+    const houseMajority = Math.floor(totalHouseSeats / 2) + 1;
+
     const rankedParties = Object.keys(houseSeats)
       .filter((pid) => (houseSeats[pid] || 0) > 0 || pid === playerKey)
       .map((pid) => {
@@ -892,12 +859,12 @@
     const playerEntry = rankedParties.find((p) => p.id === playerKey) || { houseSeats: 0, senateSeats: 0 };
     const canAnchor = playerRank <= 3 || playerEntry.houseSeats >= 45;
 
-    // Build recommended anchor partner slate that crosses 218 House seats
+    // Build recommended anchor partner slate that crosses House majority
     const sortedPartners = rankedParties.filter((p) => p.id !== playerKey).sort((a, b) => a.distanceFromPlayer - b.distanceFromPlayer || b.houseSeats - a.houseSeats);
     const suggestedPartnerIds = [];
     let runningHouse = playerEntry.houseSeats;
     for (const cand of sortedPartners) {
-      if (runningHouse >= 222) break;
+      if (runningHouse >= houseMajority + 4) break;
       suggestedPartnerIds.push(cand.id);
       runningHouse += cand.houseSeats;
     }
@@ -915,7 +882,7 @@
           .filter((p) => !allies.includes(p.id))
           .sort((a, b) => partyIdeologicalDistance(game, anchor.id, a.id) - partyIdeologicalDistance(game, anchor.id, b.id));
         for (const ex of extras) {
-          if (seatsH >= 220) break;
+          if (seatsH >= houseMajority + 2) break;
           allies.push(ex.id);
           seatsH += ex.houseSeats;
           seatsS += ex.senateSeats;

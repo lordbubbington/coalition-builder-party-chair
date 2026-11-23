@@ -1086,7 +1086,7 @@ function boltFaction(game, factionId) {
   f.formerPartyId = sourcePartyId;
   f.boltedYear = game.year || 2028;
   f.activelyCourting = true;
-  f.partyId = 'none';
+  f.partyId = 'unaffiliated';
   f.ultimatumTurnsRemaining = null;
   f.frictionIndex = 0;
 
@@ -2339,9 +2339,10 @@ function evaluateSuperPacDemands(game, turnOrWeek = 1) {
     const poolGain = round((pac.weeklyIncome || 1.2) * alignmentScore * (pac.standing >= 50 ? 1.0 : 0.4) * eraPacMult, 1);
     const nextPool = clamp(round((pac.pool || 0) + poolGain, 1), 0, 60);
 
-    let activeDemand = pac.activeDemand;
+    const isAligned = !Array.isArray(pac.alignedParties) || pac.alignedParties.includes(game.player?.baseTemplateId || 'people');
+    let activeDemand = isAligned ? pac.activeDemand : null;
     const triggerHash = hash(`${game.seed || 2028}:pac-demand:${pac.id}:${turnOrWeek}:${idx}`);
-    if (!activeDemand && (!inRange || !isPriority) && triggerHash > 0.42) {
+    if (isAligned && !activeDemand && (!inRange || !isPriority) && triggerHash > 0.42) {
       const demandType = !inRange ? 'stance-shift' : 'priority-inclusion';
       activeDemand = {
         id: `pac-demand-${pac.id}-${turnOrWeek}`,
@@ -4243,14 +4244,15 @@ function computeGoverningFatigueStep(game) {
 function applyPresidentialRallySpike(game) {
   const isPresidentialYear = (game?.year || 2028) % 4 === 0;
   if (!isPresidentialYear || game?.rallyAppliedForYear === game?.year) return game;
-  // Deterministic 3% to 7% rally spike
-  const spike = round(3.0 + hash(`rally:${game.seed}:${game.year}`) * 4.0, 1);
-  const nextPresApproval = clamp(round((game.presidentialApproval ?? 44) + spike, 1), 15, 88);
+  const curApp = Number(game?.presidentialApproval ?? 48);
+  const rawSwing = (hash(`rally:${game.seed}:${game.year}`) - 0.5) * 10.0;
+  const swing = (curApp >= 65 && rawSwing > 0) ? rawSwing * 0.35 : rawSwing;
+  const nextPresApproval = clamp(round(curApp + swing, 1), 15, 85);
   return {
     ...game,
     presidentialApproval: nextPresApproval,
     rallyAppliedForYear: game.year,
-    lastRallySpike: spike,
+    lastRallySpike: round(swing, 1),
   };
 }
 
@@ -9776,7 +9778,7 @@ function holdMidtermInternal(game, precomputed = null) {
     playerSeatsBefore,
     playerSeatChange,
     seats,
-    totalSeats: 435,
+    totalSeats: districtElection.mmpSummary?.totalHouseSeats || 435,
     nationalVote,
     states: stateResults,
     districts: districtResults,
@@ -10395,9 +10397,10 @@ function endorseCandidate(game, payload = {}, raceIdArg = null) {
   const nextFilteringSupport = { ...(game.filteringSupport || {}), [raceId]: candidateId };
   const nextFilteredCandidates = { ...(game.filteredCandidates || {}), [candidateId]: true };
 
+  const cleanChosenName = String(chosen.name || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   const note = backlash.triggeredBacklash
     ? backlash.note
-    : `Filtering Support extended to ${chosen.name} in ${raceId} (+10 pt primary swing, +1 ${candidateFactionObj?.name || 'aligned'} faction happiness, -3 other factions).`;
+    : `Filtering Support extended to ${cleanChosenName} in ${raceId} (+10 pt primary swing, +1 ${candidateFactionObj?.name || 'aligned'} faction happiness, -3 other factions).`;
 
   const nextActionsRemaining = game.organizingActionsRemaining !== undefined ? Math.max(0, game.organizingActionsRemaining - 1) : (game.actionsLeft ? game.actionsLeft - 1 : 0);
   const nextTreasury = Math.max(0, round(treasury - 0.1, 2));
@@ -11664,9 +11667,20 @@ function initializeCandidateFunding(game) {
   let totalCost = 0;
 
   const registerRace = (raceKey, kind, houseIncumbentAmt, nonIncMajorAmt) => {
-    const winner = resultsByRace[`${raceKey}:${identityId}`] || resultsByRace[`${raceKey}:${game.player?.baseTemplateId}`] || (game.player?.custom ? resultsByRace[`${raceKey}:player`] : null);
+    let winner = resultsByRace[`${raceKey}:${identityId}`] || resultsByRace[`${raceKey}:${game.player?.baseTemplateId}`] || (game.player?.custom ? resultsByRace[`${raceKey}:player`] : null);
+    const opposingSitting = (game.sittingMembers || []).find((m) => {
+      if (!m) return false;
+      if (kind === 'Senate' && m.office === 'senate' && `senate:${m.stateId || m.state}` === raceKey) return true;
+      if (kind === 'Governor' && m.office === 'governor' && `governor:${m.stateId || m.state}` === raceKey) return true;
+      if (kind === 'House' && m.office === 'house' && `house:${m.districtId || m.district || m.id}` === raceKey) return true;
+      return false;
+    });
+    const isOpposingSeat = opposingSitting && (opposingSitting.party !== identityId && opposingSitting.party !== (game.player?.baseTemplateId || 'people') && !(identityId === 'player' && opposingSitting.party === 'player'));
+    if (winner && opposingSitting && isOpposingSeat && (winner.winnerId === opposingSitting.id || winner.winnerName === opposingSitting.name)) {
+      winner = null;
+    }
     if (!major && !winner) return;
-    const hasIncumbent = Boolean(winner?.isIncumbent || winner?.incumbent);
+    const hasIncumbent = Boolean((winner?.isIncumbent || winner?.incumbent) && !isOpposingSeat);
     const baseline = hasIncumbent ? houseIncumbentAmt : (major ? nonIncMajorAmt : 0);
     const endorsedId = game.primaryEndorsements?.[raceKey] || game.raceEndorsements?.[raceKey];
     const unendorsed = Boolean(!hasIncumbent && (!endorsedId || (winner && endorsedId !== winner.winnerId)));
@@ -11712,16 +11726,17 @@ function generateWeeklyRequests(game, week) {
   const candidateReqs = competitive.map((c, idx) => {
     const askAmount = c.kind === 'Senate' ? 3 : 2;
     const riskLevel = c.signedMargin >= 8 ? 'low' : c.signedMargin >= 2.5 ? 'moderate' : 'high';
+    const cleanCandName = String(c.candidateName || '').replace(new RegExp(`\\s*\\(${c.raceKey}\\)\\s*$`, 'i'), '').replace(/\s*\([^)]*\)\s*$/, '').trim();
     return {
       id: `fund-ask-w${week}-${c.raceKey}`,
       raceKey: c.raceKey,
       kind: c.kind,
-      candidateName: c.candidateName,
+      candidateName: cleanCandName,
       amount: askAmount,
       riskLevel,
       status: 'pending',
       sourceType: 'candidate',
-      label: `${c.candidateName} (${c.raceKey}) requests $${askAmount}M for late-cycle media defense.`,
+      label: `${cleanCandName} (${c.raceKey}) requests $${askAmount}M for late-cycle media defense.`,
       order: idx,
     };
   });
@@ -14087,14 +14102,21 @@ function advanceCampaignWeek(game) {
   const nextFunding = { ...(working.candidateFunding || {}) };
   const identityId = ['people', 'heritage'].includes(working.player?.baseTemplateId) ? working.player.baseTemplateId : 'people';
   const playerSign = identityId === 'heritage' ? -1 : 1;
+  let penaltyUsed = Number(working.campaign?.fundingHappinessPenaltyUsed || 0);
+  const maxPenalty = 8;
+
   (working.campaign.weeklyRequests || []).forEach((req) => {
     if (req.sourceType === 'candidate' && req.status === 'pending' && nextFunding[req.raceKey]) {
       const margin = estimateRaceMarginInternal(working, req.raceKey) * playerSign;
-      const hapHit = margin >= 8 ? 0 : margin >= 2.5 ? -2 : -5;
-      nextHappiness = clamp(nextHappiness + hapHit, 0, 100);
+      const rawHit = margin >= 8 ? 0 : margin >= 2.5 ? -1 : -2;
+      const allowedHit = Math.max(rawHit, -(maxPenalty - penaltyUsed));
+      if (allowedHit < 0) {
+        penaltyUsed += Math.abs(allowedHit);
+        nextHappiness = clamp(nextHappiness + allowedHit, 0, 100);
+      }
       nextFunding[req.raceKey] = {
         ...nextFunding[req.raceKey],
-        happiness: clamp((nextFunding[req.raceKey].happiness ?? 70) + hapHit * 2, 0, 100),
+        happiness: clamp((nextFunding[req.raceKey].happiness ?? 70) + rawHit * 2, 0, 100),
       };
     }
   });
@@ -14107,6 +14129,7 @@ function advanceCampaignWeek(game) {
     campaign: {
       ...working.campaign,
       deploymentBoosts: nextDeploymentBoosts,
+      fundingHappinessPenaltyUsed: penaltyUsed,
     },
   };
 
@@ -15239,6 +15262,20 @@ function startNextCycleInternal(game) {
   // v0.16.9 (#5): Clean floating-point rounding & 25% thermostatic mean reversion on publicMood
   syncedCycle.publicMood = round(clamp((Number(syncedCycle.publicMood || 0)) * 0.75, -8, 12), 1);
 
+  // Sitting member happiness recovery: recover 25% of any gap below 68 plus +5 if holding House, Senate, or Presidency
+  const curHap = Number(syncedCycle.sittingMemberHappiness ?? game.sittingMemberHappiness ?? 70);
+  const holdsPower = Boolean(currHouse || currSenate || currPres);
+  const gapBelow68 = Math.max(0, 68 - curHap);
+  syncedCycle.sittingMemberHappiness = clamp(round(curHap + (gapBelow68 * 0.25) + (holdsPower ? 5 : 0), 1), 0, 100);
+
+  // Presidential approval: apply cycle fatigue scaled by pse.getApprovalDecayMultiplier(game) plus variance [-16, +16]
+  const curPresApp = Number(syncedCycle.presidentialApproval ?? game.presidentialApproval ?? 50);
+  const pseDecay = getPartySystemsEngine();
+  const decayMult = (pseDecay && typeof pseDecay.getApprovalDecayMultiplier === 'function') ? pseDecay.getApprovalDecayMultiplier(game) : 1.0;
+  const cycleFatigue = -3.5 * decayMult;
+  const presVariance = round((hash(`pres-approval-variance:${game.seed || 2028}:${nextYear}`) - 0.5) * 32, 1);
+  syncedCycle.presidentialApproval = clamp(round(curPresApp + cycleFatigue + presVariance, 1), 15, 85);
+
   return {
     ...syncedCycle,
     partyApprovals: computeUnifiedPartyApproval(syncedCycle),
@@ -15674,6 +15711,30 @@ function resolveVersion01GeneralElection(game) {
       ? `Election victory: Strategic Priority goal(s) fulfilled: ${questEval.questOutcomes.filter((q) => q.completed).map((q) => q.questName).join(', ')}! (+${happinessToAward} Member Happiness).`
       : `Election night: the ${isPresidential ? 'presidential, ' : ''}House, Senate Class ${activeSenateClass === 1 ? 'I' : activeSenateClass === 2 ? 'II' : 'III'}, gubernatorial, and state legislative contests are decided.${infuriatedCount ? ` (${infuriatedCount} close-loss candidate(s) infuriated by pulled funds!)` : ''}`,
   };
+
+  if (isPresidential) {
+    const winnerName = presForecast.winnerNominee || game.presidentialTicket?.[nextGoverningParty] || '';
+    const pools = [
+      ...(game.sittingMembers || []),
+      ...(game.politicians || []),
+      ...(game.rosterMembers || []),
+      ...(game.roster || []),
+      ...(game.candidates || []),
+      ...((game.primaryResults || []).map((r) => ({ id: r.winnerId, name: r.winnerName, approval: r.approval, popularity: r.popularity, netApproval: r.netApproval }))),
+    ];
+    const presObj = pools.find((p) => p && (p.name === winnerName || p.id === game.nomineeId || (p.office === 'president' && p.party === nextGoverningParty)));
+    let initialApproval = 50;
+    if (presObj) {
+      if (typeof presObj.approval === 'number') {
+        initialApproval = presObj.approval;
+      } else if (typeof presObj.popularity === 'number') {
+        initialApproval = presObj.popularity;
+      } else if (typeof presObj.netApproval === 'number') {
+        initialApproval = 50 + presObj.netApproval * 0.5;
+      }
+    }
+    resolved.presidentialApproval = clamp(round(initialApproval, 1), 15, 85);
+  }
 
   const autopsyReport = generateAutopsyReport(game, election);
 
@@ -17694,8 +17755,31 @@ function takeActionInternal(game, actionId, payload = {}) {
     return filterPrimarySupport(game, p?.candidateId, p);
   }
   if (actionId === 'finish-presidential-primary') {
+    const app = game.activePresidentialPrimary;
+    const year = Number(app?.year || game.year || 2028);
+    const partyId = app?.partyId || game.player?.baseTemplateId || 'people';
+    const nomineeId = app?.nomineeId || game.nomineeId || '';
+    const nomineeName = app?.nomineeName || game.presidentialTicket?.[partyId] || '';
+    const clinchTarget = app?.clinchTarget || 1968;
+    const brokered = Boolean(app?.brokered);
+    const candidates = Array.isArray(app?.candidates) ? app.candidates.slice() : [];
+
+    const summaryRecord = {
+      year,
+      partyId,
+      nomineeId,
+      nomineeName,
+      clinchTarget,
+      brokered,
+      candidates,
+    };
+
+    const existingHistory = Array.isArray(game.primaryHistory) ? game.primaryHistory.filter((h) => !(h.year === year && h.partyId === partyId)) : [];
+    const nextPrimaryHistory = [...existingHistory, summaryRecord].slice(-20);
+
     const prepped = {
       ...game,
+      primaryHistory: nextPrimaryHistory,
       phase: 'organizing',
       primariesResolved: true,
       prioritiesLocked: true,
@@ -17706,12 +17790,13 @@ function takeActionInternal(game, actionId, payload = {}) {
     if (started.phase !== 'campaign') {
       return {
         ...started,
+        primaryHistory: nextPrimaryHistory,
         phase: 'campaign',
         activePresidentialPrimary: null,
         campaign: started.campaign || { active: true, week: 1, maxWeeks: 5, weeklyActionsLeft: 3 },
       };
     }
-    return { ...started, activePresidentialPrimary: null };
+    return { ...started, primaryHistory: nextPrimaryHistory, activePresidentialPrimary: null };
   }
 
   if (actionId === 'contest-statewide-office') {
@@ -18261,6 +18346,10 @@ function takeActionInternal(game, actionId, payload = {}) {
       cohabitationTurnoutDrag: 0,
     };
     nextGame = boltFaction(nextGame, fid);
+    const existingExpelled = Array.isArray(nextGame.expelledFactions) ? nextGame.expelledFactions : [];
+    if (!existingExpelled.some((ef) => ef && ef.factionId === fid)) {
+      nextGame.expelledFactions = [...existingExpelled, { factionId: fid, name: f.name, year: nextGame.year || 2028 }];
+    }
     const note = `PARTY PURGE: Voluntarily expelled ${f.name} into Independent status, eliminating cohabitation turnout drag.`;
     nextGame.lastNote = note;
     nextGame.yearLog = [...(nextGame.yearLog || []), { year: nextGame.year, turn: (nextGame.chairTurn || 0) + 1, action: note }].slice(-80);
@@ -19771,9 +19860,9 @@ function takeActionInternal(game, actionId, payload = {}) {
     standings[resolveFaction('organizers', identityId).id] = clamp((standings[resolveFaction('organizers', identityId).id] || 55) + 4, 0, 100);
     Object.assign(next, applyMinorPartyCounterGrowth({ ...game, ...next }, identityId, 0.5));
     if (sampleStates) {
-      next.lastNote = `Regional Voter Registration Drive across ${sampleStates.join(', ')} registered +${voterGain.toLocaleString()} voters (-${tierCost}M).`;
+      next.lastNote = `Regional Voter Registration Drive across ${sampleStates.join(', ')} registered +${voterGain.toLocaleString()} voters (-$${tierCost}M).`;
     } else {
-      next.lastNote = `Statewide Voter Registration & Outreach in ${targetState.name} (${stId}) registered +${voterGain.toLocaleString()} voters (-${tierCost}M).`;
+      next.lastNote = `Statewide Voter Registration & Outreach in ${targetState.name} (${stId}) registered +${voterGain.toLocaleString()} voters (-$${tierCost}M).`;
     }
     const gauntletChecked = checkAndApplyAscensionGauntlet({ ...game, ...next }, 'player');
     next.partyTiers = gauntletChecked.partyTiers;
