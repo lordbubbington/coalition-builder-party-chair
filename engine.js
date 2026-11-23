@@ -8011,11 +8011,18 @@ function runDecennialRedistricting(game, decennialYear = null) {
     lastNote: `${game.lastNote || ''} [Decennial Reapportionment ${year}: 435 House seats reapportioned via Huntington-Hill method. Assembled new ${mapKey}].`.trim(),
   };
 
+  // [v0.18.4 MAPS-BALLOT] Initialize Decennial Redistricting War Room & 435-seat parity
+  const _rbsDec = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+  let finalRedistGame = updatedGame;
+  if (_rbsDec && typeof _rbsDec.initializeDecennialWarRoom === 'function') {
+    finalRedistGame = _rbsDec.initializeDecennialWarRoom(finalRedistGame, year);
+    finalRedistGame = _rbsDec.enforceHouse435Parity(finalRedistGame, year);
+  }
   try {
-    saveGame(updatedGame);
+    saveGame(finalRedistGame);
   } catch { /* storage may be unavailable */ }
 
-  return updatedGame;
+  return finalRedistGame;
 }
 
 function legislativeDistricts(game = null) {
@@ -8166,7 +8173,10 @@ function presidentialStateMargin(game, stateId) {
   }
 
   const pollMissErr = Number(game.pollingMissReport?.stateErrors?.[stateId] || 0);
-  let margin = baseLean + env + ticketLift + majorShift + siphonEffect + pollMissErr;
+  // [v0.18.4 MAPS-BALLOT] Ballot initiative coattails & redistricting backlash
+  const _rbsPres = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+  const _rbsStateLift = _rbsPres?.getBallotAndRedistrictingStateLift ? Number(_rbsPres.getBallotAndRedistrictingStateLift(game, stateId) || 0) : 0;
+  let margin = baseLean + env + ticketLift + majorShift + siphonEffect + pollMissErr + _rbsStateLift;
 
   // MAS-01: Independent Presidential Candidate Dual-Party Siphoning & Active Era Modifiers
   const pse = getPartySystemsEngine();
@@ -8513,7 +8523,10 @@ function calculateDistrictElection(game, year) {
     // REQ-261: Congressional district baselines center around district.lean + nationalEnvironment
     const natEnv = Number(game?.nationalEnvironment ?? 9);
     const rawDist = distMap.get(district.id) || district;
-    const districtLean = rawDist.leanPercent ?? (typeof rawDist.lean === 'number' && Math.abs(rawDist.lean) <= 1 ? -rawDist.lean * 100 : (rawDist.lean ?? 0));
+    // [v0.18.4 MAPS-BALLOT] Prefer redistricted district lean when active
+    const districtLean = district.redistrictedLean !== undefined
+      ? Number(district.redistrictedLean)
+      : (rawDist.leanPercent ?? (typeof rawDist.lean === 'number' && Math.abs(rawDist.lean) <= 1 ? -rawDist.lean * 100 : (rawDist.lean ?? 0)));
 
     const demCandidate = primaryResults[`house:${district.id}:people`];
     const repCandidate = primaryResults[`house:${district.id}:heritage`];
@@ -8542,7 +8555,10 @@ function calculateDistrictElection(game, year) {
     const playerSignDist = playerBaseDist === 'heritage' ? -1 : 1;
     const pollMissDist = Number(game.pollingMissReport?.stateErrors?.[stateId] || 0);
     const debateDbDist = Number(game.campaign?.debateDownballotBoost || 0) * playerSignDist;
-    const districtMargin = (districtLean - avgDistrictLean) + (natEnv * 1.08) + candidateLift + fundingLift + incumbentLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist;
+    // [v0.18.4 MAPS-BALLOT] Ballot initiative & redistricting backlash lift
+    const _rbsDist = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+    const _rbsDistLift = _rbsDist?.getBallotAndRedistrictingStateLift ? Number(_rbsDist.getBallotAndRedistrictingStateLift(game, stateId) || 0) * 0.5 : 0;
+    const districtMargin = (districtLean - avgDistrictLean) + (natEnv * 1.08) + candidateLift + fundingLift + incumbentLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
     const demTwoParty = clamp(50 + districtMargin / 2, 0.5, 99.5);
     const repTwoParty = clamp(50 - districtMargin / 2, 0.5, 99.5);
 
@@ -15276,6 +15292,11 @@ function startNextCycleInternal(game) {
   const presVariance = round((hash(`pres-approval-variance:${game.seed || 2028}:${nextYear}`) - 0.5) * 32, 1);
   syncedCycle.presidentialApproval = clamp(round(curPresApp + cycleFatigue + presVariance, 1), 15, 85);
 
+  // [v0.18.4 MAPS-BALLOT] Resolve pending redistricting court challenges & clear expired ballot initiatives
+  const _rbsCyc = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+  if (_rbsCyc && typeof _rbsCyc.advanceCycleRedistrictingAndBallot === 'function') {
+    syncedCycle = _rbsCyc.advanceCycleRedistrictingAndBallot(syncedCycle, nextYear);
+  }
   return {
     ...syncedCycle,
     partyApprovals: computeUnifiedPartyApproval(syncedCycle),
@@ -15856,6 +15877,12 @@ function resolveVersion01GeneralElection(game) {
   // REQ-176: Re-evaluate 5-Stage Institutional Ascent Ladder immediately post-election
   finalElectionState.partyTiers = evaluatePartyInstitutionalTiers(finalElectionState);
   enforceGameTrustCaps(finalElectionState);
+
+  // [v0.18.4 MAPS-BALLOT] Resolve Election Night Ballot Initiatives before Decennial Redistricting
+  const _rbsElec = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+  if (_rbsElec && typeof _rbsElec.resolveElectionNightBallotInitiatives === 'function') {
+    finalElectionState = _rbsElec.resolveElectionNightBallotInitiatives(finalElectionState);
+  }
 
   // REQ-62: Decennial Reapportionment Trigger
   // Detect when a general election concludes on a decennial year (2030, 2040, 2050...).
@@ -16538,6 +16565,13 @@ function executePartyAction(game, partyId, actionType, payload = {}) {
       break;
     }
 
+    // [v0.18.4 MAPS-BALLOT] Universal party action for ballot initiative sponsorship
+    case 'SPONSOR_BALLOT_INITIATIVE': {
+      const _rbsAct = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+      if (_rbsAct?.sponsorBallotInitiative) nextGame = _rbsAct.sponsorBallotInitiative(nextGame, payload, partyId);
+      break;
+    }
+
     case 'RECRUIT_CANDIDATE':
     case 'RECRUIT': {
       const cost = 1.0;
@@ -17139,6 +17173,9 @@ function simulateOpponentPhase(game, phaseName, options = {}) {
       nextGame = appointPartyLeadershipHierarchy(nextGame, pId);
       allocatePreCampaignOrganizingPool(nextGame, pId);
     });
+    // [v0.18.4 MAPS-BALLOT] Rival AI ballot initiative sponsorship & counter-funding
+    const _rbsOppOrg = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+    if (_rbsOppOrg?.runRivalBallotInitiativeAI) nextGame = _rbsOppOrg.runRivalBallotInitiativeAI(nextGame, normPhase);
     return syncPartyStateWithLegacy(nextGame);
   }
 
@@ -17206,6 +17243,9 @@ function simulateOpponentPhase(game, phaseName, options = {}) {
         }
       });
     }
+    // [v0.18.4 MAPS-BALLOT] Rival AI ballot initiative counter-funding in campaign
+    const _rbsOppCmp = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+    if (_rbsOppCmp?.runRivalBallotInitiativeAI) nextGame = _rbsOppCmp.runRivalBallotInitiativeAI(nextGame, normPhase);
     return syncPartyStateWithLegacy(nextGame);
   }
 
@@ -17287,6 +17327,15 @@ function takeActionInternal(game, actionId, payload = {}) {
     if (cvMod && typeof cvMod.vetCandidateAction === 'function') {
       return cvMod.vetCandidateAction(game, payload);
     }
+    return game;
+  }
+  // [v0.18.4 MAPS-BALLOT] Redistricting War Room & Ballot Initiative actions
+  if (['sponsor-ballot-initiative', 'counter-fund-ballot-initiative', 'select-redistricting-strategy', 'commit-decade-map'].includes(actionId)) {
+    const _rbsTa = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+    if (actionId === 'sponsor-ballot-initiative' && _rbsTa?.sponsorBallotInitiative) return _rbsTa.sponsorBallotInitiative(game, payload);
+    if (actionId === 'counter-fund-ballot-initiative' && _rbsTa?.counterFundBallotInitiative) return _rbsTa.counterFundBallotInitiative(game, payload.initiativeId, payload.partyId);
+    if (actionId === 'select-redistricting-strategy' && _rbsTa?.selectRedistrictingStrategy) return _rbsTa.selectRedistrictingStrategy(game, payload);
+    if (actionId === 'commit-decade-map' && _rbsTa?.commitDecadeMap) return _rbsTa.commitDecadeMap(game);
     return game;
   }
   if (actionId === 'resolve-scandal-crisis') {
@@ -21203,6 +21252,17 @@ function normalizeGame(parsed) {
   delete ready._politiciansCompacted;
 
   // v0.18.2 (#67): Deduplicate politicians by name, merging MEMBERS fame/traits onto sitting officeholders
+  // [v0.18.4 MAPS-BALLOT] Backward-compatible save normalization
+  const _rbsNorm = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
+  if (_rbsNorm && typeof _rbsNorm.normalizeRedistrictingBallotState === 'function') {
+    Object.assign(ready, _rbsNorm.normalizeRedistrictingBallotState(ready));
+  } else {
+    ready.redistrictingWarRoom = ready.redistrictingWarRoom || { active: false, year: 0, controlledStates: [], selections: {}, pendingChallenges: [] };
+    ready.activeBallotInitiatives = Array.isArray(ready.activeBallotInitiatives) ? ready.activeBallotInitiatives : [];
+    ready.passedStateInitiatives = ready.passedStateInitiatives || {};
+    ready.redistrictingCommissions = ready.redistrictingCommissions || {};
+  }
+
   const dedupedPoliticians = deduplicatePoliticiansList(rawPoliticians);
   ready.politicians = dedupedPoliticians.map((p) => {
     const fId = p.factionId || (window.PartyChairData?.resolvePoliticianFactionId ? window.PartyChairData.resolvePoliticianFactionId(p) : null);
@@ -22358,6 +22418,8 @@ window.PartyChairEngine = {
   getMovementHubState,
   applyMachineOperation,
   simulateOpponentPhase: (game, phaseName, options) => simulateOpponentPhase(game, phaseName, options),
+  // [v0.18.4 MAPS-BALLOT]
+  getRedistrictingBallotSystem: () => ((typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null),
 };
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = window.PartyChairEngine;

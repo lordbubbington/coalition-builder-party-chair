@@ -3552,6 +3552,9 @@ function step4WorkMarkup() {
         </div>`;
         })()}
 
+        <!-- [v0.18.4 MAPS-BALLOT] Sponsor Ballot Initiative -->
+        ${window.RedistrictingBallotSystem?.renderBallotInitiativeActionCard ? window.RedistrictingBallotSystem.renderBallotInitiativeActionCard(game, { disabled, selectedState: mapState }) : ''}
+
         <!-- 3. Court Politician to Caucus / Defect -->
         <div class="action-card" style="border-color:#1abc9c88;background:linear-gradient(145deg,#102624,#111b26)">
           <div class="action-head"><i style="color:#1abc9c">🤝</i><b>Court Politician to Caucus / Defect</b><span>1 action · $4M</span></div>
@@ -5944,6 +5947,7 @@ function autopsyModalMarkup() {
 function actionsTabMarkup() {
   if (game.phase === 'complete') {
     return `
+      ${/* [v0.18.4 MAPS-BALLOT] */ (game.redistrictingWarRoom?.active && window.RedistrictingBallotSystem?.renderRedistrictingWarRoomModal) ? window.RedistrictingBallotSystem.renderRedistrictingWarRoomModal(game) : ''}
       ${game.activeAutopsyModal ? autopsyModalMarkup() : ''}
       ${electionMarkup()}
       ${realignmentSummaryMarkup()}
@@ -9743,6 +9747,7 @@ ${(game?.electionNight?.completed || snapshot.isFinished) ? v0180PollingMissBann
       <div data-en-breaking-host></div>
 
       ${breakingMarkup}
+      ${/* [v0.18.4 MAPS-BALLOT] */ window.RedistrictingBallotSystem?.renderBallotMeasuresStrip ? window.RedistrictingBallotSystem.renderBallotMeasuresStrip(game) : ''}
 
       <!-- 2-COLUMN BROADCAST GRID -->
       <div class="decision-desk-grid">
@@ -10783,6 +10788,11 @@ function bind() {
     }
     if (action === 'voter-registration-drive') {
       payload.stateId = document.querySelector('#reg-state')?.value || mapState;
+    }
+    // [v0.18.4 MAPS-BALLOT]
+    if (action === 'sponsor-ballot-initiative') {
+      payload.stateId = document.querySelector('#ballot-init-state')?.value || mapState;
+      payload.archetypeId = document.querySelector('#ballot-init-archetype')?.value;
     }
     if (action === 'persuade-independent-caucus' || action === 'court-politician') {
       const targetId = button.dataset.targetId || document.querySelector('#ind-caucus-target')?.value || '';
@@ -11992,6 +12002,9 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
       window.__v0181SelectedRival = e.target.value;
     } else if (e.target?.id === 'v0180-faction-select') {
       window.__v0181SelectedFaction = e.target.value;
+    } else if (e.target?.classList?.contains('war-room-strat-select')) {
+      // [v0.18.4 MAPS-BALLOT]
+      dispatchAction('select-redistricting-strategy', { stateId: e.target.dataset.state, strategy: e.target.value });
     }
   });
   document.addEventListener('click', (e) => {
