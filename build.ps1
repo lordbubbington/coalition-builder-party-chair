@@ -43,6 +43,8 @@ try {
         (Join-Path $projectDir 'election-drift.js'),
         (Join-Path $projectDir 'election-night-engine.js'),
         (Join-Path $projectDir 'campaign-overhaul.js'),
+        # [v0.18.4 ATLAS-HOTSEAT]
+        (Join-Path $projectDir 'atlas-multiplayer-system.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
