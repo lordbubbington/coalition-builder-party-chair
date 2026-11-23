@@ -48,6 +48,7 @@ try {
         (Join-Path $projectDir 'coalition-politics-system.js'),
         (Join-Path $projectDir 'atlas-multiplayer-system.js'),
         (Join-Path $projectDir 'leading-faction-system.js'),
+        (Join-Path $projectDir 'faction-era-stability.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

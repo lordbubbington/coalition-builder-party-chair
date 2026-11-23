@@ -3778,6 +3778,7 @@ function step4WorkMarkup() {
           </div>`;
         })()}
         ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderOrganizingCards(game, disabled) : ''}
+        ${window.FactionEraStability?.renderRealignmentCharterCard ? window.FactionEraStability.renderRealignmentCharterCard(game, identity, disabled) : ''}
       </div>
     </section>`;
 }
@@ -7534,7 +7535,8 @@ function factionsTabMarkup() {
     const isUltimatum = f.ultimatumTurnsRemaining !== null && f.ultimatumTurnsRemaining !== undefined;
     const isInOtherParty = f.partyId !== identity && !isIndependentPool;
     const isPlayerOwnFaction = f.partyId === identity;
-    const isAnchorFaction = f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || Boolean(f.isIroncladAnchor);
+    // [v0.18.4 FACTION-ERA-FIXES]
+    const isAnchorFaction = window.FactionEraStability?.isEffectiveIroncladAnchor ? window.FactionEraStability.isEffectiveIroncladAnchor(game, f) : (f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || Boolean(f.isIroncladAnchor));
     const isOrganizing = game?.phase === 'organizing';
     const courtshipGoodwill = Math.round(Number(game?.factionCourtship?.[f.id]?.[identity] || 0));
     const canConveneSummit = isIndependentPool && isOrganizing;
