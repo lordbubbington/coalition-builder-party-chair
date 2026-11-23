@@ -191,6 +191,7 @@
     return {
       currentEraId: psd?.BASELINE_ERA_ID || 'era_07_baseline',
       currentEraNumber: 7,
+      eraNumber: 7, // [v0.18.4 FACTION-ERA-FIXES]
       currentEraStartYear: 2006,
       priorErasHistory: [],
       transitionRollHistory: {},
@@ -250,11 +251,13 @@
       }
     });
 
+    const _resolvedEraNum = Number.isFinite(Number(existing.currentEraNumber)) ? Math.max(7, Number(existing.currentEraNumber)) : 7; // [v0.18.4 FACTION-ERA-FIXES]
     const normalized = {
       ...base,
       ...existing,
       currentEraId: existing.currentEraId || base.currentEraId,
-      currentEraNumber: Number.isFinite(Number(existing.currentEraNumber)) ? Math.max(7, Number(existing.currentEraNumber)) : 7,
+      currentEraNumber: _resolvedEraNum,
+      eraNumber: _resolvedEraNum, // [v0.18.4 FACTION-ERA-FIXES]
       currentEraStartYear: Number.isFinite(Number(existing.currentEraStartYear)) ? Number(existing.currentEraStartYear) : 2006,
       priorErasHistory: Array.isArray(existing.priorErasHistory) ? existing.priorErasHistory : [],
       transitionRollHistory: existing.transitionRollHistory && typeof existing.transitionRollHistory === 'object' ? existing.transitionRollHistory : {},
@@ -915,6 +918,7 @@
     // 4. Advance Era state
     ps.currentEraId = newEra.id;
     ps.currentEraNumber = nextEraNumber;
+    ps.eraNumber = nextEraNumber; // [v0.18.4 FACTION-ERA-FIXES]
     ps.currentEraStartYear = Number(year);
     if (!ps.experiencedEraIds.includes(newEra.id)) {
       ps.experiencedEraIds.push(newEra.id);
@@ -970,6 +974,11 @@
     const working = normalizePartySystemsState(game);
     const ps = working.partySystems;
     const year = Number(nextYear ?? working.year ?? 2028);
+    // [v0.18.4 FACTION-ERA-FIXES] Clear stale prior-year realignment modal before rolling
+    if (ps.pendingModal === 'realignment' && Number(ps.modalPayload?.year || 0) < Number(year)) {
+      ps.pendingModal = null;
+      ps.modalPayload = null;
+    }
     const floorYear = getEligibilityFloorYear(ps);
 
     // Strict Eligibility Floor Check

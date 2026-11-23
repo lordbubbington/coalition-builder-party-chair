@@ -1070,10 +1070,22 @@ function triggerInternalAnchorCrisis(game, factionId) {
   return updated;
 }
 
+// [v0.18.4 FACTION-ERA-FIXES]
+function isUnaffiliatedPartyId(pid) {
+  return pid === 'none' || pid === 'independent' || pid === 'unaffiliated' || pid === '' || pid === null || pid === undefined;
+}
+function getFactionEraStability() {
+  if (typeof window !== 'undefined' && window.FactionEraStability) return window.FactionEraStability;
+  if (typeof globalThis !== 'undefined' && globalThis.FactionEraStability) return globalThis.FactionEraStability;
+  if (typeof require === 'function') { try { return require('./faction-era-stability.js'); } catch { return null; } }
+  return null;
+}
+
 // SUM-01 & REQ-159 & REQ-236: Faction Bolting (Severance Execution & Defection)
 function boltFaction(game, factionId) {
-  // REQ-236: Ironclad Democratic & Republican Leading-Faction Anchor Lock
-  if (factionId === 'dem_liberal_establishment' || factionId === 'gop_maga') {
+  // REQ-236 & [v0.18.4 FACTION-ERA-FIXES]: Ironclad Leading-Faction Anchor Lock
+  const _fesBolt = getFactionEraStability();
+  if (_fesBolt ? _fesBolt.isEffectiveIroncladAnchor(game, factionId) : (factionId === 'dem_liberal_establishment' || factionId === 'gop_maga')) {
     return triggerInternalAnchorCrisis(game, factionId);
   }
   const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
@@ -1374,8 +1386,8 @@ function checkSummitEligibility(game, factionId) {
   if (f.partyId === playerPartyId) {
     return { eligible: false, reason: 'The faction is already a member of your party.' };
   }
-  // REC-02 & REC-10: Strict Two-Step Secession Gate — must be Independent/Unaffiliated before signing a Coalition Accord
-  if (f.partyId !== 'none' && f.partyId !== 'independent' && f.partyId !== 'unaffiliated') {
+  // REC-02 & REC-10 & [v0.18.4 FACTION-ERA-FIXES]: Strict Two-Step Secession Gate
+  if (!isUnaffiliatedPartyId(f.partyId)) {
     return {
       eligible: false,
       reason: 'Faction must secede from its parent party and become Independent before a Coalition Accord can be signed.',
@@ -1515,13 +1527,10 @@ function generateMergerCoalitionDemands(game, factionId) {
       impact = 'strain';
       delta = -round(4 * bigTentDragFactor, 1);
     }
-    return {
-      factionId: ef.id,
-      factionName: ef.name,
-      distance: round(dist, 2),
-      impact,
-      happinessDelta: delta,
-    };
+    // [v0.18.4 FACTION-ERA-FIXES] Non-leading anchor cohabitation relief & accord cooldown immunity
+    const _basePreview = { factionId: ef.id, factionName: ef.name, distance: round(dist, 2), impact, happinessDelta: delta };
+    const _fesCohab = getFactionEraStability();
+    return _fesCohab ? _fesCohab.adjustCohabitationPreviewItem(game, playerPartyId, ef, _basePreview) : _basePreview;
   });
 
   return {
@@ -14886,7 +14895,8 @@ function startNextCycleInternal(game) {
       : (pid === playerIdentity && houseLost && senateLost && presLost);
     if (lostAllThree) {
       (game.factions || []).forEach((f) => {
-        if (!f || f.partyId !== pid || f.isIroncladAnchor || f.id === 'dem_liberal_establishment' || f.id === 'gop_maga') return;
+        const _fesEx = getFactionEraStability(); // [v0.18.4 FACTION-ERA-FIXES]
+        if (!f || f.partyId !== pid || (_fesEx ? _fesEx.isEffectiveIroncladAnchor(game, f) : (f.isIroncladAnchor || f.id === 'dem_liberal_establishment' || f.id === 'gop_maga'))) return;
         const curH = Number(nextFactionStandings[f.id] ?? f.happiness ?? 50);
         const curC = Number(nextFactionConfidence[f.id] ?? f.confidence ?? 50);
         const shockH = clamp(curH - 15, 0, 100);
@@ -14901,6 +14911,10 @@ function startNextCycleInternal(game) {
       });
     }
   });
+
+  // [v0.18.4 FACTION-ERA-FIXES] Anchor Realignment Drift
+  const _fesDrift = getFactionEraStability();
+  if (_fesDrift?.applyAnchorRealignmentDrift) { _fesDrift.applyAnchorRealignmentDrift(game); }
 
   // REC-09: Campaign Resource Starvation (+25 Neglect Friction for factions with $0 funding in competitive races)
   if (typeof window !== 'undefined' && window.CampaignOverhaul?.evaluateFactionResourceStarvation) {
@@ -17635,6 +17649,9 @@ function takeActionInternal(game, actionId, payload = {}) {
     return updated;
   }
   if (actionId === 'resolve-anchor-crisis') {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    const _fesRes = getFactionEraStability();
+    if (_fesRes?.resolveAnchorCrisisRealignment) return _fesRes.resolveAnchorCrisisRealignment(game);
     let updated = { ...game };
     if (updated.activeAnchorCrisis) {
       updated.activeAnchorCrisis.resolved = true;
@@ -18218,7 +18235,8 @@ function takeActionInternal(game, actionId, payload = {}) {
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
     if (!f) return { ...game, lastNote: 'Target faction not found.' };
-    if (f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    if (f.partyId === playerPid || isUnaffiliatedPartyId(f.partyId)) {
       return { ...game, lastNote: 'Courtship Dialogue applies only to factions currently inside a rival party.' };
     }
     const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
@@ -18251,7 +18269,8 @@ function takeActionInternal(game, actionId, payload = {}) {
     const fid = payload?.factionId || payload?.id;
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
-    if (!f || f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    if (!f || f.partyId === playerPid || isUnaffiliatedPartyId(f.partyId)) {
       return { ...game, lastNote: 'Drive Coalition Wedge must target an opposition faction inside a rival party.' };
     }
     const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
@@ -18280,7 +18299,8 @@ function takeActionInternal(game, actionId, payload = {}) {
     const fid = payload?.factionId || payload?.id;
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
-    if (!f || f.partyId === playerPid || f.partyId === 'none' || f.partyId === 'independent') {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    if (!f || f.partyId === playerPid || isUnaffiliatedPartyId(f.partyId)) {
       return { ...game, lastNote: 'Subsidize Dissident Caucus must target an opposition party faction.' };
     }
     if (f.ultimatumTurnsRemaining === null || f.ultimatumTurnsRemaining === undefined) {
@@ -18308,7 +18328,8 @@ function takeActionInternal(game, actionId, payload = {}) {
     const fid = payload?.factionId || payload?.id;
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
-    if (!f || (f.partyId !== 'none' && f.partyId !== 'independent' && f.partyId !== 'unaffiliated')) {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    if (!f || !isUnaffiliatedPartyId(f.partyId)) {
       return { ...game, lastNote: 'Court Independent Faction can only target Independent / Unaffiliated factions.' };
     }
     const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
@@ -18335,7 +18356,9 @@ function takeActionInternal(game, actionId, payload = {}) {
     if (!f || f.partyId !== playerPid) {
       return { ...game, lastNote: 'Expel Faction can only target a faction inside your own party.' };
     }
-    if (f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || f.isIroncladAnchor) {
+    // [v0.18.4 FACTION-ERA-FIXES]
+    const _fesExpel = getFactionEraStability();
+    if (_fesExpel ? _fesExpel.isEffectiveIroncladAnchor(game, f) : (f.id === 'dem_liberal_establishment' || f.id === 'gop_maga' || f.isIroncladAnchor)) {
       return { ...game, lastNote: `${f.name} is an ironclad party anchor and cannot be expelled.` };
     }
     const actionsLeft = Number(game.organizingActionsRemaining ?? game.actionsLeft ?? 1);
@@ -18354,6 +18377,12 @@ function takeActionInternal(game, actionId, payload = {}) {
     nextGame.lastNote = note;
     nextGame.yearLog = [...(nextGame.yearLog || []), { year: nextGame.year, turn: (nextGame.chairTurn || 0) + 1, action: note }].slice(-80);
     return nextGame;
+  }
+
+  // [v0.18.4 FACTION-ERA-FIXES] Party Realignment Charter action
+  if (actionId === 'realign-party-anchor') {
+    const _fesRealign = getFactionEraStability();
+    return _fesRealign ? _fesRealign.executeRealignPartyAnchor(game, payload) : game;
   }
 
   if (actionId === 'convene-coalition-summit' || actionId === 'sign-coalition-accord') {
@@ -20752,6 +20781,7 @@ function normalizeGame(parsed) {
     factionBoltThreats: Array.isArray(parsed.factionBoltThreats) ? parsed.factionBoltThreats : [],
     activeSplinters: Array.isArray(parsed.activeSplinters) ? parsed.activeSplinters : [],
     expelledFactions: Array.isArray(parsed.expelledFactions) ? parsed.expelledFactions : [],
+    realignedAnchors: parsed.realignedAnchors && typeof parsed.realignedAnchors === 'object' ? { ...parsed.realignedAnchors } : {}, // [v0.18.4 FACTION-ERA-FIXES]
     partySwitchLog: Array.isArray(parsed.partySwitchLog) ? parsed.partySwitchLog : [],
     stateRegistrationBoosts: parsed.stateRegistrationBoosts || {},
     minorPartyCounterGrowth: parsed.minorPartyCounterGrowth || {},
@@ -22094,6 +22124,7 @@ window.PartyChairEngine = {
   SWING_FACTION_BASE_DEM,
   evaluateFactionFriction,
   applyFactionHappinessDelta,
+  isUnaffiliatedPartyId, // [v0.18.4 FACTION-ERA-FIXES]
   checkSummitEligibility,
   boltFaction,
   generateMergerCoalitionDemands,
