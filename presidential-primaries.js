@@ -513,7 +513,19 @@
   /**
    * REQ-199: Allocate delegates within a state based on 15% threshold and Major-Bonus rules.
    */
-  function allocateStateDelegates(voteShares, stateDelegates, isMajorBonus = false) {
+  // [v0.18.4 COALITION-POLITICS] Helper to resolve standalone module
+  function getCoalitionPoliticsSystem() {
+    if (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) return window.CoalitionPoliticsSystem;
+    if (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) return globalThis.CoalitionPoliticsSystem;
+    return null;
+  }
+
+  function allocateStateDelegates(voteShares, stateDelegates, isMajorBonus = false, rules = null) {
+    // [v0.18.4 COALITION-POLITICS] Delegate math engineering hook
+    const cps = rules ? getCoalitionPoliticsSystem() : null;
+    if (cps && typeof cps.allocateStateDelegatesWithRules === 'function') {
+      return cps.allocateStateDelegatesWithRules(voteShares, stateDelegates, isMajorBonus, rules);
+    }
     const allocation = {};
     Object.keys(voteShares).forEach((id) => { allocation[id] = 0; });
 
@@ -618,10 +630,17 @@
     const currentWave = primaries.wave || 1;
 
     // Find all states belonging to current wave
-    const waveStates = Object.values(STATE_DELEGATE_SCHEDULE).filter((s) => s.wave === currentWave);
+    const defaultWaveStates = Object.values(STATE_DELEGATE_SCHEDULE).filter((s) => s.wave === currentWave);
+    const cps = getCoalitionPoliticsSystem();
 
     // Run voting for each party
     Object.keys(primaries.primaryFieldByParty).forEach((pid) => {
+      // [v0.18.4 COALITION-POLITICS] Per-party primary rules & kickoff calendar
+      const partyRules = cps?.getPartyPrimaryRules ? cps.getPartyPrimaryRules(game, pid) : null;
+      const waveStates = (cps?.getEffectiveWaveStates && partyRules)
+        ? cps.getEffectiveWaveStates(STATE_DELEGATE_SCHEDULE, currentWave, partyRules)
+        : defaultWaveStates;
+
       const field = primaries.primaryFieldByParty[pid] || [];
       const activeCandidates = field.filter((c) => c.status === 'active');
       if (activeCandidates.length <= 1) {
@@ -649,7 +668,7 @@
           voteShares[c.id] = rawScores[c.id] / scoreSum;
         });
 
-        const stateDelegatesAlloc = allocateStateDelegates(voteShares, stateSchedule.delegates, stateSchedule.majorBonus);
+        const stateDelegatesAlloc = allocateStateDelegates(voteShares, stateSchedule.delegates, stateSchedule.majorBonus, partyRules);
         activeCandidates.forEach((c) => {
           const won = stateDelegatesAlloc[c.id] || 0;
           c.delegates = (c.delegates || 0) + won;
@@ -720,6 +739,10 @@
 
       // Check player's party nomination
       const playerParty = game.player?.baseTemplateId || game.player?.id || 'people';
+      // [v0.18.4 COALITION-POLITICS] Superdelegates & REC-04 Convention Revolt check
+      if (cps?.evaluateSuperdelegateAndConventionRevolt) {
+        cps.evaluateSuperdelegateAndConventionRevolt(game, playerParty, primaries);
+      }
       const playerField = primaries.primaryFieldByParty[playerParty] || [];
       const sortedPlayer = [...playerField].sort((a, b) => (b.delegates || 0) - (a.delegates || 0));
       const topCand = sortedPlayer[0];
@@ -1132,8 +1155,10 @@
       primaries.presumptiveNomineeId = frontrunner.id;
       game.lastNote = `Ballot 2 Breakthrough: ${frontrunner.name} clinches the nomination after offering the Vice Presidency to ${kingmaker.name}!`;
     } else if (concessions.cabinetPosts && concessions.platformDemands) {
-      // Cabinet + Platform deal: pledges 80% of kingmaker delegates on Ballot 2
-      const pledged = Math.round((kingmaker.delegates || 0) * 0.80);
+      // Cabinet + Platform deal: pledges 80% of kingmaker delegates on Ballot 2 (+ superdelegate chair leverage)
+      // [v0.18.4 COALITION-POLITICS]
+      const leverageBoost = Math.min(0.20, (Number(primaries.chairBrokeredLeverage || 0) / 100));
+      const pledged = Math.round((kingmaker.delegates || 0) * (0.80 + leverageBoost));
       frontrunner.delegates = (frontrunner.delegates || 0) + pledged;
       primaries.ballotCount = 2;
       conv.brokeredResolved = true;

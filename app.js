@@ -7397,6 +7397,9 @@ function partyInfoTabMarkup() {
       </section>
       ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderMediaBalanceBar(game) : ''}
 
+      <!-- [v0.18.4 COALITION-POLITICS] Proposals #5 & #6 Panels -->
+      ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPrimaryRulesPanel(game) + window.CoalitionPoliticsSystem.renderPatronageGridPanel(game) : ''}
+
       <div class="main-grid">
         <div class="left-column">
           <!-- Election History & Records -->
@@ -9007,6 +9010,10 @@ function campaignMarkup() {
     { id: 'party-info', label: 'Party Information', eyebrow: 'Party Standing & Metrics' },
     { id: 'factions', label: 'Factions', eyebrow: `${(game?.factions || []).length || 37} National Factions & State Allocations` },
   ];
+  // [v0.18.4 COALITION-POLITICS] Strict era-gated Diplomacy Hub tab
+  if (window.CoalitionPoliticsSystem?.isDiplomacyHubUnlocked?.(game)) {
+    tabs.push({ id: 'diplomacy-hub', label: 'Diplomacy Hub', eyebrow: 'Coalition & Splinter Diplomacy' });
+  }
 
   let viewportContent = '';
   if (tab === 'map') viewportContent = mapTabMarkup();
@@ -9014,6 +9021,7 @@ function campaignMarkup() {
   else if (tab === 'forecast') viewportContent = forecastTabMarkup();
   else if (tab === 'party-info') viewportContent = partyInfoTabMarkup();
   else if (tab === 'factions') viewportContent = factionsTabMarkup();
+  else if (tab === 'diplomacy-hub' && window.CoalitionPoliticsSystem?.isDiplomacyHubUnlocked?.(game)) viewportContent = window.CoalitionPoliticsSystem.renderDiplomacyHubTab(game);
   else viewportContent = actionsTabMarkup();
 
   return `
@@ -11880,6 +11888,10 @@ function bind() {
       render();
     }
   }));
+  // [v0.18.4 COALITION-POLITICS] Bind Proposals #5, #6, #9 UI listeners
+  if (window.CoalitionPoliticsSystem?.bindEvents) {
+    window.CoalitionPoliticsSystem.bindEvents(game, dispatchAction, render);
+  }
 }
 
 window.PartyChairApp = {

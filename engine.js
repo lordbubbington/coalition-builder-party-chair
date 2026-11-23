@@ -1223,6 +1223,9 @@ function boltFaction(game, factionId) {
     : game.representatives;
 
   const nextBoltThreats = (game.factionBoltThreats || []).filter((t) => t.factionId !== factionId);
+  // [v0.18.4 COALITION-POLITICS] Vacate patronage slots held by bolting faction
+  const cpsBolt = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  const vacatedPat = cpsBolt?.vacatePatronageForFaction ? cpsBolt.vacatePatronageForFaction(game, factionId) : { patronageAppointments: game.patronageAppointments, vacatedSlots: [] };
 
   return evaluateZeroFactionCollapse({
     ...game,
@@ -1232,6 +1235,7 @@ function boltFaction(game, factionId) {
     representatives: updatedRepresentatives,
     superPacs: updatedSuperPacs,
     activeCoalitionPacts: updatedPacts,
+    patronageAppointments: vacatedPat.patronageAppointments, // [v0.18.4 COALITION-POLITICS]
     activeSplinters: nextSplinters.slice(-10),
     factionBoltThreats: nextBoltThreats,
     identityCrisis: nextIdentityCrisis || game.identityCrisis,
@@ -1524,7 +1528,7 @@ function generateMergerCoalitionDemands(game, factionId) {
     };
   });
 
-  return {
+  const baseDemands = {
     factionId: f.id,
     factionName: f.name,
     tier,
@@ -1534,6 +1538,9 @@ function generateMergerCoalitionDemands(game, factionId) {
     filteringPact,
     cohabitationPreview,
   };
+  // [v0.18.4 COALITION-POLITICS] Major bolted factions can demand 1 guaranteed Cabinet/Shadow slot
+  const cpsDem = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  return cpsDem?.augmentMergerDemandsWithPatronage ? cpsDem.augmentMergerDemandsWithPatronage(game, factionId, baseDemands) : baseDemands;
 }
 
 // SUM-02, SUM-03, SUM-05: Coalition Summit Signing & Backlash
@@ -4899,6 +4906,9 @@ function createGame(options = {}) {
   game.partyApprovals = computeUnifiedPartyApproval(game);
   game.forecasters = buildForecasters(game);
   game.stateFederalism = computeAllStateFederalism(game);
+  // [v0.18.4 COALITION-POLITICS] Initialize primaryRules, patronageAppointments, diplomacyPacts
+  const cpsInit = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  if (cpsInit?.normalizeCoalitionPoliticsState) cpsInit.normalizeCoalitionPoliticsState(game);
 
   // Cluster B: Statutory Ballot Access & Polling Uncertainty (REQ-204 - REQ-211)
   const bModInit = (typeof window !== 'undefined' && window.BallotAccess)
@@ -15296,10 +15306,13 @@ function startNextCycleInternal(game) {
   if (_rbsCyc && typeof _rbsCyc.advanceCycleRedistrictingAndBallot === 'function') {
     syncedCycle = _rbsCyc.advanceCycleRedistrictingAndBallot(syncedCycle, nextYear);
   }
+  // [v0.18.4 COALITION-POLITICS] Process patronage approval/scandal & diplomacy pact expiry
+  const cpsCyc = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  const finalCycle = cpsCyc?.processCycleTransition ? cpsCyc.processCycleTransition(syncedCycle) : syncedCycle;
   return {
-    ...syncedCycle,
-    partyApprovals: computeUnifiedPartyApproval(syncedCycle),
-    forecasters: buildForecasters(syncedCycle),
+    ...finalCycle,
+    partyApprovals: computeUnifiedPartyApproval(finalCycle),
+    forecasters: buildForecasters(finalCycle),
   };
 }
 
@@ -17283,6 +17296,12 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   if (actionId === 'set-turn-step') {
     return { ...game, turnStep: clamp(Number(payload.step || 1), 1, 5) };
+  }
+  // [v0.18.4 COALITION-POLITICS] Route Proposals #5, #6, #9 actions
+  const cpsAct = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  if (cpsAct && cpsAct.canHandleAction && cpsAct.canHandleAction(actionId)) {
+    const handled = cpsAct.handleAction(game, actionId, payload);
+    return { ...handled, partyApprovals: computeUnifiedPartyApproval(handled) };
   }
   if (actionId === 'candidate-endorse' || actionId === 'filter-support' || actionId === 'filtering-support' || actionId === 'filter-candidate-support' || actionId === 'primary-filtering-support' || actionId === 'endorse-candidate') {
     return endorseCandidate(game, payload);
@@ -21069,6 +21088,11 @@ function normalizeGame(parsed) {
   const pseNorm = getPartySystemsEngine();
   if (pseNorm) {
     ready = pseNorm.normalizePartySystemsState({ ...ready, partySystems: parsed.partySystems });
+  }
+  // [v0.18.4 COALITION-POLITICS] Backward-compatible normalization for Proposals #5, #6, #9
+  const cpsNorm = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
+  if (cpsNorm?.normalizeCoalitionPoliticsState) {
+    ready = cpsNorm.normalizeCoalitionPoliticsState(ready, parsed);
   }
 
   // Cluster B: Statutory Ballot Access & Polling Uncertainty (REQ-204 - REQ-211)
