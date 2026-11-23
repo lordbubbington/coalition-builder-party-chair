@@ -9101,6 +9101,7 @@ function campaignMarkup() {
       ${renderScandalCrisisModalMarkup(game)}
       ${renderSuccessionCrisisModalMarkup(game)}
       ${renderInternalAnchorCrisisModalMarkup(game)}
+      ${/* [v0.18.4 LEADING-FACTION] */ (window.LeadingFactionSystem && game?.pendingLeadingFactionChallenge ? window.LeadingFactionSystem.renderLeadingFactionChallengeModal(game, safe) : '')}
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
@@ -10853,6 +10854,10 @@ function bind() {
     }
     if (action === 'resolve-succession-crisis') {
       payload.path = button.dataset.path;
+    }
+    // [v0.18.4 LEADING-FACTION]
+    if (action === 'resolve-leading-faction-challenge') {
+      payload.decision = button.dataset.decision || 'accept';
     }
     if (action === 'promote-state-legislator') {
       payload.memberId = button.dataset.memberId;

@@ -1777,6 +1777,7 @@ function evaluateFactionTiers(game) {
   const presTicket = game?.presidentialTicket || {};
 
   const parties = ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'];
+  if (game?.player?.custom && !parties.includes('player')) parties.push('player'); // [v0.18.4 LEADING-FACTION]
   const designations = { ...(game?.factionDesignations || {}) };
 
   parties.forEach((pid) => {
@@ -1797,9 +1798,14 @@ function evaluateFactionTiers(game) {
 
     // 2. Determine leading faction:
     let leadingFactionId = null;
+    // [v0.18.4 LEADING-FACTION] Respect persisted dynamic leading faction override
+    const trackedLeadingId = game?.leadingFactionByParty?.[pid];
+    if (trackedLeadingId && partyFactions.some((f) => f.id === trackedLeadingId)) {
+      leadingFactionId = trackedLeadingId;
+    }
 
     // Hierarchy 1: Sitting President
-    if (governingParty === pid) {
+    if (!leadingFactionId && governingParty === pid) {
       const presName = presTicket[pid] || (pid === 'people' ? 'Jon Ossoff' : 'J. D. Vance');
       const presMember = sitting.find((m) => m.name === presName || m.office === 'president')
         || (game.roster || []).map((id) => memberFor(game, id)).find((m) => m?.name === presName);
@@ -4671,6 +4677,8 @@ function createGame(options = {}) {
     partyTiers: initialPartyTiers,
     ascensionGauntletCompleted: {},
     pendingAscensionGauntletModal: null,
+    leadingFactionByParty: {}, // [v0.18.4 LEADING-FACTION]
+    pendingLeadingFactionChallenge: null, // [v0.18.4 LEADING-FACTION]
     stateElectoralSystems: buildDefaultStateElectoralSystems(),
     viabilityBreakthroughs: {},
     fusionEndorsements: {},
@@ -15311,6 +15319,11 @@ function startNextCycleInternal(game) {
   if (amsNext && typeof amsNext.onNextCycleMultiplayer === 'function') {
     syncedCycle = amsNext.onNextCycleMultiplayer(syncedCycle);
   }
+  // [v0.18.4 LEADING-FACTION] Evaluate Dynamic Leading Faction Succession on finalized incoming legislators & President
+  const lfsCycle = (typeof window !== 'undefined' && window.LeadingFactionSystem) || (typeof global !== 'undefined' && global.LeadingFactionSystem) || null;
+  if (lfsCycle && typeof lfsCycle.evaluateLeadingFactionSuccession === 'function') {
+    syncedCycle = lfsCycle.evaluateLeadingFactionSuccession(syncedCycle);
+  }
   // [v0.18.4 COALITION-POLITICS] Process patronage approval/scandal & diplomacy pact expiry
   const cpsCyc = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
   const finalCycle = cpsCyc?.processCycleTransition ? cpsCyc.processCycleTransition(syncedCycle) : syncedCycle;
@@ -17379,6 +17392,14 @@ function takeActionInternal(game, actionId, payload = {}) {
         : null;
     if (cvMod && typeof cvMod.resolveScandalCrisis === 'function') {
       return cvMod.resolveScandalCrisis(game, payload);
+    }
+    return game;
+  }
+  // [v0.18.4 LEADING-FACTION]
+  if (actionId === 'resolve-leading-faction-challenge') {
+    const lfsMod = (typeof window !== 'undefined' && window.LeadingFactionSystem) || (typeof global !== 'undefined' && global.LeadingFactionSystem) || null;
+    if (lfsMod && typeof lfsMod.resolveLeadingFactionChallenge === 'function') {
+      return lfsMod.resolveLeadingFactionChallenge(game, payload);
     }
     return game;
   }
@@ -20815,6 +20836,9 @@ function normalizeGame(parsed) {
       ...defaultConfidence,
       ...(parsed.factionConfidence || {}),
     },
+    // [v0.18.4 LEADING-FACTION]
+    leadingFactionByParty: (parsed.leadingFactionByParty && typeof parsed.leadingFactionByParty === 'object') ? { ...parsed.leadingFactionByParty } : {},
+    pendingLeadingFactionChallenge: parsed.pendingLeadingFactionChallenge || null,
     factionDesignations: parsed.factionDesignations || evaluateFactionTiers(parsed),
     factions: Array.isArray(parsed.factions) && parsed.factions.length
       ? parsed.factions.map((f) => ({
