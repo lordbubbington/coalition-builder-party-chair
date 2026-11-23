@@ -4840,6 +4840,9 @@ function createGame(options = {}) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
   game.version = '0.18.3';
+  // [v0.18.4 MEDIA-SHOCKS]
+  const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+  if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
   game.sittingMembers = (game.sittingMembers || []).map(enrichCandidateForV07);
   const allInitialPoliticians = [
     ...(window.PartyChairData?.MEMBERS || []),
@@ -6401,22 +6404,12 @@ function getMediaVisibilityProfile(game, partyId = 'player') {
       fundraisingMultiplier: 1.0,
     };
   }
-  if (tier >= 2) {
-    return {
-      tier,
-      mediaBlackout: true,
-      earnedMediaMultiplier: 0.72,
-      waveMomentumCap: 3.5,
-      fundraisingMultiplier: 0.9,
-    };
-  }
-  return {
-    tier,
-    mediaBlackout: true,
-    earnedMediaMultiplier: 0.45,
-    waveMomentumCap: 1.5,
-    fundraisingMultiplier: 0.75,
-  };
+  const _baseVis = tier >= 2
+    ? { tier, mediaBlackout: true, earnedMediaMultiplier: 0.72, waveMomentumCap: 3.5, fundraisingMultiplier: 0.9 }
+    : { tier, mediaBlackout: true, earnedMediaMultiplier: 0.45, waveMomentumCap: 1.5, fundraisingMultiplier: 0.75 };
+  // [v0.18.4 MEDIA-SHOCKS]
+  const _msVis = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+  return (_msVis && typeof _msVis.applyBlackoutBypass === 'function') ? _msVis.applyBlackoutBypass(_baseVis, game, partyId) : _baseVis;
 }
 
 // REQ-269: Tier-Scaled Party Fundraising Evaluator (Tier 0: 0.35, Tier 1: 0.75, Tier 2-3: 0.90, Tier 4-5: 1.0)
@@ -8534,6 +8527,9 @@ function calculateDistrictElection(game, year) {
     if (incumbent) {
       if (incumbent.partyId === demParty.id) incumbentLift = 2.4;
       else if (incumbent.partyId === repParty.id) incumbentLift = -2.4;
+      // [v0.18.4 MEDIA-SHOCKS]
+      const _msLoc = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+      if (_msLoc && typeof _msLoc.getLocalIncumbentWaveBuffer === 'function') incumbentLift = round(incumbentLift + _msLoc.getLocalIncumbentWaveBuffer(game, incumbent.partyId, natEnv), 2);
     }
 
     const coModDist = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
@@ -15275,6 +15271,9 @@ function startNextCycleInternal(game) {
   const cycleFatigue = -3.5 * decayMult;
   const presVariance = round((hash(`pres-approval-variance:${game.seed || 2028}:${nextYear}`) - 0.5) * 32, 1);
   syncedCycle.presidentialApproval = clamp(round(curPresApp + cycleFatigue + presVariance, 1), 15, 85);
+  // [v0.18.4 MEDIA-SHOCKS]
+  const _msCyc = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+  if (_msCyc && typeof _msCyc.advanceCycle === 'function') syncedCycle = _msCyc.advanceCycle(syncedCycle, nextYear);
 
   return {
     ...syncedCycle,
@@ -17139,6 +17138,9 @@ function simulateOpponentPhase(game, phaseName, options = {}) {
       nextGame = appointPartyLeadershipHierarchy(nextGame, pId);
       allocatePreCampaignOrganizingPool(nextGame, pId);
     });
+    // [v0.18.4 MEDIA-SHOCKS]
+    const _msOpp = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+    if (_msOpp && typeof _msOpp.runRivalMediaInvestments === 'function') nextGame = _msOpp.runRivalMediaInvestments(nextGame);
     return syncPartyStateWithLegacy(nextGame);
   }
 
@@ -18111,6 +18113,12 @@ function takeActionInternal(game, actionId, payload = {}) {
       const res = CO.executeNewCampaignAction(game, actionId, p);
       if (res) return res;
     }
+  }
+  // [v0.18.4 MEDIA-SHOCKS]
+  const _msAct = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+  if (_msAct && ['invest-media-channel', 'launch-counter-narrative', 'crisis-pivot'].includes(actionId)) {
+    const msRes = _msAct.handleAction(game, actionId, payload);
+    if (msRes) return msRes;
   }
   if (actionId === 'advance-to-primaries') return advanceToPrimaries(game);
   if (actionId === 'resolve-primaries') return resolvePrimaries(game);
@@ -19982,7 +19990,10 @@ function takeActionInternal(game, actionId, payload = {}) {
       ? Number(pseFundAct.dispatchEraHook(game, 'getFundraisingModifier', 'small-dollar', { candidate: payload.candidate || topLeader, partyId: identityId }) ?? 1.0)
       : 1.0;
     const topLeaderTraits = evaluateCandidateTraitEffects(topLeader);
-    const raised = round(Math.max(0.5, B * visitMult * memberMult * factionMult * financeMult * fedMult * mediaFundMult * institutionalDonorMult * eraSmallDollarMult * topLeaderTraits.donorViralityMultiplier), 1);
+    // [v0.18.4 MEDIA-SHOCKS]
+    const _msDon = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+    const _msDonorMult = (_msDon && typeof _msDon.getSmallDonorYieldMultiplier === 'function') ? _msDon.getSmallDonorYieldMultiplier(game) : 1.0;
+    const raised = round(Math.max(0.5, B * visitMult * memberMult * factionMult * financeMult * fedMult * mediaFundMult * institutionalDonorMult * eraSmallDollarMult * topLeaderTraits.donorViralityMultiplier * _msDonorMult), 1);
     next.treasury = round(game.treasury + raised, 1);
     next.donorDriveVisits = stateVisits;
     bumpFactionStanding(standings, 'funders', 5, identityId);
@@ -21037,6 +21048,9 @@ function normalizeGame(parsed) {
   ready.demographicMigrationDrift = parsed.demographicMigrationDrift || {};
   ready.organizingFootprintDrift = parsed.organizingFootprintDrift || {};
   ready.stateChapterStreaks = parsed.stateChapterStreaks || {};
+  // [v0.18.4 MEDIA-SHOCKS]
+  const _msNorm = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
+  if (_msNorm && typeof _msNorm.normalizeState === 'function') ready = _msNorm.normalizeState(ready, parsed);
 
   // Cluster D: Decision Desk Broadcast Screen & Decision Desk (REQ-220 - REQ-223)
   ready.electionNight = parsed.electionNight ? {
