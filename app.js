@@ -1910,6 +1910,8 @@ function setupMarkup() {
           </div>
           ${isCustomMode ? customPartyCreatorMarkup() : ''}
           ${isCustomMode && customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0) ? '<p style="color:#f59e0b;font-size:12.5px;margin:8px 0 4px">Select at least one starting faction (including extremist or unaffiliated wings), or choose "Not a Major Movement" to build a custom 100K faction.</p>' : ''}
+          <!-- [v0.18.4 ATLAS-HOTSEAT] -->
+          ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatSetupToggle(isCustomMode ? 'player' : selectedTemplate) : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
           <p class="setup-foot">Version 0.18.3 · Opponent AI & Campaign Telemetry · Local autosave</p>
         </section>
@@ -5440,9 +5442,9 @@ function campaignDashboardMarkup() {
         <span class="v07-turn-note">
           ${safe(game.lastNote || `Campaign Month ${week} of 5. Make strategic allocations then advance the month.`)}
         </span>
-        <button type="button" class="button button-gold advance-week-btn" id="advance-campaign-week">
-          ${week < maxWeeks ? `Advance to Campaign Month ${week + 1} of 5 →` : `Proceed to General Election Night ${game?.year || 2028} ★`}
-        </button>
+        ${window.AtlasMultiplayerSystem && window.AtlasMultiplayerSystem.isMultiplayerEnabled(game)
+          ? window.AtlasMultiplayerSystem.renderHotseatTurnButton(game)
+          : `<button type="button" class="button button-gold advance-week-btn" id="advance-campaign-week">${week < maxWeeks ? `Advance to Campaign Month ${week + 1} of 5 →` : `Proceed to General Election Night ${game?.year || 2028} ★`}</button>`}
       </div>
     </div>`;
 }
@@ -6002,6 +6004,7 @@ function actionsTabMarkup() {
         ${step < 5
           ? `<button type="button" class="button button-gold" id="step-next">Next Step (Step ${step + 1} of 5) →</button>`
           : `<button type="button" class="button button-gold" id="advance-year" ${canConfirm ? '' : 'disabled'}>${confirmLabel} →</button>`}
+        ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatTurnButton(game) : ''}
       </div>
     </div>`;
 }
@@ -9033,6 +9036,7 @@ function campaignMarkup() {
         <span>${game.phase === 'organizing' ? `${game?.year || 2028} · THE RECRUITMENT PHASE (${game.organizingActionsRemaining ?? 20} Actions Remaining)` : game.campaign?.active ? `${game?.year || 2028} · CAMPAIGN MONTH ${game.campaign.week}/5` : `${game?.year || 2028} · ELECTION COMPLETE`}</span>
         ${window.PartySystemsUI ? window.PartySystemsUI.renderTopBarEraBadge(game) : ''}
         ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderTopHudPill(game) : ''}
+        ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHeaderControls(game) : ''}
         <button type="button" class="text-button" id="open-primary-archive-8" data-dup-id="open-primary-archive">Primary Archive</button>
         <button type="button" class="text-button" id="open-save-slots-9" data-dup-id="open-save-slots">Saves (5 Slots)</button>
         <button type="button" class="text-button" id="new-game">New party</button>
@@ -10229,13 +10233,22 @@ function render() {
         <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#f87171;font-weight:700;margin-bottom:8px">Game Over · ${safe(String(game.year || 2028))}</div>
         <h2 style="margin:0 0 12px;font-size:24px;color:#fff">${safe(game.gameOverTitle || 'Party Collapsed — All Factions Lost')}</h2>
         <p style="margin:0 0 22px;font-size:14.5px;line-height:1.55;color:#cbd5e1">${safe(game.gameOverMessage || 'Every faction in your party has abandoned the coalition. Without a base of support, your party has collapsed.')}</p>
-        <button type="button" id="btn-gameover-new-party" class="button button-gold" style="padding:12px 24px;font-size:14px;font-weight:700">Return to Party Setup</button>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button type="button" class="button" data-action="open-political-atlas" data-atlas-start-tab="legacy" style="padding:12px 20px;font-size:14px;font-weight:700">Open Political Atlas &amp; Legacy</button>
+          <button type="button" id="btn-gameover-new-party" class="button button-gold" style="padding:12px 24px;font-size:14px;font-weight:700">Return to Party Setup</button>
+        </div>
       </div>
     </div>
   ` : '';
-  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay + renderSaveSlotsModalMarkup() + (game ? renderPrimaryArchiveModalMarkup() : '');
+  // [v0.18.4 ATLAS-HOTSEAT]
+  const atlasHotseatOverlay = window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderOverlays(game, MAPS) : '';
+  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay + renderSaveSlotsModalMarkup() + (game ? renderPrimaryArchiveModalMarkup() : '') + atlasHotseatOverlay;
   if (game) saveGame(game);
   bind();
+  // [v0.18.4 ATLAS-HOTSEAT]
+  if (window.AtlasMultiplayerSystem) {
+    window.AtlasMultiplayerSystem.bindUI(game, { setGame: (g) => { game = g; }, render, saveGame, resetToSetup: () => { game = null; render(); } });
+  }
   renderTutorial();
 }
 
@@ -10500,6 +10513,8 @@ function bind() {
       customFactionStateAllocations: custom100kStateAllocations,
     });
     if (V07) game = V07.hydrateV07GameState(game);
+    // [v0.18.4 ATLAS-HOTSEAT]
+    if (window.AtlasMultiplayerSystem && game) game = window.AtlasMultiplayerSystem.applyHotseatSetupToGame(game);
     if (archetypeChoice && game) {
       game.player = game.player || {};
       game.player.leaderArchetype = archetypeChoice;

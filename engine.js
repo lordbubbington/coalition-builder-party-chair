@@ -15306,6 +15306,11 @@ function startNextCycleInternal(game) {
   if (_rbsCyc && typeof _rbsCyc.advanceCycleRedistrictingAndBallot === 'function') {
     syncedCycle = _rbsCyc.advanceCycleRedistrictingAndBallot(syncedCycle, nextYear);
   }
+  // [v0.18.4 ATLAS-HOTSEAT] Alternate hotseat turn order on new cycle
+  const amsNext = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
+  if (amsNext && typeof amsNext.onNextCycleMultiplayer === 'function') {
+    syncedCycle = amsNext.onNextCycleMultiplayer(syncedCycle);
+  }
   // [v0.18.4 COALITION-POLITICS] Process patronage approval/scandal & diplomacy pact expiry
   const cpsCyc = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
   const finalCycle = cpsCyc?.processCycleTransition ? cpsCyc.processCycleTransition(syncedCycle) : syncedCycle;
@@ -15978,6 +15983,11 @@ function resolveVersion01GeneralElection(game) {
   }
 
   finalElectionState = synchronizePoliticianPartyWithFaction(finalElectionState);
+  // [v0.18.4 ATLAS-HOTSEAT] Record compact Political Atlas cycle snapshot
+  const amsElec = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
+  if (amsElec && typeof amsElec.recordAtlasSnapshot === 'function') {
+    finalElectionState = amsElec.recordAtlasSnapshot(finalElectionState);
+  }
   return finalElectionState;
 }
 
@@ -17177,7 +17187,9 @@ function simulateOpponentPhase(game, phaseName, options = {}) {
 
   // Phase 1: Organizing Phase
   if (normPhase === 'organizing' || normPhase === 'recruitment') {
-    const oppPartyIds = Object.keys(nextGame.parties || {}).filter((pId) => pId !== playerPartyId);
+    // [v0.18.4 ATLAS-HOTSEAT] Skip all human-controlled parties when multiplayer is active
+    const humanIds = (nextGame.multiplayer?.enabled && Array.isArray(nextGame.multiplayer.humanPartyIds)) ? nextGame.multiplayer.humanPartyIds : [playerPartyId];
+    const oppPartyIds = Object.keys(nextGame.parties || {}).filter((pId) => !humanIds.includes(pId));
     oppPartyIds.forEach((pId) => {
       nextGame = tunePartyPlatformStances(nextGame, pId);
       nextGame = selectPartyPrioritiesAndFocuses(nextGame, pId);
@@ -21323,6 +21335,11 @@ function normalizeGame(parsed) {
   ready.version = '0.18.3';
   ready = ensurePartyStates(ready);
   ready = syncPartyStateWithLegacy(ready);
+  // [v0.18.4 ATLAS-HOTSEAT] Backward-compatible Atlas & Hotseat defaults
+  const amsNorm = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
+  if (amsNorm && typeof amsNorm.normalizeAtlasAndMultiplayer === 'function') {
+    ready = amsNorm.normalizeAtlasAndMultiplayer(ready);
+  }
 
   return ready;
 }
@@ -21714,6 +21731,11 @@ function compactGameForSave(game, options = {}) {
       slimCamp.rivalActivity = { ...slimCamp.rivalActivity, mapPins: [] };
     }
     copy.campaign = slimCamp;
+  }
+  // [v0.18.4 ATLAS-HOTSEAT] Preserve compact atlasHistory (capped at 40 cycles)
+  const amsComp = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
+  if (amsComp && typeof amsComp.compactAtlasForSave === 'function') {
+    amsComp.compactAtlasForSave(copy);
   }
   return copy;
 }
@@ -22458,6 +22480,8 @@ window.PartyChairEngine = {
   simulateOpponentPhase: (game, phaseName, options) => simulateOpponentPhase(game, phaseName, options),
   // [v0.18.4 MAPS-BALLOT]
   getRedistrictingBallotSystem: () => ((typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null),
+  // [v0.18.4 ATLAS-HOTSEAT] Exports
+  getAtlasMultiplayerSystem: () => (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem) || null,
 };
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = window.PartyChairEngine;

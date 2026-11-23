@@ -46,6 +46,7 @@ try {
         (Join-Path $projectDir 'campaign-overhaul.js'),
         (Join-Path $projectDir 'redistricting-ballot-system.js'),
         (Join-Path $projectDir 'coalition-politics-system.js'),
+        (Join-Path $projectDir 'atlas-multiplayer-system.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
