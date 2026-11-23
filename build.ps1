@@ -43,6 +43,7 @@ try {
         (Join-Path $projectDir 'election-drift.js'),
         (Join-Path $projectDir 'election-night-engine.js'),
         (Join-Path $projectDir 'campaign-overhaul.js'),
+        (Join-Path $projectDir 'leading-faction-system.js'), # [v0.18.4 LEADING-FACTION]
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
