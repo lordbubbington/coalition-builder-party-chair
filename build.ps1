@@ -55,6 +55,11 @@ try {
         (Join-Path $projectDir 'v0185-playtest-fixes.js'),
         # [v0.18.5 SAVE-MIGRATIONS]
         (Join-Path $projectDir 'save-migrations.js'),
+        # [v0.18.5 CORE-MODULARIZATION]
+        (Join-Path $projectDir 'persistence-core.js'),
+        (Join-Path $projectDir 'custom-party-core.js'),
+        (Join-Path $projectDir 'faction-core.js'),
+        (Join-Path $projectDir 'ui-setup-views.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

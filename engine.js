@@ -891,108 +891,14 @@ function computeFactionKeyIssuesDistance(game, faction, partyIdOverride = null) 
   return Math.hypot(rEcon - fEcon, rSoc - fSoc);
 }
 
-const RECOGNIZED_FRICTION_PARTIES = new Set(['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist', 'player']);
-
-// SUM-01 + REC-01 + REC-07: Two-Sided National Faction Friction & Ultimatum Detachment Loop
-function evaluateFactionFriction(game) {
-  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
-  const factions = game.factions || [];
-  let updatedGame = { ...game };
-
-  for (const f of factions) {
-    if (!f || !RECOGNIZED_FRICTION_PARTIES.has(f.partyId)) continue;
-    const isPlayerFaction = f.partyId === playerPartyId;
-
-    const curH = Number(updatedGame.factionHappiness?.[f.id] ?? updatedGame.factionHappiness?.[f.name] ?? f.happiness ?? 60);
-    let frictionDelta = 0;
-
-    // REC-07: Rebalanced low-happiness friction curve (<35: +30, <45: +15)
-    if (curH < 35) {
-      f.chronicLowTurns = (f.chronicLowTurns || 0) + 1;
-      frictionDelta += 30;
-    } else if (curH < 45) {
-      f.chronicLowTurns = 0;
-      frictionDelta += 15;
-    } else {
-      f.chronicLowTurns = 0;
-    }
-
-    // REC-07: Platform Abandonment threshold lowered from 4.5 to 3.2 Euclidean points
-    const dist = computeFactionKeyIssuesDistance(updatedGame, f, f.partyId);
-    if (dist > 3.2) {
-      frictionDelta += 15;
-    } else if (curH >= 60 && dist <= 2.5) {
-      frictionDelta -= 15;
-    }
-
-    const isVanguardFounding = isPlayerFaction
-      && updatedGame.identityCrisis?.doctrine === 'vanguard'
-      && (updatedGame.identityCrisis?.foundingFactionIds || []).includes(f.id);
-    if (isVanguardFounding && frictionDelta > 0) {
-      frictionDelta = round(frictionDelta * 0.6, 1);
-    }
-    f.frictionIndex = clamp((f.frictionIndex || 0) + frictionDelta, 0, 100);
-
-    // 3. Ultimatum handling (REC-07: remediation floor raised to Happiness >= 60; threshold lowered to 75)
-    // Bug #24: Post-accord bolt-immunity cooldown prevents immediate boomerang bolts
-    if (Number(f.accordCooldownUntilYear || 0) > Number(updatedGame.year || 2028)) {
-      f.frictionIndex = Math.min(f.frictionIndex, 35);
-      f.ultimatumTurnsRemaining = null;
-      continue;
-    }
-
-    // Bug #25: Mild ideological equilibrium recovery prevents chronic happiness floor compression
-    if (curH < 52 && dist <= 2.8) {
-      const recoveredH = clamp(round(curH + 3, 1), 0, 100);
-      f.happiness = recoveredH;
-      if (updatedGame.factionHappiness) updatedGame.factionHappiness[f.id] = recoveredH;
-      if (updatedGame.factionStandings) updatedGame.factionStandings[f.id] = recoveredH;
-    }
-
-    if (f.ultimatumTurnsRemaining !== null && f.ultimatumTurnsRemaining !== undefined) {
-      if (curH >= 60) {
-        f.ultimatumTurnsRemaining = null;
-        f.frictionIndex = Math.min(f.frictionIndex, 40);
-        if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
-          f.isPuristBoltThreat = false;
-          updatedGame.identityCrisis = {
-            ...updatedGame.identityCrisis,
-            puristRevoltPending: false,
-            puristRevoltTurnsRemaining: null,
-            puristRevoltAppeased: true,
-          };
-          updatedGame.factionBoltThreats = (updatedGame.factionBoltThreats || []).filter((t) => t.factionId !== f.id);
-        }
-        const note = `Ultimatum averted with ${f.name}: Happiness restored to ${curH}/100, Friction Index lowered to ${f.frictionIndex}.`;
-        updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
-      } else {
-        if (!isPlayerFaction && typeof window !== 'undefined' && window.PartySystemsRobots?.evaluateRivalChairUltimatumResponse) {
-          const aiResp = window.PartySystemsRobots.evaluateRivalChairUltimatumResponse(updatedGame, f, f.partyId);
-          if (aiResp && aiResp.action === 'appease') {
-            const note = `Rival Chair appeased ${f.name} (-$${aiResp.cost}M), averting a coalition bolt.`;
-            updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
-            continue;
-          }
-        }
-        f.ultimatumTurnsRemaining -= 1;
-        if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
-          updatedGame.identityCrisis = {
-            ...updatedGame.identityCrisis,
-            puristRevoltTurnsRemaining: Math.max(0, f.ultimatumTurnsRemaining),
-          };
-        }
-        if (f.ultimatumTurnsRemaining <= 0) {
-          updatedGame = boltFaction(updatedGame, f.id);
-        }
-      }
-    } else if (f.frictionIndex >= 75) {
-      f.ultimatumTurnsRemaining = 2;
-      const note = isPlayerFaction
-        ? `CRISIS: The ${f.name} has issued an official ULTIMATUM! Address core grievances within 2 turns or the faction will formally withdraw from the party.`
-        : `NATIONAL CRISIS: The ${f.name} has issued a secession ULTIMATUM to its parent party (${f.partyId})!`;
-      updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
-      if (isPlayerFaction) updatedGame.lastNote = note;
-    }
+// [v0.18.5 CORE-MODULARIZATION] Faction friction & collapse delegated to window.FactionCore
+function _tryLoadCoreModule(globalKey, fileName) {
+  if (typeof window !== "undefined" && window[globalKey]) return window[globalKey];
+  if (typeof globalThis !== "undefined" && globalThis[globalKey]) return globalThis[globalKey];
+  if (typeof require === "function") { try { return require("./" + fileName); } catch {} }
+  if (typeof process !== "undefined" && process.mainModule && typeof process.mainModule.require === "function") {
+    try { return process.mainModule.require("../" + fileName); } catch {}
+    try { return process.mainModule.require("./" + fileName); } catch {}
   }
 
   // Bug #25: AI Coalition Re-Admission Loop for bolted Unaffiliated factions
@@ -1043,25 +949,9 @@ function evaluateFactionFriction(game) {
   updatedGame = evaluateZeroFactionCollapse(updatedGame);
   return updatedGame;
 }
-
-// Bug #7 / #12: Game-Over rule when player loses all factions in their party
 function evaluateZeroFactionCollapse(game) {
-  if (!game || !Array.isArray(game.factions) || game.factions.length === 0) return game;
-  const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
-  const remaining = game.factions.filter((f) => f && f.partyId === pid);
-  if (remaining.length === 0 && !game.gameOver) {
-    const pName = game.player?.name || 'Your Party';
-    const msg = `Every faction in ${pName} has abandoned the coalition. Without a voter base or allied wings, the party has collapsed.`;
-    return {
-      ...game,
-      gameOver: true,
-      gameOverReason: 'party_collapse',
-      gameOverTitle: 'Party Collapsed — All Factions Lost',
-      gameOverMessage: msg,
-      lastNote: `GAME OVER: ${msg}`,
-    };
-  }
-  return game;
+  const fc = getFactionCore();
+  return fc ? fc.evaluateZeroFactionCollapse(game) : game;
 }
 
 // REQ-236: Internal Anchor Crisis Trigger
@@ -1107,7 +997,7 @@ function getFactionEraStability() {
   return null;
 }
 
-// SUM-01 & REQ-159 & REQ-236: Faction Bolting (Severance Execution & Defection)
+// [v0.18.5 CORE-MODULARIZATION] Faction bolting delegated to window.FactionCore
 function boltFaction(game, factionId) {
   // REQ-236 & [v0.18.4 FACTION-ERA-FIXES]: Ironclad Leading-Faction Anchor Lock
   const _fesBolt = getFactionEraStability();
@@ -1408,7 +1298,7 @@ function advanceToElectionNight(game) {
   return resolveVersion01GeneralElection(synced);
 }
 
-// REQ-153: Coalition Summit Eligibility Check
+// [v0.18.5 CORE-MODULARIZATION] Summit & Accord logic delegated to window.FactionCore
 function checkSummitEligibility(game, factionId) {
   const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
   const factions = game.factions || window.PartyChairData?.FACTIONS_CATALOG || [];
@@ -1451,135 +1341,10 @@ function checkSummitEligibility(game, factionId) {
   }
   return { eligible: true, demands };
 }
-
-// SUM-02 & SUM-03: Tiered Demands Engine & 5M Invariant & REQ-153 Happiness Threshold
 function generateMergerCoalitionDemands(game, factionId) {
-  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
-  const factions = game.factions || window.PartyChairData?.FACTIONS_CATALOG || [];
-  const f = factions.find((x) => x.id === factionId);
-  if (!f) return null;
-
-  const natVoters = Number(game.voterModel?.factions?.[f.id] ?? f.targetVoters ?? 1000000);
-  let tier = 'minor';
-  if (natVoters < 1000000 || f.status === 'fringe') tier = 'fringe';
-  else if (natVoters >= 5000000 || f.status === 'major' || f.status === 'leading') tier = 'major';
-
-  // 5.0M-Member Invariant for Extremist Factions
-  if (EXTREMIST_FACTION_IDS.has(f.id)) {
-    const totalPartyVoters = (game.factions || []).filter((x) => x.partyId === playerPartyId).reduce((s, x) => s + Number(game.voterModel?.factions?.[x.id] ?? x.targetVoters ?? 0), 0);
-    const otherMembers = totalPartyVoters - natVoters;
-    if (otherMembers > 5000000) {
-      return {
-        factionId: f.id,
-        factionName: f.name,
-        tier,
-        blocked: true,
-        blockedReason: `The ${f.name} refuses to negotiate with a party containing over 5 million members of other factions.`,
-        sliderShifts: [],
-        filteringPact: { targetFiltersPerCycle: 0, cyclesRemaining: 0 },
-        cohabitationPreview: [],
-      };
-    }
-  }
-
-  const ideals = getFactionKeyIssueIdeals(f);
-  const cur0 = getPartyKeyIssueStance(game, ideals[0].name);
-  const cur1 = getPartyKeyIssueStance(game, ideals[1].name);
-
-  const sliderShifts = [];
-  let filteringPact = { targetFiltersPerCycle: 0, cyclesRemaining: 0 };
-
-  if (tier === 'fringe') {
-    // Fringe: shift 1 Key Issue slider by +-1 pt toward ideal
-    if (cur0 !== ideals[0].ideal) {
-      sliderShifts.push({
-        issue: ideals[0].name,
-        from: cur0,
-        to: cur0 + (ideals[0].ideal > cur0 ? 1 : -1),
-        target: ideals[0].ideal,
-      });
-    } else if (cur1 !== ideals[1].ideal) {
-      sliderShifts.push({
-        issue: ideals[1].name,
-        from: cur1,
-        to: cur1 + (ideals[1].ideal > cur1 ? 1 : -1),
-        target: ideals[1].ideal,
-      });
-    }
-  } else if (tier === 'minor') {
-    // Minor: shift 2 Key Issue sliders by +-1 pt + 1 candidate filter/cycle for 5 cycles
-    const delta0 = ideals[0].ideal > cur0 ? 1 : (ideals[0].ideal < cur0 ? -1 : 0);
-    const delta1 = ideals[1].ideal > cur1 ? 1 : (ideals[1].ideal < cur1 ? -1 : 0);
-    sliderShifts.push({
-      issue: ideals[0].name,
-      from: cur0,
-      to: cur0 + delta0,
-      target: ideals[0].ideal,
-    });
-    sliderShifts.push({
-      issue: ideals[1].name,
-      from: cur1,
-      to: cur1 + delta1,
-      target: ideals[1].ideal,
-    });
-    filteringPact = { targetFiltersPerCycle: 1, cyclesRemaining: 5 };
-  } else {
-    // Major: snap both Key Issue sliders to identically match ideal + 5 candidate filters/cycle for 5 cycles
-    sliderShifts.push({
-      issue: ideals[0].name,
-      from: cur0,
-      to: ideals[0].ideal,
-      target: ideals[0].ideal,
-    });
-    sliderShifts.push({
-      issue: ideals[1].name,
-      from: cur1,
-      to: ideals[1].ideal,
-      target: ideals[1].ideal,
-    });
-    filteringPact = { targetFiltersPerCycle: 5, cyclesRemaining: 5 };
-  }
-
-  // Ideological Cohabitation Preview (SUM-05 & REQ-193: Big-Tent cuts cohabitation drag by 60%)
-  const bigTentDragFactor = game.identityCrisis?.doctrine === 'big_tent' ? 0.4 : 1.0;
-  const existingMemberFactions = (game.factions || []).filter((x) => x.partyId === playerPartyId && x.id !== f.id);
-  const cohabitationPreview = existingMemberFactions.map((ef) => {
-    const dist = Math.hypot(
-      (f.sliders?.social ?? 5) - (ef.sliders?.social ?? 5),
-      (f.sliders?.economic ?? 5) - (ef.sliders?.economic ?? 5),
-      (f.sliders?.governance ?? 5) - (ef.sliders?.governance ?? 5)
-    );
-    let impact = 'compatible';
-    let delta = 2;
-    if (dist > 4.0) {
-      impact = 'hostile';
-      delta = -round(clamp(round(12 + (dist - 4.0) * 2), 12, 18) * bigTentDragFactor, 1);
-    } else if (dist >= 2.5) {
-      impact = 'strain';
-      delta = -round(4 * bigTentDragFactor, 1);
-    }
-    // [v0.18.4 FACTION-ERA-FIXES] Non-leading anchor cohabitation relief & accord cooldown immunity
-    const _basePreview = { factionId: ef.id, factionName: ef.name, distance: round(dist, 2), impact, happinessDelta: delta };
-    const _fesCohab = getFactionEraStability();
-    return _fesCohab ? _fesCohab.adjustCohabitationPreviewItem(game, playerPartyId, ef, _basePreview) : _basePreview;
-  });
-
-  const baseDemands = {
-    factionId: f.id,
-    factionName: f.name,
-    tier,
-    blocked: false,
-    blockedReason: null,
-    sliderShifts,
-    filteringPact,
-    cohabitationPreview,
-  };
-  // [v0.18.4 COALITION-POLITICS] Major bolted factions can demand 1 guaranteed Cabinet/Shadow slot
-  const cpsDem = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
-  return cpsDem?.augmentMergerDemandsWithPatronage ? cpsDem.augmentMergerDemandsWithPatronage(game, factionId, baseDemands) : baseDemands;
+  const fc = getFactionCore();
+  return fc ? fc.generateMergerCoalitionDemands(game, factionId, { EXTREMIST_FACTION_IDS, getFactionKeyIssueIdeals, getPartyKeyIssueStance, clamp, round, getFactionEraStability }) : null;
 }
-
-// SUM-02, SUM-03, SUM-05: Coalition Summit Signing & Backlash
 function signCoalitionAccord(game, factionId, demands = null) {
   const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
   const factions = game.factions || [];
@@ -5131,444 +4896,16 @@ function createGame(options = {}) {
   game.customPriorityTracking = {};
   game.activeAnchorCrisis = null;
 
+  // [v0.18.5 CORE-MODULARIZATION] Custom Party initialization delegated to window.CustomPartyCore
   if (isCustom) {
-    if (customOrigin === 'not_major_movement') {
-      const cfId = 'custom_founding_faction';
-      const cfName = (opts.customFactionName || `${player.name} Movement`).trim().slice(0, 36);
-      const cfSliders = opts.customFactionSliders || { economic: player.economic, social: player.social, governance: 5.0 };
-      const cfIssues = Array.isArray(opts.customFactionKeyIssues) && opts.customFactionKeyIssues.length === 2
-        ? opts.customFactionKeyIssues
-        : ['healthcare-model', 'campaign-finance'];
-      let stateAllocs = opts.customFactionStateAllocations || { [player.foundingStateId || 'PA']: 100000 };
-      let allocSum = Object.values(stateAllocs).reduce((sum, v) => sum + (Number(v) || 0), 0);
-      if (allocSum !== 100000) {
-        throw new Error(`State voter allocations sum to ${allocSum} / 100,000. Exactly 100,000 voters required.`);
-      }
-
-      // REQ-249: Hare-Niemeyer largest-remainder apportionment with exact 1,000 sample-unit conservation
-      const sampleUnitsMap = apportionSampleUnitsHareNiemeyer(stateAllocs, 1000);
-
-      game.customFaction100k = {
-        id: cfId,
-        name: cfName,
-        partyId: 'player',
-        type: 'ideological',
-        status: 'leading',
-        isCustomFounding: true,
-        targetVoters: 100000,
-        sliders: cfSliders,
-        keyIssues: cfIssues,
-        stateAllocations: stateAllocs,
-      };
-
-      const cfObj = {
-        id: cfId,
-        name: cfName,
-        partyId: 'player',
-        status: 'leading',
-        isCustomFounding: true,
-        sliders: cfSliders,
-        economic: cfSliders.economic,
-        social: cfSliders.social,
-        governance: cfSliders.governance,
-        happiness: 75,
-        confidence: 65,
-        frictionIndex: 0,
-        keyIssues: cfIssues,
-      };
-      game.factions = [cfObj, ...(game.factions || [])];
-      game.factionHappiness[cfId] = 75;
-      game.factionConfidence[cfId] = 65;
-      game.factionStandings[cfId] = 75;
-      game.factionDesignations[cfId] = 'leading';
-
-      // REQ-248: 155M Zero-Variance Electorate Injection: Two-Ledger Rule
-      // Ledger 1: st.affiliations (sample voter units, 1 unit = 100 real voters)
-      // Ledger 2: st.factions (represented voters, 155M scale)
-      if (game.voterModel && Array.isArray(game.voterModel.states)) {
-        game.voterModel.states.forEach((st) => {
-          st.affiliations = st.affiliations || {};
-          st.factions = st.factions || {};
-          const stKey = st.stateId || st.id;
-          const alloc = Number(stateAllocs[stKey] || 0);
-          const allocSample = Number(sampleUnitsMap[stKey] || 0);
-
-          if (alloc > 0 || allocSample > 0) {
-            // Ledger 1: Sample units transfer
-            st.affiliations.player = (st.affiliations.player || 0) + allocSample;
-            let remainingSampleDeduct = allocSample;
-            const indCount = st.affiliations.independent || 0;
-            const indDeduct = Math.min(indCount, remainingSampleDeduct);
-            st.affiliations.independent -= indDeduct;
-            remainingSampleDeduct -= indDeduct;
-            if (remainingSampleDeduct > 0) {
-              const otherAffKeys = Object.keys(st.affiliations).filter((k) => k !== 'player' && (st.affiliations[k] || 0) > 0);
-              for (const k of otherAffKeys) {
-                const d = Math.min(st.affiliations[k], remainingSampleDeduct);
-                st.affiliations[k] -= d;
-                remainingSampleDeduct -= d;
-                if (remainingSampleDeduct <= 0) break;
-              }
-            }
-
-            // Ledger 2: Represented voters injection and proportional swing deduction
-            st.factions[cfId] = alloc;
-            let remainingToDeduct = alloc;
-            const swgKeys = Object.keys(st.factions).filter((k) => k.startsWith('swg_'));
-            const swgTotal = swgKeys.reduce((acc, k) => acc + (st.factions[k] || 0), 0);
-            if (swgTotal > 0) {
-              let deducted = 0;
-              swgKeys.forEach((k) => {
-                const portion = Math.min(st.factions[k] || 0, Math.round(remainingToDeduct * ((st.factions[k] || 0) / swgTotal)));
-                st.factions[k] -= portion;
-                deducted += portion;
-              });
-              let remainderDeduct = remainingToDeduct - deducted;
-              if (remainderDeduct !== 0 && swgKeys.length > 0) {
-                st.factions[swgKeys[0]] = Math.max(0, (st.factions[swgKeys[0]] || 0) - remainderDeduct);
-              }
-            }
-          } else {
-            if (st.affiliations.player === undefined) st.affiliations.player = 0;
-            if (st.factions[cfId] === undefined) st.factions[cfId] = 0;
-          }
-        });
-      }
-      player.baseShare = (100000 / 155000000) * 100;
-      if (!game.voterModel.affiliations) game.voterModel.affiliations = {};
-      game.voterModel.affiliations.player = {
-        name: player.name,
-        sampleVoters: 1000,
-        representedVoters: 100000,
-      };
-    } else {
-      // Catalog Factions Chosen
-      const rawChosen = Array.isArray(opts.selectedFactionIds) ? opts.selectedFactionIds : (Array.isArray(opts.startingSelectedFactionIds) ? opts.startingSelectedFactionIds : []);
-      // Anchor Lock Defense: dem_liberal_establishment & gop_maga cannot leave
-      const safeChosen = rawChosen.filter((id) => id !== 'dem_liberal_establishment' && id !== 'gop_maga');
-
-      // Bug #18: Centroid-based compatibility tolerance (enables cross-party centrist & single-party replacement coalitions)
-      const validChosenIds = [];
-      const catFactions = getFactionsCatalog();
-      const factionLookup = new Map(catFactions.map((f) => [f.id, f]));
-      const centroidTol = (customOrigin === 'executive_third_way' || customOrigin === 'civic_reform') ? 3.2 : (customOrigin === 'major_schism' ? 3.5 : 2.8);
-
-      for (const fid of safeChosen) {
-        const f = factionLookup.get(fid);
-        if (!f) continue;
-        const fEcon = f.sliders?.economic ?? f.economic ?? 5;
-        const fSoc = f.sliders?.social ?? f.social ?? 5;
-        if (validChosenIds.length === 0) {
-          validChosenIds.push(fid);
-          continue;
-        }
-        const sameSchismParent = customOrigin === 'major_schism' && schismParentPartyId && f.partyId === schismParentPartyId;
-        if (sameSchismParent) {
-          validChosenIds.push(fid);
-          continue;
-        }
-        const meanEcon = validChosenIds.reduce((s, id) => s + (factionLookup.get(id)?.sliders?.economic ?? 5), 0) / validChosenIds.length;
-        const meanSoc = validChosenIds.reduce((s, id) => s + (factionLookup.get(id)?.sliders?.social ?? 5), 0) / validChosenIds.length;
-        if (Math.abs(fEcon - meanEcon) <= centroidTol + 1e-9 && Math.abs(fSoc - meanSoc) <= centroidTol + 1e-9) {
-          validChosenIds.push(fid);
-        }
-      }
-
-      player.startingSelectedFactionIds = validChosenIds;
-
-      // Minor-Party Merger Dissolution
-      const minorPartyFactions = {
-        liberty: catFactions.filter((f) => f.partyId === 'liberty').map((f) => f.id),
-        green: catFactions.filter((f) => f.partyId === 'green').map((f) => f.id),
-        constitution: catFactions.filter((f) => f.partyId === 'constitution').map((f) => f.id),
-        socialist: catFactions.filter((f) => f.partyId === 'socialist').map((f) => f.id),
-      };
-
-      const dissolvingParties = new Set();
-      validChosenIds.forEach((fid) => {
-        for (const [mpId, fList] of Object.entries(minorPartyFactions)) {
-          if (fList.includes(fid)) {
-            dissolvingParties.add(mpId);
-          }
-        }
-      });
-
-      game.dissolvedParties = Array.from(dissolvingParties);
-      dissolvingParties.forEach((mpId) => {
-        const absorbed = validChosenIds.filter((fid) => minorPartyFactions[mpId].includes(fid));
-        const orphaned = minorPartyFactions[mpId].filter((fid) => !validChosenIds.includes(fid));
-        game.dissolvedPartyDetails[mpId] = {
-          mergedInto: 'player',
-          year: game.year || 2028,
-          absorbedFactionIds: absorbed,
-          orphanedFactionIds: orphaned,
-        };
-      });
-
-      let totalVotersTransferred = 0;
-      if (game.voterModel && Array.isArray(game.voterModel.states)) {
-        validChosenIds.forEach((fid) => {
-          const fObj = (game.factions || []).find((f) => f.id === fid);
-          const origParty = fObj?.partyId || factionLookup.get(fid)?.partyId || 'independent';
-          if (fObj) {
-            fObj.partyId = 'player';
-            fObj.happiness = 75;
-            fObj.confidence = 65;
-            game.factionHappiness[fid] = 75;
-            game.factionConfidence[fid] = 65;
-            game.factionStandings[fid] = 75;
-          }
-          game.voterModel.states.forEach((st) => {
-            st.affiliations = st.affiliations || {};
-            st.factions = st.factions || {};
-            const count = st.factions[fid] || 0;
-            if (count > 0) {
-              const _c1to1 = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
-              const countSample = _c1to1 ? Math.round(count) : Math.round(count / 100);
-              if (origParty && st.affiliations[origParty] !== undefined) {
-                st.affiliations[origParty] = Math.max(0, (st.affiliations[origParty] || 0) - countSample);
-              }
-              st.affiliations.player = (st.affiliations.player || 0) + countSample;
-              totalVotersTransferred += count;
-            }
-          });
-        });
-
-        // REQ-245 Part 2 + Bug #6: Reconcile ALL national affiliations from state totals so Turn 1 never double-counts (>100%)
-        if (!game.voterModel.affiliations) game.voterModel.affiliations = {};
-        const _c1to1Nat = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
-        const _natMult = _c1to1Nat ? 1 : 100;
-        game.voterModel.affiliations.player = {
-          name: player.name,
-          sampleVoters: _c1to1Nat ? Math.round(totalVotersTransferred) : Math.round(totalVotersTransferred / 100),
-          representedVoters: totalVotersTransferred,
-        };
-        ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist'].forEach((ak) => {
-          const stSum = game.voterModel.states.reduce((s, st) => s + Number(st.affiliations?.[ak] || 0), 0);
-          if (game.voterModel.affiliations[ak]) {
-            game.voterModel.affiliations[ak].sampleVoters = stSum;
-            game.voterModel.affiliations[ak].representedVoters = stSum * _natMult;
-          }
-          if (game.voterModel.affiliations?.thirdParty?.byParty && ['liberty', 'green', 'constitution', 'socialist'].includes(ak)) {
-            game.voterModel.affiliations.thirdParty.byParty[ak] = stSum;
-          }
-        });
-        // Bug #10: Derive Custom Party ideological axes from voter-weighted centroid of selected starting factions
-        if (validChosenIds.length > 0) {
-          let wSum = 0; let wEcon = 0; let wSoc = 0;
-          let largestFid = validChosenIds[0]; let largestV = -1;
-          validChosenIds.forEach((fid) => {
-            const fm = factionLookup.get(fid);
-            const fv = Math.max(1, Number(fm?.targetVoters || window.PartyChairData?.FACTION_NATIONAL_TOTALS?.[fid] || 100000));
-            if (fv > largestV) { largestV = fv; largestFid = fid; }
-            wSum += fv;
-            wEcon += fv * Number(fm?.sliders?.economic ?? 5.5);
-            wSoc += fv * Number(fm?.sliders?.social ?? 5.5);
-          });
-          const avgEcon10 = wEcon / Math.max(1, wSum);
-          const avgSoc10 = wSoc / Math.max(1, wSum);
-          player.economic = round(clamp((avgEcon10 - 5.5) / 4.5, -1, 1), 2);
-          player.social = round(clamp((avgSoc10 - 5.5) / 4.5, -1, 1), 2);
-          player.climate = round(clamp(-player.economic * 0.75, -1, 1), 2);
-          player.local = round(clamp(player.social * 0.65, -1, 1), 2);
-          const derivedIssues = startingIssuePositions(player);
-          player.issuePositions = derivedIssues;
-          game.issuePositions = derivedIssues;
-          // Mark largest faction as founding anchor (reduces friction slightly, still allows Game Over if lost)
-          const anchorObj = (game.factions || []).find((f) => f.id === largestFid);
-          if (anchorObj) anchorObj.isFoundingAnchor = true;
-        }
-
-        // Orphaned hardliners become Independent with Sellout Grudge
-        dissolvingParties.forEach((mpId) => {
-          const orphaned = game.dissolvedPartyDetails[mpId]?.orphanedFactionIds || [];
-          orphaned.forEach((orfId) => {
-            const orfObj = (game.factions || []).find((f) => f.id === orfId);
-            if (orfObj) {
-              orfObj.partyId = 'none';
-              orfObj.originMinorPartyId = mpId;
-              orfObj.seekingPartyHome = true;
-              orfObj.selloutGrudge = {
-                active: true,
-                targetPartyId: 'player',
-                cyclesRemaining: 3,
-                snipesFired: 0,
-                rehomedPartyId: null,
-              };
-            }
-            game.voterModel.states.forEach((st) => {
-              st.affiliations = st.affiliations || {};
-              st.factions = st.factions || {};
-              const count = st.factions[orfId] || 0;
-              if (count > 0) {
-                if (st.affiliations[mpId] !== undefined) {
-                  st.affiliations[mpId] = Math.max(0, (st.affiliations[mpId] || 0) - count);
-                }
-                st.affiliations.independent = (st.affiliations.independent || 0) + count;
-              }
-            });
-          });
-        });
-      }
-
-      // Scrub dissolved minor parties from rivals & ballots
-      if (dissolvingParties.size > 0) {
-        game.rivals = (game.rivals || []).filter((r) => !dissolvingParties.has(r.id));
-        dissolvingParties.forEach((mpId) => {
-          delete game.organizations[mpId];
-          if (game.ballotAccess && game.ballotAccess[mpId]) {
-            delete game.ballotAccess[mpId];
-          }
-          if (game.ballotAccessStatutory && game.ballotAccessStatutory[mpId]) {
-            delete game.ballotAccessStatutory[mpId];
-          }
-        });
-      }
-
-      // Universal Politician Transfer
-      const transferPol = (p) => {
-        const fId = p.factionId || p.faction;
-        if (validChosenIds.includes(fId)) {
-          p.party = 'player';
-          p.rawParty = player.customCode || 'C';
-          if (p.isIncumbent || p.incumbent) {
-            if (p.office === 'house') {
-              game.seats = Math.max(1, (game.seats || 0) + 1);
-              if (p.districtId) {
-                const rep = (game.representatives || []).find((r) => r.districtId === p.districtId || r.id === p.districtId);
-                if (rep) { rep.party = 'player'; rep.partyId = 'player'; }
-              }
-            } else if (p.office === 'governor' && p.stateId) {
-              game.governorships = game.governorships || {};
-              game.governorships[p.stateId] = 'player';
-            }
-          }
-        } else {
-          for (const mpId of dissolvingParties) {
-            if (game.dissolvedPartyDetails[mpId]?.orphanedFactionIds?.includes(fId)) {
-              p.party = 'independent';
-              p.rawParty = 'IND';
-              break;
-            }
-          }
-        }
-      };
-
-      (game.sittingMembers || []).forEach(transferPol);
-      (game.politicians || []).forEach(transferPol);
-      (game.generatedMembers || []).forEach(transferPol);
-      (game.offers || []).forEach(transferPol);
-
-      player.baseShare = (totalVotersTransferred / 155000000) * 100;
+    const cpc = _tryLoadCoreModule("CustomPartyCore", "custom-party-core.js");
+    if (cpc && typeof cpc.initializeCustomPartyState === 'function') {
+      cpc.initializeCustomPartyState(
+        game, player, opts,
+        { customOrigin, schismParentPartyId, foundingStateId, startingWarChest, archetypeTreasuryDelta, customLeader, customArchetype, seed },
+        { STATES, clamp, round, apportionSampleUnitsHareNiemeyer, getFactionsCatalog, startingIssuePositions, computePartyInstitutionalTierRaw, computeUnifiedPartyApproval }
+      );
     }
-
-    // Dynamic Starting Ascent Tier, Focus Slots, Ballot Access, Treasury & Approval Calibration (v0.16.9)
-    const actualStartingVoters = customOrigin === 'not_major_movement' ? 100000 : Math.round((player.baseShare / 100) * 155000000);
-    let voterStartTier = 0;
-    if (actualStartingVoters >= 25000000) voterStartTier = 5;
-    else if (actualStartingVoters >= 12000000) voterStartTier = 4;
-    else if (actualStartingVoters >= 5000000) voterStartTier = 3;
-    else if (actualStartingVoters >= 2000000) voterStartTier = 2;
-    else if (actualStartingVoters >= 350000) voterStartTier = 1;
-    else voterStartTier = 0;
-    const rawComputedTier = computePartyInstitutionalTierRaw(game, 'player');
-    // Bug #19: Cap Turn 1 tier so voter share isn't jumped straight to Tier 5 on medium splinters
-    const startTier = clamp(Math.max(voterStartTier, Math.min(voterStartTier + 1, rawComputedTier)), 0, 5);
-
-    const startFocusSlots = startTier <= 0 ? 1 : startTier >= 5 ? 7 : startTier >= 3 ? 5 : 3;
-
-    game.partyTiers = {
-      ...(game.partyTiers || {}),
-      player: startTier,
-    };
-    if (startTier >= 1) {
-      game.ascensionGauntletCompleted = { ...(game.ascensionGauntletCompleted || {}), player: true };
-    }
-    if (game.priorities?.additional) {
-      game.priorities.additional = Array.from({ length: startFocusSlots }, () => ({ type: 'issue', targetId: '' }));
-    }
-
-    // Bug #19/#20: Preserve advertised origin startingWarChest ($25M major_schism, $15M grassroots_viral, $50M executive_third_way) as floor
-    const majorBaselineBudget = window.PartyChairV07?.STARTING_BUDGETS?.major ?? 150;
-    const customTierTreasuryMap = {
-      0: startingWarChest,
-      1: Math.max(10.0, startingWarChest),
-      2: Math.max(25.0, startingWarChest),
-      3: Math.max(45.0, startingWarChest),
-      4: Math.max(85.0, startingWarChest),
-      5: majorBaselineBudget,
-    };
-    const tierBaseTreasury = customTierTreasuryMap[startTier] ?? startingWarChest;
-    game.treasury = Math.max(1.0, round(tierBaseTreasury + archetypeTreasuryDelta, 1));
-
-    // Tier-scaled downballot ballot access (Major custom party runs in EVERY Senate, House, Governor, & State Leg race; presidential still requires petitioning!)
-    const downballotStateCountByTier = { 0: 0, 1: 3, 2: 10, 3: 20, 4: 35, 5: 50 };
-    const downballotCount = downballotStateCountByTier[startTier] ?? 0;
-    const allFiftyStates = STATES.filter((s) => s.id !== 'DC');
-    const rankedCustomStates = allFiftyStates.slice().sort((a, b) => {
-      const stA = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === a.id);
-      const stB = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === b.id);
-      const totA = Number(stA?.representedVoters || 1);
-      const totB = Number(stB?.representedVoters || 1);
-    const _shMult = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100;
-    const shA = (Number(stA?.affiliations?.player || 0) * _shMult) / totA;
-    const shB = (Number(stB?.affiliations?.player || 0) * _shMult) / totB;
-      return shB - shA;
-    });
-    const grantedDownballotStates = startTier >= 5
-      ? allFiftyStates.map((s) => s.id)
-      : rankedCustomStates.slice(0, downballotCount).map((s) => s.id);
-    const grantedSet = new Set(grantedDownballotStates);
-    const allHouseDistricts = window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
-    const customBallotObj = { senate: {}, governor: {}, house: {}, leg: {}, presidential: {} };
-    // Bug #19/#20: Always guarantee ballot access (presidential + downballot) in the chosen foundingStateId
-    if (foundingStateId && !grantedSet.has(foundingStateId)) {
-      grantedSet.add(foundingStateId);
-      grantedDownballotStates.push(foundingStateId);
-    }
-    if (foundingStateId) {
-      customBallotObj.presidential[foundingStateId] = true;
-    }
-    if (startTier >= 5) {
-      STATES.forEach((s) => { customBallotObj.presidential[s.id] = true; });
-    }
-    grantedDownballotStates.forEach((stId) => {
-      customBallotObj.senate[stId] = true;
-      customBallotObj.governor[stId] = true;
-      customBallotObj.leg[stId] = true;
-    });
-    allHouseDistricts.forEach((d) => {
-      if (grantedSet.has(d.stateId)) customBallotObj.house[d.id] = true;
-    });
-    game.ballotAccess = {
-      ...(game.ballotAccess || {}),
-      player: customBallotObj,
-    };
-    if (downballotCount > 0) {
-      const nextSlates = { ...(game.contestedStateLegSlates || {}) };
-      grantedDownballotStates.forEach((stId) => { nextSlates[stId] = true; });
-      game.contestedStateLegSlates = nextSlates;
-    }
-
-    game.founderLegacy = {
-      active: true,
-      founderId: customLeader ? customLeader.id : `founder-${seed}`,
-      founderName: customLeader ? customLeader.name : player.leaderName,
-      founderArchetypeId: customArchetype?.id || player.leaderArchetype || null,
-      movementAuraCyclesRemaining: 3,
-      auraFundraisingBonus: 0.20,
-      auraRecruitmentLift: 1.0,
-      successionTriggered: false,
-      successionResolved: false,
-      successionTriggerReason: null,
-      successionYear: null,
-      successionOutcome: null,
-      postSuccessionCyclePending: false,
-      preSuccessionBaseline: { voteShare: player.baseShare, seats: game.seats || 0 },
-    };
-
-    game.player = player;
-    game.partyApprovals = computeUnifiedPartyApproval(game);
   } else {
     game.founderLegacy = null;
   }
@@ -22042,101 +21379,23 @@ function advanceRivalOrganizations(game) {
   return { organizations, generatedMembers, generationCounter, rivals };
 }
 
-let _storagePersistRequested = false;
+// [v0.18.5 CORE-MODULARIZATION] Delegated to window.PersistenceCore
 function requestPersistentStorageOnce() {
-  if (_storagePersistRequested) return;
-  _storagePersistRequested = true;
-  try {
-    if (typeof navigator !== 'undefined' && navigator.storage && typeof navigator.storage.persist === 'function') {
-      navigator.storage.persist().catch(() => {});
-    }
-  } catch (_) {}
+  const pc = getPersistenceCore();
+  if (pc) pc.requestPersistentStorageOnce();
 }
-
 async function saveAutosaveToIndexedDB(compactedGame) {
-  if (!compactedGame) return false;
-  requestPersistentStorageOnce();
-  const db = await openSavesIndexedDB();
-  if (!db) return false;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
-      tx.objectStore(SAVE_IDB_STORE).put({
-        slot: 0,
-        label: 'Autosave',
-        savedAt: new Date().toISOString(),
-        game: compactedGame,
-      });
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    } catch (_) {
-      resolve(false);
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.saveAutosaveToIndexedDB(compactedGame) : false;
 }
-
-let _idbSaveQueue = Promise.resolve();
-
 async function loadGameAsync() {
-  try { await _idbSaveQueue; } catch (_) {}
-  const lsGame = loadGame();
-  const db = await openSavesIndexedDB();
-  if (!db) return lsGame;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
-      const req = tx.objectStore(SAVE_IDB_STORE).get(0);
-      req.onsuccess = () => {
-        const rec = req.result;
-        if (rec && rec.game) {
-          const idbGame = normalizeGame(rec.game);
-          if (idbGame) {
-            const idbYr = Number(idbGame.year || 0);
-            const lsYr = Number(lsGame?.year || 0);
-            const idbTs = Number(idbGame._savedAt || rec.savedAt || 0);
-            const lsTs = Number(lsGame?._savedAt || 0);
-            // Bug #1: Prefer IndexedDB whenever newer year OR equal year with newer/equal timestamp
-            if (!lsGame || idbYr > lsYr || (idbYr === lsYr && idbTs >= lsTs)) {
-              resolve(idbGame);
-              return;
-            }
-          }
-        }
-        resolve(lsGame);
-      };
-      req.onerror = () => resolve(lsGame);
-    } catch (_) {
-      resolve(lsGame);
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.loadGameAsync({ normalizeGame, migrateSave }) : loadGame();
 }
-
 function saveGame(game) {
-  try {
-    const stamped = { ...game, _savedAt: Date.now() };
-    const compacted = compactGameForSave(stamped);
-    // Bug #1: Serialize IndexedDB writes via queue so rapid saves never race
-    _idbSaveQueue = _idbSaveQueue
-      .then(() => saveAutosaveToIndexedDB(compacted))
-      .catch(() => {});
-    const jsonStr = JSON.stringify(compacted);
-    if (jsonStr.length <= 4_300_000) {
-      try {
-        localStorage.setItem(SAVE_KEY, jsonStr);
-        if (typeof window !== 'undefined') window.__saveQuotaError = false;
-      } catch (_) {
-        try { localStorage.removeItem(SAVE_KEY); } catch (__) {}
-        if (typeof window !== 'undefined') window.__saveQuotaError = true;
-      }
-    } else {
-      // Clear stale localStorage snapshot so loadGameAsync never reverts to an older year
-      try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
-      if (typeof window !== 'undefined') window.__saveQuotaError = false;
-    }
-    if (game && Number.isFinite(Number(game._activeSaveSlot)) && typeof saveToSlotAsync === 'function') {
-      saveToSlotAsync(Number(game._activeSaveSlot), stamped).catch(() => {});
-    }
-  } catch { /* storage may be unavailable */ }
+  const pc = getPersistenceCore();
+  if (pc) { pc.saveGame(game); return; }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch {}
 }
 
 function normalizeGame(parsed) {
@@ -22954,6 +22213,8 @@ function migrateVoterModelToOneToOne(vm) {
   return next;
 }
 
+// [v0.18.5 CORE-MODULARIZATION] Thin delegating wrappers to window.PersistenceCore
+function getPersistenceCore() { return _tryLoadCoreModule("PersistenceCore", "persistence-core.js"); }
 function loadGame() {
   try {
     const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V184) || localStorage.getItem(PREVIOUS_SAVE_KEY_V183) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
@@ -22961,19 +22222,6 @@ function loadGame() {
     return migrateSave(JSON.parse(value));
   } catch { return null; }
 }
-
-
-// ============================================================================
-// VERSION 0.16.9.1: 5-SLOT LOCAL SAVE SYSTEM
-// ============================================================================
-
-// ============================================================================
-// VERSION 0.16.9: SAVE COMPACTION & INDEXEDDB 5-SLOT STORAGE (100MB+ CAPABLE)
-// ============================================================================
-const SAVE_IDB_NAME = 'CoalitionBuilderSavesDB';
-const SAVE_IDB_VERSION = 1;
-const SAVE_IDB_STORE = 'saveSlots';
-
 function compactGameForSave(game, options = {}) {
   if (!game || typeof game !== 'object') return game;
   const ultra = Boolean(options && options.ultra);
@@ -23260,228 +22508,47 @@ function compactGameForSave(game, options = {}) {
 
   return copy;
 }
-
 function openSavesIndexedDB() {
-  return new Promise((resolve) => {
-    if (typeof indexedDB === 'undefined') {
-      resolve(null);
-      return;
-    }
-    try {
-      const req = indexedDB.open(SAVE_IDB_NAME, SAVE_IDB_VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(SAVE_IDB_STORE)) {
-          db.createObjectStore(SAVE_IDB_STORE, { keyPath: 'slot' });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    } catch (_) {
-      resolve(null);
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.openSavesIndexedDB() : Promise.resolve(null);
 }
-
 async function listSaveSlotsAsync() {
-  const db = await openSavesIndexedDB();
-  if (!db) return listSaveSlots();
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
-      const req = tx.objectStore(SAVE_IDB_STORE).getAll();
-      req.onsuccess = () => {
-        const bySlot = new Map((req.result || []).map((r) => [Number(r.slot), r]));
-        const fallback = listSaveSlots();
-        const out = [];
-        for (let i = 1; i <= SAVE_SLOT_COUNT; i++) {
-          const rec = bySlot.get(i);
-          if (rec && rec.game) {
-            const g = rec.game;
-            out.push({
-              slot: i,
-              empty: false,
-              label: rec.label || g.player?.name || `Slot ${i}`,
-              partyName: g.player?.name || 'Party',
-              partyColor: g.player?.color || '#3478c8',
-              year: g.year || 2028,
-              phase: g.phase || 'organizing',
-              savedAt: rec.savedAt || null,
-              version: g.version || '0.17.0',
-              storage: 'IndexedDB',
-            });
-          } else {
-            out.push(fallback[i - 1] || { slot: i, empty: true });
-          }
-        }
-        resolve(out);
-      };
-      req.onerror = () => resolve(listSaveSlots());
-    } catch (_) {
-      resolve(listSaveSlots());
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.listSaveSlotsAsync() : [];
 }
-
 async function saveToSlotAsync(slotNum, game, label = '') {
-  if (!game) return false;
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  const compact = compactGameForSave(game);
-  game._activeSaveSlot = n;
-  compact._activeSaveSlot = n;
-  const record = {
-    slot: n,
-    label: (label || game.player?.name || `Slot ${n}`).trim(),
-    savedAt: new Date().toISOString(),
-    game: compact,
-  };
-  const db = await openSavesIndexedDB();
-  if (!db) return saveToSlot(n, compact, label);
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
-      tx.objectStore(SAVE_IDB_STORE).put(record);
-      tx.oncomplete = () => {
-        try { saveGame(compact); } catch (_) {}
-        resolve(true);
-      };
-      tx.onerror = () => resolve(saveToSlot(n, compact, label));
-    } catch (_) {
-      resolve(saveToSlot(n, compact, label));
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.saveToSlotAsync(slotNum, game, label) : false;
 }
-
 async function loadFromSlotAsync(slotNum) {
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  const db = await openSavesIndexedDB();
-  if (!db) return loadFromSlot(n);
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
-      const req = tx.objectStore(SAVE_IDB_STORE).get(n);
-      req.onsuccess = () => {
-        const rec = req.result;
-        if (rec && rec.game) {
-          const loaded = normalizeGame(rec.game);
-          if (loaded) loaded._activeSaveSlot = n;
-          resolve(loaded);
-        } else {
-          resolve(loadFromSlot(n));
-        }
-      };
-      req.onerror = () => resolve(loadFromSlot(n));
-    } catch (_) {
-      resolve(loadFromSlot(n));
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.loadFromSlotAsync(slotNum, { normalizeGame }) : null;
 }
-
 async function deleteSaveSlotAsync(slotNum) {
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  deleteSaveSlot(n);
-  const db = await openSavesIndexedDB();
-  if (!db) return true;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
-      tx.objectStore(SAVE_IDB_STORE).delete(n);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(true);
-    } catch (_) {
-      resolve(true);
-    }
-  });
+  const pc = getPersistenceCore();
+  return pc ? pc.deleteSaveSlotAsync(slotNum) : false;
 }
-
 const SAVE_SLOT_COUNT = 5;
 const SAVE_SLOT_PREFIX = 'partyChairGame.save.slot.';
-
 function saveSlotKey(slotNum) {
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  return `${SAVE_SLOT_PREFIX}${n}`;
+  const pc = getPersistenceCore();
+  return pc ? pc.saveSlotKey(slotNum) : `${SAVE_SLOT_PREFIX}${slotNum}`;
 }
-
 function listSaveSlots() {
-  const slots = [];
-  for (let i = 1; i <= SAVE_SLOT_COUNT; i++) {
-    let raw = null;
-    try { raw = localStorage.getItem(saveSlotKey(i)); } catch (_) {}
-    if (!raw) {
-      slots.push({ slot: i, empty: true });
-      continue;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      const meta = parsed._slotMeta || {};
-      const g = parsed.game || parsed;
-      slots.push({
-        slot: i,
-        empty: false,
-        label: meta.label || g.player?.name || `Slot ${i}`,
-        partyName: g.player?.name || 'Party',
-        partyColor: g.player?.color || '#3478c8',
-        year: g.year || 2028,
-        phase: g.phase || 'organizing',
-        savedAt: meta.savedAt || null,
-        version: g.version || '0.17.0',
-      });
-    } catch (_) {
-      slots.push({ slot: i, empty: true, corrupted: true });
-    }
-  }
-  return slots;
+  const pc = getPersistenceCore();
+  return pc ? pc.listSaveSlots() : [];
 }
-
 function saveToSlot(slotNum, game, label = '') {
-  if (!game) return false;
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  const payload = {
-    _slotMeta: {
-      slot: n,
-      label: (label || game.player?.name || `Slot ${n}`).trim(),
-      savedAt: new Date().toISOString(),
-    },
-    game: compactGameForSave(game),
-  };
-  try {
-    localStorage.setItem(saveSlotKey(n), JSON.stringify(payload));
-    saveGame(game);
-    return true;
-  } catch (_) {
-    try {
-      const ultraPayload = { ...payload, game: compactGameForSave(game, { ultra: true }) };
-      localStorage.setItem(saveSlotKey(n), JSON.stringify(ultraPayload));
-      saveGame(game);
-      return true;
-    } catch (__) {
-      return false;
-    }
-  }
+  const pc = getPersistenceCore();
+  return pc ? pc.saveToSlot(slotNum, game, label) : false;
 }
-
 function loadFromSlot(slotNum) {
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  try {
-    const raw = localStorage.getItem(saveSlotKey(n));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const loaded = normalizeGame(parsed.game || parsed);
-    if (loaded) saveGame(loaded);
-    return loaded;
-  } catch (_) {
-    return null;
-  }
+  const pc = getPersistenceCore();
+  return pc ? pc.loadFromSlot(slotNum, { normalizeGame }) : null;
 }
-
 function deleteSaveSlot(slotNum) {
-  const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-  try {
-    localStorage.removeItem(saveSlotKey(n));
-    return true;
-  } catch (_) {
-    return false;
-  }
+  const pc = getPersistenceCore();
+  return pc ? pc.deleteSaveSlot(slotNum) : false;
 }
 
 function exportSave(game) {
