@@ -14948,6 +14948,167 @@ const UNIVERSAL_PARTY_ACTIONS_CATALOG = [
   { actionType: 'ADVANCE_CAMPAIGN_MONTH', phase: 'campaign', consumesAction: false, description: 'Advance campaign calendar to next monthly turn.' },
 ];
 
+/* ==========================================================================
+   DEVELOPER 4: DARK-MONEY SUPER PAC BLOCS & ELECTORAL REFORM SANDBOX
+   ========================================================================== */
+
+const DARK_MONEY_BLOCS = [
+  {
+    id: 'tech_innovation_pac',
+    name: 'Tech Innovation Coalition PAC',
+    shortName: 'Tech Innovation',
+    sector: 'Technology & Artificial Intelligence',
+    description: 'Silicon Valley mega-donors and venture funds committed to AI acceleration and minimal regulatory barriers.',
+    infusion: 25.0, // $25M outside spending warchest
+    demands: 'Demands deregulation and open-source AI infrastructure with zero federal compute caps.',
+    perks: {
+      digitalYieldBoost: 0.20,
+    },
+    redLine: {
+      description: 'Tech Antitrust enforcement or AI Compute caps',
+      bills: ['tech-antitrust', 'ai-compute-caps'],
+      sliderAxis: 'economic',
+      sliderThreshold: 6.5,
+      operator: 'gt',
+    },
+  },
+  {
+    id: 'organized_labor_pac',
+    name: 'Organized Labor Action Fund',
+    shortName: 'Organized Labor',
+    sector: 'Labor Unions & Working Families',
+    description: 'Industrial and service union federations mobilizing massive ground operations and member strike funds.',
+    infusion: 20.0, // $20M outside spending warchest
+    demands: 'Demands national card-check union certification and federal minimum wage expansion.',
+    perks: {
+      volunteerSurge: 0.15, // +15% volunteer field mobilization yield
+    },
+    redLine: {
+      description: 'National Right-to-Work or Trade Deregulation agreements',
+      bills: ['right-to-work', 'trade-deregulation'],
+      sliderAxis: 'economic',
+      sliderThreshold: 4.0,
+      operator: 'lt',
+    },
+  },
+  {
+    id: 'wall_street_finance_pac',
+    name: 'Financial Markets Action Council',
+    shortName: 'Wall Street Finance',
+    sector: 'Wall Street & Capital Markets',
+    description: 'Investment banks, private equity leaders, and hedge funds seeking capital gains stability and market liquidity.',
+    infusion: 35.0, // $35M outside spending warchest
+    demands: 'Demands financial regulatory stability and capital gains rate protection.',
+    perks: {
+      donorNetworkMultiplier: 1.25,
+    },
+    redLine: {
+      description: 'Federal Wealth Tax or Financial Transaction Tax',
+      bills: ['wealth-tax', 'financial-transaction-tax'],
+      sliderAxis: 'economic',
+      sliderThreshold: 7.0,
+      operator: 'gt',
+    },
+  },
+  {
+    id: 'energy_independence_pac',
+    name: 'American Energy Independence Fund',
+    shortName: 'Energy Independence',
+    sector: 'Energy & Natural Resources',
+    description: 'Domestic oil, gas, and grid infrastructure operators demanding expedited federal resource permitting.',
+    infusion: 30.0, // $30M outside spending warchest
+    demands: 'Demands domestic energy production and fossil-fuel export infrastructure.',
+    perks: {
+      industrialStateLift: 0.08,
+    },
+    redLine: {
+      description: 'Federal Carbon Tax or Drilling & Permitting Bans',
+      bills: ['carbon-tax', 'drilling-bans'],
+      sliderAxis: 'climate',
+      sliderThreshold: 6.5,
+      operator: 'gt',
+    },
+  },
+  {
+    id: 'grassroots_small_dollar_pac',
+    name: 'People’s Grassroots Mobilization Network',
+    shortName: 'Grassroots Network',
+    sector: 'Grassroots Activism & Small-Dollar Donors',
+    description: 'Decentralized digital movement financed by millions of recurring micro-donors demanding clean elections.',
+    infusion: 15.0, // $15M outside spending warchest
+    demands: 'Demands grassroots committee accountability and a strict corporate PAC rejection pledge.',
+    perks: {
+      turnoutBoost: 1.5, // +1.5% base voter turnout across all states
+    },
+    redLine: {
+      description: 'Corporate PAC acceptance or Big Donor alliance',
+      bills: ['corporate-pac-alliance'],
+      corporatePacLimit: 2,
+    },
+  },
+  {
+    id: 'pharma_health_pac',
+    name: 'Biopharma & Healthcare Innovation Alliance',
+    shortName: 'Pharma & Health',
+    sector: 'Pharmaceuticals & Healthcare',
+    description: 'Major pharmaceutical manufacturers and private healthcare networks defending patent rights and private insurance.',
+    infusion: 25.0, // $25M outside spending warchest
+    demands: 'Demands patent exclusivity protection and healthcare marketplace stability.',
+    perks: {
+      suburbanMediaLift: 0.12,
+    },
+    redLine: {
+      description: 'Prescription Drug Price Caps or Universal Single-Payer Healthcare',
+      bills: ['drug-price-caps', 'universal-healthcare'],
+      sliderAxis: 'healthcare',
+      sliderThreshold: 6.5,
+      operator: 'gt',
+    },
+  },
+];
+
+const STATE_ELECTORAL_SYSTEMS = {
+  fptp: {
+    id: 'fptp',
+    name: 'First-Past-The-Post / Plurality',
+    shortName: 'FPTP',
+    category: 'plurality',
+    isAntiSpoiler: false,
+    isProportional: false,
+    description: 'Traditional single-member plurality voting. Subject to Duverger\'s Law strategic defection.',
+  },
+  rcv: {
+    id: 'rcv',
+    name: 'Ranked-Choice Voting (Instant-Runoff)',
+    shortName: 'RCV',
+    category: 'preferential',
+    isAntiSpoiler: true,
+    isProportional: false,
+    description: 'Voters rank candidates by preference. Eliminates spoiler penalties through automatic redistribution of exhausted ballots.',
+  },
+  approval_voting: {
+    id: 'approval_voting',
+    alias: 'approval',
+    name: 'Approval Voting',
+    shortName: 'Approval',
+    category: 'evaluative',
+    isAntiSpoiler: true,
+    isProportional: false,
+    description: 'Voters cast equal votes for all candidates they approve. Completely eliminates strategic defection; minor parties poll and vote at true ideological alignment.',
+  },
+  open_list_proportional: {
+    id: 'open_list_proportional',
+    alias: 'proportional',
+    name: 'Open-List Proportional Representation',
+    shortName: 'PR House',
+    category: 'proportional',
+    isAntiSpoiler: true,
+    isProportional: true,
+    thresholdPct: 4.0,
+    description: 'Multi-seat congressional delegations apportioned by Saint-Laguë / Hare quota with a 4.0% statewide threshold for minor parties to win U.S. House seats.',
+  },
+};
+
 window.PartyChairData = Object.assign(window.PartyChairData || {}, {
   DEFAULT_STRATEGY_PROFILES,
   generateDynamicPartyStrategyProfile,
@@ -15018,4 +15179,10 @@ window.PartyChairData = Object.assign(window.PartyChairData || {}, {
   getStatePartyPlatform,
   getStatePartyDeltas,
   getStatePartyDossierNarrative,
+  DARK_MONEY_BLOCS,
+  STATE_ELECTORAL_SYSTEMS,
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = window.PartyChairData;
+}

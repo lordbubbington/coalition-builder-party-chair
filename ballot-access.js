@@ -776,6 +776,78 @@
     return tier >= 2;
   }
 
+  /**
+   * Process a state electoral system reform (Approval Voting, Open-List Proportional, RCV, or FPTP).
+   * Updates game.stateElectoralSystems, logs the transition, and records in electoralReformHistory.
+   */
+  function processStateElectoralReform(game, stateId, newSystem, options = {}) {
+    if (!game || !stateId) return game;
+    const normSys = String(newSystem || '').toLowerCase().trim();
+    let sysKey = 'fptp';
+    if (normSys === 'approval' || normSys === 'approval_voting') {
+      sysKey = 'approval_voting';
+    } else if (normSys === 'proportional' || normSys === 'open_list_proportional') {
+      sysKey = 'open_list_proportional';
+    } else if (normSys === 'rcv' || normSys === 'ranked_choice') {
+      sysKey = 'rcv';
+    }
+
+    const nextSystems = { ...(game.stateElectoralSystems || {}) };
+    const cur = nextSystems[stateId] || { allRaces: 'plurality', legislative: 'plurality' };
+
+    if (sysKey === 'approval_voting') {
+      nextSystems[stateId] = {
+        ...cur,
+        allRaces: 'approval_voting',
+        approvalVotingActive: true,
+      };
+    } else if (sysKey === 'open_list_proportional') {
+      nextSystems[stateId] = {
+        ...cur,
+        legislative: 'open_list_proportional',
+        openListProportionalActive: true,
+      };
+    } else if (sysKey === 'rcv') {
+      nextSystems[stateId] = {
+        ...cur,
+        allRaces: 'rcv',
+        rcvActive: true,
+      };
+    } else {
+      nextSystems[stateId] = {
+        ...cur,
+        allRaces: 'plurality',
+        legislative: 'plurality',
+      };
+    }
+
+    const sysDefs = (typeof getData === 'function' && getData().STATE_ELECTORAL_SYSTEMS)
+      || (typeof globalThis !== 'undefined' && globalThis.PartyChairData?.STATE_ELECTORAL_SYSTEMS)
+      || {};
+    const sysDef = sysDefs[sysKey] || { name: sysKey };
+
+    const reformEntry = {
+      stateId,
+      newSystem: sysKey,
+      systemName: sysDef.name || sysKey,
+      year: game.year || 2028,
+      turn: (game.chairTurn || 0) + 1,
+      source: options.source || 'legislative_reform',
+      timestamp: Date.now(),
+    };
+
+    const nextHistory = [...(game.electoralReformHistory || []), reformEntry];
+    const note = `Electoral Reform Enacted: ${stateId} has adopted ${sysDef.name || sysKey}.`;
+
+    return {
+      ...game,
+      stateElectoralSystems: nextSystems,
+      electoralReformHistory: nextHistory,
+      lastNote: note,
+      yearLog: [...(game.yearLog || []), { year: game.year || 2028, turn: (game.chairTurn || 0) + 1, action: note }].slice(-80),
+    };
+  }
+
   return {
     getStatutoryRules,
     getStatutoryBallotRule,
@@ -793,5 +865,6 @@
     canEnactStateVotingLaw,
     enactStateVotingLaw,
     canCourtPoliticians,
+    processStateElectoralReform,
   };
 });
