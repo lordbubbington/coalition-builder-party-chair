@@ -3779,6 +3779,80 @@ function step4WorkMarkup() {
             `}
           </div>`;
         })()}
+
+        <!-- 11. Candidate Mentorship Bench (Party Protégés) -->
+        ${(() => {
+          const proteges = Array.isArray(game.partyProteges) ? game.partyProteges : [];
+          const findPol = (id) => {
+            const all = [
+              ...(game.stateLegStandouts?.[identity] || []),
+              ...(game.stateLegStandouts?.[game.player?.baseTemplateId] || []),
+              ...(game.sittingMembers || []),
+              ...(game.politicians || []),
+              ...(game.candidates || [])
+            ];
+            return all.find((p) => p && (p.id === id || p.name === id));
+          };
+          const activeProteges = proteges.map((pid) => findPol(pid) || { id: pid, name: pid, quality: 6, fame: 35, mentorshipProgress: { cyclesGroomed: 1 } });
+
+          const eligiblePool = [];
+          const candidateLists = [
+            ...(game.stateLegStandouts?.[identity] || []),
+            ...(game.stateLegStandouts?.[game.player?.baseTemplateId] || []),
+            ...(game.sittingMembers?.filter((m) => m.party === identity || m.caucus === identity) || []),
+            ...(game.politicians?.filter((m) => m.party === identity || m.partyId === identity) || [])
+          ];
+          const seenIds = new Set(proteges);
+          candidateLists.forEach((p) => {
+            if (p && !seenIds.has(p.id) && !seenIds.has(p.name) && (p.fame || 30) <= 65) {
+              seenIds.add(p.id);
+              eligiblePool.push(p);
+            }
+          });
+
+          return `
+          <div class="action-card mentorship-bench-card">
+            <div class="action-head">
+              <i>🌱</i><b>Candidate Mentorship Pipeline & Farm Team</b>
+              <span>1 action · $2.0M · ${activeProteges.length}/3 Protégés</span>
+            </div>
+            <p>Designate up to 3 promising breakout state legislators, mayors, or rising leaders as <b>Party Protégés</b>. Over 2–3 cycles of active mentorship, protégés gain +8–12 Fame, +1–2 Quality (capped at 9), the <i>Rising Star</i> trait, and headline future Senate, Gubernatorial, and Presidential tickets with deep party loyalty.</p>
+            
+            ${activeProteges.length ? `
+              <div class="protege-roster-grid">
+                ${activeProteges.map((p) => `
+                  <div class="protege-badge-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <b style="color:#f8fafc; font-size:12.5px;">${safe(p.name)}</b>
+                      <span style="font-size:10px; color:#38bdf8; background:rgba(56, 189, 248, 0.15); padding:1px 5px; border-radius:3px;">Qual ${p.quality || 6}/9</span>
+                    </div>
+                    <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                      ${safe(p.officeLabel || p.office || 'State Leg')}, ${safe(p.stateId || 'US')} · Fame ${Math.round(p.fame || 30)}
+                    </div>
+                    <div style="font-size:10.5px; color:#a5b4fc; margin-top:4px;">
+                      Groomed: ${p.mentorshipProgress?.cyclesGroomed || 1} cycle(s) · ${p.traits?.includes('Rising Star') ? '★ Rising Star' : 'In Mentorship'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div style="font-size:12px; color:#94a3b8; margin:6px 0; font-style:italic;">No active protégés designated yet. Designate statehouse standouts below to begin multi-cycle grooming.</div>
+            `}
+
+            ${activeProteges.length < 3 ? `
+              <div class="inline-controls" style="margin-top:6px;">
+                <select id="mentor-prospect-select" style="flex:1;">
+                  ${eligiblePool.length ? eligiblePool.map((p) => `
+                    <option value="${p.id}">${safe(p.name)} · ${safe(p.officeLabel || p.office || 'Leader')}, ${safe(p.stateId || 'US')} (Fame ${Math.round(p.fame || 30)}, Qual ${p.quality || 6})</option>
+                  `).join('') : '<option value="">[ No eligible emerging leaders with Fame ≤ 65 ]</option>'}
+                </select>
+                <button type="button" class="button button-small button-gold" data-action="mentor-prospect" ${disabled || game.treasury < 2.0 || !eligiblePool.length ? 'disabled' : ''}>Mentor Prospect (-$2M)</button>
+              </div>
+            ` : `
+              <small class="v07-warn-note" style="color:#34d399;">Maximum protégé roster reached (3/3). Grooming progress will automatically advance during cycle transition.</small>
+            `}
+          </div>`;
+        })()}
         ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderOrganizingCards(game, disabled) : ''}
         ${window.FactionEraStability?.renderRealignmentCharterCard ? window.FactionEraStability.renderRealignmentCharterCard(game, identity, disabled) : ''}
       </div>
@@ -4819,6 +4893,287 @@ function leaderDeploymentModalMarkup() {
     </div>`;
 }
 
+/* ==========================================================================
+   DEVELOPER 4: DONOR CLASS DARK-MONEY BLOCS & ELECTORAL REFORM SANDBOX
+   ========================================================================== */
+
+function renderDonorBlocsDossierMarkup(game) {
+  const Eng = window.PartyChairEngine;
+  const catalog = (Eng?.getDarkMoneyCatalog ? Eng.getDarkMoneyCatalog() : (window.PartyChairData?.DARK_MONEY_BLOCS || []));
+  const darkState = game?.darkMoneyBlocs || { activeBlocs: [], donorRevolts: [], blocs: {} };
+  const activeIds = new Set(darkState.activeBlocs || []);
+  const revolts = darkState.donorRevolts || [];
+
+  return `
+    <section class="panel section-panel donor-blocs-dossier" style="background:linear-gradient(135deg,#0e1724,#0a1118);border-left:4px solid var(--gold);margin-top:16px">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow" style="color:var(--gold)">Mega-Donor Alliances & Outside Spending</div>
+          <h2 style="margin:2px 0 4px">Donor Class Dark-Money Super PAC Blocs</h2>
+        </div>
+        <span class="v09-pac-pool-pill" style="border-color:var(--gold);color:var(--gold)">
+          ${activeIds.size} Active PAC Alliance${activeIds.size === 1 ? '' : 's'}
+        </span>
+      </div>
+      <p style="margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.5">
+        Outside dark-money conduits inject massive independent expenditure warchests, volunteer surges, and digital advertising into your campaign—completely independent of statutory committee contribution caps. However, every mega-donor coalition enforces rigid <b>legislative red lines</b>. Crossing a bloc’s red line triggers an instant <b>Donor Class Revolt</b>: freezing outside spending, withdrawing airtime, and backing primary challengers.
+      </p>
+
+      ${revolts.length > 0 ? `
+        <div class="revolt-alert-box" style="margin-bottom:14px;padding:10px 14px;background:rgba(239,68,68,0.12);border:1px solid #ef4444;border-radius:6px">
+          <div style="font-weight:700;color:#f87171;font-size:13px;display:flex;align-items:center;gap:6px">
+            ⚠ ACTIVE DONOR REVOLTS DETECTED (${revolts.length})
+          </div>
+          <div style="margin-top:4px;font-size:12.5px;color:#fca5a5;line-height:1.4">
+            ${revolts.map((r) => `
+              <div>• <b>${safe(r.blocName)}:</b> Terminated airtime (-$${r.penaltyAirtime}M) after ${safe(r.breachReason || r.breachedRedLine)}. Primary challenges mobilized.</div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="donor-bloc-grid">
+        ${catalog.map((bloc) => {
+          const bState = darkState.blocs?.[bloc.id] || {};
+          const isActive = activeIds.has(bloc.id);
+          const isRevolted = Boolean(bState.revolted);
+          const statusClass = isRevolted ? 'status-revolted' : isActive ? 'status-active' : 'status-available';
+          const statusLabel = isRevolted ? 'REVOLTED & FROZEN' : isActive ? 'ACTIVE ALLIANCE' : 'AVAILABLE';
+
+          return `
+            <div class="donor-bloc-card ${isRevolted ? 'revolted' : isActive ? 'active' : ''}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+                <div>
+                  <span class="donor-bloc-sector">${safe(bloc.sector)}</span>
+                  <h3 style="margin:2px 0 0;font-size:15px;color:var(--text)">${safe(bloc.name)}</h3>
+                </div>
+                <span class="donor-bloc-status ${statusClass}">${statusLabel}</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;line-height:1.4">${safe(bloc.description)}</div>
+
+              <div class="donor-bloc-metrics" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                <span class="v07-mini-badge" style="background:rgba(16,185,129,0.15);border-color:#10b981;color:#6ee7b7">
+                  +$${bloc.infusion}M Warchest
+                </span>
+                ${bloc.perks?.volunteerSurge ? `
+                  <span class="v07-mini-badge" style="background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#93c5fd">
+                    +15% Volunteer Surge
+                  </span>
+                ` : ''}
+                ${bloc.perks?.turnoutBoost ? `
+                  <span class="v07-mini-badge" style="background:rgba(168,85,247,0.15);border-color:#a855f7;color:#d8b4fe">
+                    +1.5% Turnout Boost
+                  </span>
+                ` : ''}
+                ${bloc.perks?.digitalYieldBoost ? `
+                  <span class="v07-mini-badge" style="background:rgba(234,179,8,0.15);border-color:#eab308;color:#fde047">
+                    +20% Digital Yield
+                  </span>
+                ` : ''}
+              </div>
+
+              <div class="donor-bloc-redline" style="padding:6px 8px;background:rgba(15,23,42,0.6);border-radius:4px;border:1px solid rgba(255,255,255,0.06);font-size:12px;margin-bottom:10px">
+                <span style="color:#f87171;font-weight:700">POLICY RED LINE:</span>
+                <span style="color:var(--text)"> ${safe(bloc.redLine.description)}</span>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end">
+                ${isRevolted ? `
+                  <span style="font-size:11.5px;color:#f87171;font-style:italic">Mega-donors hostile · Funding frozen</span>
+                ` : isActive ? `
+                  <span style="font-size:11.5px;color:#6ee7b7;font-weight:600">✓ Outside expenditures deployed</span>
+                ` : `
+                  <button type="button" class="button button-small button-gold" data-action="partner-dark-bloc" data-bloc-id="${bloc.id}">
+                    Form Mega-Donor Alliance
+                  </button>
+                `}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderFinanceTab(game) {
+  const Eng = window.PartyChairEngine;
+  const fProfile = Eng?.calculatePartyFundraising ? Eng.calculatePartyFundraising(game, 'player') : { amount: 10, tier: 1 };
+  const treasury = game?.treasury ?? 25;
+  const outsideWarchest = fProfile.totalOutsideWarchest || 0;
+
+  return `
+    <div class="panel-stack">
+      <section class="panel section-panel">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">National Committee Treasury & Financial Operations</div>
+            <h2>Campaign Finance & Mega-Donor Warchests</h2>
+          </div>
+          <span class="turnout-chip">$${roundTo(treasury, 1)}M Committee Balance</span>
+        </div>
+        <p style="margin:0 0 12px;color:var(--muted);font-size:13.5px">
+          The National Committee balances direct treasury contributions, public matching subsidies, independent Super PAC expenditure pools, and allied outside dark-money mega-donor coalitions.
+        </p>
+
+        <div class="v07-kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:16px">
+          <div class="v07-kpi-card" style="padding:12px;background:#101a26;border:1px solid var(--line);border-radius:8px">
+            <div class="eyebrow">Committee Treasury</div>
+            <div style="font-size:22px;font-weight:700;color:#10b981">$${roundTo(treasury, 1)}M</div>
+            <small style="color:var(--muted)">Liquid campaign funds</small>
+          </div>
+          <div class="v07-kpi-card" style="padding:12px;background:#101a26;border:1px solid var(--line);border-radius:8px">
+            <div class="eyebrow">Quarterly Base</div>
+            <div style="font-size:22px;font-weight:700;color:#60a5fa">+$${roundTo(fProfile.amount, 1)}M</div>
+            <small style="color:var(--muted)">Media Tier ${fProfile.tier} yield</small>
+          </div>
+          <div class="v07-kpi-card" style="padding:12px;background:#101a26;border:1px solid var(--line);border-radius:8px">
+            <div class="eyebrow">Dark Money Warchest</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gold)">$${roundTo(outsideWarchest, 1)}M</div>
+            <small style="color:var(--muted)">${fProfile.darkMoneyActiveCount || 0} active outside PACs</small>
+          </div>
+        </div>
+      </section>
+
+      ${renderDonorBlocsDossierMarkup(game)}
+
+      ${superPacsPanelMarkup()}
+    </div>
+  `;
+}
+
+function renderElectoralSystemsMap(game) {
+  const Eng = window.PartyChairEngine;
+  const npvicEv = Eng?.getNpvicTotalEV ? Eng.getNpvicTotalEV(game) : (game.npvicTotalEV || 205);
+  const isCompactActive = Eng?.isNpvicActive ? Eng.isNpvicActive(game) : npvicEv >= 270;
+  const compactStates = new Set(game?.npvicStates || []);
+
+  let fptpCount = 0, rcvCount = 0, approvalCount = 0, propCount = 0;
+  (STATES || []).forEach((st) => {
+    const sys = Eng?.getStateElectoralSystem ? Eng.getStateElectoralSystem(game, st.id, 'house') : { effectiveSystem: 'plurality' };
+    if (sys.effectiveSystem === 'rcv') rcvCount++;
+    else if (sys.effectiveSystem === 'approval' || sys.effectiveSystem === 'approval_voting') approvalCount++;
+    else if (sys.isProportional || sys.effectiveSystem === 'open_list_proportional' || sys.effectiveSystem === 'proportional') propCount++;
+    else fptpCount++;
+  });
+
+  return `
+    <div class="panel-stack">
+      <section class="panel section-panel">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow" style="color:#7ee3d4">Electoral Reform & Constitutional Sandbox</div>
+            <h2>50-State Electoral Reform & NPVIC Sandbox</h2>
+          </div>
+          <span class="turnout-chip">${compactStates.size} NPVIC Signatory States</span>
+        </div>
+        <p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">
+          States possess plenary constitutional authority to determine their own presidential elector allocation rules and congressional election methods. Experiment with anti-spoiler voting reforms (Ranked-Choice Voting, Approval Voting), multi-seat Proportional Representation for U.S. House delegations, and the National Popular Vote Interstate Compact (NPVIC).
+        </p>
+
+        <!-- NPVIC Progress & Activation Panel -->
+        <div class="npvic-tracker-panel" style="background:#0e1724;border:1px solid #1e293b;border-radius:8px;padding:14px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="eyebrow" style="color:var(--gold)">Constitutional Interstate Compact</div>
+              <h3 style="margin:2px 0 0;font-size:17px;color:var(--text)">National Popular Vote Interstate Compact (NPVIC)</h3>
+            </div>
+            <span class="npvic-status-pill ${isCompactActive ? 'status-active' : 'status-pending'}">
+              ${isCompactActive ? '✓ COMPACT ACTIVE (270+ BLOC ALLOCATION IN EFFECT)' : `INACTIVE (${270 - npvicEv} EVs NEEDED)`}
+            </span>
+          </div>
+
+          <div style="margin:10px 0 6px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+              <span><b>${npvicEv}</b> of 270 EVs Ratified</span>
+              <span>${Math.round((npvicEv / 270) * 100)}% of Threshold</span>
+            </div>
+            <div class="npvic-progress-bar" style="height:10px;background:#1e293b;border-radius:5px;overflow:hidden;position:relative">
+              <div class="npvic-meter-fill" style="width:${Math.min(100, (npvicEv / 270) * 100)}%;height:100%;background:${isCompactActive ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#3b82f6,#6366f1)'}"></div>
+            </div>
+          </div>
+
+          <p style="margin:6px 0 10px;font-size:12.5px;color:var(--muted);line-height:1.45">
+            ${isCompactActive
+              ? '<b>The Compact is fully in effect!</b> Compacting states represent a constitutional majority (>= 270 electoral votes). All 270+ electors will cast their ballots as an indivisible bloc for the national popular vote winner.'
+              : `Ratified by ${compactStates.size} jurisdictions representing ${npvicEv} electoral votes. Once states totaling 270 electoral votes join, all signatory states will automatically award their electors to the winner of the national popular vote.`}
+          </p>
+
+          <div class="eyebrow" style="margin-top:10px">Signatory States (${compactStates.size}) — Click to Toggle</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+            ${(STATES || []).map((s) => {
+              const joined = compactStates.has(s.id);
+              return `
+                <button type="button" class="npvic-state-chip ${joined ? 'joined' : 'available'}" data-action="toggle-npvic" data-state-id="${s.id}" style="padding:4px 8px;border-radius:4px;font-size:11.5px;cursor:pointer;border:1px solid ${joined ? '#10b981' : '#334155'};background:${joined ? 'rgba(16,185,129,0.18)' : '#0f172a'};color:${joined ? '#6ee7b7' : 'var(--text-muted)'}">
+                  ${s.id} (${s.ev || 3} EV) ${joined ? '✓' : '+'}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- 50-State Electoral Reform Table -->
+        <div class="section-heading" style="margin-top:16px">
+          <div>
+            <div class="eyebrow">State-Level Voting System Architectures</div>
+            <h3>50-State Electoral Systems Roster</h3>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="v159-tally-chip">FPTP: ${fptpCount}</span>
+            <span class="v159-tally-chip" style="border-color:#38bdf8;color:#7dd3fc">RCV: ${rcvCount}</span>
+            <span class="v159-tally-chip" style="border-color:#10b981;color:#6ee7b7">Approval: ${approvalCount}</span>
+            <span class="v159-tally-chip" style="border-color:#a855f7;color:#d8b4fe">PR House: ${propCount}</span>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="max-height:450px;overflow-y:auto;margin-top:8px">
+          <table class="data-table" style="width:100%;font-size:12.5px">
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>EVs / Seats</th>
+                <th>Current System</th>
+                <th>Strategic Defection</th>
+                <th>Re-Enact Reform</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(STATES || []).map((s) => {
+                const sys = Eng?.getStateElectoralSystem ? Eng.getStateElectoralSystem(game, s.id, 'house') : { effectiveSystem: 'plurality', isAntiSpoiler: false };
+                const seats = Math.max(1, (s.ev || 3) - 2);
+                return `
+                  <tr>
+                    <td><b>${safe(s.name)}</b> (${s.id})</td>
+                    <td>${s.ev || 3} EV · ${seats} House seat${seats === 1 ? '' : 's'}</td>
+                    <td>
+                      <span class="v159-sys-badge ${sys.effectiveSystem === 'approval' || sys.effectiveSystem === 'approval_voting' ? 'sys-approval' : sys.isProportional || sys.effectiveSystem === 'open_list_proportional' ? 'sys-prop' : sys.effectiveSystem === 'rcv' ? 'sys-rcv' : 'sys-fptp'}">
+                        ${sys.effectiveSystem === 'approval' || sys.effectiveSystem === 'approval_voting' ? 'Approval Voting' : sys.effectiveSystem === 'rcv' ? 'Ranked-Choice' : sys.isProportional || sys.effectiveSystem === 'open_list_proportional' ? 'Open-List PR' : 'Plurality (FPTP)'}
+                      </span>
+                    </td>
+                    <td>
+                      ${sys.isAntiSpoiler
+                        ? '<span style="color:#10b981;font-weight:600">Eliminated (0% Spoiler)</span>'
+                        : '<span style="color:var(--text-muted)">Active (Duverger Pen.)</span>'}
+                    </td>
+                    <td>
+                      <select class="state-reform-select" data-state-id="${s.id}" style="padding:3px 6px;background:#0f172a;color:var(--text);border:1px solid #334155;border-radius:4px;font-size:11.5px">
+                        <option value="fptp" ${sys.effectiveSystem === 'plurality' || sys.effectiveSystem === 'fptp' ? 'selected' : ''}>Plurality (FPTP)</option>
+                        <option value="rcv" ${sys.effectiveSystem === 'rcv' ? 'selected' : ''}>Ranked-Choice Voting</option>
+                        <option value="approval_voting" ${sys.effectiveSystem === 'approval' || sys.effectiveSystem === 'approval_voting' ? 'selected' : ''}>Approval Voting</option>
+                        ${seats >= 2 ? `<option value="open_list_proportional" ${sys.isProportional || sys.effectiveSystem === 'open_list_proportional' ? 'selected' : ''}>Open-List PR (4.0% Thresh)</option>` : ''}
+                      </select>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function superPacsPanelMarkup() {
   const pse = window.PartySystemsEngine;
   if (pse && pse.isSuperPacOutlawed(game)) {
@@ -4918,7 +5273,9 @@ function superPacsPanelMarkup() {
             </article>`;
         }).join('')}
       </div>
-    </section>`;
+    </section>
+    ${renderDonorBlocsDossierMarkup(game)}
+  `;
 }
 
 function campaignPollingMapMarkup() {
@@ -6590,7 +6947,17 @@ function mapTabMarkup() {
     ['state-legislatures', 'State Legislatures'],
     ['lean-gradient', 'Partisan Lean Gradient'],
     ['trifectas', 'Trifectas & Mixed Control'],
+    ['electoral-systems', 'Electoral Systems & NPVIC Sandbox'],
   ];
+
+  if (currentMapMode === 'electoral-systems') {
+    return `
+      <div class="map-view-wrapper">
+        <div class="map-tabs" style="margin-bottom:12px">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="button ${currentMapMode === id ? 'button-gold' : ''}">${safe(label)}</button>`).join('')}</div>
+        ${renderElectoralSystemsMap(game)}
+      </div>
+    `;
+  }
 
   const env = game.nationalEnvironment || 0;
   const nationalLabel = env === 0 ? 'Even' : `${env > 0 ? 'D' : 'R'}+${Math.abs(env).toFixed(1)}`;
@@ -6629,7 +6996,33 @@ function mapTabMarkup() {
     const presYearLabel = inGameOutcome ? inGameOutcome.year || game.year : 2024;
     const winnerTitle = repEv > demEv ? `${repName} won President with ${repEv} EV` : `${demName} won President with ${demEv} EV`;
 
+    const Eng = window.PartyChairEngine;
+    const npvicEv = Eng?.getNpvicTotalEV ? Eng.getNpvicTotalEV(game) : (game.npvicTotalEV || 205);
+    const isCompactActive = Eng?.isNpvicActive ? Eng.isNpvicActive(game) : npvicEv >= 270;
+    const npvicTrackerMarkup = `
+      <div class="npvic-tracker-panel" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="eyebrow" style="color:var(--gold)">National Popular Vote Interstate Compact (NPVIC)</div>
+            <h4 style="margin:2px 0 0;font-size:14px;color:var(--text)">Compacting States: ${npvicEv}/270 EV (${isCompactActive ? 'ACTIVE COMPACT' : `${270 - npvicEv} EVs Needed`})</h4>
+          </div>
+          <span class="npvic-status-pill ${isCompactActive ? 'status-active' : 'status-pending'}">
+            ${isCompactActive ? 'COMPACT ACTIVE · 270+ BLOC ALLOCATION' : 'PENDING 270 EV THRESHOLD'}
+          </span>
+        </div>
+        <div class="npvic-progress-bar" style="height:8px;background:#182230;border-radius:4px;overflow:hidden;margin:6px 0 6px;position:relative">
+          <div class="npvic-meter-fill" style="width:${Math.min(100, (npvicEv / 270) * 100)}%;height:100%;background:${isCompactActive ? 'linear-gradient(90deg, #10b981, #059669)' : 'linear-gradient(90deg, #3b82f6, #6366f1)'}"></div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.4">
+          ${isCompactActive
+            ? '✓ The compact has activated! All 270+ electoral votes from signatory states will award as an indivisible bloc to the National Popular Vote winner.'
+            : `States totaling ${npvicEv} EVs have enacted the compact. Upon reaching 270 EVs, the compact activates automatically nationwide.`}
+        </div>
+      </div>
+    `;
+
     detail = `
+      ${npvicTrackerMarkup}
       <div class="presidential-scoreboard">
         <div class="ec-candidate dem">
           <span class="candidate-party">Democratic</span>
@@ -7468,6 +7861,8 @@ function partyInfoTabMarkup() {
 
       <!-- [v0.18.4 COALITION-POLITICS] Proposals #5 & #6 Panels -->
       ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPrimaryRulesPanel(game) + window.CoalitionPoliticsSystem.renderPatronageGridPanel(game) : ''}
+
+      ${renderDonorBlocsDossierMarkup(game)}
 
       <div class="main-grid">
         <div class="left-column">
@@ -8739,24 +9134,65 @@ function nominatingConventionModalMarkup(game) {
 
         <!-- Section 2: Vice Presidential Running Mate Selection -->
         <div class="convention-section">
-          <h3 style="font-size: 15px; color: #f8fafc; margin: 0 0 6px 0;">2. Vice Presidential Running Mate Selection</h3>
+          <h3 style="font-size: 15px; color: #f8fafc; margin: 0 0 6px 0;">2. Vice Presidential & Running-Mate Selection War Room</h3>
           <p style="font-size: 12px; color: #94a3b8; margin: 0 0 10px 0;">
-            Select a running mate to balance the ticket geographically and heal primary fractures.
+            Review qualitative vetting dossiers and balance the national ticket. Unvetted running mates carry elevated risk of an October scandal detonation.
           </p>
-          <div class="convention-item-grid">
-            ${vpRoster.map((v) => `
-              <div class="convention-item-card ${selectedVp?.id === v.id ? 'highlight' : ''}">
-                <div>
-                  <b style="font-size: 14px; color: #f8fafc;">${safe(v.name)}</b>
-                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">${safe(v.stateId)} · Fame ${v.fame || 60}</div>
-                  <div style="font-size: 11.5px; color: #38bdf8; margin-top: 6px;">
-                    ${v.isRunnerUp ? '<b style="color: #facc15;">★ Primary Runner-Up: Faction Healing Accord</b>' : 'Regional & Executive Anchor'}
+          <div class="convention-item-grid vp-war-room-grid">
+            ${vpRoster.map((v) => {
+              const isSelected = selectedVp?.id === v.id || game.selectedVpId === v.id || game.selectedVp?.id === v.id;
+              const angleBadgeClass = v.strategicAngle ? `vp-angle-${v.strategicAngle.replace(/_/g, '-')}` : 'vp-angle-default';
+              const angleLabel = v.angleTitle || (v.strategicAngle ? v.strategicAngle.replace(/_/g, ' ') : 'Strategic Anchor');
+              const tierBadgeClass = v.isVetted
+                ? `tier-${(v.vulnerabilityTier || 'clean-record').toLowerCase().replace(/\s+/g, '-')}`
+                : 'tier-unvetted';
+              const tierLabel = v.isVetted
+                ? (v.vulnerabilityTier || 'Clean Record')
+                : 'Unvetted Prospect · High Scandal Exposure';
+
+              return `
+              <div class="convention-item-card vp-war-room-card ${isSelected ? 'highlight' : ''}">
+                <div class="vp-war-room-body">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div>
+                      <b style="font-size: 14px; color: #f8fafc;">${safe(v.name)}</b>
+                      <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                        ${safe(v.stateId || 'US')} · ${safe(v.officeLabel || v.office || 'Leader')} · Fame ${Math.round(v.fame || 50)}
+                      </div>
+                    </div>
+                    <span class="vp-angle-badge ${angleBadgeClass}">${safe(angleLabel)}</span>
+                  </div>
+
+                  <div class="vp-dossier-text" style="font-size: 12px; color: #38bdf8; margin: 8px 0 6px 0; font-style: italic;">
+                    ${safe(v.dossier || (v.isRunnerUp ? 'Primary Runner-Up · Faction Healing Accord' : 'Regional & Executive Anchor'))}
+                  </div>
+
+                  <div class="vp-vetting-status" style="margin-top: 6px; padding: 6px 8px; background: rgba(15, 23, 42, 0.6); border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+                      <span class="vp-vetting-badge ${tierBadgeClass}" style="font-size: 10.5px; font-weight: 600;">
+                        ${safe(tierLabel)}
+                      </span>
+                      ${!v.isVetted ? `
+                        <button type="button" class="button button-small" data-action="audit-vp" data-candidate="${v.id}" style="font-size: 10.5px; padding: 2px 8px; border-color: #38bdf8; color: #38bdf8;">
+                          Full Background Audit ($3M)
+                        </button>
+                      ` : ''}
+                    </div>
+                    ${v.isVetted && v.vettingReport ? `
+                      <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.3;">
+                        ${safe(v.vettingReport)}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
-                <button type="button" class="button ${selectedVp?.id === v.id ? 'button-gold' : ''}" data-select-vp="${v.id}">
-                  ${selectedVp?.id === v.id ? 'Selected Running Mate ✓' : 'Select Running Mate'}
-                </button>
-              </div>`).join('')}
+
+                <div style="margin-top: 10px;">
+                  <button type="button" class="button ${isSelected ? 'button-gold' : ''}" style="width: 100%;" data-select-vp="${v.id}">
+                    ${isSelected ? 'Selected Running Mate ✓' : 'Select Running Mate'}
+                  </button>
+                </div>
+              </div>`;
+            }).join('')}
           </div>
         </div>
 
@@ -9078,6 +9514,7 @@ function campaignMarkup() {
     { id: 'states', label: 'States', eyebrow: '50-State Directory' },
     { id: 'forecast', label: 'Forecast', eyebrow: 'Election Projections & Forecasts' },
     { id: 'party-info', label: 'Party Information', eyebrow: 'Party Standing & Metrics' },
+    { id: 'finance', label: 'Finance & PACs', eyebrow: 'Outside Spending & Donor Blocs' },
     { id: 'factions', label: 'Factions', eyebrow: `${(game?.factions || []).length || 37} National Factions & State Allocations` },
   ];
   // [v0.18.4 COALITION-POLITICS] Strict era-gated Diplomacy Hub tab
@@ -9090,6 +9527,7 @@ function campaignMarkup() {
   else if (tab === 'states') viewportContent = statesTabMarkup();
   else if (tab === 'forecast') viewportContent = forecastTabMarkup();
   else if (tab === 'party-info') viewportContent = partyInfoTabMarkup();
+  else if (tab === 'finance') viewportContent = renderFinanceTab(game);
   else if (tab === 'factions') viewportContent = factionsTabMarkup();
   else if (tab === 'diplomacy-hub' && window.CoalitionPoliticsSystem?.isDiplomacyHubUnlocked?.(game)) viewportContent = window.CoalitionPoliticsSystem.renderDiplomacyHubTab(game);
   else viewportContent = actionsTabMarkup();
@@ -10922,6 +11360,12 @@ function bind() {
     if (action === 'vet-candidate') {
       payload.candidateId = button.dataset.candidate;
     }
+    if (action === 'audit-vp') {
+      payload.candidateId = button.dataset.candidate;
+    }
+    if (action === 'mentor-prospect') {
+      payload.politicianId = document.querySelector('#mentor-prospect-select')?.value;
+    }
     if (action === 'resolve-scandal-crisis') {
       payload.option = button.dataset.crisisOption || 'stand_by';
     }
@@ -12112,7 +12556,14 @@ window.PartyChairApp = {
   setCustomOrigin: (o) => { customOrigin = o; },
   getCustomSelectedFactionIds: () => customSelectedFactionIds,
   setCustomSelectedFactionIds: (fids) => { customSelectedFactionIds = fids; },
+  // Developer 4: Dark-Money Blocs & Electoral Reform Exports
+  renderDonorBlocsDossierMarkup,
+  renderFinanceTab,
+  renderElectoralSystemsMap,
 };
+
+window.renderFinanceTab = renderFinanceTab;
+window.renderElectoralSystemsMap = renderElectoralSystemsMap;
 
 render();
 
@@ -12136,9 +12587,44 @@ if (typeof document !== 'undefined' && !window.__v0180WarRoomBound) {
     } else if (e.target?.classList?.contains('war-room-strat-select')) {
       // [v0.18.4 MAPS-BALLOT]
       dispatchAction('select-redistricting-strategy', { stateId: e.target.dataset.state, strategy: e.target.value });
+    } else if (e.target?.classList?.contains('state-reform-select')) {
+      const stateId = e.target.dataset.stateId;
+      const newSystem = e.target.value;
+      const ba = (typeof window !== 'undefined' && window.BallotAccess) || (typeof global !== 'undefined' && global.BallotAccess);
+      if (ba?.processStateElectoralReform) {
+        game = ba.processStateElectoralReform(game, stateId, newSystem);
+        if (typeof saveGame === 'function') saveGame(game);
+        if (typeof render === 'function') render();
+      }
     }
   });
   document.addEventListener('click', (e) => {
+    // Developer 4: Dark-Money PAC Partnerships & NPVIC State Toggle
+    const darkBlocBtn = e.target?.closest?.('[data-action="partner-dark-bloc"]');
+    if (darkBlocBtn && game) {
+      const blocId = darkBlocBtn.getAttribute('data-bloc-id');
+      if (blocId && window.PartyChairEngine?.partnerWithDarkMoneyBloc) {
+        game = window.PartyChairEngine.partnerWithDarkMoneyBloc(game, blocId);
+        if (typeof saveGame === 'function') saveGame(game);
+        if (typeof render === 'function') render();
+      }
+      return;
+    }
+    const npvicToggleBtn = e.target?.closest?.('[data-action="toggle-npvic"]');
+    if (npvicToggleBtn && game) {
+      const stateId = npvicToggleBtn.getAttribute('data-state-id');
+      if (stateId && window.PartyChairEngine) {
+        const compact = new Set(game.npvicStates || []);
+        if (compact.has(stateId)) {
+          game = window.PartyChairEngine.leaveNpvic(game, stateId);
+        } else {
+          game = window.PartyChairEngine.joinNpvic(game, stateId);
+        }
+        if (typeof saveGame === 'function') saveGame(game);
+        if (typeof render === 'function') render();
+      }
+      return;
+    }
     // [v0.18.4 MEDIA-SHOCKS]
     if (window.MediaShocksSystem?.handleUiClick?.(e, () => game, (g) => { game = g; }, typeof saveGame === 'function' ? saveGame : null, typeof render === 'function' ? render : null)) return;
     const primCtrlBtn = e.target?.closest?.('[data-v0182-primary]');

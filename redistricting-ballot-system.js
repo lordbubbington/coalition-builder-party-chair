@@ -823,7 +823,9 @@
     // Compute total player cost & action cost
     let totalCost = 0;
     let totalActionCost = 0;
-    let indTrustDelta = 0;
+    let fairCompactCount = 0;
+    let aggressiveGerrymanderCount = 0;
+    let otherTrustDelta = 0;
     const happinessBoostStates = new Set();
     const newChallenges = [...(wr.pendingChallenges || [])];
     const nextBacklash = { ...(nextGame.redistrictingBacklash || {}) };
@@ -839,7 +841,13 @@
       if (isPlayerChoice) {
         totalCost += strat.cost;
         totalActionCost += strat.actionCost || 0;
-        indTrustDelta += strat.indTrustDelta;
+        if (stratKey === 'fair_compact') {
+          fairCompactCount++;
+        } else if (stratKey === 'aggressive_gerrymander') {
+          aggressiveGerrymanderCount++;
+        } else {
+          otherTrustDelta += (strat.indTrustDelta || 0);
+        }
         if (strat.sittingHappinessDelta > 0) {
           happinessBoostStates.add(stEntry.stateId);
         }
@@ -928,9 +936,15 @@
       return m;
     });
 
+    // Chunk 2.4: Clamp net indTrustDelta from a single decennial redistricting commit to [-8, +8]
+    // (+1 per fair_compact up to +6 max, -2 per aggressive_gerrymander down to -8 max)
+    const fairCompactDelta = Math.min(6, fairCompactCount * 1.0);
+    const aggressiveDelta = Math.max(-8, aggressiveGerrymanderCount * -2.0);
+    const netTrustDelta = clamp(round1(fairCompactDelta + aggressiveDelta + otherTrustDelta), -8, 8);
+
     // Update trust
     const curTrust = nextGame.trust || { supporters: 80, independents: 50, opponents: 12 };
-    const nextIndTrust = clamp(round1(Number(curTrust.independents ?? 50) + indTrustDelta), 0, 100);
+    const nextIndTrust = clamp(round1(Number(curTrust.independents ?? 50) + netTrustDelta), 0, 100);
     const nextTrust = { ...curTrust, independents: nextIndTrust };
 
     const nextTreasury = round2(Math.max(0, curTreasury - totalCost));
@@ -960,7 +974,7 @@
           action: `Decade Map Committed (${year}): ${logLines.length ? logLines.join('; ') : 'Commission & neutral maps ratified'}.`,
         },
       ].slice(-80),
-      lastNote: `Decade Map (${year}) committed ($${totalCost}M spent, Independents Trust ${indTrustDelta >= 0 ? '+' : ''}${indTrustDelta}).`,
+      lastNote: `Decade Map (${year}) committed ($${totalCost}M spent, Independents Trust ${netTrustDelta >= 0 ? '+' : ''}${netTrustDelta}).`,
     };
 
     committed = enforceHouse435Parity(committed, year);

@@ -254,10 +254,25 @@
     if (!status.anchor) {
       return { eligible: false, reason: 'No ironclad anchor faction found in this party.', partyId };
     }
-    if (status.isLeading && status.anchorShare >= MINORITY_ANCHOR_SHARE_THRESHOLD) {
+
+    // Chunk 2.3: Mandatory 8-year (4-cycle) realignment cooldown
+    const currentYear = Number(game.year || 2028);
+    const lastRealign = Number(game.lastRealignmentYear || 0);
+    if (lastRealign > 0 && (currentYear - lastRealign) < 8) {
       return {
         eligible: false,
-        reason: `${status.anchor.name} is still the leading faction with ${round(status.anchorShare * 100, 1)}% of party voters.`,
+        reason: `Realignment Cooldown Active: A charter was ratified in ${lastRealign}. Mandatory 8-year (4-cycle) cooldown active until ${lastRealign + 8}.`,
+        partyId,
+        oldAnchorId: status.anchor.id,
+        oldAnchorName: status.anchor.name,
+      };
+    }
+
+    // Prevent realignment when current anchor is already the plurality leading faction
+    if (status.isLeading) {
+      return {
+        eligible: false,
+        reason: `${status.anchor.name} is already the leading plurality faction (${round(status.anchorShare * 100, 1)}% of party voters).`,
         partyId,
         oldAnchorId: status.anchor.id,
         oldAnchorName: status.anchor.name,
@@ -274,6 +289,21 @@
         oldAnchorName: status.anchor.name,
       };
     }
+
+    // Prevent targeting a faction previously realigned away
+    const prevAnchors = Array.isArray(game.previousAnchorFactions) ? game.previousAnchorFactions : [];
+    if (prevAnchors.includes(status.candidateNewAnchor.id)) {
+      return {
+        eligible: false,
+        reason: `Cannot realign anchor to ${status.candidateNewAnchor.name}: this faction was previously realigned away.`,
+        partyId,
+        oldAnchorId: status.anchor.id,
+        oldAnchorName: status.anchor.name,
+        newAnchorId: status.candidateNewAnchor.id,
+        newAnchorName: status.candidateNewAnchor.name,
+      };
+    }
+
     if (game.activeAnchorCrisis && !game.activeAnchorCrisis.resolved) {
       return {
         eligible: false,
@@ -327,6 +357,8 @@
       ...game,
       treasury: round(check.treasury - REALIGN_MONEY_COST, 2),
       organizingActionsRemaining: Math.max(0, check.actionsLeft - REALIGN_ACTIONS_COST),
+      lastRealignmentYear: Number(game.year || 2028),
+      previousAnchorFactions: Array.from(new Set([...(game.previousAnchorFactions || []), check.oldAnchorId])),
       activeAnchorCrisis: {
         factionId: check.oldAnchorId,
         partyId,
@@ -374,6 +406,8 @@
       const oldName = nextFactions.find((f) => f.id === oldAnchorId)?.name || oldAnchorId;
       const newName = nextFactions.find((f) => f.id === newAnchorId)?.name || newAnchorId;
       const note = `PARTY REALIGNMENT CHARTER RATIFIED: ${newName} is now the ironclad anchor of the party. ${oldName}'s anchor lock has been lifted.`;
+      updated.lastRealignmentYear = Number(updated.year || 2028);
+      updated.previousAnchorFactions = Array.from(new Set([...(updated.previousAnchorFactions || []), oldAnchorId]));
       updated.lastNote = note;
       updated.yearLog = [...(updated.yearLog || []), { year: updated.year || 2028, turn: (updated.chairTurn || 0) + 1, action: note }].slice(-80);
     }
