@@ -1435,7 +1435,7 @@ function generateMergerCoalitionDemands(game, factionId) {
   const natVoters = Number(game.voterModel?.factions?.[f.id] ?? f.targetVoters ?? 1000000);
   let tier = 'minor';
   if (natVoters < 1000000 || f.status === 'fringe') tier = 'fringe';
-  else if (natVoters >= 2500000 || f.status === 'major' || f.status === 'leading') tier = 'major';
+  else if (natVoters >= 5000000 || f.status === 'major' || f.status === 'leading') tier = 'major';
 
   // 5.0M-Member Invariant for Extremist Factions
   if (EXTREMIST_FACTION_IDS.has(f.id)) {
@@ -1793,12 +1793,12 @@ function evaluateFactionTiers(game) {
     const partyFactions = catalog.filter((f) => f.partyId === pid);
     if (!partyFactions.length) return;
 
-    // 1. Assign size tiers: Fringe (<1M), Minor (1M - <2.5M), Major (2.5M+)
+    // 1. Assign size tiers: Fringe (<1M), Minor (1M - <5M), Major (5M+)
     partyFactions.forEach((f) => {
       const voters = Number(voterFactions[f.id] ?? voterFactions[f.name] ?? f.targetVoters ?? 0);
       if (voters < 1000000) {
         designations[f.id] = 'fringe';
-      } else if (voters < 2500000) {
+      } else if (voters < 5000000) {
         designations[f.id] = 'minor';
       } else {
         designations[f.id] = 'major';
@@ -16902,7 +16902,7 @@ function tunePartyPlatformStances(game, partyId) {
     let weightedFactionSum = 0;
     let totalFactionWeight = 0;
     partyFactions.forEach((f) => {
-      const isMajor = f.status === 'major' || f.status === 'leading' || (f.representedVoters || 0) >= 2500000;
+      const isMajor = f.status === 'major' || f.status === 'leading' || (f.representedVoters || 0) >= 5000000;
       const w_f = isMajor ? 3.0 : 1.0;
       let F_fi = 5.5;
       if (f.sliders && f.sliders[issueAxis] !== undefined) {

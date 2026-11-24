@@ -700,7 +700,8 @@
     { id: 'opp_house', label: 'House Opposition Leader', category: 'opposition', requiredOffice: 'house', requiresOpposition: true, minSeats: 1, multiplier: 1.0, passiveDesc: 'Opposition caucus lead: +1.5 House race support & opposition messaging' },
     { id: 'opp_senate', label: 'Senate Opposition Leader', category: 'opposition', requiredOffice: 'senate', requiresOpposition: true, minSeats: 1, multiplier: 1.0, passiveDesc: 'Opposition chamber lead: +2.0 Senate race support & filibuster cohesion' },
     { id: 'opp_gov', label: 'Gubernatorial Association Opposition Chair', category: 'opposition', requiredOffice: 'governor', requiresOpposition: true, minSeats: 1, multiplier: 1.0, passiveDesc: 'Opposition governor lead: +2.0 Gubernatorial support & state-level critique' },
-    // REQ-157: Dynamic Faction Leaders (Major Factions Only: >= 2.5M voters, 7 Dem / 7 GOP)
+    // REQ-157: Dynamic Faction Leaders (Major Factions Only: >= 5.0M voters, 6 Dem / 6 GOP at start)
+    { id: 'faction_dem_abundance', label: 'Abundance Leader', category: 'faction', partyId: 'people', factionId: 'dem_abundance', factionName: 'Abundance', allowOverlap: true, multiplier: 1.0, passiveDesc: 'Steadies Abundance confidence & pro-growth base turnout' },
     { id: 'faction_dem_liberal_establishment', label: 'The Liberal Establishment Leader', category: 'faction', partyId: 'people', factionId: 'dem_liberal_establishment', factionName: 'The Liberal Establishment', allowOverlap: true, multiplier: 1.0, passiveDesc: 'Steadies The Liberal Establishment confidence & base turnout' },
     { id: 'faction_dem_black_voters', label: 'Black Voters Leader', category: 'faction', partyId: 'people', factionId: 'dem_black_voters', factionName: 'Black Voters', allowOverlap: true, multiplier: 1.0, passiveDesc: 'Steadies Black Voters confidence & base turnout' },
     { id: 'faction_dem_capital_l_left', label: 'The Capital L Left Leader', category: 'faction', partyId: 'people', factionId: 'dem_capital_l_left', factionName: 'The Capital L Left', allowOverlap: true, multiplier: 1.0, passiveDesc: 'Steadies The Capital L Left confidence & base turnout' },
@@ -739,7 +740,16 @@
   }
 
   function isRoleUnlockedForParty(game, partyIdentityId, roleDef) {
-    if (roleDef.category === 'faction' && roleDef.partyId && roleDef.partyId !== partyIdentityId) return false;
+    if (roleDef.category === 'faction') {
+      if (roleDef.partyId && roleDef.partyId !== partyIdentityId) return false;
+      const fId = roleDef.factionId;
+      if (fId) {
+        const liveF = (game?.factions || []).find((f) => f && f.id === fId);
+        if (liveF && liveF.partyId !== partyIdentityId) return false;
+        const voters = Number(game?.voterModel?.factions?.[fId] ?? window.PartyChairData?.FACTION_NATIONAL_TOTALS?.[fId] ?? liveF?.targetVoters ?? 0);
+        if (voters < 5000000) return false;
+      }
+    }
     const counts = partySeatCounts(game, partyIdentityId);
     if (roleDef.requiresPresidency) {
       if (roleDef.category === 'cabinet' && game?.coalitionCabinetPosts?.[roleDef.id] === partyIdentityId) {
