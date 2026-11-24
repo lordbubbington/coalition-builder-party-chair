@@ -262,8 +262,8 @@
     const candidateId = payload.candidateId || payload.id;
     if (!candidateId) return game;
 
-    // Check treasury cost ($500,000)
-    const cost = 0.5; // $500K in $M units
+    // Check treasury cost ($500,000 / $0.5M depending on treasury unit scale)
+    const cost = (game.treasury > 1000) ? 500000 : 0.5;
     if ((game.treasury || 0) < cost) {
       return {
         ...game,
@@ -350,6 +350,12 @@
     if (game.pendingScandalCrisis) return game; // A crisis is already waiting for resolution
 
     const currentWeek = Number(game.campaign.week ?? game.campaign.currentWeek ?? 1);
+
+    // Evaluate unvetted running mate scandal in October (Month 5 / Week 5)
+    if ((currentWeek >= 5 || options.evaluateVpScandal || options.force) && (game.selectedVp || game.presidentialPrimaries?.conventionData?.selectedVp)) {
+      game = evaluateVpScandal(game, options);
+    }
+
     // Allow evaluation in weeks 3 or 4, or forced via options
     if (currentWeek < 3 && !options.force) return game;
 
@@ -622,6 +628,444 @@
     return working;
   }
 
+  // =========================================================================
+  // VICE PRESIDENTIAL & RUNNING-MATE SELECTION WAR ROOM & SKELETONS (CHUNKS 3.2 & 3.3)
+  // =========================================================================
+
+  const FALLBACK_RUNNING_MATES = {
+    people: [
+      { id: 'vp_people_wi', name: 'Sen. Tammy Baldwin', stateId: 'WI', office: 'senate', fame: 70, quality: 8, factionId: 'dem_liberal_establishment', traits: ['Polished', 'Disciplined', 'Bipartisan Dealmaker'] },
+      { id: 'vp_people_pa', name: 'Gov. Josh Shapiro', stateId: 'PA', office: 'governor', fame: 72, quality: 8, factionId: 'dem_liberal_establishment', traits: ['Prosecutorial Edge', 'Polished', 'Rising Star'] },
+      { id: 'vp_people_ga', name: 'Sen. Raphael Warnock', stateId: 'GA', office: 'senate', fame: 74, quality: 8, factionId: 'dem_black_voters', traits: ['Oratorical Phenom', 'Grassroots Organizer', 'Disciplined'] },
+      { id: 'vp_people_mi', name: 'Gov. Gretchen Whitmer', stateId: 'MI', office: 'governor', fame: 78, quality: 8, factionId: 'dem_liberal_establishment', traits: ['Polished', 'Prosecutorial Edge', 'Rising Star'] },
+      { id: 'vp_people_ky', name: 'Gov. Andy Beshear', stateId: 'KY', office: 'governor', fame: 68, quality: 8, factionId: 'dem_liberal_establishment', traits: ['Prosecutorial Edge', 'Squeaky Clean', 'Bipartisan Dealmaker'] },
+    ],
+    heritage: [
+      { id: 'vp_heritage_nh', name: 'Gov. Chris Sununu', stateId: 'NH', office: 'governor', fame: 66, quality: 7, factionId: 'gop_suburban_moderates', traits: ['Polished', 'Disciplined', 'Bipartisan Dealmaker'] },
+      { id: 'vp_heritage_al', name: 'Sen. Katie Britt', stateId: 'AL', office: 'senate', fame: 64, quality: 7, factionId: 'gop_traditional_conservatives', traits: ['Rising Star', 'Polished', 'Committee Workhorse'] },
+      { id: 'vp_heritage_va', name: 'Gov. Glenn Youngkin', stateId: 'VA', office: 'governor', fame: 72, quality: 8, factionId: 'gop_suburban_moderates', traits: ['Self-Made Entrepreneur', 'Polished', 'Disciplined'] },
+      { id: 'vp_heritage_fl', name: 'Sen. Marco Rubio', stateId: 'FL', office: 'senate', fame: 80, quality: 7, factionId: 'gop_traditional_conservatives', traits: ['Sunday Show Fixture', 'Polished', 'Established Politician'] },
+      { id: 'vp_heritage_sc', name: 'Sen. Tim Scott', stateId: 'SC', office: 'senate', fame: 72, quality: 8, factionId: 'gop_black_conservatives', traits: ['Oratorical Phenom', 'Disciplined', 'Polished'] },
+    ],
+    liberty: [
+      { id: 'vp_liberty_ga', name: 'Chase Oliver', stateId: 'GA', office: 'party_leader', fame: 45, quality: 7, factionId: 'liberty_radicals', traits: ['Grassroots Organizer', 'Digital Native', 'Rising Star'] },
+      { id: 'vp_liberty_va', name: 'Mike ter Maat', stateId: 'VA', office: 'party_leader', fame: 42, quality: 7, factionId: 'liberty_pragmatists', traits: ['Budget Hawk', 'Disciplined', 'Academic Theorist'] },
+      { id: 'vp_liberty_sc', name: 'Spike Cohen', stateId: 'SC', office: 'party_leader', fame: 48, quality: 7, factionId: 'liberty_radicals', traits: ['Digital Native', 'Floor Speech Maverick', 'Polished'] },
+      { id: 'vp_liberty_nh', name: 'Jeremy Kauffman', stateId: 'NH', office: 'party_leader', fame: 40, quality: 6, factionId: 'liberty_radicals', traits: ['Rough', 'Undisciplined', 'Populist Firebrand'] },
+    ],
+    green: [
+      { id: 'vp_green_wa', name: 'Kshama Sawant', stateId: 'WA', office: 'party_leader', fame: 46, quality: 7, factionId: 'green_eco_socialists', traits: ['Grassroots Organizer', 'Populist Firebrand', 'Doctrinal Purist'] },
+      { id: 'vp_green_ca', name: 'Butch Ware', stateId: 'CA', office: 'party_leader', fame: 44, quality: 6, factionId: 'green_activists', traits: ['Academic Theorist', 'Doctrinal Purist', 'Rough'] },
+      { id: 'vp_green_ma', name: 'Jill Stein', stateId: 'MA', office: 'party_leader', fame: 60, quality: 7, factionId: 'green_activists', traits: ['Doctrinal Purist', 'Grassroots Organizer', 'Established Politician'] },
+      { id: 'vp_green_ny', name: 'Howie Hawkins', stateId: 'NY', office: 'party_leader', fame: 42, quality: 6, factionId: 'green_eco_socialists', traits: ['Union Stalwart', 'Rough', 'Doctrinal Purist'] },
+    ],
+    constitution: [
+      { id: 'vp_const_ut', name: 'Scott Bradley', stateId: 'UT', office: 'party_leader', fame: 40, quality: 6, factionId: 'const_paleoconservatives', traits: ['Academic Theorist', 'Disciplined', 'Doctrinal Purist'] },
+      { id: 'vp_const_tn', name: 'Randall Terry', stateId: 'TN', office: 'party_leader', fame: 45, quality: 6, factionId: 'const_theocrats', traits: ['Backbench Agitator', 'Populist Firebrand', 'Undisciplined'] },
+      { id: 'vp_const_wv', name: 'Don Blankenship', stateId: 'WV', office: 'party_leader', fame: 42, quality: 5, factionId: 'const_paleoconservatives', traits: ['Self-Made Entrepreneur', 'Rough', 'Corrupt'] },
+      { id: 'vp_const_va', name: 'Darrell Castle', stateId: 'TN', office: 'party_leader', fame: 38, quality: 6, factionId: 'const_paleoconservatives', traits: ['Disciplined', 'Quiet Diplomat'] },
+    ],
+    socialist: [
+      { id: 'vp_soc_ca', name: 'Gloria La Riva', stateId: 'CA', office: 'party_leader', fame: 44, quality: 6, factionId: 'soc_anti_imperialists', traits: ['Union Stalwart', 'Doctrinal Purist', 'Established Politician'] },
+      { id: 'vp_soc_ny', name: 'Claudia De la Cruz', stateId: 'NY', office: 'party_leader', fame: 46, quality: 7, factionId: 'soc_militant_labor', traits: ['Grassroots Organizer', 'Populist Firebrand', 'Rising Star'] },
+      { id: 'vp_soc_nj', name: 'Cornel West', stateId: 'NJ', office: 'party_leader', fame: 62, quality: 7, factionId: 'soc_democratic_socialists', traits: ['Oratorical Phenom', 'Academic Theorist', 'Floor Speech Maverick'] },
+      { id: 'vp_soc_il', name: 'Karina Garcia', stateId: 'IL', office: 'party_leader', fame: 40, quality: 6, factionId: 'soc_militant_labor', traits: ['Grassroots Organizer', 'Digital Native'] },
+    ],
+  };
+
+  /**
+   * Chunk 3.2: Generate a vetted shortlist of 4 potential running mates balancing distinct strategic angles:
+   * 1. Home-State / Regional Anchor (+3.5% to +5.0% home-state lift, +1.5% regional coattails)
+   * 2. Factional Peacekeeper (+15 Happiness, +10 Confidence to major rival faction)
+   * 3. Ideological Complement (balances ticket, +4.0 suburban independent trust)
+   * 4. High-Energy Attack Dog (+2.0% national base turnout lift)
+   */
+  function generateVpRunningMateShortlist(game, playerPartyId = null) {
+    const partyId = playerPartyId || (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people'));
+    const nominee = game?.presidentialPrimaries?.nominee
+      || (game?.presidentialTicket?.[partyId] ? { name: game.presidentialTicket[partyId] } : null)
+      || (game?.presidentialTicket?.playerNominee || null);
+    const nomineeState = nominee?.stateId || nominee?.state || 'PA';
+    const nomineeFaction = nominee?.factionId || nominee?.faction || 'dem_liberal_establishment';
+
+    // 1. Gather all potential prospects from sitting members, standouts, and fallbacks
+    const pool = [];
+    const sitting = Array.isArray(game?.sittingMembers) ? game.sittingMembers : [];
+    sitting.forEach((m) => {
+      if ((m.party === partyId || m.caucus === partyId) && (m.office === 'senate' || m.office === 'governor' || m.office === 'stateLeg')) {
+        if (!nominee || m.name !== nominee.name) {
+          pool.push(m);
+        }
+      }
+    });
+
+    // Add standouts
+    if (game?.stateLegStandouts?.[partyId]) {
+      game.stateLegStandouts[partyId].forEach((s) => {
+        if (!pool.some((p) => p.id === s.id || p.name === s.name)) {
+          pool.push(s);
+        }
+      });
+    }
+
+    // Add party fallbacks
+    const customLabel = (game?.player?.name || 'Party').trim();
+    const fallbacks = FALLBACK_RUNNING_MATES[partyId] || [
+      { id: `vp_custom_1`, name: `${customLabel} Co-Chair Alex Mercer`, stateId: 'PA', office: 'party_leader', fame: 55, quality: 7, factionId: 'establishment', traits: ['Polished', 'Disciplined'] },
+      { id: `vp_custom_2`, name: `${customLabel} Organizer Dana Reyes`, stateId: 'OH', office: 'party_leader', fame: 52, quality: 7, factionId: 'reform', traits: ['Grassroots Organizer', 'Rising Star'] },
+      { id: `vp_custom_3`, name: `${customLabel} Policy Director Jordan Ellis`, stateId: 'MI', office: 'party_leader', fame: 50, quality: 7, factionId: 'moderates', traits: ['Budget Hawk', 'Disciplined'] },
+      { id: `vp_custom_4`, name: `${customLabel} Trail Agitator Morgan Hayes`, stateId: 'WI', office: 'party_leader', fame: 54, quality: 7, factionId: 'populist', traits: ['Populist Firebrand', 'Floor Speech Maverick'] },
+    ];
+    fallbacks.forEach((f) => {
+      if (!pool.some((p) => p.name === f.name)) {
+        pool.push(f);
+      }
+    });
+
+    // 2. Identify candidate for Angle 1: Home-State / Regional Anchor
+    // Prefers Rust Belt / Sun Belt battlegrounds different from nominee
+    const battlegroundStates = ['PA', 'WI', 'MI', 'GA', 'AZ', 'NC', 'NV', 'OH', 'NH', 'FL', 'VA'];
+    let anchorCand = pool.find((c) => c.stateId !== nomineeState && battlegroundStates.includes(c.stateId)) || pool[0];
+    const usedIds = new Set([anchorCand.id || anchorCand.name]);
+
+    // 3. Identify candidate for Angle 2: Factional Peacekeeper
+    // Prefers rival faction within party
+    const factions = (Array.isArray(game?.factions) && game.factions.length)
+      ? game.factions.filter((f) => f.partyId === partyId)
+      : (window.PartyChairData?.FACTIONS_CATALOG || []).filter((f) => f.partyId === partyId);
+    const rivalFaction = factions.find((f) => f.id !== nomineeFaction && f.status === 'major') || factions.find((f) => f.id !== nomineeFaction) || factions[0];
+    const rivalFactionId = rivalFaction?.id || 'dem_progressive_left';
+    const rivalFactionName = rivalFaction?.name || 'Progressive Left';
+
+    let peacekeeperCand = pool.find((c) => !usedIds.has(c.id || c.name) && (c.factionId === rivalFactionId || c.faction === rivalFactionName))
+      || pool.find((c) => !usedIds.has(c.id || c.name) && c.factionId !== nomineeFaction)
+      || pool.find((c) => !usedIds.has(c.id || c.name))
+      || fallbacks[1];
+    usedIds.add(peacekeeperCand.id || peacekeeperCand.name);
+
+    // 4. Identify candidate for Angle 3: Ideological Complement
+    // Balances ticket (moderate/pragmatist if nominee is ideological, or vice versa)
+    let complementCand = pool.find((c) => !usedIds.has(c.id || c.name) && (hasCandidateTrait(c, 'Bipartisan Dealmaker') || hasCandidateTrait(c, 'Quiet Diplomat') || hasCandidateTrait(c, 'Polished')))
+      || pool.find((c) => !usedIds.has(c.id || c.name))
+      || fallbacks[2];
+    usedIds.add(complementCand.id || complementCand.name);
+
+    // 5. Identify candidate for Angle 4: High-Energy Attack Dog
+    // Prefers firebrands, mavericks, grassroots organizers
+    let attackDogCand = pool.find((c) => !usedIds.has(c.id || c.name) && (hasCandidateTrait(c, 'Populist Firebrand') || hasCandidateTrait(c, 'Floor Speech Maverick') || hasCandidateTrait(c, 'Rough') || hasCandidateTrait(c, 'Grassroots Organizer')))
+      || pool.find((c) => !usedIds.has(c.id || c.name))
+      || fallbacks[3];
+    usedIds.add(attackDogCand.id || attackDogCand.name);
+
+    // Helper to enrich prospect with vetting and angle info
+    const enrichProspect = (base, angle, title, dossier, bonuses = {}) => {
+      const pol = { ...base };
+      pol.strategicAngle = angle;
+      pol.angleTitle = title;
+      pol.dossier = dossier;
+      Object.assign(pol, bonuses);
+
+      // Hidden vulnerability score
+      const vulnScore = computeCandidateVulnerabilityScore(pol);
+      pol.vulnerabilityScore = vulnScore;
+      const vettingRec = game?.candidateVetting?.[pol.id];
+      if (vettingRec && vettingRec.vetted) {
+        pol.isVetted = true;
+        pol.vulnerabilityTier = vettingRec.tier;
+        pol.vettingReport = vettingRec.summary;
+      } else if (pol.isVetted) {
+        pol.vulnerabilityTier = getVulnerabilityTier(vulnScore);
+        pol.vettingReport = getQualitativeVettingReport(vulnScore).summary;
+      } else {
+        pol.isVetted = false;
+        pol.vulnerabilityTier = 'Unvetted';
+        pol.vettingReport = null;
+      }
+      return pol;
+    };
+
+    const shortlist = [
+      enrichProspect(
+        anchorCand,
+        'home_state_anchor',
+        'Home-State / Regional Anchor',
+        `Strong ${anchorCand.stateId || 'Battleground'} Appeal · Battleground Coattails Anchor`,
+        { homeStateLift: 4.5, regionalCoattailBoost: 1.5 }
+      ),
+      enrichProspect(
+        peacekeeperCand,
+        'factional_peacekeeper',
+        'Factional Peacekeeper',
+        `Unifies the ${rivalFactionName} · Factional Harmony Accord`,
+        { targetFactionId: rivalFactionId, targetFactionName: rivalFactionName, factionHappinessGain: 15, factionConfidenceGain: 10 }
+      ),
+      enrichProspect(
+        complementCand,
+        'ideological_complement',
+        'Ideological Complement',
+        'Balances the National Ticket · Broad Suburban Independent Appeal',
+        { independentTrustBoost: 4.0 }
+      ),
+      enrichProspect(
+        attackDogCand,
+        'attack_dog',
+        'High-Energy Attack Dog',
+        'Grassroots Base Mobilizer · Relentless Campaign Trail Attack Dog',
+        { baseTurnoutLift: 2.0 }
+      ),
+    ];
+
+    if (game) {
+      game.vpShortlist = shortlist;
+      if (game.presidentialPrimaries?.conventionData) {
+        game.presidentialPrimaries.conventionData.vpShortlist = shortlist;
+        game.presidentialPrimaries.conventionData.vpRoster = shortlist;
+      }
+    }
+
+    return shortlist;
+  }
+
+  /**
+   * Chunk 3.3: Action — "Full Background Audit" ($3M from National Treasury)
+   * Unmasks qualitative background report, marking running-mate prospect as vetted.
+   */
+  function auditVpAction(game, payload = {}) {
+    if (!game) return game;
+    const candidateId = payload.candidateId || payload.id || payload.vpId;
+    if (!candidateId) return game;
+
+    // Cost: $3M ($3,000,000 / 3.0 in $M scale)
+    const cost = (game.treasury > 1000) ? 3000000 : 3.0;
+    if ((game.treasury || 0) < cost) {
+      return {
+        ...game,
+        lastError: 'Insufficient Treasury funds for running-mate background audit ($3.0M required).',
+      };
+    }
+
+    // Locate running mate across shortlist, convention roster, sitting members, politicians
+    let cand = null;
+    const candidates = [
+      ...(game.vpShortlist || []),
+      ...(game.presidentialPrimaries?.conventionData?.vpShortlist || []),
+      ...(game.presidentialPrimaries?.conventionData?.vpRoster || []),
+      ...(game.sittingMembers || []),
+      ...(game.politicians || []),
+    ];
+    cand = candidates.find((c) => c && (c.id === candidateId || c.name === candidateId));
+    if (!cand) {
+      cand = { id: candidateId, name: payload.candidateName || 'Running Mate Prospect' };
+    }
+
+    const record = getOrAssignCandidateVulnerability(game, cand);
+    record.vetted = true;
+    cand.isVetted = true;
+    cand.vulnerabilityTier = record.tier;
+    cand.vettingReport = record.summary;
+
+    // Update in shortlist and convention data if present
+    const updateInList = (list) => {
+      if (!Array.isArray(list)) return list;
+      return list.map((item) => {
+        if (item && (item.id === candidateId || item.name === cand.name)) {
+          return { ...item, isVetted: true, vulnerabilityTier: record.tier, vettingReport: record.summary };
+        }
+        return item;
+      });
+    };
+
+    let updatedVpShortlist = updateInList(game.vpShortlist);
+    let updatedConv = game.presidentialPrimaries?.conventionData ? { ...game.presidentialPrimaries.conventionData } : null;
+    if (updatedConv) {
+      if (updatedConv.vpRoster) updatedConv.vpRoster = updateInList(updatedConv.vpRoster);
+      if (updatedConv.vpShortlist) updatedConv.vpShortlist = updateInList(updatedConv.vpShortlist);
+      if (updatedConv.selectedVp && (updatedConv.selectedVp.id === candidateId || updatedConv.selectedVp.name === cand.name)) {
+        updatedConv.selectedVp = { ...updatedConv.selectedVp, isVetted: true, vulnerabilityTier: record.tier, vettingReport: record.summary };
+      }
+    }
+
+    const nextTreasury = Math.max(0, (game.treasury || 0) - cost);
+    const note = `Completed full background audit on running-mate prospect ${cand.name}: ${record.label}. ${record.summary}`;
+
+    const nextPrimaries = updatedConv ? { ...game.presidentialPrimaries, conventionData: updatedConv } : game.presidentialPrimaries;
+    return {
+      ...game,
+      treasury: nextTreasury,
+      candidateVetting: {
+        ...(game.candidateVetting || {}),
+        [candidateId]: record,
+      },
+      vpShortlist: updatedVpShortlist,
+      presidentialPrimaries: nextPrimaries,
+      lastNote: note,
+    };
+  }
+
+  /**
+   * Chunk 3.3: October Vetting Scandal Blowups for Unvetted Running Mates
+   * If unvetted, high vulnerability (score >= 46, Baggage or Toxic) has a 35% chance
+   * in October of inflicting -3.0% national presidential polling and -8 Supporter Trust.
+   */
+  function evaluateVpScandal(game, options = {}) {
+    if (!game) return game;
+    if (game.vpScandalTriggered) return game; // Already triggered once
+
+    const vp = game.selectedVp || game.presidentialPrimaries?.conventionData?.selectedVp;
+    if (!vp) return game;
+
+    // If vetted, completely immune to unvetted vetting blowup
+    const record = getOrAssignCandidateVulnerability(game, vp);
+    if (vp.isVetted || record?.vetted) return game;
+
+    // Check vulnerability score & tier
+    const score = record?.score ?? computeCandidateVulnerabilityScore(vp);
+    const tier = record?.tier ?? getVulnerabilityTier(score);
+
+    // Only candidates with notable liabilities (Baggage / Toxic, or score >= 46) trigger
+    if (score < 46 && tier !== 'Baggage' && tier !== 'Toxic' && !options.force) {
+      return game;
+    }
+
+    // 35% probability during October
+    const rollSeed = `${game.seed || 2028}:${game.year || 2028}:vp_scandal:${vp.id || vp.name}`;
+    const roll = hashCandidateId(rollSeed) / 100.0;
+    const triggers = options.force || (roll < 0.35);
+
+    if (!triggers) return game;
+
+    let working = { ...game };
+    working.vpScandalTriggered = true;
+
+    // Inflict -3.0% national presidential polling drag
+    if (typeof working.presidentialApproval === 'number') {
+      working.presidentialApproval = clamp(round(working.presidentialApproval - 3.0, 1), 0, 100);
+    }
+    if (typeof working.nationalPolling === 'number') {
+      working.nationalPolling = clamp(round(working.nationalPolling - 3.0, 1), 0, 100);
+    }
+    working.vpPollingDrag = 3.0;
+    working.vpScandalPollingPenalty = (working.vpScandalPollingPenalty || 0) - 3.0;
+
+    // Inflict -8 Supporter Trust
+    if (working.trust) {
+      const curSupporters = working.trust.supporters ?? working.trust.base ?? 70;
+      working.trust = {
+        ...working.trust,
+        supporters: clamp(round(curSupporters - 8.0, 1), 0, 100),
+      };
+      if (typeof working.trust.base === 'number') {
+        working.trust.base = clamp(round(working.trust.base - 8.0, 1), 0, 100);
+      }
+    }
+
+    const crisis = {
+      id: `vp_scandal_${vp.id || 'running_mate'}`,
+      candidateId: vp.id,
+      candidateName: vp.name,
+      raceKey: 'president',
+      title: `October Surprise: Running-Mate Vetting Scandal Engulfs ${vp.name}`,
+      headline: `Bombshell Liabilities and Past Financial Conflicts Erupt Around ${vp.name}`,
+      narrative: `With just weeks remaining until Election Day, investigative journalists have unmasked severe financial irregularities and controversial paper trails surrounding unvetted running mate ${vp.name}. The revelation has dominated cable airwaves, eroding supporter trust (-8 Trust) and pulling national ticket polling down by -3.0%.`,
+    };
+
+    working.activeCampaignScandals = [...(working.activeCampaignScandals || []), crisis];
+    working.lastNote = `OCTOBER SURPRISE: Unvetted running mate ${vp.name} engulfed in an explosive vetting scandal (-3.0% presidential polling, -8 Supporter Trust).`;
+
+    return working;
+  }
+
+  /**
+   * Resolve Vice Presidential Running Mate Selection & Apply Strategic Angle Bonuses
+   */
+  function resolveVpSelectionWithWarRoom(game, candidateId) {
+    if (!game) return game;
+    let working = { ...game };
+
+    // Locate candidate in shortlist or convention data
+    let vp = null;
+    const candidates = [
+      ...(working.vpShortlist || []),
+      ...(working.presidentialPrimaries?.conventionData?.vpShortlist || []),
+      ...(working.presidentialPrimaries?.conventionData?.vpRoster || []),
+      ...(working.sittingMembers || []),
+      ...(working.politicians || []),
+    ];
+    vp = candidates.find((c) => c && (c.id === candidateId || c.name === candidateId));
+    if (!vp && working.presidentialPrimaries?.conventionData?.vpRoster) {
+      vp = working.presidentialPrimaries.conventionData.vpRoster.find((c) => c.id === candidateId || c.name === candidateId);
+    }
+    if (!vp) return game;
+
+    working.selectedVp = vp;
+    working.selectedVpId = vp.id;
+
+    const playerParty = working.player?.custom ? 'player' : (working.player?.baseTemplateId || 'people');
+    if (working.presidentialPrimaries) {
+      working.presidentialPrimaries.vpSelectionByParty = working.presidentialPrimaries.vpSelectionByParty || {};
+      working.presidentialPrimaries.vpSelectionByParty[playerParty] = vp.name;
+      if (working.presidentialPrimaries.conventionData) {
+        working.presidentialPrimaries.conventionData.selectedVp = vp;
+        working.presidentialPrimaries.conventionData.selectedVpId = vp.id;
+      }
+    }
+
+    let angleNote = '';
+
+    // Apply strategic angle instant benefits
+    if (vp.strategicAngle === 'factional_peacekeeper') {
+      // +15 Happiness and +10 Confidence to major rival faction
+      const targetFid = vp.targetFactionId || vp.factionId;
+      if (targetFid) {
+        if (working.factionStandings) {
+          const curH = Number(working.factionStandings[targetFid] ?? 60);
+          working.factionStandings[targetFid] = clamp(round(curH + 15, 1), 0, 100);
+        }
+        if (working.factionHappiness) {
+          const curH = Number(working.factionHappiness[targetFid] ?? 60);
+          working.factionHappiness[targetFid] = clamp(round(curH + 15, 1), 0, 100);
+        }
+        if (working.factionConfidence) {
+          const curC = Number(working.factionConfidence[targetFid] ?? 60);
+          working.factionConfidence[targetFid] = clamp(round(curC + 10, 1), 0, 100);
+        }
+        if (Array.isArray(working.factions)) {
+          working.factions = working.factions.map((f) => {
+            if (f.id === targetFid || f.name === targetFid) {
+              return {
+                ...f,
+                happiness: clamp(round((f.happiness || 60) + 15, 1), 0, 100),
+                confidence: clamp(round((f.confidence || 60) + 10, 1), 0, 100),
+              };
+            }
+            return f;
+          });
+        }
+      }
+      angleNote = `Factional Peacekeeper accord: ${vp.name} cements party unity (+15 Happiness, +10 Confidence to ${vp.targetFactionName || 'rival wing'}).`;
+    } else if (vp.strategicAngle === 'ideological_complement') {
+      // Balances ticket, lifting suburban independent trust by +4.0
+      working.trust = working.trust || {};
+      working.trust.independents = clamp(round((working.trust.independents || 50) + 4.0, 1), 0, 100);
+      if (typeof working.trust.suburban === 'number') {
+        working.trust.suburban = clamp(round(working.trust.suburban + 4.0, 1), 0, 100);
+      }
+      angleNote = `Ideological Complement: ${vp.name} balances the ticket (+4.0 Suburban Independent Trust).`;
+    } else if (vp.strategicAngle === 'attack_dog') {
+      // Delivers +2.0% national base turnout lift
+      working.vpBaseTurnoutLift = 2.0;
+      angleNote = `High-Energy Attack Dog: ${vp.name} takes the fight to the airwaves (+2.0% national base turnout).`;
+    } else {
+      // Home-State / Regional Anchor: delivers +3.5% to +5.0% home-state lift and +1.5% regional coattails
+      working.vpHomeStateLift = vp.homeStateLift || 4.5;
+      working.vpRegionalCoattailBoost = vp.regionalCoattailBoost || 1.5;
+      angleNote = `Home-State / Regional Anchor: ${vp.name} solidifies battleground firewalls across ${vp.stateId || 'home state'}.`;
+    }
+
+    working.lastNote = `Vice Presidential Selection: ${vp.name} officially named running mate! ${angleNote}`;
+    return working;
+  }
+
   return {
     TRAIT_VULNERABILITY_WEIGHTS,
     computeCandidateVulnerabilityScore,
@@ -634,5 +1078,10 @@
     resolveScandalCrisis,
     calculateCandidateElectability,
     CANDIDATE_ELECTABILITY_TRAIT_MODIFIERS,
+    generateVpRunningMateShortlist,
+    auditVpAction,
+    evaluateVpScandal,
+    resolveVpSelectionWithWarRoom,
+    FALLBACK_RUNNING_MATES,
   };
 });
