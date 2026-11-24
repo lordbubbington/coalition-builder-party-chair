@@ -2152,3 +2152,47 @@ Categorized primarily by **Size** per workspace rules:
   - `test-v0181-fixes.cjs`: 12/12 passed (100%).
   - `test-v0182-fixes.cjs`: 6/6 passed (100%).
 - **Executable Compilation:** Rebuilt self-contained Windows executable via `powershell -ExecutionPolicy Bypass -File .\build.ps1` to `dist/release/Coalition Builder - Party Chair.exe` and `dist/Coalition Builder - Party Chair.exe`.
+
+---
+
+## VERSION 0.18.4
+
+# Coalition Builder: Party Chair — Version 0.18.4
+
+Version 0.18.4 delivers an essential balancing and bug-fix release focused on minor party polling visibility, downballot candidate triage retention, state legislature grassroots viability, and Duverger spoiler defection protections.
+
+Categorized primarily by **Size** per workspace rules:
+
+### 1. Medium Requirements (2 Requirements)
+
+1. **REQ-311: Minor-Party Downballot Polling & Recruited Candidate Triage Retention (Medium | `engine.js`, `app.js`):**
+   - Passed `raceId` when polling downballot contests (`computeRacePollingBreakdown`) so ballot-certified minor parties (e.g., Greens, Libertarians) reflect accurate polling shares rather than zero-access presidential suppression.
+   - Guaranteed the player's party is always visible in downballot polling breakdowns even when polling below 0.5%.
+   - Certified downballot ballot access for contested races so recruited candidates survive primary resolution, never get wiped silently, and appear in Candidate Budget Triage with full funding allocation capabilities.
+   - Surfaced explicit notification if any recruited candidate lost or was disqualified during primaries.
+
+2. **REQ-312: State Legislature Grassroots Haven & Registration-Floor Polling (Medium | `engine.js`):**
+   - Established State Legislative races as the primary grassroots growth haven for minor parties by setting Duverger strategic defection spoiler penalties to 0.0%.
+   - Implemented a baseline voter registration percentage floor for state legislative contest polling.
+   - Modeled independent voter allocation in state legislatures weighted by relative party popularity rather than major-party duopoly dominance.
+
+### 2. Small Requirements (1 Requirement)
+
+1. **REQ-313: Minor-Party 1/3 Voter Retention Spoiler Floor (Small | `engine.js`):**
+   - Capped the strategic defection penalty across all party tiers at 2/3 ($\le 66.67\%$), guaranteeing that at least 1/3 of a party's loyal base always turns out and sticks with their ticket even under intense general election spoiler pressure.
+
+---
+
+### 3. Release Packaging & Verification
+
+- **Version Bump:** Promoted version to `0.18.4` across `package.json`, `engine.js`, `app.js`, `build.js`, `index.html`.
+- **Save Compatibility:** Save key updated to `partyChairGame.save.v18.4` with backward-compatible migration supporting `v18.3`, `v18.2`, `v16.2`, and earlier save keys.
+- **Automated Verification Matrix:**
+  - `node --check` syntax validation on `engine.js`, `app.js`, `party-systems-engine.js`, `faction-era-stability.js`.
+  - `scripts/test-v0184-minor-party-fixes.cjs`: 4/4 passed (100%).
+  - `scripts/test-v0184-faction-era-fixes.cjs`: passed (100%).
+  - `scripts/test-faction-defection-overhaul.cjs`: passed (100%).
+  - `scripts/test-v0164-tier0-media.cjs`: passed (100%).
+  - `scripts/test-v0183-bug-fixes.cjs`: passed (100%).
+  - `scripts/test-mas01-phase4.cjs`: passed (100%).
+- **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.

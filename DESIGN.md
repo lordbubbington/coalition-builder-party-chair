@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.3 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.3 Opponent AI & Campaign Telemetry Release implementing Phase 1–3 of the Symmetric Opponent Execution Engine (SOEE) across REQ-300, REQ-303, REQ-304, and REQ-310; featuring autonomous rival chair organizing and campaign execution, 5-month battleground airwaves saturation curves, Theme of the Month selection with repeat stale penalties, 42 trait-driven crises decision trees, opposition research and October Surprise detonations, Final 72 Hours Blitz, and War Room intelligence telemetry. Full specifications live in `SYMMETRIC_OPPONENT_AI_DESIGN.md` and `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.18.4 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.18.4 Minor Party Polling & Spoiler Overhaul Release implementing REQ-311, REQ-312, and REQ-313; featuring downballot minor-party polling breakdown accuracy, candidate budget triage retention for recruited nominees, state legislature grassroots haven with 0% Duverger spoiler penalty, and 1/3 loyal voter retention defection floor. Full specifications live in `SYMMETRIC_OPPONENT_AI_DESIGN.md` and `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 

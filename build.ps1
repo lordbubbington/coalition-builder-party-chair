@@ -63,20 +63,32 @@ try {
         (Join-Path $projectDir 'launcher.cs')
     
     if ($LASTEXITCODE -ne 0) { throw "Executable build failed with exit code $LASTEXITCODE." }
-    if (Test-Path -LiteralPath $exePath) {
-        [System.IO.File]::Copy($temporaryExePath, $exePath, $true)
-        Remove-Item -LiteralPath $temporaryExePath -Force
-    } else {
-        Move-Item -LiteralPath $temporaryExePath -Destination $exePath
-    }
-    Remove-Item -LiteralPath $archivePath -Force
-    $rootExePath = Join-Path $distRootDir 'Coalition Builder - Party Chair.exe'
+    $releaseUpdated = $false
     try {
-        [System.IO.File]::Copy($exePath, $rootExePath, $true)
-        Get-Item -LiteralPath $exePath, $rootExePath | Select-Object FullName, Length, LastWriteTime
+        [System.IO.File]::Copy($temporaryExePath, $exePath, $true)
+        $releaseUpdated = $true
     } catch [System.IO.IOException] {
-        Write-Warning "The release executable was built, but the dist copy could not be refreshed. Close any running game window and run build.ps1 again. Release build: $exePath"
-        Get-Item -LiteralPath $exePath | Select-Object FullName, Length, LastWriteTime
+        Write-Warning "The release executable ($exePath) is locked by an open process and could not be overwritten. Close any running game window to refresh this copy."
+    }
+
+    $rootExePath = Join-Path $distRootDir 'Coalition Builder - Party Chair.exe'
+    $rootUpdated = $false
+    try {
+        [System.IO.File]::Copy($temporaryExePath, $rootExePath, $true)
+        $rootUpdated = $true
+    } catch [System.IO.IOException] {
+        Write-Warning "The dist root executable ($rootExePath) is locked by an open process and could not be overwritten. Close any running game window to refresh this copy."
+    }
+
+    Remove-Item -LiteralPath $temporaryExePath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
+
+    if ($releaseUpdated -or $rootUpdated) {
+        Write-Host "Executable build packaging complete!" -ForegroundColor Green
+        if ($releaseUpdated) { Get-Item -LiteralPath $exePath | Select-Object FullName, Length, LastWriteTime }
+        if ($rootUpdated) { Get-Item -LiteralPath $rootExePath | Select-Object FullName, Length, LastWriteTime }
+    } else {
+        throw "Neither the release nor root executable could be refreshed because both are locked by open processes. Please close any running Coalition Builder window."
     }
 } catch {
     Write-Host ''
