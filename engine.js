@@ -23944,6 +23944,9 @@ window.PartyChairEngine = {
   getRedistrictingBallotSystem: () => ((typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null),
   // [v0.18.4 ATLAS-HOTSEAT] Exports
   getAtlasMultiplayerSystem: () => (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem) || null,
+  // Developer 3: Candidate Mentorship Pipeline & VP Vetting War Room
+  mentorProspectAction,
+  applyProtegeGroomingCycle,
   // Developer 4: Dark-Money Super PAC Blocs & Electoral Reform Sandbox
   getDarkMoneyCatalog,
   getDarkMoneyBloc,

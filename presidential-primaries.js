@@ -868,19 +868,26 @@
       },
     ];
 
-    // REQ-202: 4 Qualified Running Mate (VP) Contenders
-    const runnerUp = sorted[1];
-    const vpRoster = [];
-    if (runnerUp) {
-      vpRoster.push({
-        id: runnerUp.id,
-        name: runnerUp.name,
-        stateId: runnerUp.stateId,
-        factionId: runnerUp.factionId,
-        isRunnerUp: true,
-        fame: runnerUp.fame,
-      });
+    // REQ-202 & Chunk 3.2: 4 Qualified Running Mate (VP) Contenders via War Room
+    const cvMod = (typeof window !== 'undefined' && window.CandidateVetting) || (typeof require !== 'undefined' ? (function(){ try { return require('./candidate-vetting.js'); } catch { return null; } })() : null);
+    let vpRoster = [];
+    if (cvMod && typeof cvMod.generateVpRunningMateShortlist === 'function') {
+      vpRoster = cvMod.generateVpRunningMateShortlist(game, partyId);
     }
+
+    if (!vpRoster || vpRoster.length < 4) {
+      vpRoster = [];
+      const runnerUp = sorted[1];
+      if (runnerUp) {
+        vpRoster.push({
+          id: runnerUp.id,
+          name: runnerUp.name,
+          stateId: runnerUp.stateId,
+          factionId: runnerUp.factionId,
+          isRunnerUp: true,
+          fame: runnerUp.fame,
+        });
+      }
 
     // Additional prospective running mates from sitting governors / senators
     const sittingMembers = game.sittingMembers || [];
@@ -971,6 +978,7 @@
         fame: ['people', 'heritage'].includes(partyId) ? 66 : 42,
       });
     }
+  }
 
     // REQ-202 & REQ-280: Keynote Speaker Candidates (party-aligned fallbacks)
     const keynoteSpeakers = sittingMembers.filter((m) => m.party === partyId && (m.fame || 40) >= 50).slice(0, 3);
@@ -1072,9 +1080,14 @@
   }
 
   /**
-   * REQ-202: Vice Presidential Ticket Selection
+   * REQ-202 & Chunk 3.2: Vice Presidential Ticket Selection
    */
   function resolveVpSelection(game, vpCandidateId) {
+    const cvMod = (typeof window !== 'undefined' && window.CandidateVetting) || (typeof require !== 'undefined' ? (function(){ try { return require('./candidate-vetting.js'); } catch { return null; } })() : null);
+    if (cvMod && typeof cvMod.resolveVpSelectionWithWarRoom === 'function') {
+      return cvMod.resolveVpSelectionWithWarRoom(game, vpCandidateId);
+    }
+
     if (!game.presidentialPrimaries?.conventionData) return game;
     const conv = game.presidentialPrimaries.conventionData;
     const vp = conv.vpRoster.find((v) => v.id === vpCandidateId);

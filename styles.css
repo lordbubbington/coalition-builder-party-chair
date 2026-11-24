@@ -5988,3 +5988,273 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   font-family: inherit;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   DEVELOPER 4: DARK-MONEY SUPER PAC BLOCS & ELECTORAL REFORM SANDBOX
+   ========================================================================== */
+
+.donor-bloc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.donor-bloc-card {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(15, 23, 42, 0.90));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.donor-bloc-card:hover {
+  border-color: rgba(234, 179, 8, 0.35);
+  transform: translateY(-1px);
+}
+
+.donor-bloc-card.active {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.25), rgba(15, 23, 42, 0.92));
+}
+
+.donor-bloc-card.revolted {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.25), rgba(15, 23, 42, 0.92));
+}
+
+.donor-bloc-sector {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gold, #eab308);
+}
+
+.donor-bloc-status {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.donor-bloc-status.status-active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border: 1px solid #10b981;
+}
+
+.donor-bloc-status.status-revolted {
+  background: rgba(239, 68, 68, 0.20);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+}
+
+.donor-bloc-status.status-available {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted, #94a3b8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.npvic-tracker-panel {
+  background: linear-gradient(135deg, #0e1724, #0a1118);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.npvic-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.npvic-status-pill.status-active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid #10b981;
+}
+
+.npvic-status-pill.status-pending {
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  border: 1px solid #6366f1;
+}
+
+.sys-approval {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid #10b981 !important;
+}
+
+.sys-prop {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #d8b4fe !important;
+  border: 1px solid #a855f7 !important;
+}
+
+.sys-rcv {
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #7dd3fc !important;
+  border: 1px solid #38bdf8 !important;
+}
+
+.sys-fptp {
+  background: rgba(100, 116, 139, 0.15) !important;
+  color: #94a3b8 !important;
+  border: 1px solid #475569 !important;
+}
+
+/* ==========================================================================
+   DEVELOPER 3: CANDIDATE MENTORSHIP FARM TEAM & VP VETTING WAR ROOM
+   ========================================================================== */
+
+.mentorship-bench-card {
+  border-left: 3px solid #38bdf8;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+}
+
+.protege-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.protege-badge-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.15s ease;
+}
+
+.protege-badge-card:hover {
+  border-color: #38bdf8;
+}
+
+.vp-war-room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.vp-war-room-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.80));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.vp-war-room-card:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
+}
+
+.vp-war-room-card.highlight {
+  border-color: #facc15;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+}
+
+.vp-angle-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.vp-angle-badge.vp-angle-home-state-anchor {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid #38bdf8;
+  color: #7dd3fc;
+}
+
+.vp-angle-badge.vp-angle-factional-peacekeeper {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid #10b981;
+  color: #6ee7b7;
+}
+
+.vp-angle-badge.vp-angle-ideological-complement {
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid #a855f7;
+  color: #d8b4fe;
+}
+
+.vp-angle-badge.vp-angle-attack-dog {
+  background: rgba(249, 115, 22, 0.18);
+  border: 1px solid #f97316;
+  color: #fdba74;
+}
+
+.vp-angle-badge.vp-angle-default {
+  background: rgba(148, 163, 184, 0.18);
+  border: 1px solid #94a3b8;
+  color: #cbd5e1;
+}
+
+.vp-dossier-text {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.4;
+  margin: 8px 0;
+}
+
+.vp-vetting-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.vp-vetting-badge.tier-clean-record {
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  color: #86efac;
+}
+
+.vp-vetting-badge.tier-minor-scrutiny {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #7dd3fc;
+}
+
+.vp-vetting-badge.tier-significant-baggage {
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  color: #fde047;
+}
+
+.vp-vetting-badge.tier-critical-exposure {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+}
+
+.vp-vetting-badge.tier-unvetted {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
