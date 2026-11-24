@@ -5009,6 +5009,57 @@ function createGame(options = {}) {
         { customOrigin, schismParentPartyId, foundingStateId, startingWarChest, archetypeTreasuryDelta, customLeader, customArchetype, seed },
         { STATES, clamp, round, apportionSampleUnitsHareNiemeyer, getFactionsCatalog, startingIssuePositions, computePartyInstitutionalTierRaw, computeUnifiedPartyApproval }
       );
+    } else {
+      // Bug #2: Inline fallback when CustomPartyCore module is absent
+      const rawChosen = Array.isArray(opts.selectedFactionIds) ? opts.selectedFactionIds : (Array.isArray(opts.startingSelectedFactionIds) ? opts.startingSelectedFactionIds : []);
+      const safeChosen = rawChosen.filter((id) => id !== 'dem_liberal_establishment' && id !== 'gop_maga');
+      player.startingSelectedFactionIds = safeChosen;
+      let totalV = 0;
+      const is1to1Fb = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
+      const divFb = is1to1Fb ? 1 : 100;
+      safeChosen.forEach((fid) => {
+        const fObj = (game.factions || []).find((f) => f.id === fid);
+        const origParty = fObj?.partyId || 'independent';
+        if (fObj) {
+          fObj.partyId = 'player';
+          fObj.happiness = 75;
+          fObj.confidence = 65;
+          game.factionHappiness[fid] = 75;
+          game.factionStandings[fid] = 75;
+        }
+        (game.voterModel?.states || []).forEach((st) => {
+          const cnt = Number(st.factions?.[fid] || 0);
+          if (cnt > 0 && st.affiliations) {
+            const sCnt = Math.round(cnt / divFb);
+            if (origParty && st.affiliations[origParty] !== undefined) {
+              st.affiliations[origParty] = Math.max(0, Number(st.affiliations[origParty] || 0) - sCnt);
+            }
+            st.affiliations.player = Number(st.affiliations.player || 0) + sCnt;
+            totalV += cnt;
+          }
+        });
+      });
+      if (game.voterModel?.affiliations) {
+        game.voterModel.affiliations.player = {
+          name: player.name,
+          sampleVoters: Math.round(totalV / divFb),
+          representedVoters: totalV,
+        };
+      }
+      player.baseShare = (Math.max(100000, totalV) / 155000000) * 100;
+      game.partyTiers = { ...(game.partyTiers || {}), player: totalV >= 12000000 ? 4 : (totalV >= 5000000 ? 3 : (totalV >= 2000000 ? 2 : 1)) };
+      game.treasury = Math.max(1.0, round((startingWarChest || 25) + (archetypeTreasuryDelta || 0), 1));
+      const fbBa = { senate: {}, governor: {}, house: {}, leg: {}, presidential: {} };
+      if (foundingStateId) {
+        fbBa.presidential[foundingStateId] = true;
+        fbBa.senate[foundingStateId] = true;
+        fbBa.governor[foundingStateId] = true;
+        fbBa.leg[foundingStateId] = true;
+      }
+      game.ballotAccess = { ...(game.ballotAccess || {}), player: fbBa };
+      game.founderLegacy = { active: true, founderId: customLeader?.id || `founder-${seed}`, founderName: customLeader?.name || player.leaderName, movementAuraCyclesRemaining: 3 };
+      game.player = player;
+      game.partyApprovals = computeUnifiedPartyApproval(game);
     }
   } else {
     game.founderLegacy = null;
@@ -12508,7 +12559,7 @@ function computeDeterministicStartAge(entity, refYear = 2028) {
   return 36 + Math.round((h / 100) * 30);
 }
 
-function ensureAndAdvancePoliticianAges(game, deltaYears = 0) {
+function ensureAndAdvancePoliticianAges(game, deltaYears = 0, options = {}) {
   if (!game || typeof game !== 'object') return game;
   const year = Number(game.year || 2028);
   const applyAge = (list, isSitting) => {
@@ -12582,7 +12633,7 @@ function ensureAndAdvancePoliticianAges(game, deltaYears = 0) {
   };
   return {
     ...game,
-    sittingMembers: applyAge(game.sittingMembers, true),
+    sittingMembers: options.skipSittingAging ? game.sittingMembers : applyAge(game.sittingMembers, true),
     politicians: applyAge(game.politicians, false),
   };
 }
@@ -15184,6 +15235,10 @@ function startNextCycleInternal(game) {
       if (typeof demoEngine.selectDeterministicMigrationPatterns === 'function') {
         activeMigrationPatterns = demoEngine.selectDeterministicMigrationPatterns(game.seed || 2028, nextYear, nextEnv, null);
       }
+      // ~3% per-cycle electorate population growth (parties register during cycle; independents grow to match remaining demand)
+      if (typeof demoEngine.applyCyclePopulationGrowth === 'function') {
+        demoEngine.applyCyclePopulationGrowth(voterModel, 0.03, game.factions);
+      }
       if (typeof demoEngine.applyInterstateMigration === 'function' && activeMigrationPatterns.length > 0) {
         const migResult = demoEngine.applyInterstateMigration(voterModel, activeMigrationPatterns);
         migrationTransferred = migResult?.transferredTotal || 0;
@@ -15321,6 +15376,10 @@ function startNextCycleInternal(game) {
     const curStand = nextFactionStandings[f.id] ?? 50;
     if (curStand < 35 + floorBonus) {
       nextFactionStandings[f.id] = clamp(round(35 + floorBonus, 1), 0, 100);
+      if (f.legacyId) nextFactionStandings[f.legacyId] = nextFactionStandings[f.id];
+    } else if (curStand > 92) {
+      // Bug #3: Prevent permanent 100-pinning across 20+ cycles
+      nextFactionStandings[f.id] = round(curStand - 3, 1);
       if (f.legacyId) nextFactionStandings[f.legacyId] = nextFactionStandings[f.id];
     }
   });
@@ -15779,7 +15838,8 @@ function startNextCycleInternal(game) {
   syncedCycle.activePresidentialPrimary = null;
 
   // v0.16.9 (#1): Replenish any retired/vacant sitting officials across Senate (100), House (435), Gov (50), Statewide (223)
-  syncedCycle = ensureAndAdvancePoliticianAges(syncedCycle, 2);
+  // Bug #4: sittingMembers already aged +2 in startNextCycleInternal; advance remaining pools +2 only
+  syncedCycle = ensureAndAdvancePoliticianAges(syncedCycle, 2, { skipSittingAging: true });
   if (typeof window !== 'undefined' && window.CampaignOverhaul?.advanceCycleCorruptTraitDrift) {
     syncedCycle = window.CampaignOverhaul.advanceCycleCorruptTraitDrift(syncedCycle);
   }
@@ -16801,8 +16861,13 @@ function syncPartyStateWithLegacy(game, options = {}) {
     game.__lastSyncedTopActions = game.organizingActionsRemaining;
     game.__lastSyncedPartyActions = playerParty.organizingActionsRemaining;
 
+    // Bug #5: Only refill actionsLeft when exhausted (<= 0), never overwrite a decremented turn value (e.g. 3 -> 4)
     if (typeof game.actionsLeft === 'number' && game.phase === 'organizing') {
-      game.actionsLeft = Math.min(4, Math.max(0, playerParty.organizingActionsRemaining));
+      if (game.actionsLeft <= 0 && playerParty.organizingActionsRemaining > 0) {
+        game.actionsLeft = Math.min(4, playerParty.organizingActionsRemaining);
+      } else {
+        game.actionsLeft = Math.min(game.actionsLeft, Math.max(0, playerParty.organizingActionsRemaining));
+      }
     }
 
     if (!game.priorities) game.priorities = {};
@@ -21999,6 +22064,11 @@ function normalizeGame(parsed) {
     }
     if ((ready.actionsLeft <= 0 || typeof ready.actionsLeft !== 'number') && ready.organizingActionsRemaining > 0) {
       ready.actionsLeft = Math.min(4, ready.organizingActionsRemaining);
+    }
+    // Bug #5: Sync parsed organizingActionsRemaining into ready.parties before syncPartyStateWithLegacy runs
+    const _npId = getPlayerPartyId(ready);
+    if (ready.parties && ready.parties[_npId]) {
+      ready.parties[_npId].organizingActionsRemaining = ready.organizingActionsRemaining;
     }
   }
   if (!ready.forecasters && typeof buildForecasters === 'function') {

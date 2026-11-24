@@ -288,31 +288,59 @@
             });
           }
 
-          // Adjust origin state affiliations proportionately
+          // Bug #1: Adjust origin state base affiliations (excluding derived 'thirdParty' rollup) & preserve third-party share on destination
+          const THIRD_KEYS = ['liberty', 'green', 'constitution', 'socialist', 'other'];
+          const deductedByThird = {};
+          let totalDeductedThird = 0;
+          const is1to1Mig = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10000000);
+          const transferSample = is1to1Mig ? actualTransfer : Math.round(actualTransfer / 100);
+
           if (origState.affiliations) {
-            const sumAff = Object.values(origState.affiliations).reduce((a, b) => a + Number(b || 0), 0) || 1;
-            const affRatio = actualTransfer / (origVoters || sumAff);
-            Object.keys(origState.affiliations).forEach((pk) => {
+            const baseKeys = Object.keys(origState.affiliations).filter((k) => k !== 'thirdParty');
+            const sumBase = baseKeys.reduce((a, k) => a + Number(origState.affiliations[k] || 0), 0) || 1;
+            const affRatio = Math.min(0.95, transferSample / sumBase);
+            let totalDeducted = 0;
+            baseKeys.forEach((pk) => {
               const currentAff = Number(origState.affiliations[pk] || 0);
               const deduct = Math.min(currentAff, Math.round(currentAff * affRatio));
               origState.affiliations[pk] = Math.max(0, currentAff - deduct);
+              totalDeducted += deduct;
+              if (THIRD_KEYS.includes(pk)) {
+                deductedByThird[pk] = (deductedByThird[pk] || 0) + deduct;
+                totalDeductedThird += deduct;
+              }
             });
+            const origRem = transferSample - totalDeducted;
+            if (origRem !== 0 && origState.affiliations.independent !== undefined) {
+              origState.affiliations.independent = Math.max(0, Number(origState.affiliations.independent || 0) - origRem);
+            }
+            if (origState.affiliations.thirdParty !== undefined) {
+              origState.affiliations.thirdParty = THIRD_KEYS.reduce((s, tk) => s + Number(origState.affiliations[tk] || 0), 0);
+            }
           }
 
-          // Adjust destination state affiliations
+          // Adjust destination state affiliations (crediting transferred thirdParty share so conservation holds 100%)
           if (destState.affiliations) {
-            // Skew destination affiliations towards economic/social deltas
             const econDelta = Number(skew.econDelta || 0);
             const isMoreLeft = econDelta < 0;
             const targetParty = isMoreLeft ? 'people' : 'heritage';
-            const bonusParty = (voterModel.voterScale === '1:1') ? Math.round(actualTransfer * 0.45) : Math.round(actualTransfer / 100 * 0.45);
-            const indParty = (voterModel.voterScale === '1:1') ? Math.round(actualTransfer * 0.35) : Math.round(actualTransfer / 100 * 0.35);
-            const otherParty = (voterModel.voterScale === '1:1') ? (actualTransfer - bonusParty - indParty) : (Math.round(actualTransfer / 100) - bonusParty - indParty);
+            const remainingForMajorInd = Math.max(0, transferSample - totalDeductedThird);
+            const bonusParty = Math.round(remainingForMajorInd * 0.45);
+            const indParty = Math.round(remainingForMajorInd * 0.35);
+            const otherParty = Math.max(0, remainingForMajorInd - bonusParty - indParty);
 
             destState.affiliations[targetParty] = (destState.affiliations[targetParty] || 0) + bonusParty;
             destState.affiliations.independent = (destState.affiliations.independent || 0) + indParty;
             const counterParty = targetParty === 'people' ? 'heritage' : 'people';
-            destState.affiliations[counterParty] = (destState.affiliations[counterParty] || 0) + Math.max(0, otherParty);
+            destState.affiliations[counterParty] = (destState.affiliations[counterParty] || 0) + otherParty;
+            THIRD_KEYS.forEach((tk) => {
+              if (deductedByThird[tk]) {
+                destState.affiliations[tk] = (destState.affiliations[tk] || 0) + deductedByThird[tk];
+              }
+            });
+            if (destState.affiliations.thirdParty !== undefined) {
+              destState.affiliations.thirdParty = THIRD_KEYS.reduce((s, tk) => s + Number(destState.affiliations[tk] || 0), 0);
+            }
           }
 
           patternNetTransferred += actualTransfer;
@@ -330,8 +358,9 @@
       });
     });
 
-    // Reconcile electorate total to ensure 100% exact zero-variance conservation
-    renormalizeElectorateHareNiemeyer(voterModel, 155000000);
+    // Preserve current electorate total (supports ~3%/cycle population growth) with exact zero-variance conservation
+    const migTargetTotal = Number(voterModel.representedVoters || 155000000);
+    renormalizeElectorateHareNiemeyer(voterModel, migTargetTotal);
 
     return { voterModel, transferredTotal, appliedPatterns };
   }
@@ -395,17 +424,24 @@
           st.affiliations.heritage = Math.max(0, Number(st.affiliations.heritage || 0) - repDeduct);
         }
         st.affiliations.independent = (Number(st.affiliations.independent || 0)) + indBonus;
-        st.affiliations.thirdParty = (Number(st.affiliations.thirdParty || 0)) + thirdBonus;
 
-        if (isGenAlphaActive) {
-          st.affiliations.liberty = (Number(st.affiliations.liberty || 0)) + Math.round(thirdBonus * 0.5);
-          st.affiliations.green = (Number(st.affiliations.green || 0)) + Math.round(thirdBonus * 0.3);
-        }
+        // Bug #1: Distribute 100% of thirdBonus across base third-party keys, then derive thirdParty rollup
+        const libAdd = Math.round(thirdBonus * 0.45);
+        const grnAdd = Math.round(thirdBonus * 0.30);
+        const conAdd = Math.round(thirdBonus * 0.15);
+        const socAdd = Math.max(0, thirdBonus - libAdd - grnAdd - conAdd);
+        st.affiliations.liberty = (Number(st.affiliations.liberty || 0)) + libAdd;
+        st.affiliations.green = (Number(st.affiliations.green || 0)) + grnAdd;
+        st.affiliations.constitution = (Number(st.affiliations.constitution || 0)) + conAdd;
+        st.affiliations.socialist = (Number(st.affiliations.socialist || 0)) + socAdd;
+        st.affiliations.thirdParty = ['liberty', 'green', 'constitution', 'socialist', 'other']
+          .reduce((s, tk) => s + Number(st.affiliations[tk] || 0), 0);
       }
     });
 
-    // Zero-variance reconciliation
-    renormalizeElectorateHareNiemeyer(voterModel, 155000000);
+    // Zero-variance reconciliation preserving current electorate total
+    const turnTargetTotal = Number(voterModel.representedVoters || 155000000);
+    renormalizeElectorateHareNiemeyer(voterModel, turnTargetTotal);
     return voterModel;
   }
 
@@ -447,9 +483,10 @@
       e.st.representedVoters = newStRep;
       e.st.sampleVoters = is1to1 ? newStRep : Math.round(newStRep / 100);
 
-      const diff = newStRep - oldStRep;
-      if (diff !== 0 && e.st.affiliations) {
-        const affKeys = Object.keys(e.st.affiliations);
+      // Bug #1: Exclude derived 'thirdParty' rollup when reconciling state affiliations
+      if (e.st.affiliations) {
+        const THIRD_KEYS = ['liberty', 'green', 'constitution', 'socialist', 'other'];
+        const affKeys = Object.keys(e.st.affiliations).filter((k) => k !== 'thirdParty');
         const affSum = affKeys.reduce((s, k) => s + Number(e.st.affiliations[k] || 0), 0);
         const affTarget = is1to1 ? newStRep : e.st.sampleVoters;
         const affDiff = affTarget - affSum;
@@ -459,12 +496,101 @@
             e.st.affiliations[targetAffKey] = Math.max(0, Number(e.st.affiliations[targetAffKey] || 0) + affDiff);
           }
         }
+        if (e.st.affiliations.thirdParty !== undefined) {
+          e.st.affiliations.thirdParty = THIRD_KEYS.reduce((s, tk) => s + Number(e.st.affiliations[tk] || 0), 0);
+        }
       }
     });
 
     voterModel.representedVoters = targetTotal;
     voterModel.sampleVoters = is1to1 ? targetTotal : Math.round(targetTotal / 100);
 
+    // Reconcile national affiliation rollups from state totals
+    if (voterModel.affiliations) {
+      const mult = is1to1 ? 1 : 100;
+      const THIRD_KEYS = ['liberty', 'green', 'constitution', 'socialist', 'other'];
+      Object.keys(voterModel.affiliations).forEach((ak) => {
+        if (ak === 'thirdParty') return;
+        const sumA = voterModel.states.reduce((s, st) => s + Number(st.affiliations?.[ak] || 0), 0);
+        if (voterModel.affiliations[ak] && typeof voterModel.affiliations[ak] === 'object') {
+          voterModel.affiliations[ak].sampleVoters = sumA;
+          voterModel.affiliations[ak].representedVoters = sumA * mult;
+        }
+      });
+      if (voterModel.affiliations.thirdParty && typeof voterModel.affiliations.thirdParty === 'object') {
+        const tpSum = voterModel.states.reduce((s, st) => s + THIRD_KEYS.reduce((ts, tk) => ts + Number(st.affiliations?.[tk] || 0), 0), 0);
+        voterModel.affiliations.thirdParty.sampleVoters = tpSum;
+        voterModel.affiliations.thirdParty.representedVoters = tpSum * mult;
+        if (voterModel.affiliations.thirdParty.byParty) {
+          THIRD_KEYS.forEach((tk) => {
+            if (voterModel.affiliations.thirdParty.byParty[tk] !== undefined) {
+              voterModel.affiliations.thirdParty.byParty[tk] = voterModel.states.reduce((s, st) => s + Number(st.affiliations?.[tk] || 0), 0);
+            }
+          });
+        }
+      }
+    }
+
+    return voterModel;
+  }
+
+  /**
+   * ~3% per-cycle electorate population growth:
+   * Parties register new voters during the cycle; any remaining demand up to +3%
+   * flows into state independents & independent/swing factions during post-election realignment.
+   */
+  function applyCyclePopulationGrowth(voterModel, growthRate = 0.03, gameFactions = null) {
+    if (!voterModel || !Array.isArray(voterModel.states) || voterModel.states.length === 0) return voterModel;
+    const is1to1 = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10000000);
+    const mult = is1to1 ? 1 : 100;
+    const currentTotal = voterModel.states.reduce((acc, st) => acc + Number(st.representedVoters || 0), 0);
+    if (currentTotal <= 0) return voterModel;
+
+    const prevBaseline = Number(voterModel.cycleBaselineVoters || currentTotal);
+    const targetTotal = Math.round(prevBaseline * (1 + growthRate));
+    const remainingDemand = Math.max(0, targetTotal - currentTotal);
+
+    if (remainingDemand > 0) {
+      const indFacIds = Array.isArray(gameFactions)
+        ? gameFactions.filter((f) => f && (['independent', 'none', 'unaffiliated'].includes(f.partyId) || String(f.id).startsWith('swg_'))).map((f) => f.id)
+        : [];
+      let distributed = 0;
+      voterModel.states.forEach((st, idx) => {
+        const share = Number(st.representedVoters || 0) / currentTotal;
+        const addRep = (idx === voterModel.states.length - 1)
+          ? Math.max(0, remainingDemand - distributed)
+          : Math.round(remainingDemand * share);
+        distributed += addRep;
+        if (addRep <= 0) return;
+
+        st.representedVoters = Number(st.representedVoters || 0) + addRep;
+        const addSample = is1to1 ? addRep : Math.round(addRep / mult);
+        st.sampleVoters = Number(st.sampleVoters || 0) + addSample;
+        st.affiliations = st.affiliations || {};
+        st.affiliations.independent = Number(st.affiliations.independent || 0) + addSample;
+
+        // Grow independent/swing factions proportionally to match remaining demand
+        if (st.factions) {
+          const stIndKeys = indFacIds.length
+            ? indFacIds.filter((fid) => st.factions[fid] !== undefined)
+            : Object.keys(st.factions).filter((fid) => String(fid).startsWith('swg_'));
+          if (stIndKeys.length > 0) {
+            const stIndSum = stIndKeys.reduce((s, fid) => s + Math.max(1, Number(st.factions[fid] || 0)), 0);
+            let fDist = 0;
+            stIndKeys.forEach((fid, fi) => {
+              const fAdd = (fi === stIndKeys.length - 1)
+                ? Math.max(0, addRep - fDist)
+                : Math.round(addRep * (Math.max(1, Number(st.factions[fid] || 0)) / stIndSum));
+              fDist += fAdd;
+              st.factions[fid] = Number(st.factions[fid] || 0) + fAdd;
+            });
+          }
+        }
+      });
+    }
+
+    voterModel.cycleBaselineVoters = Math.max(targetTotal, currentTotal);
+    renormalizeElectorateHareNiemeyer(voterModel, voterModel.cycleBaselineVoters);
     return voterModel;
   }
 
@@ -474,6 +600,7 @@
     applyInterstateMigration,
     applyGenerationalTurnover,
     renormalizeElectorateHareNiemeyer,
+    applyCyclePopulationGrowth,
   };
 
   if (typeof window !== 'undefined') {
@@ -483,6 +610,7 @@
     window.PartyChairData.applyInterstateMigration = applyInterstateMigration;
     window.PartyChairData.applyGenerationalTurnover = applyGenerationalTurnover;
     window.PartyChairData.renormalizeElectorateHareNiemeyer = renormalizeElectorateHareNiemeyer;
+    window.PartyChairData.applyCyclePopulationGrowth = applyCyclePopulationGrowth;
   }
 
   if (typeof module !== 'undefined' && module.exports) {
