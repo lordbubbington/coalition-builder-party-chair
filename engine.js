@@ -21063,7 +21063,12 @@ function saveGame(game) {
 
 function normalizeGame(parsed) {
   ensureV07DataBridges();
-  if (!parsed || (parsed.schema !== undefined && ![1, 2, 3, 4, 5, 6, 7].includes(parsed.schema)) || !parsed.player || !Number.isFinite(parsed.year)) return null;
+  // [v0.18.5 SAVE-MIGRATIONS]
+  const _smMod = (typeof window !== 'undefined' && window.SaveMigrations) || (typeof global !== 'undefined' && global.SaveMigrations);
+  if (_smMod && typeof _smMod.migrateSaveObject === 'function' && parsed && typeof parsed === 'object') {
+    parsed = _smMod.migrateSaveObject(parsed);
+  }
+  if (!parsed || (parsed.schema !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8].includes(parsed.schema)) || !parsed.player || !Number.isFinite(parsed.year)) return null;
   const primaryHandoffSave = !parsed.phase && Boolean(parsed.primariesResolved);
   const allArch = allPartyArchetypes();
   const existingRivals = Array.isArray(parsed.rivals) ? parsed.rivals : [];
@@ -21672,6 +21677,10 @@ function normalizeGame(parsed) {
   const _cesNorm = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
   if (_cesNorm && typeof _cesNorm.normalizeCampaignEvents === 'function') {
     ready = _cesNorm.normalizeCampaignEvents(ready);
+  }
+  // [v0.18.5 SAVE-MIGRATIONS]
+  if (_smMod && typeof _smMod.validateAndRepairSave === 'function') {
+    ready = _smMod.validateAndRepairSave(ready);
   }
 
   return ready;

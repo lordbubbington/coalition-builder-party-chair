@@ -52,6 +52,8 @@ try {
         (Join-Path $projectDir 'leading-faction-system.js'),
         (Join-Path $projectDir 'faction-era-stability.js'),
         (Join-Path $projectDir 'v0185-playtest-fixes.js'),
+        # [v0.18.5 SAVE-MIGRATIONS]
+        (Join-Path $projectDir 'save-migrations.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
