@@ -549,8 +549,10 @@
       return 4;
     }
 
-    // Tier 3: Federally Recognized Party (>= 3.5% Pres Vote OR 25+ pres ballot states & 5+ federal seats)
-    if ((lastPresShare !== null && lastPresShare >= 3.5) || (presBallotCount >= 25 && federalSeats >= 5)) {
+    // Tier 3: Federally Recognized Party (>= 3.5% Pres Vote OR 25+ pres ballot states & 5+ federal seats OR statehouse farm team bridge: 18+ pres ballot states & 5+ federal/statehouse seats)
+    const stateLegSeatsCount = Object.values(game?.stateHouseSeatCounts || {}).reduce((sum, row) => sum + Number(row?.[resolvedKey] || 0), 0);
+    const standoutsCount = (game?.stateLegStandouts?.[resolvedKey] || []).length;
+    if ((lastPresShare !== null && lastPresShare >= 3.5) || (presBallotCount >= 25 && federalSeats >= 5) || (presBallotCount >= 18 && (federalSeats * 2 + stateLegSeatsCount + standoutsCount) >= 5)) {
       return 3;
     }
 

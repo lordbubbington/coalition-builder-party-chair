@@ -565,7 +565,7 @@
       }
     }
 
-    // Longest-serving official fallback from live sittingMembers
+    // Longest-serving official fallback from live sittingMembers or atmospheric fallback (Chunk 2.5)
     let longestOfficial = game.legacyMeta?.longestServingOfficial || null;
     if (!longestOfficial) {
       const curYear = Number(game.year || 2028);
@@ -579,6 +579,28 @@
           party: pId,
           yearsServed: Math.max(2, Number(bestM.terms || 1) * 2),
           startYear: curYear - Math.max(2, Number(bestM.terms || 1) * 2),
+        };
+      } else {
+        // Chunk 2.5: Atmospheric fallback for minor parties with 0 seats won
+        const appointedChairId = game.leadershipRoles?.[pId]?.chair || (pId === 'player' ? game.leadershipRoles?.player?.chair : null);
+        const allRoster = [...(game.sittingMembers || []), ...(game.generatedMembers || []), ...(game.roster || [])];
+        const chairMember = appointedChairId ? allRoster.find((m) => m && m.id === appointedChairId) : null;
+        const recurringNominee = (game.primaryResults || []).find((pr) => pr && (pr.partyId === pId || pr.party === pId))?.candidateName
+          || (game.presidentialTicket?.[pId])
+          || (game.player?.custom ? game.player.candidateName : null);
+        const meta = getPartyMeta(game, pId);
+        const fallbackName = chairMember?.name || game.player?.chairName || (recurringNominee ? `${recurringNominee}` : `${meta.short} National Committee Chair`);
+        const fallbackOffice = chairMember ? 'National Committee Chair' : (recurringNominee ? 'Standard-Bearer Nominee' : 'National Committee Officer');
+        const fallbackState = chairMember?.stateId || chairMember?.state || 'National Headquarters';
+        const elapsedYears = Math.max(2, curYear - 2028 + 2);
+        longestOfficial = {
+          name: fallbackName,
+          office: fallbackOffice,
+          state: fallbackState,
+          party: pId,
+          yearsServed: elapsedYears,
+          startYear: 2028,
+          isAtmosphericFallback: true,
         };
       }
     }
@@ -1609,6 +1631,7 @@
     compactAtlasForSave,
     recordAtlasSnapshot,
     computeChairLegacy,
+    generateLegacySummary: computeChairLegacy,
     initHotseatMultiplayer,
     isMultiplayerEnabled,
     getActiveHumanPartyId,

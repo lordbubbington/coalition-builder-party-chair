@@ -1298,7 +1298,7 @@
     ],
     "flavor": "These voters don’t think the government should exist.",
     "isExtremist": true,
-    "startingHappiness": 30,
+    "startingHappiness": 48,
     "cohesion": 0.95,
     "growthProfile": {
       "archetype": "high_elasticity_frontier",
@@ -1313,6 +1313,47 @@
         "ID",
         "MT",
         "NV",
+        "FL"
+      ]
+    }
+  },
+  {
+    "id": "lib_classical_liberals",
+    "name": "Classical Liberals & Civil Libertarians",
+    "partyId": "liberty",
+    "type": "ideological",
+    "status": "minor",
+    "targetVoters": 350000,
+    "sliders": {
+      "social": 3.5,
+      "economic": 7.5,
+      "governance": 3.0
+    },
+    "keyIssues": [
+      "Free Trade",
+      "Civil Liberties"
+    ],
+    "redLineIssues": [
+      "federal-debt-expansion"
+    ],
+    "flavor": "Advocates of free trade, constitutional limits, and civil liberties who favor a pragmatic constitutional framework.",
+    "isExtremist": false,
+    "startingHappiness": 65,
+    "cohesion": 0.82,
+    "growthProfile": {
+      "archetype": "suburban_professional",
+      "archetypeCluster": [
+        "free_market",
+        "civil_liberties"
+      ],
+      "demographicAppeal": 1.25,
+      "regionalRelevance": [
+        "NH",
+        "CO",
+        "VA",
+        "AZ",
+        "NV",
+        "TX",
         "FL"
       ]
     }
@@ -1638,6 +1679,7 @@
   "Girlypops": "swg_girlypops",
   "True Libertarians": "lib_true_libertarians",
   "Ancaps": "lib_ancaps",
+  "Classical Liberals & Civil Libertarians": "lib_classical_liberals",
   "Eco-Socialist Vanguard": "grn_eco_socialist_vanguard",
   "YIMBYs": "grn_yimby",
   "Christian Dominionists & Theocrats": "con_christian_dominionists",
@@ -3528,6 +3570,7 @@
   "swg_girlypops": 2500500,
   "lib_true_libertarians": 989000,
   "lib_ancaps": 197800,
+  "lib_classical_liberals": 350000,
   "grn_eco_socialist_vanguard": 398700,
   "con_christian_dominionists": 235600,
   "unaff_groypers": 200000,
