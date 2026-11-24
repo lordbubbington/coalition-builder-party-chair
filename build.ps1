@@ -60,6 +60,8 @@ try {
         (Join-Path $projectDir 'custom-party-core.js'),
         (Join-Path $projectDir 'faction-core.js'),
         (Join-Path $projectDir 'ui-setup-views.js'),
+        # [OFF-CYCLE]
+        (Join-Path $projectDir 'off-cycle-interlude.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

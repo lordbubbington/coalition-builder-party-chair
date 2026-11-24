@@ -6069,8 +6069,9 @@ function actionsTabMarkup() {
         <p class="section-intro">Inspect final maps in the <b>Map</b> tab, state results in <b>States</b>, or Electoral College & Forecaster history in <b>Forecast</b>.</p>
         <div class="inline-controls" style="margin-top:14px">
           <button type="button" class="button button-gold" id="btn-view-autopsy-report">View Post-Election Autopsy Report →</button>
-          <button type="button" class="button button-gold" id="start-next-cycle">Start Next Cycle (${(game.year || 2028) + 2}) →</button>
-          <button type="button" class="button button-gold" data-main-tab="map">Inspect Final Maps →</button>
+          <button type="button" class="button button-gold" id="start-off-cycle-interlude">Proceed to ${(game.year || 2028) + 1} Off-Cycle Interlude →</button><!-- [OFF-CYCLE] -->
+          <button type="button" class="button" id="start-next-cycle">Skip to ${(game.year || 2028) + 2} Federal Cycle →</button>
+          <button type="button" class="button" data-main-tab="map">Inspect Final Maps →</button>
           <button type="button" class="button" data-main-tab="forecast">Review Election Forecast →</button>
         </div>
       </section>`;
@@ -10425,6 +10426,14 @@ function render() {
     bind();
     return;
   }
+  // [OFF-CYCLE] Render dedicated Off-Cycle Interlude screen & Decision Desk
+  if (game && game.phase === 'off-cycle-interlude' && window.OffCycleInterludeSystem) {
+    app.innerHTML = window.OffCycleInterludeSystem.renderScreen(game) + renderSaveSlotsModalMarkup();
+    if (game) saveGame(game);
+    bind();
+    window.OffCycleInterludeSystem.bindUI(game, { setGame: (g) => { game = g; }, render, saveGame });
+    return;
+  }
   const gameOverOverlay = (game && game.gameOver) ? `
     <div id="party-collapse-gameover-modal" style="position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,0.88);display:flex;align-items:center;justify-content:center;padding:24px">
       <div style="max-width:520px;width:100%;background:#0f172a;border:2px solid #ef4444;border-radius:12px;padding:28px;color:#f8fafc;box-shadow:0 24px 60px rgba(0,0,0,0.65);text-align:center">
@@ -11546,6 +11555,14 @@ function bind() {
   document.querySelector('#btn-finalize-convention')?.addEventListener('click', () => {
     dispatchAction('convention-finalize');
     render();
+  });
+
+  // [OFF-CYCLE] Enter off-cycle-interlude directly from post-election screen
+  document.querySelector('#start-off-cycle-interlude')?.addEventListener('click', () => {
+    dispatchAction('start-off-cycle-interlude');
+    if (game && typeof saveGame === 'function') saveGame(game);
+    render();
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') window.scrollTo(0, 0);
   });
 
   // Post-Election: Start Next Cycle (2030)

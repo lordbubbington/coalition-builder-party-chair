@@ -127,6 +127,23 @@ function getDemographicsEngine() {
   return null;
 }
 
+// [OFF-CYCLE] Dynamic resolver for OffCycleInterludeSystem
+function getOffCycleSystem() {
+  if (typeof window !== 'undefined' && window.OffCycleInterludeSystem) {
+    return window.OffCycleInterludeSystem;
+  }
+  if (typeof global !== 'undefined' && global.OffCycleInterludeSystem) {
+    return global.OffCycleInterludeSystem;
+  }
+  if (typeof globalThis !== 'undefined' && globalThis.OffCycleInterludeSystem) {
+    return globalThis.OffCycleInterludeSystem;
+  }
+  if (typeof require !== 'undefined') {
+    try { return require('./off-cycle-interlude.js'); } catch {}
+  }
+  return null;
+}
+
 const FALLBACK_MINOR_ARCHETYPES = [
   { id: 'constitution', name: 'Constitution Party', color: '#a84214', baseShare: 0.2, economic: 0.55, social: 0.85, climate: -0.65, local: 0.7, isMajor: false, lastPresidentialShare: 0.15, startingBudget: 10, description: 'A nationalist-populist and faith-and-flag constitutionalist party targeting disaffected MAGA voters.' },
   { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.88, social: -0.6, climate: 0.72, local: -0.25, isMajor: false, lastPresidentialShare: 0.15, startingBudget: 10, description: 'A labor-progressive eco-socialist and anti-war coalition competing for militant union and activist voters.' },
@@ -15180,7 +15197,8 @@ function startNextCycleInternal(game) {
   if (game && game.pollingMissReport) {
     game = { ...game, pollingMissReport: null };
   }
-  if (game.phase !== 'complete') return game;
+  // [OFF-CYCLE] Allow seamless handoff from either post-election 'complete' or 'off-cycle-interlude'
+  if (game.phase !== 'complete' && game.phase !== 'off-cycle-interlude') return game;
   const nextYear = (game.year || 2028) + 2;
   const nextCycleType = (nextYear % 4 === 0) ? 'presidential' : 'midterm';
   const nextSenateClass = getSenateClassForYear(nextYear);
@@ -15719,7 +15737,7 @@ function startNextCycleInternal(game) {
       const _liveSitIds = new Set(updatedSittingMembers.map((m) => m && m.id).filter(Boolean));
       const _prunedPols = (game.politicians || []).filter((p) => {
         if (!p) return false;
-        if (_liveSitIds.has(p.id) || p.isFormerPresident) return true;
+        if (_liveSitIds.has(p.id) || p.isFormerPresident || p.isScoutedPrimaryRecruit) return true;
         if ((p.retired || p.isRetired) && (nextYear - Number(p.retiredYear || nextYear)) >= 2) return false;
         return true;
       });
@@ -15727,7 +15745,7 @@ function startNextCycleInternal(game) {
       const _keepNonSitIds = new Set(
         _nonSitCap.slice().sort((a, b) => Number(b.fame || 0) - Number(a.fame || 0)).slice(0, 220).map((p) => p.id)
       );
-      return _prunedPols.filter((p) => _liveSitIds.has(p.id) || p.isFormerPresident || _keepNonSitIds.has(p.id));
+      return _prunedPols.filter((p) => _liveSitIds.has(p.id) || p.isFormerPresident || p.isScoutedPrimaryRecruit || _keepNonSitIds.has(p.id));
     })(),
     councilOfElders,
     factionStandings: nextFactionStandings,
@@ -15910,7 +15928,30 @@ function startNextCycleInternal(game) {
   syncedCycle.vpScandalTriggered = false;
   // [v0.18.4 COALITION-POLITICS] Process patronage approval/scandal & diplomacy pact expiry
   const cpsCyc = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
-  const finalCycle = cpsCyc?.processCycleTransition ? cpsCyc.processCycleTransition(syncedCycle) : syncedCycle;
+  let finalCycle = cpsCyc?.processCycleTransition ? cpsCyc.processCycleTransition(syncedCycle) : syncedCycle;
+  // [OFF-CYCLE] Apply pendingBellwetherBonus when entering year + 2 organizing phase
+  if (finalCycle.pendingBellwetherBonus && !finalCycle.pendingBellwetherBonus.applied) {
+    const _ocEnd = getOffCycleSystem();
+    if (_ocEnd?.applyBellwetherBonusToCycleState) {
+      finalCycle = _ocEnd.applyBellwetherBonusToCycleState(finalCycle);
+    } else {
+      const _bw = finalCycle.pendingBellwetherBonus;
+      const _pSign = playerIdentity === 'heritage' ? -1 : (playerIdentity === 'people' ? 1 : 0);
+      const _bwWave = clamp(Number(_bw.bellwetherWave || 0), -3.5, 3.5);
+      finalCycle = {
+        ...finalCycle,
+        nationalEnvironment: clamp(round(Number(finalCycle.nationalEnvironment || 0) + _bwWave * _pSign, 2), -25, 25),
+        treasury: Math.max(0, round(Number(finalCycle.treasury || 0) + Number(_bw.donorDelta || 0), 1)),
+        waveMomentum: clamp(round(Number(finalCycle.waveMomentum || 0) + _bwWave, 2), -10, 10),
+        campaign: finalCycle.campaign ? { ...finalCycle.campaign, waveBonus: round(Number(finalCycle.campaign.waveBonus || 0) + _bwWave, 2) } : finalCycle.campaign,
+      };
+    }
+  }
+  finalCycle = {
+    ...finalCycle,
+    pendingBellwetherBonus: null,
+    offCycle: finalCycle.offCycle ? { ...finalCycle.offCycle, active: false } : (finalCycle.offCycle ?? null),
+  };
   return {
     ...finalCycle,
     partyApprovals: computeUnifiedPartyApproval(finalCycle),
@@ -18875,6 +18916,22 @@ function takeActionInternal(game, actionId, payload = {}) {
   // CAMPAIGN & COALITION GRAND-STRATEGY ACTIONS
   // ============================================================================
   if (actionId === 'start-next-cycle') return startNextCycle(game);
+  // [OFF-CYCLE] Route off-cycle interlude initialization & actions
+  if (actionId === 'start-off-cycle-interlude' || actionId === 'enter-off-cycle-interlude' || actionId === 'off-cycle-init') {
+    const _ocSys = getOffCycleSystem();
+    if (_ocSys && typeof _ocSys.initializeOffCycleInterlude === 'function') {
+      return _ocSys.initializeOffCycleInterlude(game, payload?.oddYear || ((game.year || 2028) + 1));
+    }
+    return game;
+  }
+  if (typeof actionId === 'string' && (actionId.startsWith('off-cycle-') || actionId.startsWith('oc-'))) {
+    const _ocSys = getOffCycleSystem();
+    if (_ocSys && typeof _ocSys.handleAction === 'function') {
+      const _ocRes = _ocSys.handleAction(game, actionId, payload);
+      if (_ocRes) return _ocRes;
+    }
+    return game;
+  }
   if (actionId === 'start-campaign' || actionId === 'start-campaign-phase') {
     const yr = Number(game?.year || 2028);
     const pKey = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
@@ -18997,7 +19054,7 @@ function takeActionInternal(game, actionId, payload = {}) {
   if (actionId === 'election-night-complete') {
     if (!game.electionNight) return game;
     const hasCoalitionModal = game.partySystems?.pendingModal === 'coalition';
-    return {
+    const completed = {
       ...game,
       phase: 'complete',
       electionNight: {
@@ -19007,6 +19064,11 @@ function takeActionInternal(game, actionId, payload = {}) {
       },
       activeAutopsyModal: !hasCoalitionModal,
     };
+    // [OFF-CYCLE] Enter off-cycle-interlude directly when requested or enabled
+    if ((payload?.enterOffCycle || game.offCycleEnabled) && getOffCycleSystem()?.initializeOffCycleInterlude) {
+      return getOffCycleSystem().initializeOffCycleInterlude(completed, (completed.year || 2028) + 1);
+    }
+    return completed;
   }
   // REC-02, REC-03, REC-06: Opposition Subversion, Courtship Dialogue, Independent Courting & Voluntary Expulsion
   if (actionId === 'open-courtship-dialogue') {
@@ -21351,6 +21413,16 @@ function advanceYear(game) {
   if (game && game.pollingMissReport) {
     game = { ...game, pollingMissReport: null };
   }
+  // [OFF-CYCLE] Hand off completed off-cycle interlude into next 2-year federal cycle (+pendingBellwetherBonus)
+  if (game && game.phase === 'off-cycle-interlude') {
+    const _ocSys = getOffCycleSystem();
+    let ready = game;
+    if (ready.offCycle && !ready.offCycle.resolved && _ocSys?.resolveOffCycleInterlude) {
+      ready = _ocSys.resolveOffCycleInterlude(ready);
+    }
+    const closed = ready.offCycle ? { ...ready.offCycle, active: false } : null;
+    return startNextCycle({ ...ready, offCycle: closed });
+  }
   if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
@@ -21395,7 +21467,16 @@ function advanceYear(game) {
     : ` ${leaderState.roster.length} leaders carried forward.`;
   if (expiredBill) next.lastNote += ` ${expiredBill.name} expired at the end of the session.`;
   next.yearLog = [...(closing.yearLog || []), { year: closing.year, action: next.lastNote }].slice(-40);
-  return refreshOffers({ ...next, ...leaderState }, nextSeed);
+  let out = refreshOffers({ ...next, ...leaderState }, nextSeed);
+  // [OFF-CYCLE] Apply pendingBellwetherBonus on legacy advanceYear path if present
+  if (out.pendingBellwetherBonus && !out.pendingBellwetherBonus.applied) {
+    const _ocLeg = getOffCycleSystem();
+    if (_ocLeg?.applyBellwetherBonusToCycleState) {
+      out = _ocLeg.applyBellwetherBonusToCycleState(out);
+    }
+    out = { ...out, pendingBellwetherBonus: null, offCycle: out.offCycle ? { ...out.offCycle, active: false } : null };
+  }
+  return out;
 }
 
 function advanceMemberCohorts(game) {
@@ -21807,7 +21888,10 @@ function normalizeGame(parsed) {
   }
   ready.schema = 7;
   if (parsed.activePresidentialPrimary) ready.activePresidentialPrimary = parsed.activePresidentialPrimary;
-  if (parsed.phase === 'presidential-primary' || parsed.phase === 'election-night') ready.phase = parsed.phase;
+  if (parsed.phase === 'presidential-primary' || parsed.phase === 'election-night' || parsed.phase === 'off-cycle-interlude') ready.phase = parsed.phase;
+  // [OFF-CYCLE] Preserve offCycle interlude & pendingBellwetherBonus across save/reload
+  if (parsed.offCycle && typeof parsed.offCycle === 'object') ready.offCycle = parsed.offCycle;
+  if (parsed.pendingBellwetherBonus && typeof parsed.pendingBellwetherBonus === 'object') ready.pendingBellwetherBonus = parsed.pendingBellwetherBonus;
   ready.version = '0.18.6';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
@@ -23286,6 +23370,11 @@ window.PartyChairEngine = {
   isNpvicActive,
   joinNpvic,
   leaveNpvic,
+  // [OFF-CYCLE] Exports
+  getOffCycleSystem,
+  initializeOffCycleInterlude: (game, oddYear) => getOffCycleSystem()?.initializeOffCycleInterlude?.(game, oddYear) || game,
+  resolveOffCycleInterlude: (game) => getOffCycleSystem()?.resolveOffCycleInterlude?.(game) || game,
+  completeOffCycleInterlude: (game) => getOffCycleSystem()?.completeOffCycleInterlude?.(game) || game,
 };
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = window.PartyChairEngine;
