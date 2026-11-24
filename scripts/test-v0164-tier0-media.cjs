@@ -88,8 +88,8 @@ assert(env.Engine.computeWaveMomentum(waveGame) <= 0.0, 'Tier 0 wave momentum ca
 
 const t0DefLow = env.Engine.computeStrategicDefection(conGame, 'constitution', 'PA', 'presidential', 1.0);
 const t0DefHigh = env.Engine.computeStrategicDefection(conGame, 'constitution', 'PA', 'presidential', 15.0);
-assert(t0DefLow.defectionRate >= 0.75 && t0DefLow.defectionRate <= 0.85, 'Tier 0 defection near 0% in 75%-85% band: ' + t0DefLow.defectionRate);
-assert(t0DefHigh.defectionRate >= 0.75 && t0DefHigh.defectionRate <= 0.85, 'Tier 0 defection near threshold in 75%-85% band: ' + t0DefHigh.defectionRate);
+assert(t0DefLow.defectionRate >= 0.52 && t0DefLow.defectionRate <= 0.6667, 'Tier 0 defection near 0% in 52%-66.67% band (>=1/3 retained): ' + t0DefLow.defectionRate);
+assert(t0DefHigh.defectionRate >= 0.52 && t0DefHigh.defectionRate <= 0.6667, 'Tier 0 defection near threshold in 52%-66.67% band (>=1/3 retained): ' + t0DefHigh.defectionRate);
 
 const t1Def = env.Engine.computeStrategicDefection(libGame, 'liberty', 'PA', 'presidential', 2.0);
 assert(t1Def.defectionRate >= 0.42 && t1Def.defectionRate <= 0.65, 'Tier 1 defection preserved in 42%-65% band: ' + t1Def.defectionRate);

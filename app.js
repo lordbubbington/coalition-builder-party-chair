@@ -531,9 +531,10 @@ function pollingMarginColor(canonicalPartyId, margin, fallbackColor = '#9333ea')
   return proceduralCustomColor(tierHint, fallbackColor);
 }
 
-function getStatePollingBreakdown(stateObj, districtObj = null) {
+function getStatePollingBreakdown(stateObj, districtObj = null, raceId = null) {
   const fullState = STATES.find((s) => s.id === (stateObj?.id || stateObj)) || stateObj;
-  const rawSupport = fullState ? supportByState(game, fullState) : {};
+  // [v0.18.4 MINOR-PARTY-FIXES] Pass raceId when polling downballot contests so ballot-certified minor parties show real shares
+  const rawSupport = fullState ? supportByState(game, fullState, raceId ? { raceId } : undefined) : {};
   const parties = partyList(game);
   const rows = parties.map((p) => {
     const canonicalId = (p.id === 'player' && !p.custom) ? (p.baseTemplateId || 'people') : p.id;
@@ -571,7 +572,8 @@ function getStatePollingBreakdown(stateObj, districtObj = null) {
   const leader = sorted[0] || { canonicalId: 'people', shortName: 'Dem', color: '#3478c8', share: 50 };
   const runnerUp = sorted[1] || { canonicalId: 'heritage', shortName: 'Rep', color: '#c9474e', share: 50 };
   const margin = leader.share - runnerUp.share;
-  const visible = sorted.filter((r, idx) => idx < 2 || r.share >= 0.5);
+  // [v0.18.4 MINOR-PARTY-FIXES] Always include the player's own party in race polling breakdowns even below 0.5%
+  const visible = sorted.filter((r, idx) => idx < 2 || r.id === 'player' || r.share >= 0.5);
   const summaryText = visible.map((r) => `${r.shortName}: ${r.share.toFixed(1)}%`).join(' · ');
   return { sorted, leader, runnerUp, margin, summaryText };
 }
@@ -6150,7 +6152,7 @@ function nationalMapSvg(mode, options = {}) {
         if (isPollingMode) {
           const stObj = STATES.find((s) => s.id === stateId);
           const dMeta = distMetaMap.get(district.id) || distMetaMap.get(district.id.replace(/-0(\d)$/, '-$1'));
-          const bd = getStatePollingBreakdown(stObj, dMeta);
+          const bd = getStatePollingBreakdown(stObj, dMeta, `house:${district.id}`);
           const fillColor = pollingMarginColor(bd.leader.canonicalId, bd.margin, bd.leader.color);
           const title = `${district.id} — ${bd.summaryText}${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}`;
           return `<path style="fill:${fillColor}" class="map-district" d="${district.q.split('!').map(decodePath).join('')}" data-map-state="${district.stateId || district.id}" tabindex="0"><title>${safe(title)}</title></path>`;
@@ -6337,6 +6339,12 @@ function nationalMapSvg(mode, options = {}) {
             const noGovTitle = `${state.name || state.id} · No Gubernatorial election contested this cycle`;
             return `<path style="fill:#334155" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(noGovTitle)}</title></path>`;
           }
+          if (isPollingMode) {
+            const bd = getStatePollingBreakdown(state, null, `governor:${state.id}`);
+            const fillColor = pollingMarginColor(bd.leader.canonicalId, bd.margin, bd.leader.color);
+            const govTitle = `${state.name || state.id} Gubernatorial — ${bd.summaryText} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`;
+            return `<path style="fill:${fillColor}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(govTitle)}</title></path>`;
+          }
           const k = `governor:${state.id}`;
           const r = activeOutletData[k] || consensusRating(game.forecasters?.sallow?.[k], game.forecasters?.cooked?.[k], game.forecasters?.inside?.[k]) || 'Toss-Up';
           const fillColor = ratingColor(r);
@@ -6358,7 +6366,7 @@ function nationalMapSvg(mode, options = {}) {
           }
           const incName = seat?.incumbent || seat?.label || 'Contested Seat';
           if (isPollingMode) {
-            const bd = getStatePollingBreakdown(state);
+            const bd = getStatePollingBreakdown(state, null, `senate:${state.id}`);
             const fillColor = pollingMarginColor(bd.leader.canonicalId, bd.margin, bd.leader.color);
             const seatTitle = `${state.id} Senate (Class ${seat.classNum}: ${incName}) — ${bd.summaryText} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`;
             return `<path style="fill:${fillColor}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(seatTitle)}</title></path>`;
@@ -6385,7 +6393,7 @@ function nationalMapSvg(mode, options = {}) {
           return `<path style="fill:#475569" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(neTitle)}</title></path>`;
         }
         if (isPollingMode) {
-          const bd = getStatePollingBreakdown(state);
+          const bd = getStatePollingBreakdown(state, null, `state-leg:${state.id}`);
           const fillColor = pollingMarginColor(bd.leader.canonicalId, bd.margin, bd.leader.color);
           const legTitle = `${state.id} State Legislature — ${bd.summaryText} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`;
           return `<path style="fill:${fillColor}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(legTitle)}</title></path>`;

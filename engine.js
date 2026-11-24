@@ -6782,22 +6782,28 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
     return { defectionRate: 0, defectedShare: 0, retainedShare: round(share, 2), recipientPartyId: null, threshold, regionalRelief: spillover.active, bypassed: true, reason: 'above-viability-threshold' };
   }
 
-  // Below threshold: Tier 0 ("Radioactive Squeeze") suffers 75%-85% base defection; Tier 1+ suffers 42%-65%
+  // [v0.18.4 MINOR-PARTY-FIXES] Cap strategic defection at 2/3 (<= 66.67%) so at least 1/3 of voters always stick
+  const MAX_DEFECTION_RATE = 2 / 3;
   const partyTier = getPartyInstitutionalTier(game, resolved);
   const distRatio = clamp((threshold - share) / Math.max(1, threshold), 0, 1);
   let defectionRate;
   if (partyTier <= 0) {
-    defectionRate = 0.75 + 0.10 * distRatio; // 75% right under threshold -> 85% near 0%
-    defectionRate = round(clamp(defectionRate * eraDefMult, 0.75, 0.85), 4);
+    defectionRate = 0.52 + (MAX_DEFECTION_RATE - 0.52) * distRatio; // 52% right under threshold -> 66.67% near 0%
+    if (spillover.active) {
+      defectionRate *= 0.5;
+    }
+    defectionRate = round(clamp(defectionRate * eraDefMult, 0, MAX_DEFECTION_RATE), 4);
   } else {
     defectionRate = 0.42 + 0.23 * distRatio; // 42% right under threshold -> 65% near 0%
     if (spillover.active) {
       defectionRate *= 0.5; // Regional snowball halves defection severity
     }
-    defectionRate = round(clamp(defectionRate * eraDefMult, 0, 0.65), 4);
+    defectionRate = round(clamp(defectionRate * eraDefMult, 0, Math.min(0.65, MAX_DEFECTION_RATE)), 4);
   }
-  const defectedShare = round(share * defectionRate, 2);
-  const retainedShare = round(Math.max(0, share - defectedShare), 2);
+  const minRetained = round(share / 3, 2);
+  const rawDefected = round(share * defectionRate, 2);
+  const retainedShare = round(Math.max(minRetained, share - rawDefected), 2);
+  const defectedShare = round(Math.max(0, share - retainedShare), 2);
   const recipientPartyId = getNearestMajorParty(game, resolved);
 
   return {
@@ -8738,7 +8744,7 @@ function factionPenalty(game) {
   return Math.min(9, FACTIONS.reduce((total, faction) => total + Math.max(0, 45 - (game.factionStandings[faction.id] ?? 55)) * 0.28, 0));
 }
 
-function supportByState(game, state) {
+function supportByState(game, state, options = {}) {
   const player = game.player;
   const org = organizationFor(game, player);
   const stateId = state.stateId || state.id;
@@ -8884,9 +8890,10 @@ function supportByState(game, state) {
       const candMod = pseSup.getCandidateMarginModifier(game, nominee, stateId, { partyId: identityId });
       if (candMod) rawScore = Math.max(minFloor, rawScore + candMod * 0.5);
     }
-    // REQ-258 Part 1: Strict Ballot Access Zero-Polling Invariant
+    // REQ-258 Part 1 & [v0.18.4 MINOR-PARTY-FIXES]: Check contest-specific ballot access when raceId is provided
     const ballotCheckId = sameAsPlayer ? (game.player?.baseTemplateId || party.id) : party.id;
-    if (!hasBallotAccess(game, ballotCheckId, 'presidential:' + stateId) && !hasBallotAccess(game, party.id, 'presidential:' + stateId)) {
+    const ballotRaceKey = options?.raceId || ('presidential:' + stateId);
+    if (!hasBallotAccess(game, ballotCheckId, ballotRaceKey) && !hasBallotAccess(game, party.id, ballotRaceKey)) {
       return 0.0;
     }
     // v0.18.2 (#10, #16): Apply Spoiler Wedge minor-party boost & multi-party 3-cycle chapter cushion
@@ -10531,10 +10538,23 @@ function encourageStateRecruit(game, payload) {
   const note = hasStandout
     ? `${recruit.name} (Sitting State Lawmaker) advanced to the ${targetPartyName} primary without recruitment fee ($0). Quality ${recruit.quality}/10.`
     : `${recruit.name} entered the ${targetPartyName} primary for $${cost}M. Recruit quality ${recruit.quality}/10.`;
+  // [v0.18.4 MINOR-PARTY-FIXES] Certify downballot ballot access for the contested race so recruited candidates are never silently wiped at primary resolution
+  const nextBallotAccess = JSON.parse(JSON.stringify(game.ballotAccess || buildStartingBallotAccess(game.seed)));
+  const nextContestedStatewide = { ...(game.contestedStatewideOffices || {}) };
+  const _baKey = targetParty === 'player' && !game.player?.custom ? (game.player?.baseTemplateId || 'player') : targetParty;
+  nextBallotAccess[_baKey] = nextBallotAccess[_baKey] || { senate: {}, governor: {}, house: {}, leg: {}, presidential: {} };
+  const [_rk, _rt] = String(raceId || '').split(':');
+  if (_rk === 'senate' && _rt) { nextBallotAccess[_baKey].senate = { ...(nextBallotAccess[_baKey].senate || {}), [_rt]: true }; }
+  else if (_rk === 'governor' && _rt) { nextBallotAccess[_baKey].governor = { ...(nextBallotAccess[_baKey].governor || {}), [_rt]: true }; }
+  else if (_rk === 'house' && _rt) { nextBallotAccess[_baKey].house = { ...(nextBallotAccess[_baKey].house || {}), [_rt]: true }; }
+  else if ((_rk === 'state-leg' || _rk === 'stateLeg') && _rt) { nextBallotAccess[_baKey].leg = { ...(nextBallotAccess[_baKey].leg || {}), [_rt]: true }; }
+  else if (_rk === 'statewide' && _rt) { nextContestedStatewide[_rt] = true; }
   return {
     ...game,
     actionsLeft: game.actionsLeft - 1,
     treasury: round(game.treasury - cost, 1),
+    ballotAccess: nextBallotAccess,
+    contestedStatewideOffices: nextContestedStatewide,
     primaryFields: { ...(game.primaryFields || {}), [raceId]: { ...(game.primaryFields?.[raceId] || {}), [targetParty]: nextField } },
     recruitedCandidates: [...(game.recruitedCandidates || []), { ...recruit, partyId: targetParty, raceId, cost }],
     stateLegStandouts: updatedStandouts,
@@ -10710,7 +10730,19 @@ function resolveVersion01Primaries(game) {
     failedCandidates: (game.recruitedCandidates || []).filter((candidate) => !results.some((result) => result.raceId === candidate.raceId && result.partyId === candidate.partyId && result.winnerId === candidate.id)).map((candidate) => candidate.id),
     actionsLeft: ACTIONS_PER_YEAR,
     eventResolved: true,
-    primaryResultSummary: `${results.length} party primaries resolved across House, Senate, gubernatorial, and state legislative races.`,
+    ...(() => {
+      // [v0.18.4 MINOR-PARTY-FIXES] Surface explicit notice if any recruited candidate lost or was disqualified in primaries
+      const failedList = (game.recruitedCandidates || []).filter((c) => !results.some((r) => r.raceId === c.raceId && r.partyId === c.partyId && r.winnerId === c.id));
+      const baseSum = `${results.length} party primaries resolved across House, Senate, gubernatorial, and state legislative races.`;
+      if (!failedList.length) return { primaryResultSummary: baseSum };
+      const lossNames = failedList.slice(0, 4).map((c) => `${c.name} (${c.raceId})`).join(', ');
+      const notice = `Primary Defeat Notice: ${lossNames}${failedList.length > 4 ? ` +${failedList.length - 4} more` : ''} did not advance to the general election.`;
+      return {
+        primaryResultSummary: `${baseSum} ${notice}`,
+        lastNote: notice,
+        yearLog: [...(game.yearLog || []), { year: game.year || 2028, turn: (game.chairTurn || 0) + 1, action: notice }].slice(-80),
+      };
+    })(),
   };
   const pactEvaluated = evaluateCoalitionPacts(postPrimaryGame);
   const synced = synchronizePoliticianPartyWithFaction(pactEvaluated);
@@ -11743,6 +11775,14 @@ function initializeCandidateFunding(game) {
   senateRaces.forEach((r) => registerRace(`senate:${r.state}`, 'Senate', 5, 2.5));
   govStates.forEach((s) => registerRace(`governor:${s}`, 'Governor', 3, 1.5));
   (window.PartyChairData.VERSION_01_HOUSE_DISTRICTS || []).forEach((d) => registerRace(`house:${d.id}`, 'House', 1, 0.5));
+  // [v0.18.4 MINOR-PARTY-FIXES] Also include player-won Statewide Executive & State Leg nominees in Candidate Budget Triage
+  (game.primaryResults || []).forEach((r) => {
+    if (!r || funding[r.raceId]) return;
+    const isPlayerMatch = r.partyId === identityId || r.partyId === game.player?.baseTemplateId || (game.player?.custom && r.partyId === 'player');
+    if (!isPlayerMatch) return;
+    if (String(r.raceId).startsWith('statewide:')) registerRace(r.raceId, 'Statewide', 1, 0.5);
+    else if (String(r.raceId).startsWith('state-leg:')) registerRace(r.raceId, 'State Leg', 1, 0.5);
+  });
 
   const affordableSpend = Math.min(Math.floor((game.treasury || 0) * 0.5), Math.round(totalCost * 0.25)); // Committee reserve co-pay (max 50% of available warchest)
   return {
@@ -19615,9 +19655,21 @@ function takeActionInternal(game, actionId, payload = {}) {
     } else {
       nextField = [deployedCandidate, ...field];
     }
+    // [v0.18.4 MINOR-PARTY-FIXES] Certify downballot ballot access for deployed bench leader's contested race
+    const nextBaDeploy = JSON.parse(JSON.stringify(game.ballotAccess || buildStartingBallotAccess(game.seed)));
+    const nextContestedSwDeploy = { ...(game.contestedStatewideOffices || {}) };
+    nextBaDeploy[targetParty] = nextBaDeploy[targetParty] || { senate: {}, governor: {}, house: {}, leg: {}, presidential: {} };
+    const [_dk, _dt] = String(raceId || '').split(':');
+    if (_dk === 'senate' && _dt) { nextBaDeploy[targetParty].senate = { ...(nextBaDeploy[targetParty].senate || {}), [_dt]: true }; }
+    else if (_dk === 'governor' && _dt) { nextBaDeploy[targetParty].governor = { ...(nextBaDeploy[targetParty].governor || {}), [_dt]: true }; }
+    else if (_dk === 'house' && _dt) { nextBaDeploy[targetParty].house = { ...(nextBaDeploy[targetParty].house || {}), [_dt]: true }; }
+    else if ((_dk === 'state-leg' || _dk === 'stateLeg') && _dt) { nextBaDeploy[targetParty].leg = { ...(nextBaDeploy[targetParty].leg || {}), [_dt]: true }; }
+    else if (_dk === 'statewide' && _dt) { nextContestedSwDeploy[_dt] = true; }
     return {
       ...game,
       roster: (game.roster || []).filter((id) => id !== leaderId),
+      ballotAccess: nextBaDeploy,
+      contestedStatewideOffices: nextContestedSwDeploy,
       deployedLeaders: [...(game.deployedLeaders || []), { leaderId: leader.id, raceId, candidateId: deployedCandidate.id, leader }],
       primaryFields: { ...(game.primaryFields || {}), [raceId]: { ...(game.primaryFields?.[raceId] || {}), [targetParty]: nextField } },
       primaryEndorsements: { ...(game.primaryEndorsements || {}), [raceId]: deployedCandidate.id },
