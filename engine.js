@@ -10,8 +10,10 @@ function seededUnit(seedStr) {
 (function PartyChairEngineModule() {
 const { BILLS, CONVENTIONS, EVENTS, FACTIONS, MEMBERS, PARTY_ARCHETYPES, REGIONS, STATES, FACTIONS_CATALOG, FACTION_NAME_TO_ID, FACTION_STATE_MATRIX, FACTION_NATIONAL_TOTALS, getFactionCohesion, getFactionCohesionLabel, getFactionGrowthProfile, calculateFactionRegistrationLift } = (window.PartyChairData || {});
 
-const SAVE_KEY = 'partyChairGame.save.v18.4';
-const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.3';
+const SAVE_KEY = 'partyChairGame.save.v18.6';
+const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.5';
+const PREVIOUS_SAVE_KEY_V184 = 'partyChairGame.save.v18.4';
+const PREVIOUS_SAVE_KEY_V183 = 'partyChairGame.save.v18.3';
 const PREVIOUS_SAVE_KEY_V182 = 'partyChairGame.save.v18.2';
 const PREVIOUS_SAVE_KEY_V162 = 'partyChairGame.save.v16.2';
 const PREVIOUS_SAVE_KEY_V161 = 'partyChairGame.save.v16.1';
@@ -4987,7 +4989,7 @@ function createGame(options = {}) {
   if (window.PartyChairV07) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
-  game.version = '0.18.4';
+  game.version = '0.18.6';
   // [v0.18.4 MEDIA-SHOCKS]
   const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
   if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
@@ -5679,7 +5681,7 @@ function createGame(options = {}) {
   }
   // [v0.18.5] Ensure ALL eligible leadership roles start filled for player and rivals
   game = populateAllStartingLeadershipRoles(game);
-  game.version = '0.18.4';
+  game.version = '0.18.6';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
 
@@ -9194,12 +9196,22 @@ function calculateDistrictElection(game, year) {
     roboticSeatSummary = psrSeats.allocateSyntheticProportionalSeats(game, { seats, districtResults });
   }
 
-  // Ensure standard party keys (people, heritage) are present alongside player id
+  // Ensure standard party keys (people, heritage) are present alongside player id as non-enumerable aliases so Object.values(seats) sums strictly to 435
   if (demParty && demParty.id !== (demParty.baseTemplateId || 'people') && seats[demParty.id] !== undefined) {
-    seats[demParty.baseTemplateId || 'people'] = seats[demParty.id];
+    Object.defineProperty(seats, demParty.baseTemplateId || 'people', {
+      value: seats[demParty.id],
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    });
   }
   if (repParty && repParty.id !== (repParty.baseTemplateId || 'heritage') && seats[repParty.id] !== undefined) {
-    seats[repParty.baseTemplateId || 'heritage'] = seats[repParty.id];
+    Object.defineProperty(seats, repParty.baseTemplateId || 'heritage', {
+      value: seats[repParty.id],
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    });
   }
 
   const stateResults = STATES.map((state) => {
@@ -12733,7 +12745,7 @@ function startCampaignPhase(game) {
     ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
-    version: '0.18.4',
+    version: '0.18.6',
     primariesResolved: true,
     superPacs: evaluateSuperPacDemands(_preFundGame, 1),
   };
@@ -16136,7 +16148,7 @@ function startNextCycleInternal(game) {
 
   let refreshed = {
     ...game,
-    version: '0.18.4',
+    version: '0.18.6',
     stateLegStandouts: standoutUpdated.stateLegStandouts || game.stateLegStandouts || {},
     formerStateReps: standoutUpdated.formerStateReps || game.formerStateReps || {},
     dissolvedParties: Array.isArray(game.dissolvedParties) ? game.dissolvedParties : [],
@@ -16834,7 +16846,7 @@ function resolveVersion01GeneralElection(game) {
 
   const resolved = {
     ...questRewardedResult,
-    version: '0.18.4',
+    version: '0.18.6',
     phase: 'complete',
     primariesResolved: true,
     generalElectionResolved: true,
@@ -17403,12 +17415,14 @@ function syncPartyStateWithLegacy(game, options = {}) {
     if (rId !== playerPartyId && game.parties[rId]) {
       const opp = game.parties[rId];
       if (game.organizations?.[rId]) {
-        // [SOEE Economy Fix] Credit cycle grant/fundraising directly into game.parties[rId].treasury (clamped to max $350M)
-        // before syncing back into game.organizations[rId].treasury
+        // [SOEE Economy Fix] Credit cycle grant/fundraising directly into game.parties[rId].treasury
+        // (clamped to max $350M for minor parties; $5000M for major parties) before syncing back into game.organizations[rId].treasury
+        const isMaj = ['people', 'heritage'].includes(rId) || isMajorParty(game, rId);
+        const maxCap = isMaj ? 5000 : 350;
         if (Number(game.organizations[rId].treasury || 0) > Number(opp.treasury || 0)) {
-          opp.treasury = Math.min(350, round(Number(game.organizations[rId].treasury), 1));
+          opp.treasury = Math.min(maxCap, round(Number(game.organizations[rId].treasury), 1));
         }
-        opp.treasury = Math.min(350, Math.max(0, round(Number(opp.treasury || 0), 1)));
+        opp.treasury = Math.min(maxCap, Math.max(0, round(Number(opp.treasury || 0), 1)));
         game.organizations[rId].treasury = opp.treasury;
       }
       if (game.leadershipRoles) {
@@ -21831,7 +21845,7 @@ function advanceYear(game) {
   if (game && game.pollingMissReport) {
     game = { ...game, pollingMissReport: null };
   }
-  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
+  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
   const rivalUpdate = advanceRivalOrganizations(game);
@@ -22153,7 +22167,7 @@ function normalizeGame(parsed) {
   const normalized = {
     ...parsed,
     schema: 7,
-    version: '0.18.4',
+    version: '0.18.6',
     activeTab: parsed.activeTab || 'actions',
     turnStep: clamp(Number(parsed.turnStep || 1), 1, 5),
     phase: parsed.phase || (parsed.primariesResolved ? 'general-campaign' : 'organizing'),
@@ -22361,7 +22375,7 @@ function normalizeGame(parsed) {
   ready.schema = 7;
   if (parsed.activePresidentialPrimary) ready.activePresidentialPrimary = parsed.activePresidentialPrimary;
   if (parsed.phase === 'presidential-primary' || parsed.phase === 'election-night') ready.phase = parsed.phase;
-  ready.version = '0.18.4';
+  ready.version = '0.18.6';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
     house: false,
@@ -22749,7 +22763,7 @@ function normalizeGame(parsed) {
     window.CampaignOverhaul.initializeDynamicCorruptTrait(ready);
   }
   ready.grassrootsMultiplier = computeGrassrootsMultiplier(ready);
-  ready.version = '0.18.4';
+  ready.version = '0.18.6';
   ready = ensurePartyStates(ready);
   ready = syncPartyStateWithLegacy(ready);
   // [v0.18.4 ATLAS-HOTSEAT] Backward-compatible Atlas & Hotseat defaults
@@ -22933,7 +22947,7 @@ function migrateVoterModelToOneToOne(vm) {
 
 function loadGame() {
   try {
-    const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
+    const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V184) || localStorage.getItem(PREVIOUS_SAVE_KEY_V183) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
     if (!value) return null;
     return migrateSave(JSON.parse(value));
   } catch { return null; }

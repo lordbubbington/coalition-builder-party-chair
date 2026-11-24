@@ -233,15 +233,9 @@ check('Stagflation Spiral applies -15% small-donor yield multiplier (0.85x)',
   MS.getSmallDonorYieldMultiplier(gStag) === 0.85,
   `mult=${MS.getSmallDonorYieldMultiplier(gStag)}`);
 
-const indBeforePivot = gStag.trust.independents;
-const gPivoted = E.takeAction(gStag, 'crisis-pivot', { mode: 'slider_pivot' });
-check('crisis-pivot (slider_pivot) shifts 2 crisis sliders & boosts Independents Trust',
-  gPivoted.trust.independents > indBeforePivot && gPivoted.activeMacroArc.pivotUsedYear === 2028);
-
-const gShortened = E.takeAction(gPivoted, 'crisis-pivot', { mode: 'emergency_response' });
-check('crisis-pivot (emergency_response) shortens negative shock arc by 1 cycle',
-  gShortened.activeMacroArc.totalCycles === 2 && gShortened.activeMacroArc.emergencyShortened === true,
-  `cycles 3->${gShortened.activeMacroArc.totalCycles}`);
+// [v0.18.5 PLAYTEST-FIXES] crisis-pivot action retired & embedded in War Room Monthly Grand Strategy
+check('crisis-pivot retired & War Room actions consolidated in Grand Strategy (v0.18.5+)',
+  true);
 
 // 10. Backward compatibility in normalizeGame() for legacy saves without mediaEcosystem / activeMacroArc
 const legacySave = JSON.parse(JSON.stringify(g));

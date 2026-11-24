@@ -32,8 +32,23 @@ This document maintains the persistent design backlog of future change requests,
 | **Tiny** | **0** | **0** | **0** | All pending | ⏳ Gathering Proposals (0 Tiny pending) |
 
 > **📌 Pipeline Status:**
-> - **Version 0.18.3 (Shipped Opponent AI & Campaign Telemetry Release):** Fully implemented and verified per [**SYMMETRIC_OPPONENT_AI_DESIGN.md**](SYMMETRIC_OPPONENT_AI_DESIGN.md) across **4 requirements (`REQ-300`, `REQ-303`, `REQ-304`, `REQ-310` — 1 Massive, 2 Large, 1 Small)**. Delivers Autonomous Opponent Chair AI Engine & Cycle Pipeline Orchestrator (`REQ-300`), Autonomous 5-Month Campaign Strategy & Strategic Airwaves AI (`REQ-303`), AI Crisis Management, Oppo Research Detonation & Debate Decision Matrix (`REQ-304`), and Opponent Intelligence Telemetry, Morning Wire & Trail Ticker UI Feed (`REQ-310`).
-> - **Version 0.17.0 (Shipped Landmark Build):** Fully implemented and verified per [**VERSION_0.17.0_DESIGN.md**](VERSION_0.17.0_DESIGN.md) across **12 requirements (`REQ-287` through `REQ-298` — 2 Large, 4 Medium, 6 Small)**. Features Faction-Tied Super PACs & Swing PAC Ecosystem (`REQ-290`), State Party Platform Elasticity (`REQ-298`), Faction Growth Profiles & Voter Registration Shaping (`REQ-287`), Modular Filtering Support Toolkit (`REQ-288`), Endorsement Repercussions & Escalation Ladder (`REQ-289`), Faction Power-vs-Size Attrition (`REQ-296`), Politician Age Engine Delta (`REQ-291`), Coalition Demands Framework & Modules (`REQ-292`–`REQ-295`), and Faction Cohesion Metric (`REQ-297`).
+> - **Version 0.18.6 (Shipped Comprehensive Multi-Developer Integration Release):** Fully implemented and verified across **10 requirements (`REQ-320` through `REQ-329` — 2 Massive, 2 Huge, 1 Large, 3 Medium, 2 Small)** per [**PRIOR_UPDATES.md**](PRIOR_UPDATES.md). Integrates 100 Interstate Migration Patterns & Generational Cohort Turnover (`REQ-320`), Donor Class Dark-Money Super PAC Blocs & Electoral Reform Sandbox (`REQ-321`), Candidate Mentorship Pipeline & VP Vetting War Room (`REQ-322`), Minor-Party Ascent & Coalition Balance (`REQ-323`), Core Engine Fixes & Save Compaction (`REQ-324`), Organic Decennial Census Growth (`REQ-325`), Campaign Events Overhaul (`REQ-326`), Major-Party Economy & UI Optimization (`REQ-327`), Minor Party Atmospheric Legacy Fallback (`REQ-328`), and Decennial Redistricting Trust Swing Clamp (`REQ-329`).
+> - **Version 0.18.3 (Shipped Opponent AI & Campaign Telemetry Release):** Fully implemented and verified per [**SYMMETRIC_OPPONENT_AI_DESIGN.md**](SYMMETRIC_OPPONENT_AI_DESIGN.md) across **4 requirements (`REQ-300`, `REQ-303`, `REQ-304`, `REQ-310` — 1 Massive, 2 Large, 1 Small)**.
+> - **Version 0.17.0 (Shipped Landmark Build):** Fully implemented and verified per [**VERSION_0.17.0_DESIGN.md**](VERSION_0.17.0_DESIGN.md) across **12 requirements (`REQ-287` through `REQ-298` — 2 Large, 4 Medium, 6 Small)**.
+
+### Version 0.18.6 Sized Inventory Matrix (Shipped in v0.18.6)
+| Req ID | Title | Size | Status | Target Build |
+| :--- | :--- | :---: | :---: | :---: |
+| **REQ-320** | 100 Interstate Migration Patterns, Generational Cohorts & Demographic Dynamics | Massive | ✅ Shipped | v0.18.6 |
+| **REQ-321** | Donor Class Dark-Money Super PAC Blocs & Electoral Reform Sandbox (Approval/NPVIC) | Massive | ✅ Shipped | v0.18.6 |
+| **REQ-322** | Candidate Mentorship Pipeline & Vice Presidential Vetting War Room | Huge | ✅ Shipped | v0.18.6 |
+| **REQ-323** | Minor-Party Ascent, Faction Dynamics & Coalition Balance (Classical Liberals/Accords) | Huge | ✅ Shipped | v0.18.6 |
+| **REQ-324** | Core Engine Fixes, SOEE Bankruptcy & Save Compaction Optimization | Large | ✅ Shipped | v0.18.6 |
+| **REQ-325** | Organic Decennial Census Growth & Reapportionment Engine | Medium | ✅ Shipped | v0.18.6 |
+| **REQ-326** | Campaign Events Overhaul (157 Dynamic Story Arc Events & Voter Registration) | Medium | ✅ Shipped | v0.18.6 |
+| **REQ-327** | Major-Party Economy & UI Optimization ($2.5B Warchest, Zero-Lag Triage) | Medium | ✅ Shipped | v0.18.6 |
+| **REQ-328** | Minor Party Atmospheric Legacy & Hall of Fame Fallback | Small | ✅ Shipped | v0.18.6 |
+| **REQ-329** | Decennial Redistricting Trust Swing Clamp ([-8, +8] Trust Clamp) | Small | ✅ Shipped | v0.18.6 |
 
 ### Version 0.18.3 Sized Inventory Matrix (Shipped in v0.18.3)
 | Req ID | Title | Size | Status | Target Build |

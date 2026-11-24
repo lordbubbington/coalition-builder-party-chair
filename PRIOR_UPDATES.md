@@ -2196,3 +2196,103 @@ Categorized primarily by **Size** per workspace rules:
   - `scripts/test-v0183-bug-fixes.cjs`: passed (100%).
   - `scripts/test-mas01-phase4.cjs`: passed (100%).
 - **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.
+
+---
+
+## VERSION 0.18.6
+
+# Coalition Builder: Party Chair — Version 0.18.6
+
+Version 0.18.6 is a monumental integration release synthesizing systems from five dedicated development branches: Interstate Demographic Migration & Generational Cohort Turnover, Donor Class Dark-Money Super PAC Blocs & Electoral Reform Sandbox, Candidate Farm Team Mentorship & Vice Presidential Vetting War Room, Minor-Party Ascent & Coalition Balance, and Core Engine SOEE Optimization & Save Compaction.
+
+Categorized primarily by **Size** per workspace rules:
+
+### 1. Massive Requirements (2 Requirements)
+
+1. **REQ-320: 100 Interstate Migration Patterns, Generational Cohorts & Demographic Dynamics Engine (Massive | `demographic-migration-data.js`, `demographics-0.9.js`, `engine.js`, `scenario-2028.js`, `index.html`, `build.ps1`):**
+   - Implemented a catalog of 100 deterministic interstate migration patterns across 5 macro vectors: Sun Belt Boom Vectors, Rust Belt & Heartland Outmigration, Mountain West Growth Corridors, Climate & Cost-of-Living Dispersion, and Reverse Great Migration & Urban Renaissance.
+   - Built the Multi-Cycle Migration Application Engine: dynamically shifts represented voters between source and destination states across two-year cycle boundaries based on economic and political climate.
+   - Generational Cohort Turnover: transitions the American electorate across six generational cohorts (Silent Generation, Baby Boomers, Gen X, Millennials, Gen Z, Generation Alpha) at four-year presidential election boundaries, adjusting turnout propensities and ideological elasticity.
+   - Post-cycle Hare-Niemeyer apportionment pass across all 51 jurisdictions guaranteeing zero-variance conservation of the exact 155,000,000 represented electorate.
+   - Organic decennial census derivation: `getDecennialStatePopulations` in `scenario-2028.js` organically derives 2030, 2040, 2050, and 2060 state census populations directly from voter migration, altering congressional apportionment and Electoral College votes.
+
+2. **REQ-321: Donor Class Dark-Money Super PAC Blocs & Electoral Reform Sandbox (Massive | `data.js`, `ballot-access.js`, `engine.js`, `app.js`, `styles.css`):**
+   - Established the Dark-Money Super PAC Blocs catalog with 6 distinct interest blocs: Tech Innovation Coalition PAC ($25M), Organized Labor Defense Fund PAC ($20M), Wall Street & Financial Services PAC ($30M), American Energy Independence PAC ($25M), Grassroots Small-Dollar Alliance PAC ($15M), and Healthcare & Life Sciences PAC ($22M).
+   - Partnering seals outside spending infusions, independent expenditure airwaves boosts, and binding policy red lines with explicit donor revolts (-$20M to -$45M treasury clawbacks and -15% earned media penalties) if platform stances or enacted legislation violate red lines.
+   - Electoral Reform Sandbox: `STATE_ELECTORAL_SYSTEMS` defining Approval Voting (completely eliminates Duverger strategic defection) and Open-List Proportional Representation for congressional delegations (4.0% threshold).
+   - National Popular Vote Interstate Compact (NPVIC): tracks compacting states and cumulative electoral votes; upon reaching $\ge 270$ EVs, automatically activates and awards all 270+ compacting electoral votes in a single block to the national popular vote winner, eliminating contingent elections.
+   - Dedicated Campaign Finance & Donor Blocs UI tab and 50-State Electoral Systems & NPVIC Map view.
+
+### 2. Huge Requirements (2 Requirements)
+
+1. **REQ-322: Candidate Mentorship Pipeline & Vice Presidential Vetting War Room (Huge | `candidate-vetting.js`, `presidential-primaries.js`, `engine.js`, `styles.css`):**
+   - Candidate Mentorship Pipeline: Chairs can designate up to 3 promising prospects (`mentorProspectAction`, $2.0M + 1 action); protégés groom across multi-cycle progressions (`applyProtegeGroomingCycle`), gaining +1 Quality per cycle, +10 Fame, Rising Star designations, and faction loyalty.
+   - Vice Presidential & Running-Mate Selection War Room: Generates 4 distinct running mates balancing strategic angles: Ideological Balancing, Geographic Anchor, Experience/Gravitas, and Rising Star Energy.
+   - Running-mate vetting investigations (`auditVpAction`, $3.0M): reveals candidate skeleton tiers and eliminates vulnerability to October Surprise scandal detonations (`evaluateVpScandal`).
+   - Atmospheric dossiers adhering strictly to narrative tiers and zero leaked raw number formatting.
+
+2. **REQ-323: Minor-Party Ascent, Faction Dynamics & Coalition Balance (Huge | `factions-0.15.js`, `faction-era-stability.js`, `v07-scaffolding.js`, `atlas-multiplayer-system.js`, `engine.js`, `app.js`):**
+   - Break Tier 2 Glass Ceiling: Enabled small-population state breakthroughs (e.g. New Hampshire Libertarians winning 1-4 State House seats at 10% vote and spawning statehouse farm team standouts).
+   - High-Leverage Mid-Game Sinks: Regional Broadcast Buy ($15M, +2.5% registration), RCV Ballot Initiatives ($20M, eliminates strategic defection), Fusion Cross-Endorsements ($15M, +3.5% ballot line lift).
+   - Defection Cliff Softening: Raised `lib_ancaps` starting happiness from 30 to 48; added Classical Liberals & Civil Libertarians faction (`lib_classical_liberals`, 350,000 target voters, 65 starting happiness, Free Trade & Civil Liberties focus); added Faction Courtship / Re-recruitment action ($4.0M, +15 happiness).
+   - Coalition Stability & Cooldowns: Mandatory 8-year (4-cycle) realignment cooldown; blocked realigning back to previously discarded anchors; capped Coalition Accords at 2 per organizing phase; 6-year defection reunification cooldown.
+   - Tier 3 Farm Team Bridge in `v07-scaffolding.js`: allows recognition with 18+ presidential ballot states and combined federal/statehouse seats.
+
+### 3. Large Requirements (1 Requirement)
+
+1. **REQ-324: Core Engine Fixes, SOEE Bankruptcy & Save Compaction Optimization (Large | `engine.js`, `party-systems-data.js`, `party-systems-engine.js`, `BALANCE_AUDIT_REPORT.md`):**
+   - Resolved runaway rival party compound treasury accumulation and artificial bankruptcy in SOEE.
+   - Harmonized `stateOrganizations` dual-keying (`player` vs `people`), ensuring state chapter counts and strengths evaluate cleanly without desync.
+   - Save Compaction: Deduplicated decennial maps in `compactGameForSave`, pruned stale historical maps, trimmed actionLog past 3 cycles, and purged primaryFields/representatives outside their active phases.
+   - Balanced opponent treasury capping: clamped minor rival parties to $350M while exempting major parties during general campaign warchest operations.
+
+### 4. Medium Requirements (3 Requirements)
+
+1. **REQ-325: Organic Decennial Census Growth & Reapportionment Engine (Medium | `scenario-2028.js`, `engine.js`):**
+   - Derived decennial state census populations from voter migration model ratios, driving dynamic congressional seat reapportionments across 2030, 2040, 2050, and 2060.
+   - Dynamically recomputed state Electoral Votes ($EV = \text{House Seats} + 2$, DC fixed at 3) upon decennial reapportionment.
+
+2. **REQ-326: Campaign Events Overhaul (Medium | `campaign-events-system.js`, `campaign-overhaul.js`, `app.js`, `engine.js`):**
+   - 157 unique campaign events with dynamic multi-month story beats, debate callbacks, and contextual faction resolution.
+   - 1/3 of eligible Tier 1-4 events feature voter registration recruitment choices with 70-90% success rates strictly conserving voter count.
+   - Generational Windfall event awarding +100,000 voters distributed across 10 states.
+
+3. **REQ-327: Major-Party Economy & UI Optimization (Medium | `engine.js`, `app.js`, `data.js`):**
+   - Granted $2,500M general election warchests to major parties following primary certification, with post-election residual treasury capped at $\le \$100\text{M}$.
+   - Zero-lag close-race triage sub-menus and batch candidate funding.
+   - Landslide wave alignment ensuring 430+ EV presidential landslides translate to House wave majorities.
+
+### 5. Small Requirements (2 Requirements)
+
+1. **REQ-328: Minor Party Atmospheric Legacy & Hall of Fame Fallback (Small | `atlas-multiplayer-system.js`):**
+   - Added atmospheric leadership fallbacks in `computeChairLegacy` for minor party chairs who won 0 legislative seats, recording standard-bearer and committee chair tenures in the Political Atlas Hall of Fame.
+
+2. **REQ-329: Decennial Redistricting Trust Swing Clamp (Small | `redistricting-ballot-system.js`):**
+   - Clamped net Independents Trust delta from decennial redistricting map ratification strictly to $[-8, +8]$ (+1 per fair compact up to +6 max, -2 per aggressive gerrymander down to -8 max).
+
+---
+
+### 6. Release Packaging & Verification
+
+- **Version Bump:** Promoted version to `0.18.6` across `package.json`, `engine.js`, `app.js`, `build.js`, `index.html`.
+- **Save Compatibility:** Save key updated to `partyChairGame.save.v18.6` with backward-compatible migration supporting `v18.5`, `v18.4`, `v18.3`, `v18.2`, `v16.2`, and earlier save keys.
+- **Automated Verification Matrix:**
+  - `test-v0162-integration.cjs`: 119/119 passed (100%).
+  - `test-mas01-phase4.cjs`: 86/86 passed (100%).
+  - `test-faction-defection-overhaul.cjs`: 8/8 passed (100%).
+  - `test-faction-coalition-balance.cjs`: 36/36 passed (100%).
+  - `test-candidate-farmteam-vp.cjs`: 9/9 passed (100%).
+  - `test-dark-money-electoral-reform.cjs`: 15/15 passed (100%).
+  - `test-demographics-migration-cohorts.cjs`: all passed (100%).
+  - `test-agent6-overhauls.cjs`: 47/47 passed (100%).
+  - `test-req72-seats.cjs`: 83/83 passed (100%).
+  - `test-v0184-atlas-multiplayer.cjs`: 7/7 passed (100%).
+  - `test-v0184-coalition-politics.cjs`: 7/7 passed (100%).
+  - `test-v0184-maps-ballot.cjs`: 9/9 passed (100%).
+  - `test-v0184-media-shocks.cjs`: 16/16 passed (100%).
+  - `test-v0185-campaign-events.cjs`: 7/7 passed (100%).
+  - `test-v0185-green-playtest-fixes.cjs`: 6/6 passed (100%).
+  - `test-v0185-major-party-ux-and-balance.cjs`: 6/6 passed (100%).
+- **Electorate Invariant:** Strictly verified 155,000,000 represented voters with 0 variance across all 51 jurisdictions.
+- **UI Vibe Invariant:** Zero `REQ-XX` technical identifiers rendered in customer-facing UI markup.
+- **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.

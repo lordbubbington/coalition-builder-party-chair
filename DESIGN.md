@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.4 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.4 Minor Party Polling & Spoiler Overhaul Release implementing REQ-311, REQ-312, and REQ-313; featuring downballot minor-party polling breakdown accuracy, candidate budget triage retention for recruited nominees, state legislature grassroots haven with 0% Duverger spoiler penalty, and 1/3 loyal voter retention defection floor. Full specifications live in `SYMMETRIC_OPPONENT_AI_DESIGN.md` and `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.18.6 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.18.6 Multi-Developer Integration Release implementing REQ-320 through REQ-329; featuring 100 Interstate Migration Patterns, Generational Cohort Turnover, Donor Class Dark-Money Super PAC Blocs & Revolts, Approval Voting & NPVIC, Candidate Mentorship Pipeline & VP Vetting War Room, Minor Party Ascent & Classical Liberals, SOEE Economy Balancing & Save Compaction. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 
