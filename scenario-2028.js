@@ -10764,10 +10764,37 @@ const CENSUS_DECENNIAL_POPULATIONS_2030 = {
   VA: 8715698, WA: 7812880, WV: 1770071, WI: 5910955, WY: 584057,
 };
 
-function getDecennialStatePopulations(year = 2030) {
-  if (year === 2030) return { ...CENSUS_DECENNIAL_POPULATIONS_2030 };
+function getDecennialStatePopulations(year = 2030, voterModel = null) {
   const base = { ...CENSUS_DECENNIAL_POPULATIONS_2030 };
   const step = Math.max(0, Math.floor((year - 2030) / 10));
+
+  // If voterModel with states is provided, derive organic census population based on represented voter migration
+  if (voterModel && Array.isArray(voterModel.states) && voterModel.states.length > 0) {
+    const baselineVm = (typeof window !== 'undefined' && window.PartyChairData?.VERSION_05_VOTER_MODEL)
+      || (typeof global !== 'undefined' && global.PartyChairData?.VERSION_05_VOTER_MODEL);
+    const baselineVotersMap = new Map();
+    if (baselineVm && Array.isArray(baselineVm.states)) {
+      baselineVm.states.forEach((st) => baselineVotersMap.set(st.stateId || st.id, Number(st.representedVoters || 0)));
+    }
+
+    const res = {};
+    const macroGrowthFactor = Math.pow(1.025, step); // Organic macro national population expansion
+
+    for (const [id, basePop] of Object.entries(base)) {
+      const stVoter = voterModel.states.find((s) => (s.stateId || s.id) === id);
+      const initVoters = baselineVotersMap.get(id) || (stVoter ? Number(stVoter.representedVoters || 0) : 0);
+      if (stVoter && initVoters > 0) {
+        const voterRatio = Number(stVoter.representedVoters || 0) / initVoters;
+        res[id] = Math.round(basePop * voterRatio * macroGrowthFactor);
+      } else {
+        res[id] = Math.round(basePop * macroGrowthFactor);
+      }
+    }
+    return res;
+  }
+
+  // Fallback parametric decennial projection if voterModel is not passed
+  if (year === 2030) return { ...CENSUS_DECENNIAL_POPULATIONS_2030 };
   const sunbelt = ['TX', 'FL', 'AZ', 'NC', 'GA', 'SC', 'UT', 'NV', 'ID', 'TN', 'CO', 'WA'];
   const rustbelt = ['NY', 'IL', 'CA', 'PA', 'OH', 'MI', 'WV', 'LA'];
   const res = {};

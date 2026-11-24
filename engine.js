@@ -115,6 +115,16 @@ function getPresidentialPrimariesEngine() {
   return null;
 }
 
+function getDemographicsEngine() {
+  if (typeof window !== 'undefined' && window.PartyChairData?.applyInterstateMigration) {
+    return window.PartyChairData;
+  }
+  if (typeof require !== 'undefined') {
+    try { return require('./demographics-0.9.js'); } catch {}
+  }
+  return null;
+}
+
 const FALLBACK_MINOR_ARCHETYPES = [
   { id: 'constitution', name: 'Constitution Party', color: '#a84214', baseShare: 0.2, economic: 0.55, social: 0.85, climate: -0.65, local: 0.7, isMajor: false, lastPresidentialShare: 0.15, startingBudget: 10, description: 'A nationalist-populist and faith-and-flag constitutionalist party targeting disaffected MAGA voters.' },
   { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.88, social: -0.6, climate: 0.72, local: -0.25, isMajor: false, lastPresidentialShare: 0.15, startingBudget: 10, description: 'A labor-progressive eco-socialist and anti-war coalition competing for militant union and activist voters.' },
@@ -8111,18 +8121,25 @@ function runDecennialRedistricting(game, decennialYear = null) {
     ? window.PartyChairData.apportionHuntingtonHill
     : (pops, total) => Object.fromEntries(Object.keys(pops).map((id) => [id, 1]));
 
-  const pops = getPops(year);
+  const pops = getPops(year, game.voterModel);
   const apportioned = apportion(pops, 435);
   const assembledMap = assembleNationalHouseMap(apportioned, year, pops);
   const mapKey = `${year} map`;
 
-  const updatedStates = STATES.map((st) => ({
-    ...st,
-    districtCount: apportioned[st.id] ?? st.districtCount ?? 1,
-  }));
+  const updatedStates = STATES.map((st) => {
+    const dc = apportioned[st.id] ?? st.districtCount ?? 1;
+    return {
+      ...st,
+      districtCount: dc,
+      ev: st.id === 'DC' ? 3 : (dc + 2),
+    };
+  });
   if (typeof window !== 'undefined' && window.PartyChairData?.VERSION_01_STATES) {
     window.PartyChairData.VERSION_01_STATES.forEach((st) => {
-      if (apportioned[st.id]) st.districtCount = apportioned[st.id];
+      if (apportioned[st.id]) {
+        st.districtCount = apportioned[st.id];
+        st.ev = st.id === 'DC' ? 3 : (st.districtCount + 2);
+      }
     });
   }
 
@@ -14909,7 +14926,31 @@ function startNextCycleInternal(game) {
   // Voter registration expansion is driven dynamically by GOTV operations.
   // REQ-172: Cumulative multi-cycle voter registration carryover without baseline reset
   const voterModel = game.voterModel ? JSON.parse(JSON.stringify(game.voterModel)) : null;
+  let activeMigrationPatterns = [];
+  let migrationTransferred = 0;
   if (voterModel && Array.isArray(voterModel.states)) {
+    // Developer 5: Multi-Cycle Migration Application Engine & Generational Cohort Turnover
+    const demoEngine = getDemographicsEngine();
+    if (demoEngine) {
+      if (typeof demoEngine.selectDeterministicMigrationPatterns === 'function') {
+        activeMigrationPatterns = demoEngine.selectDeterministicMigrationPatterns(game.seed || 2028, nextYear, nextEnv, null);
+      }
+      if (typeof demoEngine.applyInterstateMigration === 'function' && activeMigrationPatterns.length > 0) {
+        const migResult = demoEngine.applyInterstateMigration(voterModel, activeMigrationPatterns);
+        migrationTransferred = migResult?.transferredTotal || 0;
+      }
+      // Generational cohort turnover applied at 4-year presidential election boundaries
+      if (nextYear % 4 === 0 && typeof demoEngine.applyGenerationalTurnover === 'function') {
+        demoEngine.applyGenerationalTurnover(voterModel, nextYear);
+      }
+    }
+
+    // Post-cycle Hare-Niemeyer renormalization pass across all 51 jurisdictions to lock total represented voters strictly to 155,000,000 with 0 variance
+    const renormFn = demoEngine?.renormalizeElectorateHareNiemeyer;
+    if (typeof renormFn === 'function') {
+      renormFn(voterModel, 155000000);
+    }
+
     let totRep = 0;
     let totSample = 0;
     voterModel.states.forEach((st) => {
@@ -15310,6 +15351,14 @@ function startNextCycleInternal(game) {
     activeAnchorCrisis: null,
     statePartisanDrift: game.statePartisanDrift || {},
     demographicMigrationDrift: game.demographicMigrationDrift || {},
+    activeMigrationPatterns,
+    migrationHistory: {
+      ...(game.migrationHistory || {}),
+      [nextYear]: {
+        patterns: activeMigrationPatterns.map((p) => ({ id: p.id, name: p.name, trend: p.trend, volume: p.voterVolume })),
+        transferred: migrationTransferred,
+      },
+    },
     organizingFootprintDrift: game.organizingFootprintDrift || {},
     stateChapterStreaks: game.stateChapterStreaks || {},
     candidateVetting: game.candidateVetting || {},
@@ -22821,6 +22870,13 @@ window.PartyChairEngine = {
   simulateOpponentPhase: (game, phaseName, options) => simulateOpponentPhase(game, phaseName, options),
   // [v0.18.4 MAPS-BALLOT]
   getRedistrictingBallotSystem: () => ((typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null),
+  // Developer 5: Demographics, Migration Patterns & Generational Cohorts
+  getDemographicsEngine,
+  getMigrationPatternsCatalog: () => (getDemographicsEngine()?.getMigrationPatternsCatalog ? getDemographicsEngine().getMigrationPatternsCatalog() : (window.PartyChairData?.MIGRATION_PATTERNS || [])),
+  selectDeterministicMigrationPatterns: (seed, year, macroEnv, count) => getDemographicsEngine()?.selectDeterministicMigrationPatterns?.(seed, year, macroEnv, count),
+  applyInterstateMigration: (voterModel, patterns) => getDemographicsEngine()?.applyInterstateMigration?.(voterModel, patterns),
+  applyGenerationalTurnover: (voterModel, year) => getDemographicsEngine()?.applyGenerationalTurnover?.(voterModel, year),
+  renormalizeElectorateHareNiemeyer: (voterModel, targetTotal) => getDemographicsEngine()?.renormalizeElectorateHareNiemeyer?.(voterModel, targetTotal),
   // [v0.18.4 ATLAS-HOTSEAT] Exports
   getAtlasMultiplayerSystem: () => (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem) || null,
 };

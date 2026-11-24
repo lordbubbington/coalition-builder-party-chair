@@ -28,6 +28,7 @@ try {
         (Join-Path $projectDir 'maps-0.3.js'),
         (Join-Path $projectDir 'state-house-data-0.5.js'),
         (Join-Path $projectDir 'voter-model-0.5.js'),
+        (Join-Path $projectDir 'demographic-migration-data.js'),
         (Join-Path $projectDir 'demographics-0.9.js'),
         (Join-Path $projectDir 'political-trends-system.js'),
         (Join-Path $projectDir 'political-texture-system.js'),
