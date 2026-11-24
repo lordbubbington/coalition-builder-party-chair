@@ -1443,7 +1443,7 @@ function generateMergerCoalitionDemands(game, factionId) {
   const natVoters = Number(game.voterModel?.factions?.[f.id] ?? f.targetVoters ?? 1000000);
   let tier = 'minor';
   if (natVoters < 1000000 || f.status === 'fringe') tier = 'fringe';
-  else if (natVoters >= 2500000 || f.status === 'major' || f.status === 'leading') tier = 'major';
+  else if (natVoters >= 5000000 || f.status === 'major' || f.status === 'leading') tier = 'major';
 
   // 5.0M-Member Invariant for Extremist Factions
   if (EXTREMIST_FACTION_IDS.has(f.id)) {
@@ -1801,12 +1801,12 @@ function evaluateFactionTiers(game) {
     const partyFactions = catalog.filter((f) => f.partyId === pid);
     if (!partyFactions.length) return;
 
-    // 1. Assign size tiers: Fringe (<1M), Minor (1M - <2.5M), Major (2.5M+)
+    // 1. Assign size tiers: Fringe (<1M), Minor (1M - <5M), Major (5M+)
     partyFactions.forEach((f) => {
       const voters = Number(voterFactions[f.id] ?? voterFactions[f.name] ?? f.targetVoters ?? 0);
       if (voters < 1000000) {
         designations[f.id] = 'fringe';
-      } else if (voters < 2500000) {
+      } else if (voters < 5000000) {
         designations[f.id] = 'minor';
       } else {
         designations[f.id] = 'major';
@@ -12090,13 +12090,19 @@ function startCampaignPhase(game) {
     ballotMeasures: {},
     weeklyLog: [`Campaign Month 1 of 5 begins. ${fundingInit.initialCommitmentNote}`],
   };
-  return {
+  let started = {
     ...withFunding,
     campaign,
     forecasters,
     waveMomentum,
-    lastNote: `Primaries resolved. The 15-Week Grand-Strategy Campaign begins (Week 1/15).`,
+    lastNote: `Primaries resolved. Campaign Month 1 of 5 begins.`,
   };
+  // [v0.18.5 CAMPAIGN-EVENTS] Roll Month 1 dynamic campaign event
+  const _cesStart = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesStart && typeof _cesStart.rollMonthlyCampaignEvent === 'function') {
+    started = _cesStart.rollMonthlyCampaignEvent(started, 1);
+  }
+  return started;
 }
 
 function pullCandidateFunds(game, raceKey, amount = null) {
@@ -14404,7 +14410,7 @@ function advanceCampaignWeek(game) {
   const nextUltimatum = coAdv ? coAdv.checkFactionTrailUltimatum(updatedBase, nextWeek) : null;
   const nextFiredCrisisIds = [...(updatedBase.campaign.firedCrisisIds || []), ...newCrises.map((c) => c.id)];
 
-  return {
+  const _nextCampState = {
     ...simPhaseGame,
     waveMomentum,
     forecasters,
@@ -14444,6 +14450,9 @@ function advanceCampaignWeek(game) {
       ? `MONTH 4 OCTOBER SURPRISE: ${nextEvent.title}!`
       : `Campaign Month ${nextWeek} of 5 begins (8 actions available).`,
   };
+  // [v0.18.5 CAMPAIGN-EVENTS] Roll next month's dynamic campaign event
+  const _cesAdv = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  return (_cesAdv && typeof _cesAdv.rollMonthlyCampaignEvent === 'function') ? _cesAdv.rollMonthlyCampaignEvent(_nextCampState, nextWeek) : _nextCampState;
 }
 
 // ============================================================================
@@ -16254,6 +16263,11 @@ function resolveVersion01GeneralElection(game) {
   if (amsElec && typeof amsElec.recordAtlasSnapshot === 'function') {
     finalElectionState = amsElec.recordAtlasSnapshot(finalElectionState);
   }
+  // [v0.18.5 CAMPAIGN-EVENTS] Attach cycle defining event to Political Atlas
+  const _cesAtlas = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesAtlas && typeof _cesAtlas.attachDefiningEventToAtlas === 'function') {
+    finalElectionState = _cesAtlas.attachDefiningEventToAtlas(finalElectionState);
+  }
   return finalElectionState;
 }
 
@@ -17127,7 +17141,7 @@ function tunePartyPlatformStances(game, partyId) {
     let weightedFactionSum = 0;
     let totalFactionWeight = 0;
     partyFactions.forEach((f) => {
-      const isMajor = f.status === 'major' || f.status === 'leading' || (f.representedVoters || 0) >= 2500000;
+      const isMajor = f.status === 'major' || f.status === 'leading' || (f.representedVoters || 0) >= 5000000;
       const w_f = isMajor ? 3.0 : 1.0;
       let F_fi = 5.5;
       if (f.sliders && f.sliders[issueAxis] !== undefined) {
@@ -18753,6 +18767,11 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   if (actionId === 'resolve-campaign-event') {
     return applyCampaignEventChoice(game, Number(payload.choiceIndex || 0));
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  if (actionId === 'resolve-campaign-event-v2') {
+    const _cesAct = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+    return (_cesAct && typeof _cesAct.resolveCampaignEvent === 'function') ? _cesAct.resolveCampaignEvent(game, payload.choiceId ?? payload.choiceIndex ?? 0) : game;
   }
   if (actionId === 'respond-pac-demand') {
     const psePac = getPartySystemsEngine();
@@ -21649,6 +21668,11 @@ function normalizeGame(parsed) {
   if (amsNorm && typeof amsNorm.normalizeAtlasAndMultiplayer === 'function') {
     ready = amsNorm.normalizeAtlasAndMultiplayer(ready);
   }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  const _cesNorm = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesNorm && typeof _cesNorm.normalizeCampaignEvents === 'function') {
+    ready = _cesNorm.normalizeCampaignEvents(ready);
+  }
 
   return ready;
 }
@@ -22045,6 +22069,11 @@ function compactGameForSave(game, options = {}) {
   const amsComp = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
   if (amsComp && typeof amsComp.compactAtlasForSave === 'function') {
     amsComp.compactAtlasForSave(copy);
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  const _cesComp = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesComp && typeof _cesComp.compactCampaignEventsForSave === 'function') {
+    _cesComp.compactCampaignEventsForSave(copy);
   }
   return copy;
 }

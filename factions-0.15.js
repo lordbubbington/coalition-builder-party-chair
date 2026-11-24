@@ -12,7 +12,7 @@
     "type": "ideological",
     "status": "leading",
     "isIroncladAnchor": true,
-    "targetVoters": 12616200,
+    "targetVoters": 10616200,
     "sliders": {
       "social": 4,
       "economic": 4,
@@ -22,7 +22,10 @@
       "Institutional Norms",
       "Entitlement Defense"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "The traditional backbone of the Democratic Party—elected officials, party apparatus loyalists, and suburban pragmatists who favor steady governance, institutional guardrails, and incremental reform.",
     "startingHappiness": 83,
     "cohesion": 0.5,
@@ -53,7 +56,7 @@
     "partyId": "people",
     "type": "racial",
     "status": "major",
-    "targetVoters": 12029800,
+    "targetVoters": 11029800,
     "sliders": {
       "social": 4,
       "economic": 3,
@@ -63,7 +66,10 @@
       "Civil Rights",
       "Voting Access"
     ],
-    "redLineIssues": ["voting-rights-rollback", "civil-rights-retrenchment"],
+    "redLineIssues": [
+      "voting-rights-rollback",
+      "civil-rights-retrenchment"
+    ],
     "flavor": "The African American Voting Block - have been a core faction of the democratic party since the civil rights movement",
     "startingHappiness": 66,
     "cohesion": 0.75,
@@ -96,7 +102,7 @@
     "partyId": "people",
     "type": "ideological",
     "status": "major",
-    "targetVoters": 7396100,
+    "targetVoters": 5396100,
     "sliders": {
       "social": 2,
       "economic": 2,
@@ -106,7 +112,10 @@
       "Universal Healthcare",
       "Climate Action"
     ],
-    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
+    "redLineIssues": [
+      "fossil-fuel-expansion",
+      "climate-deregulation"
+    ],
     "flavor": "Extreme on Rhetoric, Extreme on Policy - these are the progressives that are keeping fox news in business",
     "startingHappiness": 49,
     "cohesion": 0.88,
@@ -140,7 +149,7 @@
     "partyId": "people",
     "type": "ideological",
     "status": "major",
-    "targetVoters": 5783500,
+    "targetVoters": 5140351,
     "sliders": {
       "social": 3.7,
       "economic": 4.8,
@@ -150,7 +159,10 @@
       "Free Trade Agreements",
       "Corporate Tax Competitiveness"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "Pro-globalization, free-trade technocrats and educated professionals who combine socially progressive values with market-oriented economic policies and fiscal prudence.",
     "startingHappiness": 64,
     "cohesion": 0.45,
@@ -174,12 +186,57 @@
     }
   },
   {
+    "id": "dem_abundance",
+    "name": "Abundance",
+    "partyId": "people",
+    "type": "ideological",
+    "status": "major",
+    "targetVoters": 6643149,
+    "sliders": {
+      "social": 2.8,
+      "economic": 5,
+      "governance": 4.5
+    },
+    "keyIssues": [
+      "Housing Supply & Permitting Reform",
+      "Clean Energy & Infrastructure Abundance"
+    ],
+    "redLineIssues": [
+      "housing-supply-freeze",
+      "clean-energy-moratorium"
+    ],
+    "flavor": "Pro-building, supply-side liberals and state-capacity reformers focused on abundant housing, rapid clean-energy permitting, high-speed transit, and modernizing government to deliver tangible growth.",
+    "startingHappiness": 66,
+    "cohesion": 0.55,
+    "growthProfile": {
+      "archetype": "suburban",
+      "archetypeCluster": [
+        "suburban",
+        "tech_corridor",
+        "urban_professionals"
+      ],
+      "demographicAppeal": 1.2,
+      "regionalRelevance": [
+        "CA",
+        "WA",
+        "NY",
+        "MA",
+        "CO",
+        "TX",
+        "NC",
+        "VA",
+        "IL",
+        "MN"
+      ]
+    }
+  },
+  {
     "id": "dem_bernie_bros",
     "name": "Bernie Bros",
     "partyId": "people",
     "type": "ideological",
-    "status": "major",
-    "targetVoters": 5258200,
+    "status": "minor",
+    "targetVoters": 4258200,
     "sliders": {
       "social": 3.3,
       "economic": 1.8,
@@ -189,7 +246,10 @@
       "Wealth and Capital Gains",
       "Business Regulation and Antitrust Laws"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "These are voters who became engaged in politics during Bernie Sanders 2016 campaign. They’re milder on social views and rhetoric, but very left leaning on economic issues. It also has a strong populist current.",
     "startingHappiness": 39,
     "cohesion": 0.85,
@@ -219,8 +279,8 @@
     "name": "Faith Based Liberals",
     "partyId": "people",
     "type": "ideological",
-    "status": "major",
-    "targetVoters": 5239900,
+    "status": "minor",
+    "targetVoters": 3239900,
     "sliders": {
       "social": 5,
       "economic": 2,
@@ -230,7 +290,10 @@
       "Voting Rights",
       "Civil Rights Protections"
     ],
-    "redLineIssues": ["voting-rights-rollback", "civil-rights-retrenchment"],
+    "redLineIssues": [
+      "voting-rights-rollback",
+      "civil-rights-retrenchment"
+    ],
     "flavor": "Mainline Protestant, Catholic, and interfaith social-gospel voters who view progressive politics as a moral duty to care for the poor, marginalized, and vulnerable.",
     "startingHappiness": 68,
     "cohesion": 0.65,
@@ -258,7 +321,7 @@
     "partyId": "people",
     "type": "ideological",
     "status": "major",
-    "targetVoters": 3864800,
+    "targetVoters": 5864800,
     "sliders": {
       "social": 5.5,
       "economic": 5.5,
@@ -268,7 +331,10 @@
       "Balanced Budget Amendment",
       "Rural Healthcare Support"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Fiscally conservative and culturally moderate Democrats who represent rural, small-town, and border districts, emphasizing bipartisan compromise and deficit reduction.",
     "startingHappiness": 43,
     "cohesion": 0.48,
@@ -308,7 +374,10 @@
       "Comprehensive Immigration Reform",
       "Labor Standards Enforcement"
     ],
-    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
+    "redLineIssues": [
+      "free-trade-concessions",
+      "right-to-work-mandate"
+    ],
     "flavor": "Multi-generational Hispanic and Latino families in urban centers and agricultural belts who blend socially moderate family values with support for public education and healthcare access.",
     "startingHappiness": 57,
     "cohesion": 0.6,
@@ -346,7 +415,10 @@
       "Religious Liberty",
       "Right to Life Protections"
     ],
-    "redLineIssues": ["social-liberalization", "religious-exemption-repeal"],
+    "redLineIssues": [
+      "social-liberalization",
+      "religious-exemption-repeal"
+    ],
     "flavor": "Evangelical and devout traditionalist Christians who prioritize social conservatism, judicial originalism, and the defense of religious institutions in public life.",
     "startingHappiness": 72,
     "cohesion": 0.88,
@@ -390,7 +462,10 @@
       "Border Security Wall",
       "Tariffs & Trade Protection"
     ],
-    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
+    "redLineIssues": [
+      "free-trade-concessions",
+      "right-to-work-mandate"
+    ],
     "flavor": "America-First working-class nationalists energized by Donald Trump, emphasizing strict border enforcement, protectionist trade policies, and cultural populism.",
     "startingHappiness": 76,
     "cohesion": 0.85,
@@ -433,7 +508,10 @@
       "Second Amendment Rights",
       "Federal Land Transfer"
     ],
-    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
+    "redLineIssues": [
+      "fossil-fuel-expansion",
+      "climate-deregulation"
+    ],
     "flavor": "Rugged individualists, ranchers, and Second Amendment absolutists across the Mountain West who demand federal land divestment and radical regulatory relief.",
     "startingHappiness": 59,
     "cohesion": 0.65,
@@ -473,7 +551,10 @@
       "Immigration Enforcement",
       "National Sovereignty"
     ],
-    "redLineIssues": ["amnesty-compromise", "foreign-interventionism"],
+    "redLineIssues": [
+      "amnesty-compromise",
+      "foreign-interventionism"
+    ],
     "flavor": "Hardline nativist reactionaries who demand an end to legal immigration, aggressive deportation operations, and the cultural reassertion of European heritage.",
     "startingHappiness": 50,
     "cohesion": 0.92,
@@ -512,7 +593,10 @@
       "Suburban School Choice",
       "Local Tax Restraint"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "College-educated suburbanites and Sunbelt professionals who favor pro-business tax policy and public safety while rejecting conspiratorial rhetoric and cultural extremism.",
     "startingHappiness": 44,
     "cohesion": 0.42,
@@ -552,7 +636,10 @@
       "Defense Modernization",
       "NATO Expansion"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Hawkish foreign policy institutionalists and defense-sector advocates who champion global American hegemony, democratic interventionism, and deterrence against authoritarian rivals.",
     "startingHappiness": 32,
     "cohesion": 0.7,
@@ -579,7 +666,7 @@
     "name": "Paleocons",
     "partyId": "heritage",
     "type": "ideological",
-    "status": "major",
+    "status": "minor",
     "targetVoters": 3083400,
     "sliders": {
       "social": 9.5,
@@ -590,7 +677,10 @@
       "Foreign Non-Intervention",
       "Decentralized Federalism"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Old-Right isolationists who combine deep cultural traditionalism with fierce opposition to foreign wars, global trade pacts, and centralized federal power.",
     "startingHappiness": 61,
     "cohesion": 0.86,
@@ -629,7 +719,10 @@
       "Religious Freedom Protections",
       "Refugee Resettlement"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Latter-day Saint voters across the Intermountain West who pair devout family values and fiscal conservatism with institutional decency, civic trust, and welcoming refugee attitudes.",
     "startingHappiness": 45,
     "cohesion": 0.78,
@@ -665,7 +758,10 @@
       "Agricultural Subsidies & Crop Insurance",
       "Rural Broadband Infrastructure"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Generational agricultural producers and rural smallholders who depend on farm bill protections, biofuel mandates, and water rights while maintaining traditional cultural leanings.",
     "startingHappiness": 62,
     "cohesion": 0.62,
@@ -705,7 +801,10 @@
       "Corporate Tax Reductions",
       "Financial Deregulation"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "Wealthy corporate executives, financiers, and donors who focus primarily on supply-side tax cuts, capital gains relief, and minimal government intervention in capital markets.",
     "startingHappiness": 40,
     "cohesion": 0.6,
@@ -743,7 +842,10 @@
       "Anti-Communist Foreign Policy",
       "Sanctions Enforcement"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "South Florida Cuban-American voting bloc with deep anti-communist convictions, fiercely loyal to hardline foreign policy against Latin American dictatorships and supportive of free-market policies.",
     "startingHappiness": 70,
     "cohesion": 0.7,
@@ -775,7 +877,10 @@
       "Government Gridlock Reform",
       "Bipartisan Infrastructure"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "The perfect ideological center of the American electorate, evenly divided and skeptical of ideological purity from both parties, deciding general election outcomes.",
     "startingHappiness": 46,
     "cohesion": 0.3,
@@ -814,7 +919,10 @@
       "Domestic Manufacturing",
       "Union Protections"
     ],
-    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
+    "redLineIssues": [
+      "free-trade-concessions",
+      "right-to-work-mandate"
+    ],
     "flavor": "Union Voters and Construction workers used to be reliably democratic - but the Trump Coalition swallowed them up",
     "startingHappiness": 36,
     "cohesion": 0.52,
@@ -853,7 +961,10 @@
       "Cryptocurrency Freedom",
       "Free Speech Online"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "These low information voters get most of their news from podcasts - and that’s how they decide on who they vote for, too",
     "startingHappiness": 38,
     "cohesion": 0.28,
@@ -891,7 +1002,10 @@
       "Fiscal Discipline",
       "Free Market Deregulation"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "These voters used to be dyed in the wool republicans - but Trump changed everything",
     "startingHappiness": 56,
     "cohesion": 0.35,
@@ -929,7 +1043,10 @@
       "Artificial Intelligence Deregulation",
       "High-Skill Immigration"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "These voters believe in the power of technology. They hold progressive social views (civil rights, free speech) but despise regulatory barriers, compute controls, and wealth taxes.",
     "startingHappiness": 55,
     "cohesion": 0.4,
@@ -968,7 +1085,10 @@
       "Inflation Reduction",
       "Lower Grocery Prices"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "These voters don’t follow politics closely - they just want to be left alone and grill. But when food, gas, and energy prices spike, they deliver brutal verdicts to the governing party.",
     "startingHappiness": 53,
     "cohesion": 0.2,
@@ -996,7 +1116,7 @@
     "name": "Religious Moderates",
     "partyId": "independent",
     "type": "ideological",
-    "status": "major",
+    "status": "minor",
     "targetVoters": 4502800,
     "sliders": {
       "social": 6.5,
@@ -1007,7 +1127,10 @@
       "Charitable Giving Incentives",
       "Community Poverty Programs"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Churchgoers, Catholics, and interfaith believers who resist hard-right Christian nationalism but expect politicians to respect personal faith, family values, and basic community compassion.",
     "startingHappiness": 51,
     "cohesion": 0.45,
@@ -1034,7 +1157,7 @@
     "name": "Working Class Latinos",
     "partyId": "independent",
     "type": "racial",
-    "status": "major",
+    "status": "minor",
     "targetVoters": 4002500,
     "sliders": {
       "social": 6.2,
@@ -1045,7 +1168,10 @@
       "Small Business Loans",
       "Public Safety & Policing"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Blue-collar Hispanic voters in Nevada, Arizona, Texas, and the Rust Belt who prioritize steady jobs, law and order, and small-business opportunity, swinging fluidly between both major parties.",
     "startingHappiness": 41,
     "cohesion": 0.45,
@@ -1071,7 +1197,7 @@
     "name": "Girlypops",
     "partyId": "independent",
     "type": "ideological",
-    "status": "major",
+    "status": "minor",
     "targetVoters": 2500500,
     "sliders": {
       "social": 2.5,
@@ -1082,7 +1208,10 @@
       "Reproductive Healthcare Access",
       "Equal Pay Protections"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Young, pop-culture-fluent women who care deeply about reproductive autonomy, social equality, and campus climate, but distrust career politicians and rigid ideological labels.",
     "startingHappiness": 52,
     "cohesion": 0.25,
@@ -1120,7 +1249,10 @@
       "Tax Policy",
       "Gun Policy"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "True libertarians are hard to come by - but these voters believe in true small government, not just on liberal issues",
     "startingHappiness": 48,
     "cohesion": 0.88,
@@ -1160,7 +1292,10 @@
       "Abolition of the Federal Reserve",
       "Total Tax Elimination"
     ],
-    "redLineIssues": ["federal-debt-expansion", "tax-hike-package"],
+    "redLineIssues": [
+      "federal-debt-expansion",
+      "tax-hike-package"
+    ],
     "flavor": "These voters don’t think the government should exist.",
     "isExtremist": true,
     "startingHappiness": 30,
@@ -1198,7 +1333,10 @@
       "Fossil Fuel Nationalization",
       "Degrowth Climate Transition"
     ],
-    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
+    "redLineIssues": [
+      "fossil-fuel-expansion",
+      "climate-deregulation"
+    ],
     "flavor": "The Eco-Socialist Vanguard warns of the coming eco-apoclypse",
     "startingHappiness": 47,
     "cohesion": 0.9,
@@ -1237,7 +1375,10 @@
       "NIMBYism and Housing Development",
       "Affordability and the Cost of Living"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "These leftie voters left the democrats over housing issues - now they’re in an uncomfortable alliance with the greens",
     "startingHappiness": 54,
     "cohesion": 0.58,
@@ -1275,7 +1416,10 @@
       "Religious Liberty",
       "Religion in Public Schools"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "Radical religious reconstructionists who believe American civil law should be completely replaced with biblical law and Christian governance.",
     "isExtremist": true,
     "startingHappiness": 60,
@@ -1315,7 +1459,10 @@
       "Worker-Owned Enterprises",
       "Public Banking Infrastructure"
     ],
-    "redLineIssues": ["free-trade-concessions", "right-to-work-mandate"],
+    "redLineIssues": [
+      "free-trade-concessions",
+      "right-to-work-mandate"
+    ],
     "flavor": "These voters are socialists, who idealize Karl Marx.",
     "isExtremist": true,
     "startingHappiness": 34,
@@ -1354,7 +1501,10 @@
       "Expropriation of Corporate Monopolies",
       "Centralized Economic Planning"
     ],
-    "redLineIssues": ["fossil-fuel-expansion", "climate-deregulation"],
+    "redLineIssues": [
+      "fossil-fuel-expansion",
+      "climate-deregulation"
+    ],
     "flavor": "These are communists, who want total state control over the economy.",
     "isExtremist": true,
     "startingHappiness": 28,
@@ -1392,7 +1542,10 @@
       "Immigration Moratorium",
       "Anti-Globalist Sovereignty"
     ],
-    "redLineIssues": ["amnesty-compromise", "foreign-interventionism"],
+    "redLineIssues": [
+      "amnesty-compromise",
+      "foreign-interventionism"
+    ],
     "flavor": "Online alt-right provocateurs and youth reactionaries who use irony, memes, and internet culture to push far-right ethno-nationalist talking points into mainstream discourse.",
     "startingHappiness": 24,
     "cohesion": 0.95,
@@ -1428,7 +1581,10 @@
       "Racial Segregation",
       "Totalitarian State Authority"
     ],
-    "redLineIssues": ["entitlement-cuts", "institutional-norm-breach"],
+    "redLineIssues": [
+      "entitlement-cuts",
+      "institutional-norm-breach"
+    ],
     "flavor": "These voters support the Klu Klux Klan and Neo-Nazis. They turn out 0%.",
     "isExtremist": true,
     "startingHappiness": 17,
@@ -1488,18 +1644,19 @@
   "Socialists": "soc_socialists",
   "Communists": "soc_communists",
   "Groypers": "unaff_groypers",
-  "The Klan & Neo-Nazis": "unaff_the_klan"
+  "The Klan & Neo-Nazis": "unaff_the_klan",
+  "Abundance": "dem_abundance"
 };
 
   const FACTION_STATE_MATRIX = {
   "AL": {
-    "dem_liberal_establishment": 98260,
-    "dem_black_voters": 365323,
-    "dem_capital_l_left": 18610,
-    "dem_neo_liberals": 20288,
-    "dem_bernie_bros": 27575,
-    "dem_faith_based_liberals": 81604,
-    "dem_blue_dog": 80370,
+    "dem_liberal_establishment": 82683,
+    "dem_black_voters": 334955,
+    "dem_capital_l_left": 13578,
+    "dem_neo_liberals": 18032,
+    "dem_bernie_bros": 22331,
+    "dem_faith_based_liberals": 50457,
+    "dem_blue_dog": 111517,
     "gop_faith_and_flag": 353757,
     "gop_maga": 134378,
     "gop_western_mavericks": 61928,
@@ -1527,16 +1684,17 @@
     "gop_mormons": 0,
     "gop_cubans": 0,
     "grn_yimby": 35,
-    "soc_socialists": null
+    "soc_socialists": null,
+    "dem_abundance": 58477
   },
   "AK": {
-    "dem_liberal_establishment": 14760,
-    "dem_black_voters": 3784,
-    "dem_capital_l_left": 2795,
-    "dem_neo_liberals": 3048,
-    "dem_bernie_bros": 9941,
-    "dem_faith_based_liberals": 3405,
-    "dem_blue_dog": 12073,
+    "dem_liberal_establishment": 12420,
+    "dem_black_voters": 3470,
+    "dem_capital_l_left": 2039,
+    "dem_neo_liberals": 2709,
+    "dem_bernie_bros": 8050,
+    "dem_faith_based_liberals": 2105,
+    "dem_blue_dog": 13373,
     "gop_faith_and_flag": 7937,
     "gop_maga": 8009,
     "gop_western_mavericks": 68897,
@@ -1561,16 +1719,17 @@
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 5640
   },
   "AZ": {
-    "dem_liberal_establishment": 218236,
-    "dem_black_voters": 55957,
-    "dem_capital_l_left": 137775,
-    "dem_neo_liberals": 112649,
-    "dem_bernie_bros": 146988,
-    "dem_faith_based_liberals": 50345,
-    "dem_blue_dog": 79334,
+    "dem_liberal_establishment": 183640,
+    "dem_black_voters": 51306,
+    "dem_capital_l_left": 100519,
+    "dem_neo_liberals": 100122,
+    "dem_bernie_bros": 119034,
+    "dem_faith_based_liberals": 31129,
+    "dem_blue_dog": 98550,
     "dem_traditional_latin": 120420,
     "gop_faith_and_flag": 28178,
     "gop_maga": 56864,
@@ -1596,16 +1755,17 @@
     "grn_eco_socialist_vanguard": 3383,
     "grn_yimby": 759,
     "unaff_groypers": 3331,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 116984
   },
   "AR": {
-    "dem_liberal_establishment": 8224,
-    "dem_black_voters": 14762,
-    "dem_capital_l_left": 1558,
-    "dem_neo_liberals": 1698,
-    "dem_bernie_bros": 2308,
-    "dem_faith_based_liberals": 4553,
-    "dem_blue_dog": 13080,
+    "dem_liberal_establishment": 6920,
+    "dem_black_voters": 13535,
+    "dem_capital_l_left": 1137,
+    "dem_neo_liberals": 1509,
+    "dem_bernie_bros": 1869,
+    "dem_faith_based_liberals": 2815,
+    "dem_blue_dog": 14818,
     "gop_faith_and_flag": 30145,
     "gop_maga": 11451,
     "gop_western_mavericks": 5278,
@@ -1631,15 +1791,16 @@
     "unaff_the_klan": 68,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 3580
   },
   "CA": {
-    "dem_liberal_establishment": 2066320,
-    "dem_black_voters": 353215,
-    "dem_capital_l_left": 2261112,
-    "dem_neo_liberals": 1279913,
-    "dem_bernie_bros": 927799,
-    "dem_faith_based_liberals": 317827,
+    "dem_liberal_establishment": 1738754,
+    "dem_black_voters": 323853,
+    "dem_capital_l_left": 1649678,
+    "dem_neo_liberals": 1137581,
+    "dem_bernie_bros": 751351,
+    "dem_faith_based_liberals": 196517,
     "dem_traditional_latin": 760110,
     "gop_faith_and_flag": 659239,
     "gop_maga": 665246,
@@ -1666,18 +1827,19 @@
     "soc_socialists": 71601,
     "soc_communists": 47769,
     "unaff_groypers": 52073,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 121310,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 1287142
   },
   "CO": {
-    "dem_liberal_establishment": 172488,
-    "dem_black_voters": 35383,
-    "dem_capital_l_left": 156808,
-    "dem_neo_liberals": 128210,
-    "dem_bernie_bros": 154901,
-    "dem_faith_based_liberals": 31833,
-    "dem_blue_dog": 12541,
+    "dem_liberal_establishment": 145144,
+    "dem_black_voters": 32442,
+    "dem_capital_l_left": 114405,
+    "dem_neo_liberals": 113953,
+    "dem_bernie_bros": 125442,
+    "dem_faith_based_liberals": 19683,
+    "dem_blue_dog": 24691,
     "dem_traditional_latin": 38071,
     "gop_faith_and_flag": 35890,
     "gop_maga": 36214,
@@ -1705,16 +1867,17 @@
     "soc_socialists": 1157,
     "soc_communists": 772,
     "unaff_groypers": 1288,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 116404
   },
   "CT": {
-    "dem_liberal_establishment": 196828,
-    "dem_black_voters": 134581,
-    "dem_capital_l_left": 82841,
-    "dem_neo_liberals": 121919,
-    "dem_bernie_bros": 36823,
-    "dem_faith_based_liberals": 30271,
-    "dem_blue_dog": 11926,
+    "dem_liberal_establishment": 165626,
+    "dem_black_voters": 123394,
+    "dem_capital_l_left": 60440,
+    "dem_neo_liberals": 108361,
+    "dem_bernie_bros": 29820,
+    "dem_faith_based_liberals": 18717,
+    "dem_blue_dog": 23480,
     "gop_faith_and_flag": 68300,
     "gop_maga": 68915,
     "gop_western_mavericks": 50814,
@@ -1741,16 +1904,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 85351
   },
   "DE": {
-    "dem_liberal_establishment": 74181,
-    "dem_black_voters": 88763,
-    "dem_capital_l_left": 9366,
-    "dem_neo_liberals": 25527,
-    "dem_bernie_bros": 13879,
-    "dem_faith_based_liberals": 11408,
-    "dem_blue_dog": 4495,
+    "dem_liberal_establishment": 62421,
+    "dem_black_voters": 81384,
+    "dem_capital_l_left": 6833,
+    "dem_neo_liberals": 22688,
+    "dem_bernie_bros": 11239,
+    "dem_faith_based_liberals": 7054,
+    "dem_blue_dog": 8849,
     "gop_faith_and_flag": 28559,
     "gop_maga": 28816,
     "gop_western_mavericks": 21247,
@@ -1775,16 +1939,17 @@
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 27151
   },
   "FL": {
-    "dem_liberal_establishment": 850839,
-    "dem_black_voters": 698119,
-    "dem_capital_l_left": 128915,
-    "dem_neo_liberals": 351350,
-    "dem_bernie_bros": 191021,
-    "dem_faith_based_liberals": 565293,
-    "dem_blue_dog": 247442,
+    "dem_liberal_establishment": 715959,
+    "dem_black_voters": 640087,
+    "dem_capital_l_left": 94055,
+    "dem_neo_liberals": 312278,
+    "dem_bernie_bros": 154693,
+    "dem_faith_based_liberals": 349528,
+    "dem_blue_dog": 463207,
     "dem_traditional_latin": 187793,
     "gop_faith_and_flag": 656372,
     "gop_maga": 706437,
@@ -1811,16 +1976,17 @@
     "unaff_groypers": 24065,
     "unaff_the_klan": 22273,
     "gop_mormons": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 303172
   },
   "GA": {
-    "dem_liberal_establishment": 316171,
-    "dem_black_voters": 940399,
-    "dem_capital_l_left": 47904,
-    "dem_neo_liberals": 130561,
-    "dem_bernie_bros": 70983,
-    "dem_faith_based_liberals": 210063,
-    "dem_blue_dog": 22987,
+    "dem_liberal_establishment": 266049,
+    "dem_black_voters": 862227,
+    "dem_capital_l_left": 34950,
+    "dem_neo_liberals": 116042,
+    "dem_bernie_bros": 57483,
+    "dem_faith_based_liberals": 129885,
+    "dem_blue_dog": 103165,
     "gop_faith_and_flag": 401019,
     "gop_maga": 294277,
     "gop_western_mavericks": 108492,
@@ -1847,16 +2013,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 169267
   },
   "HI": {
-    "dem_liberal_establishment": 69047,
-    "dem_black_voters": 17704,
-    "dem_capital_l_left": 78463,
-    "dem_neo_liberals": 14256,
-    "dem_bernie_bros": 19378,
-    "dem_faith_based_liberals": 15929,
-    "dem_blue_dog": 6275,
+    "dem_liberal_establishment": 58101,
+    "dem_black_voters": 16232,
+    "dem_capital_l_left": 57246,
+    "dem_neo_liberals": 12671,
+    "dem_bernie_bros": 15693,
+    "dem_faith_based_liberals": 9849,
+    "dem_blue_dog": 12355,
     "gop_faith_and_flag": 25175,
     "gop_maga": 25402,
     "gop_western_mavericks": 18730,
@@ -1883,15 +2050,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 38905
   },
   "ID": {
-    "dem_liberal_establishment": 29665,
-    "dem_capital_l_left": 5619,
-    "dem_neo_liberals": 6125,
-    "dem_bernie_bros": 8326,
-    "dem_faith_based_liberals": 6843,
-    "dem_blue_dog": 47180,
+    "dem_liberal_establishment": 24962,
+    "dem_capital_l_left": 4100,
+    "dem_neo_liberals": 5444,
+    "dem_bernie_bros": 6743,
+    "dem_faith_based_liberals": 4231,
+    "dem_blue_dog": 49792,
     "gop_faith_and_flag": 22412,
     "gop_maga": 8224,
     "gop_western_mavericks": 70742,
@@ -1919,16 +2087,17 @@
     "dem_black_voters": 0,
     "dem_traditional_latin": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 8486
   },
   "IL": {
-    "dem_liberal_establishment": 455882,
-    "dem_black_voters": 545495,
-    "dem_capital_l_left": 345366,
-    "dem_neo_liberals": 282382,
-    "dem_bernie_bros": 204699,
-    "dem_faith_based_liberals": 168270,
-    "dem_blue_dog": 27621,
+    "dem_liberal_establishment": 383613,
+    "dem_black_voters": 500150,
+    "dem_capital_l_left": 251975,
+    "dem_neo_liberals": 250980,
+    "dem_bernie_bros": 165770,
+    "dem_faith_based_liberals": 104044,
+    "dem_blue_dog": 91847,
     "dem_traditional_latin": 83850,
     "gop_faith_and_flag": 261991,
     "gop_maga": 264351,
@@ -1956,16 +2125,17 @@
     "soc_communists": 9215,
     "unaff_groypers": 3866,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 281336
   },
   "IN": {
-    "dem_liberal_establishment": 215370,
-    "dem_black_voters": 220890,
-    "dem_capital_l_left": 40789,
-    "dem_neo_liberals": 44468,
-    "dem_bernie_bros": 60441,
-    "dem_faith_based_liberals": 178862,
-    "dem_blue_dog": 176157,
+    "dem_liberal_establishment": 181228,
+    "dem_black_voters": 202528,
+    "dem_capital_l_left": 29759,
+    "dem_neo_liberals": 39523,
+    "dem_bernie_bros": 48946,
+    "dem_faith_based_liberals": 110593,
+    "dem_blue_dog": 244426,
     "gop_faith_and_flag": 277112,
     "gop_maga": 203352,
     "gop_western_mavericks": 74971,
@@ -1992,16 +2162,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 79974
   },
   "IA": {
-    "dem_liberal_establishment": 132489,
-    "dem_black_voters": 33971,
-    "dem_capital_l_left": 25092,
-    "dem_neo_liberals": 27355,
-    "dem_bernie_bros": 37181,
-    "dem_faith_based_liberals": 73354,
-    "dem_blue_dog": 108366,
+    "dem_liberal_establishment": 111486,
+    "dem_black_voters": 31147,
+    "dem_capital_l_left": 18307,
+    "dem_neo_liberals": 24313,
+    "dem_bernie_bros": 30110,
+    "dem_faith_based_liberals": 45356,
+    "dem_blue_dog": 136364,
     "gop_faith_and_flag": 106588,
     "gop_maga": 91774,
     "gop_western_mavericks": 42294,
@@ -2026,16 +2197,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 40725
   },
   "KS": {
-    "dem_liberal_establishment": 92037,
-    "dem_black_voters": 23599,
-    "dem_capital_l_left": 17431,
-    "dem_neo_liberals": 19003,
-    "dem_bernie_bros": 25829,
-    "dem_faith_based_liberals": 21233,
-    "dem_blue_dog": 146378,
+    "dem_liberal_establishment": 77447,
+    "dem_black_voters": 21637,
+    "dem_capital_l_left": 12717,
+    "dem_neo_liberals": 16890,
+    "dem_bernie_bros": 20917,
+    "dem_faith_based_liberals": 13129,
+    "dem_blue_dog": 154482,
     "gop_faith_and_flag": 143522,
     "gop_maga": 52660,
     "gop_western_mavericks": 155315,
@@ -2061,16 +2233,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 28291
   },
   "KY": {
-    "dem_liberal_establishment": 206545,
-    "dem_black_voters": 211839,
-    "dem_capital_l_left": 39118,
-    "dem_neo_liberals": 42646,
-    "dem_bernie_bros": 57965,
-    "dem_faith_based_liberals": 114356,
-    "dem_blue_dog": 328494,
+    "dem_liberal_establishment": 173802,
+    "dem_black_voters": 194230,
+    "dem_capital_l_left": 28540,
+    "dem_neo_liberals": 37904,
+    "dem_bernie_bros": 46941,
+    "dem_faith_based_liberals": 70708,
+    "dem_blue_dog": 372142,
     "gop_faith_and_flag": 390308,
     "gop_maga": 148262,
     "gop_western_mavericks": 68326,
@@ -2097,16 +2270,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 76696
   },
   "LA": {
-    "dem_liberal_establishment": 92850,
-    "dem_black_voters": 345208,
-    "dem_capital_l_left": 17585,
-    "dem_neo_liberals": 19171,
-    "dem_bernie_bros": 26058,
-    "dem_faith_based_liberals": 77111,
-    "dem_blue_dog": 147671,
+    "dem_liberal_establishment": 78131,
+    "dem_black_voters": 316512,
+    "dem_capital_l_left": 12830,
+    "dem_neo_liberals": 17039,
+    "dem_bernie_bros": 21102,
+    "dem_faith_based_liberals": 47679,
+    "dem_blue_dog": 177103,
     "gop_faith_and_flag": 301047,
     "gop_maga": 114357,
     "gop_western_mavericks": 52701,
@@ -2133,15 +2307,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 55258
   },
   "ME": {
-    "dem_liberal_establishment": 71446,
-    "dem_capital_l_left": 81189,
-    "dem_neo_liberals": 14752,
-    "dem_bernie_bros": 80202,
-    "dem_faith_based_liberals": 16483,
-    "dem_blue_dog": 6493,
+    "dem_liberal_establishment": 60120,
+    "dem_capital_l_left": 59234,
+    "dem_neo_liberals": 13112,
+    "dem_bernie_bros": 64949,
+    "dem_faith_based_liberals": 10192,
+    "dem_blue_dog": 12784,
     "gop_faith_and_flag": 24666,
     "gop_maga": 24887,
     "gop_western_mavericks": 122338,
@@ -2169,16 +2344,17 @@
     "dem_black_voters": 0,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 50174
   },
   "MD": {
-    "dem_liberal_establishment": 334903,
-    "dem_black_voters": 744225,
-    "dem_capital_l_left": 140953,
-    "dem_neo_liberals": 207446,
-    "dem_bernie_bros": 62657,
-    "dem_faith_based_liberals": 123616,
-    "dem_blue_dog": 20291,
+    "dem_liberal_establishment": 281812,
+    "dem_black_voters": 682360,
+    "dem_capital_l_left": 102837,
+    "dem_neo_liberals": 184377,
+    "dem_bernie_bros": 50741,
+    "dem_faith_based_liberals": 76433,
+    "dem_blue_dog": 67474,
     "gop_faith_and_flag": 116839,
     "gop_maga": 117890,
     "gop_western_mavericks": 86926,
@@ -2205,15 +2381,16 @@
     "unaff_groypers": 1389,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 188057
   },
   "MA": {
-    "dem_liberal_establishment": 223382,
-    "dem_black_voters": 38184,
-    "dem_capital_l_left": 244441,
-    "dem_neo_liberals": 138366,
-    "dem_bernie_bros": 167171,
-    "dem_faith_based_liberals": 34355,
+    "dem_liberal_establishment": 187970,
+    "dem_black_voters": 35010,
+    "dem_capital_l_left": 178341,
+    "dem_neo_liberals": 122979,
+    "dem_bernie_bros": 135379,
+    "dem_faith_based_liberals": 21242,
     "gop_faith_and_flag": 51568,
     "gop_maga": 52033,
     "gop_western_mavericks": 38367,
@@ -2237,20 +2414,21 @@
     "soc_socialists": 2044,
     "soc_communists": 1363,
     "unaff_groypers": 575,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 13113,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 151865
   },
   "MI": {
-    "dem_liberal_establishment": 383107,
-    "dem_black_voters": 550099,
-    "dem_capital_l_left": 193489,
-    "dem_neo_liberals": 63281,
-    "dem_bernie_bros": 206426,
-    "dem_faith_based_liberals": 254534,
-    "dem_blue_dog": 111416,
+    "dem_liberal_establishment": 322374,
+    "dem_black_voters": 504371,
+    "dem_capital_l_left": 141167,
+    "dem_neo_liberals": 56244,
+    "dem_bernie_bros": 167168,
+    "dem_faith_based_liberals": 157382,
+    "dem_blue_dog": 208568,
     "gop_faith_and_flag": 196423,
     "gop_maga": 396385,
     "gop_western_mavericks": 146137,
@@ -2277,16 +2455,17 @@
     "unaff_groypers": 3827,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 205078
   },
   "MN": {
-    "dem_liberal_establishment": 227811,
-    "dem_black_voters": 46731,
-    "dem_capital_l_left": 207102,
-    "dem_neo_liberals": 94074,
-    "dem_bernie_bros": 204584,
-    "dem_faith_based_liberals": 100904,
-    "dem_blue_dog": 66252,
+    "dem_liberal_establishment": 191697,
+    "dem_black_voters": 42846,
+    "dem_capital_l_left": 151099,
+    "dem_neo_liberals": 83613,
+    "dem_bernie_bros": 165676,
+    "dem_faith_based_liberals": 62390,
+    "dem_blue_dog": 104766,
     "gop_faith_and_flag": 123086,
     "gop_maga": 124194,
     "gop_western_mavericks": 91575,
@@ -2313,16 +2492,17 @@
     "unaff_groypers": 1761,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 145371
   },
   "MS": {
-    "dem_liberal_establishment": 54119,
-    "dem_black_voters": 201207,
-    "dem_capital_l_left": 10249,
-    "dem_neo_liberals": 11174,
-    "dem_bernie_bros": 15188,
-    "dem_faith_based_liberals": 44945,
-    "dem_blue_dog": 86071,
+    "dem_liberal_establishment": 45540,
+    "dem_black_voters": 184481,
+    "dem_capital_l_left": 7478,
+    "dem_neo_liberals": 9931,
+    "dem_bernie_bros": 12300,
+    "dem_faith_based_liberals": 27790,
+    "dem_blue_dog": 103226,
     "gop_faith_and_flag": 195253,
     "gop_maga": 74169,
     "gop_western_mavericks": 34180,
@@ -2349,16 +2529,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 32207
   },
   "MO": {
-    "dem_liberal_establishment": 172162,
-    "dem_black_voters": 309005,
-    "dem_capital_l_left": 32607,
-    "dem_neo_liberals": 35546,
-    "dem_bernie_bros": 48315,
-    "dem_faith_based_liberals": 142980,
-    "dem_blue_dog": 140817,
+    "dem_liberal_establishment": 144870,
+    "dem_black_voters": 283318,
+    "dem_capital_l_left": 23790,
+    "dem_neo_liberals": 31593,
+    "dem_bernie_bros": 39126,
+    "dem_faith_based_liberals": 88406,
+    "dem_blue_dog": 195391,
     "gop_faith_and_flag": 266051,
     "gop_maga": 195235,
     "gop_western_mavericks": 71978,
@@ -2385,15 +2566,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 74938
   },
   "MT": {
-    "dem_liberal_establishment": 37700,
-    "dem_capital_l_left": 7141,
-    "dem_neo_liberals": 7784,
-    "dem_bernie_bros": 25392,
-    "dem_faith_based_liberals": 8697,
-    "dem_blue_dog": 59959,
+    "dem_liberal_establishment": 31723,
+    "dem_capital_l_left": 5210,
+    "dem_neo_liberals": 6918,
+    "dem_bernie_bros": 20563,
+    "dem_faith_based_liberals": 5377,
+    "dem_blue_dog": 63279,
     "gop_faith_and_flag": 8915,
     "gop_maga": 8995,
     "gop_western_mavericks": 77378,
@@ -2420,16 +2602,17 @@
     "dem_black_voters": 0,
     "dem_traditional_latin": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 13603
   },
   "NE": {
-    "dem_liberal_establishment": 62345,
-    "dem_black_voters": 15985,
-    "dem_capital_l_left": 11808,
-    "dem_neo_liberals": 12873,
-    "dem_bernie_bros": 17496,
-    "dem_faith_based_liberals": 14382,
-    "dem_blue_dog": 99156,
+    "dem_liberal_establishment": 52462,
+    "dem_black_voters": 14656,
+    "dem_capital_l_left": 8615,
+    "dem_neo_liberals": 11442,
+    "dem_bernie_bros": 14169,
+    "dem_faith_based_liberals": 8893,
+    "dem_blue_dog": 104645,
     "gop_faith_and_flag": 75988,
     "gop_maga": 40892,
     "gop_western_mavericks": 120607,
@@ -2454,16 +2637,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 19163
   },
   "NV": {
-    "dem_liberal_establishment": 157869,
-    "dem_black_voters": 40479,
-    "dem_capital_l_left": 29899,
-    "dem_neo_liberals": 32596,
-    "dem_bernie_bros": 44304,
-    "dem_faith_based_liberals": 36420,
-    "dem_blue_dog": 57390,
+    "dem_liberal_establishment": 132843,
+    "dem_black_voters": 37114,
+    "dem_capital_l_left": 21814,
+    "dem_neo_liberals": 28971,
+    "dem_bernie_bros": 35878,
+    "dem_faith_based_liberals": 22519,
+    "dem_blue_dog": 71291,
     "dem_traditional_latin": 43556,
     "gop_faith_and_flag": 10037,
     "gop_maga": 20254,
@@ -2489,15 +2673,16 @@
     "grn_eco_socialist_vanguard": 1771,
     "unaff_groypers": 1887,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 48527
   },
   "NH": {
-    "dem_liberal_establishment": 72184,
-    "dem_capital_l_left": 13671,
-    "dem_neo_liberals": 14904,
-    "dem_bernie_bros": 81029,
-    "dem_faith_based_liberals": 16652,
-    "dem_blue_dog": 6560,
+    "dem_liberal_establishment": 60741,
+    "dem_capital_l_left": 9974,
+    "dem_neo_liberals": 13247,
+    "dem_bernie_bros": 65619,
+    "dem_faith_based_liberals": 10296,
+    "dem_blue_dog": 12916,
     "gop_faith_and_flag": 17538,
     "gop_maga": 17696,
     "gop_western_mavericks": 152230,
@@ -2514,16 +2699,18 @@
     "swg_technocrats": 19343,
     "swg_grillers": 44795,
     "swg_religious_moderates": 35470,
-    "swg_girlypops": 12390
+    "swg_girlypops": 12390,
+    "dem_abundance": 32207,
+    "dem_black_voters": null
   },
   "NJ": {
-    "dem_liberal_establishment": 551649,
-    "dem_black_voters": 377193,
-    "dem_capital_l_left": 232176,
-    "dem_neo_liberals": 341701,
-    "dem_bernie_bros": 103209,
-    "dem_faith_based_liberals": 84841,
-    "dem_blue_dog": 33423,
+    "dem_liberal_establishment": 464198,
+    "dem_black_voters": 345838,
+    "dem_capital_l_left": 169393,
+    "dem_neo_liberals": 303702,
+    "dem_bernie_bros": 83581,
+    "dem_faith_based_liberals": 52458,
+    "dem_blue_dog": 65806,
     "gop_faith_and_flag": 183926,
     "gop_maga": 185584,
     "gop_western_mavericks": 136840,
@@ -2550,16 +2737,17 @@
     "unaff_groypers": 1182,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_traditional_farmers": 0
+    "gop_traditional_farmers": 0,
+    "dem_abundance": 239216
   },
   "NM": {
-    "dem_liberal_establishment": 95997,
-    "dem_black_voters": 24614,
-    "dem_capital_l_left": 60604,
-    "dem_neo_liberals": 19821,
-    "dem_bernie_bros": 64656,
-    "dem_faith_based_liberals": 22146,
-    "dem_blue_dog": 34897,
+    "dem_liberal_establishment": 80779,
+    "dem_black_voters": 22568,
+    "dem_capital_l_left": 44216,
+    "dem_neo_liberals": 17617,
+    "dem_bernie_bros": 52360,
+    "dem_faith_based_liberals": 13693,
+    "dem_blue_dog": 43350,
     "dem_traditional_latin": 52969,
     "gop_faith_and_flag": 17346,
     "gop_maga": 17502,
@@ -2585,16 +2773,17 @@
     "grn_eco_socialist_vanguard": 1154,
     "grn_yimby": 258,
     "unaff_groypers": 426,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 48152
   },
   "NY": {
-    "dem_liberal_establishment": 955759,
-    "dem_black_voters": 1143752,
-    "dem_capital_l_left": 1045856,
-    "dem_neo_liberals": 592034,
-    "dem_bernie_bros": 429168,
-    "dem_faith_based_liberals": 146996,
-    "dem_blue_dog": 57909,
+    "dem_liberal_establishment": 804246,
+    "dem_black_voters": 1048675,
+    "dem_capital_l_left": 763043,
+    "dem_neo_liberals": 526197,
+    "dem_bernie_bros": 347549,
+    "dem_faith_based_liberals": 90890,
+    "dem_blue_dog": 114015,
     "dem_traditional_latin": 175798,
     "gop_faith_and_flag": 342794,
     "gop_maga": 345882,
@@ -2622,16 +2811,17 @@
     "soc_socialists": 21835,
     "soc_communists": 14556,
     "unaff_groypers": 16130,
-    "gop_mormons": 0
+    "gop_mormons": 0,
+    "dem_abundance": 676859
   },
   "NC": {
-    "dem_liberal_establishment": 266439,
-    "dem_black_voters": 710499,
-    "dem_capital_l_left": 40370,
-    "dem_neo_liberals": 110024,
-    "dem_bernie_bros": 59819,
-    "dem_faith_based_liberals": 177021,
-    "dem_blue_dog": 174343,
+    "dem_liberal_establishment": 224201,
+    "dem_black_voters": 651437,
+    "dem_capital_l_left": 29453,
+    "dem_neo_liberals": 97789,
+    "dem_bernie_bros": 48443,
+    "dem_faith_based_liberals": 109454,
+    "dem_blue_dog": 241910,
     "gop_faith_and_flag": 346466,
     "gop_maga": 254245,
     "gop_western_mavericks": 93734,
@@ -2658,15 +2848,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 135828
   },
   "ND": {
-    "dem_liberal_establishment": 32274,
-    "dem_capital_l_left": 6112,
-    "dem_neo_liberals": 6664,
-    "dem_bernie_bros": 9057,
-    "dem_faith_based_liberals": 7445,
-    "dem_blue_dog": 51330,
+    "dem_liberal_establishment": 27158,
+    "dem_capital_l_left": 4459,
+    "dem_neo_liberals": 5923,
+    "dem_bernie_bros": 7335,
+    "dem_faith_based_liberals": 4603,
+    "dem_blue_dog": 54172,
     "gop_faith_and_flag": 32854,
     "gop_maga": 17680,
     "gop_western_mavericks": 52145,
@@ -2692,16 +2883,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 9232
   },
   "OH": {
-    "dem_liberal_establishment": 314353,
-    "dem_black_voters": 564219,
-    "dem_capital_l_left": 59536,
-    "dem_neo_liberals": 64905,
-    "dem_bernie_bros": 88220,
-    "dem_faith_based_liberals": 261068,
-    "dem_blue_dog": 257120,
+    "dem_liberal_establishment": 264520,
+    "dem_black_voters": 517317,
+    "dem_capital_l_left": 43437,
+    "dem_neo_liberals": 57687,
+    "dem_bernie_bros": 71442,
+    "dem_faith_based_liberals": 161422,
+    "dem_blue_dog": 356766,
     "gop_faith_and_flag": 306542,
     "gop_maga": 329923,
     "gop_western_mavericks": 121635,
@@ -2727,16 +2919,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 136830
   },
   "OK": {
-    "dem_liberal_establishment": 96746,
-    "dem_black_voters": 24807,
-    "dem_capital_l_left": 18324,
-    "dem_neo_liberals": 19975,
-    "dem_bernie_bros": 27151,
-    "dem_faith_based_liberals": 53564,
-    "dem_blue_dog": 153867,
+    "dem_liberal_establishment": 81409,
+    "dem_black_voters": 22745,
+    "dem_capital_l_left": 13369,
+    "dem_neo_liberals": 17754,
+    "dem_bernie_bros": 21987,
+    "dem_faith_based_liberals": 33119,
+    "dem_blue_dog": 174312,
     "gop_faith_and_flag": 250049,
     "gop_maga": 94984,
     "gop_western_mavericks": 175091,
@@ -2763,15 +2956,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 29739
   },
   "OR": {
-    "dem_liberal_establishment": 203539,
-    "dem_black_voters": 41752,
-    "dem_capital_l_left": 267275,
-    "dem_neo_liberals": 33621,
-    "dem_bernie_bros": 182786,
-    "dem_faith_based_liberals": 37564,
+    "dem_liberal_establishment": 171273,
+    "dem_black_voters": 38281,
+    "dem_capital_l_left": 195000,
+    "dem_neo_liberals": 29882,
+    "dem_bernie_bros": 148024,
+    "dem_faith_based_liberals": 23226,
     "gop_faith_and_flag": 62597,
     "gop_maga": 63161,
     "gop_western_mavericks": 310478,
@@ -2796,19 +2990,20 @@
     "soc_socialists": 9827,
     "soc_communists": 6552,
     "unaff_groypers": 2613,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 14338,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 146513
   },
   "PA": {
-    "dem_liberal_establishment": 561619,
-    "dem_black_voters": 806420,
-    "dem_capital_l_left": 283646,
-    "dem_neo_liberals": 231918,
-    "dem_bernie_bros": 302611,
-    "dem_faith_based_liberals": 373136,
-    "dem_blue_dog": 163330,
+    "dem_liberal_establishment": 472588,
+    "dem_black_voters": 739385,
+    "dem_capital_l_left": 206944,
+    "dem_neo_liberals": 206128,
+    "dem_bernie_bros": 245061,
+    "dem_faith_based_liberals": 230715,
+    "dem_blue_dog": 305751,
     "gop_faith_and_flag": 426488,
     "gop_maga": 459018,
     "gop_western_mavericks": 169228,
@@ -2836,16 +3031,17 @@
     "unaff_the_klan": 11609,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 316108
   },
   "RI": {
-    "dem_liberal_establishment": 74646,
-    "dem_black_voters": 12760,
-    "dem_capital_l_left": 56550,
-    "dem_neo_liberals": 10275,
-    "dem_bernie_bros": 13966,
-    "dem_faith_based_liberals": 11480,
-    "dem_blue_dog": 4523,
+    "dem_liberal_establishment": 62813,
+    "dem_black_voters": 11699,
+    "dem_capital_l_left": 41258,
+    "dem_neo_liberals": 9132,
+    "dem_bernie_bros": 11310,
+    "dem_faith_based_liberals": 7098,
+    "dem_blue_dog": 8905,
     "gop_faith_and_flag": 16369,
     "gop_maga": 16517,
     "gop_western_mavericks": 12179,
@@ -2861,16 +3057,17 @@
     "swg_technocrats": 18587,
     "swg_grillers": 43045,
     "swg_religious_moderates": 34085,
-    "swg_girlypops": 11906
+    "swg_girlypops": 11906,
+    "dem_abundance": 31985
   },
   "SC": {
-    "dem_liberal_establishment": 106112,
-    "dem_black_voters": 394516,
-    "dem_capital_l_left": 20097,
-    "dem_neo_liberals": 21909,
-    "dem_bernie_bros": 29779,
-    "dem_faith_based_liberals": 88125,
-    "dem_blue_dog": 86792,
+    "dem_liberal_establishment": 89290,
+    "dem_black_voters": 361721,
+    "dem_capital_l_left": 14663,
+    "dem_neo_liberals": 19473,
+    "dem_bernie_bros": 24116,
+    "dem_faith_based_liberals": 54489,
+    "dem_blue_dog": 120428,
     "gop_faith_and_flag": 294654,
     "gop_maga": 111928,
     "gop_western_mavericks": 51581,
@@ -2897,15 +3094,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 63150
   },
   "SD": {
-    "dem_liberal_establishment": 31446,
-    "dem_capital_l_left": 5956,
-    "dem_neo_liberals": 6493,
-    "dem_bernie_bros": 8825,
-    "dem_faith_based_liberals": 7254,
-    "dem_blue_dog": 50013,
+    "dem_liberal_establishment": 26461,
+    "dem_capital_l_left": 4345,
+    "dem_neo_liberals": 5771,
+    "dem_bernie_bros": 7147,
+    "dem_faith_based_liberals": 4485,
+    "dem_blue_dog": 52782,
     "gop_faith_and_flag": 49261,
     "gop_maga": 26509,
     "gop_western_mavericks": 78187,
@@ -2931,16 +3129,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 8996
   },
   "TN": {
-    "dem_liberal_establishment": 174159,
-    "dem_black_voters": 312590,
-    "dem_capital_l_left": 32985,
-    "dem_neo_liberals": 35959,
-    "dem_bernie_bros": 48875,
-    "dem_faith_based_liberals": 144638,
-    "dem_blue_dog": 142450,
+    "dem_liberal_establishment": 146550,
+    "dem_black_voters": 286605,
+    "dem_capital_l_left": 24065,
+    "dem_neo_liberals": 31960,
+    "dem_bernie_bros": 39580,
+    "dem_faith_based_liberals": 89432,
+    "dem_blue_dog": 197656,
     "gop_faith_and_flag": 415671,
     "gop_maga": 197372,
     "gop_western_mavericks": 72766,
@@ -2967,16 +3166,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 75808
   },
   "TX": {
-    "dem_liberal_establishment": 802042,
-    "dem_black_voters": 822601,
-    "dem_capital_l_left": 151902,
-    "dem_neo_liberals": 413999,
-    "dem_bernie_bros": 225082,
-    "dem_faith_based_liberals": 666088,
-    "dem_blue_dog": 291590,
+    "dem_liberal_establishment": 674897,
+    "dem_black_voters": 754221,
+    "dem_capital_l_left": 110826,
+    "dem_neo_liberals": 367961,
+    "dem_bernie_bros": 182276,
+    "dem_faith_based_liberals": 411851,
+    "dem_blue_dog": 545827,
     "dem_traditional_latin": 442533,
     "gop_faith_and_flag": 917852,
     "gop_maga": 538841,
@@ -3004,15 +3204,16 @@
     "unaff_the_klan": 18631,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 325445
   },
   "UT": {
-    "dem_liberal_establishment": 85217,
-    "dem_capital_l_left": 16140,
-    "dem_neo_liberals": 17595,
-    "dem_bernie_bros": 23915,
-    "dem_faith_based_liberals": 19659,
-    "dem_blue_dog": 30979,
+    "dem_liberal_establishment": 71708,
+    "dem_capital_l_left": 11776,
+    "dem_neo_liberals": 15638,
+    "dem_bernie_bros": 19367,
+    "dem_faith_based_liberals": 12155,
+    "dem_blue_dog": 38483,
     "gop_faith_and_flag": 55045,
     "gop_maga": 20196,
     "gop_western_mavericks": 99280,
@@ -3039,14 +3240,15 @@
     "dem_black_voters": 0,
     "dem_traditional_latin": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 24378
   },
   "VT": {
-    "dem_liberal_establishment": 31711,
-    "dem_capital_l_left": 52051,
-    "dem_neo_liberals": 6548,
-    "dem_bernie_bros": 33043,
-    "dem_faith_based_liberals": 7316,
+    "dem_liberal_establishment": 26684,
+    "dem_capital_l_left": 37976,
+    "dem_neo_liberals": 5820,
+    "dem_bernie_bros": 26759,
+    "dem_faith_based_liberals": 4524,
     "gop_faith_and_flag": 18142,
     "gop_maga": 18305,
     "gop_western_mavericks": 13498,
@@ -3072,19 +3274,20 @@
     "soc_communists": 1333,
     "unaff_groypers": 173,
     "dem_black_voters": 0,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 2792,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 26114
   },
   "VA": {
-    "dem_liberal_establishment": 421603,
-    "dem_black_voters": 504478,
-    "dem_capital_l_left": 53233,
-    "dem_neo_liberals": 261149,
-    "dem_bernie_bros": 78877,
-    "dem_faith_based_liberals": 155617,
-    "dem_blue_dog": 25544,
+    "dem_liberal_establishment": 354768,
+    "dem_black_voters": 462542,
+    "dem_capital_l_left": 38838,
+    "dem_neo_liberals": 232108,
+    "dem_bernie_bros": 63876,
+    "dem_faith_based_liberals": 96220,
+    "dem_blue_dog": 84941,
     "gop_faith_and_flag": 280014,
     "gop_maga": 150686,
     "gop_western_mavericks": 111109,
@@ -3109,15 +3312,16 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 167208
   },
   "WA": {
-    "dem_liberal_establishment": 315104,
-    "dem_black_voters": 64637,
-    "dem_capital_l_left": 413773,
-    "dem_neo_liberals": 234216,
-    "dem_bernie_bros": 282975,
-    "dem_faith_based_liberals": 58153,
+    "dem_liberal_establishment": 265152,
+    "dem_black_voters": 59264,
+    "dem_capital_l_left": 301883,
+    "dem_neo_liberals": 208170,
+    "dem_bernie_bros": 229159,
+    "dem_faith_based_liberals": 35957,
     "gop_faith_and_flag": 106853,
     "gop_maga": 107815,
     "gop_western_mavericks": 529984,
@@ -3142,19 +3346,20 @@
     "soc_socialists": 7237,
     "soc_communists": 4825,
     "unaff_groypers": 2019,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 22196,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 247077
   },
   "WV": {
-    "dem_liberal_establishment": 56513,
-    "dem_black_voters": 14490,
-    "dem_capital_l_left": 10703,
-    "dem_neo_liberals": 11668,
-    "dem_bernie_bros": 15860,
-    "dem_faith_based_liberals": 31289,
-    "dem_blue_dog": 89880,
+    "dem_liberal_establishment": 47554,
+    "dem_black_voters": 13286,
+    "dem_capital_l_left": 7809,
+    "dem_neo_liberals": 10371,
+    "dem_bernie_bros": 12844,
+    "dem_faith_based_liberals": 19346,
+    "dem_blue_dog": 101823,
     "gop_faith_and_flag": 126508,
     "gop_maga": 48055,
     "gop_western_mavericks": 22145,
@@ -3181,16 +3386,17 @@
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 17370
   },
   "WI": {
-    "dem_liberal_establishment": 271026,
-    "dem_black_voters": 55595,
-    "dem_capital_l_left": 136883,
-    "dem_neo_liberals": 44767,
-    "dem_bernie_bros": 243392,
-    "dem_faith_based_liberals": 120046,
-    "dem_blue_dog": 78820,
+    "dem_liberal_establishment": 228061,
+    "dem_black_voters": 50974,
+    "dem_capital_l_left": 99868,
+    "dem_neo_liberals": 39789,
+    "dem_bernie_bros": 197104,
+    "dem_faith_based_liberals": 74226,
+    "dem_blue_dog": 124640,
     "gop_faith_and_flag": 95055,
     "gop_maga": 191821,
     "gop_western_mavericks": 70720,
@@ -3217,15 +3423,16 @@
     "unaff_groypers": 2070,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 135867
   },
   "WY": {
-    "dem_liberal_establishment": 7039,
-    "dem_capital_l_left": 1333,
-    "dem_neo_liberals": 1454,
-    "dem_bernie_bros": 1975,
-    "dem_faith_based_liberals": 1623,
-    "dem_blue_dog": 11195,
+    "dem_liberal_establishment": 5923,
+    "dem_capital_l_left": 973,
+    "dem_neo_liberals": 1292,
+    "dem_bernie_bros": 1599,
+    "dem_faith_based_liberals": 1004,
+    "dem_blue_dog": 11814,
     "gop_faith_and_flag": 3448,
     "gop_maga": 3479,
     "gop_western_mavericks": 29929,
@@ -3252,15 +3459,16 @@
     "dem_black_voters": 0,
     "dem_traditional_latin": 0,
     "gop_cubans": 0,
-    "grn_yimby": 0
+    "grn_yimby": 0,
+    "dem_abundance": 2014
   },
   "DC": {
-    "dem_liberal_establishment": 53987,
-    "dem_black_voters": 119970,
-    "dem_capital_l_left": 40899,
-    "dem_neo_liberals": 33440,
-    "dem_bernie_bros": 10100,
-    "dem_faith_based_liberals": 8303,
+    "dem_liberal_establishment": 45429,
+    "dem_black_voters": 109997,
+    "dem_capital_l_left": 29839,
+    "dem_neo_liberals": 29721,
+    "dem_bernie_bros": 8179,
+    "dem_faith_based_liberals": 5134,
     "gop_faith_and_flag": 2951,
     "gop_maga": 2978,
     "gop_western_mavericks": 2196,
@@ -3284,23 +3492,23 @@
     "soc_socialists": 104,
     "soc_communists": 69,
     "unaff_groypers": 117,
-    "dem_blue_dog": 0,
+    "dem_blue_dog": 3169,
     "dem_traditional_latin": 0,
     "gop_mormons": 0,
     "gop_traditional_farmers": 0,
-    "gop_cubans": 0
+    "gop_cubans": 0,
+    "dem_abundance": 35231
   }
 };
 
   const FACTION_NATIONAL_TOTALS = {
-  "dem_liberal_establishment": 12616200,
-  "dem_black_voters": 12029800,
-  "dem_capital_l_left": 7396100,
-  "dem_neo_liberals": 5783500,
-  "dem_bernie_bros": 5258200,
-  "dem_faith_based_liberals": 5239900,
-  "dem_blue_dog": 3864800,
-  "dem_traditional_latin": 1905100,
+  "dem_liberal_establishment": 10616200,
+  "dem_black_voters": 11029800,
+  "dem_capital_l_left": 5396100,
+  "dem_neo_liberals": 5140351,
+  "dem_bernie_bros": 4258200,
+  "dem_faith_based_liberals": 3239900,
+  "dem_blue_dog": 5864800,
   "gop_faith_and_flag": 9234800,
   "gop_maga": 7194100,
   "gop_western_mavericks": 6684100,
@@ -3308,10 +3516,8 @@
   "gop_suburban_moderates": 5344600,
   "gop_neo_cons": 5258000,
   "gop_paleocons": 3083400,
-  "gop_mormons": 2462700,
   "gop_traditional_farmers": 2056400,
   "gop_market_country_club": 2062300,
-  "gop_cubans": 823200,
   "swg_true_centrists": 9006000,
   "swg_hard_hats": 6004000,
   "swg_podcast_bros": 6004000,
@@ -3319,17 +3525,21 @@
   "swg_technocrats": 5503500,
   "swg_grillers": 5003000,
   "swg_religious_moderates": 4502800,
-  "swg_working_class_latinos": 4002500,
   "swg_girlypops": 2500500,
   "lib_true_libertarians": 989000,
   "lib_ancaps": 197800,
   "grn_eco_socialist_vanguard": 398700,
-  "grn_yimby": 114100,
   "con_christian_dominionists": 235600,
-  "soc_socialists": 144800,
-  "soc_communists": 96400,
   "unaff_groypers": 200000,
-  "unaff_the_klan": 142200
+  "unaff_the_klan": 142200,
+  "dem_traditional_latin": 1905100,
+  "gop_mormons": 2462700,
+  "gop_cubans": 823200,
+  "grn_yimby": 114100,
+  "soc_socialists": 144800,
+  "dem_abundance": 6643149,
+  "swg_working_class_latinos": 4002500,
+  "soc_communists": 96400
 };
 
   const PartyChairData = (typeof window !== 'undefined' ? (window.PartyChairData = window.PartyChairData || {}) : (global.PartyChairData = global.PartyChairData || {}));

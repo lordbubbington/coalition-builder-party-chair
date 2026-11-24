@@ -5234,6 +5234,8 @@ function campaignDashboardMarkup() {
             </section>`
           : ''}
 
+      <!-- [v0.18.5 CAMPAIGN-EVENTS] -->
+      ${window.CampaignEventsSystem ? window.CampaignEventsSystem.renderCampaignTimelineStrip(game) : ''}
       ${activeEraFeedbackBannerMarkup()}
 
       <section class="panel section-panel">
@@ -10302,12 +10304,18 @@ function render() {
   ` : '';
   // [v0.18.4 ATLAS-HOTSEAT]
   const atlasHotseatOverlay = window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderOverlays(game, MAPS) : '';
-  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay + renderSaveSlotsModalMarkup() + (game ? renderPrimaryArchiveModalMarkup() : '') + atlasHotseatOverlay;
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  const campaignEventsOverlay = window.CampaignEventsSystem ? window.CampaignEventsSystem.renderOverlays(game) : '';
+  app.innerHTML = (game ? campaignMarkup() : setupMarkup()) + gameOverOverlay + renderSaveSlotsModalMarkup() + (game ? renderPrimaryArchiveModalMarkup() : '') + atlasHotseatOverlay + campaignEventsOverlay;
   if (game) saveGame(game);
   bind();
   // [v0.18.4 ATLAS-HOTSEAT]
   if (window.AtlasMultiplayerSystem) {
     window.AtlasMultiplayerSystem.bindUI(game, { setGame: (g) => { game = g; }, render, saveGame, resetToSetup: () => { game = null; render(); } });
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  if (window.CampaignEventsSystem) {
+    window.CampaignEventsSystem.bindUI(game, { setGame: (g) => { game = g; }, render, saveGame });
   }
   renderTutorial();
 }
@@ -11474,6 +11482,8 @@ function bind() {
 
   // Campaign Phase: Advance Week & October Surprise (REQ-39 & REQ-41)
   document.querySelector('#advance-campaign-week')?.addEventListener('click', () => {
+    // [v0.18.5 CAMPAIGN-EVENTS] Must-resolve gate for pending Breaking News event
+    if (game?.campaignEvents?.pendingEvent && !game.campaignEvents.pendingEvent.resolved) { render(); return; }
     if (window.PartyChairEngine?.advanceCampaignWeek) {
       game = window.PartyChairEngine.advanceCampaignWeek(game);
       if (V07 && game) game = V07.hydrateV07GameState(game);
