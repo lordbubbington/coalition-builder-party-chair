@@ -328,8 +328,8 @@
     const startYear = Number(ps.currentEraStartYear || 2028);
     // Strict 8th Party System Floor: NEVER before 2040
     if (eraNum <= 7) return 2040;
-    // Strict 9th+ Party System Floor: at least 30 years after preceding era start
-    return startYear + 30;
+    // Strict 9th+ Party System Floor: lowered from 30 to 22 years after preceding era start
+    return startYear + 22;
   }
 
   function computeTransitionProbability(game, targetYear = null) {
@@ -337,8 +337,11 @@
     const year = Number(targetYear ?? game?.year ?? 2028);
     const floorYear = getEligibilityFloorYear(ps);
     if (year < floorYear) return 0;
+    const startYear = Number(ps.currentEraStartYear || 2028);
+    const yearsInEra = Math.max(0, year - startYear);
+    const cyclesPast16 = yearsInEra > 16 ? Math.floor((yearsInEra - 16) / 2) : 0;
     const cyclesSinceFloor = Math.max(0, Math.floor((year - floorYear) / 2));
-    const prob = 0.10 + 0.05 * cyclesSinceFloor;
+    const prob = 0.10 + 0.05 * cyclesSinceFloor + 0.05 * cyclesPast16;
     return clamp(round(prob, 4), 0, 1.0);
   }
 
