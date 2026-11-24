@@ -6,8 +6,10 @@
 (function (root) {
   'use strict';
 
-  const SAVE_KEY = 'partyChairGame.save.v18.4';
-  const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.3';
+  const SAVE_KEY = 'partyChairGame.save.v18.6';
+  const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.5';
+  const PREVIOUS_SAVE_KEY_V184 = 'partyChairGame.save.v18.4';
+  const PREVIOUS_SAVE_KEY_V183 = 'partyChairGame.save.v18.3';
   const PREVIOUS_SAVE_KEY_V182 = 'partyChairGame.save.v18.2';
   const PREVIOUS_SAVE_KEY_V162 = 'partyChairGame.save.v16.2';
   const PREVIOUS_SAVE_KEY_V161 = 'partyChairGame.save.v16.1';
@@ -61,7 +63,7 @@
         if (p.retired || p.isRetired || p.defeated || Number(p.age || 50) >= 82) return false;
         return true;
       });
-      const maxNonSitting = ultra ? 120 : 250;
+      const maxNonSitting = ultra ? 80 : 160;
       copy.politicians = filtered.length > maxNonSitting
         ? filtered.slice().sort((a, b) => Number(b.fame || 0) - Number(a.fame || 0)).slice(0, maxNonSitting)
         : filtered;
@@ -70,6 +72,10 @@
     if (copy.forecasters) {
       delete copy.forecasters;
     }
+    delete copy._forecastCache;
+    delete copy._deferredDistricts;
+    delete copy._forecastOptions;
+    delete copy._forecastCacheHits;
     // Clear completed or inactive electionNight timelines (~2.5-3 MB savings)
     if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
       copy.electionNight = null;
@@ -256,6 +262,73 @@
     if (_cesComp && typeof _cesComp.compactCampaignEventsForSave === 'function') {
       _cesComp.compactCampaignEventsForSave(copy);
     }
+
+    // Developer 1 (Chunk 1.4): Prune actionLog, partyActionLog, machineAllocations, and SOEE telemetry past last 3 cycles
+    const curSaveCycle = Number(copy.year || 2028);
+    const minKeptCycle = curSaveCycle - 4; // Keep current cycle + prior 2 cycles (3 cycles total)
+    if (Array.isArray(copy.actionLog)) {
+      copy.actionLog = copy.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+    }
+    if (Array.isArray(copy.partyActionLog)) {
+      copy.partyActionLog = copy.partyActionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+    }
+    if (copy.parties && typeof copy.parties === 'object') {
+      Object.values(copy.parties).forEach((p) => {
+        if (!p || typeof p !== 'object') return;
+        if (Array.isArray(p.actionLog)) {
+          p.actionLog = p.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+        }
+        if (Array.isArray(p.machineAllocations)) {
+          p.machineAllocations = p.machineAllocations.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+        }
+        if (Array.isArray(p.soeeTelemetry)) {
+          p.soeeTelemetry = p.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+        }
+      });
+    }
+    if (Array.isArray(copy.soeeTelemetry)) {
+      copy.soeeTelemetry = copy.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
+    }
+
+    // Developer 1 (Chunk 1.4): Delete stale primaryFields outside primary phase & representatives outside complete phase
+    if (copy.phase !== 'primary' && copy.phase !== 'presidential-primary' && copy.primaryFields) {
+      delete copy.primaryFields;
+    }
+    if (copy.phase !== 'complete' && copy.representatives) {
+      delete copy.representatives;
+    }
+
+    // Developer 1 (Chunk 1.4): Deduplicate currentHouseMap and decennial map duplicate
+    if (activeMapKey && copy[activeMapKey] && copy.currentHouseMap) {
+      delete copy[activeMapKey];
+    }
+
+    // Developer 1 (Chunk 1.4): Limit older simulatedPrimaries to last 4 presidential cycles
+    if (copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
+      const yrs = Object.keys(copy.simulatedPrimaries).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+      if (yrs.length > 4) {
+        const keepYrs = new Set(yrs.slice(-4).map(String));
+        Object.keys(copy.simulatedPrimaries).forEach((y) => {
+          if (!keepYrs.has(String(y))) delete copy.simulatedPrimaries[y];
+        });
+      }
+    }
+
+    // Developer 1 (Chunk 1.4): Compact sittingMembers historical rosters (careerMilestones to max 5, remove historical/event logs and ratings)
+    if (Array.isArray(copy.sittingMembers)) {
+      copy.sittingMembers = copy.sittingMembers.map((m) => {
+        if (!m || typeof m !== 'object') return m;
+        const sm = { ...m };
+        if (Array.isArray(sm.careerMilestones) && sm.careerMilestones.length > 5) {
+          sm.careerMilestones = sm.careerMilestones.slice(-5);
+        }
+        delete sm.historicalLog;
+        delete sm.eventLog;
+        delete sm.ratings;
+        return sm;
+      });
+    }
+
     return copy;
   }
 
@@ -335,6 +408,8 @@
     try {
       const value = localStorage.getItem(SAVE_KEY)
         || localStorage.getItem(PREVIOUS_SAVE_KEY)
+        || localStorage.getItem(PREVIOUS_SAVE_KEY_V184)
+        || localStorage.getItem(PREVIOUS_SAVE_KEY_V183)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V182)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V162)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V161)

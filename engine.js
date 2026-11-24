@@ -900,6 +900,110 @@ function _tryLoadCoreModule(globalKey, fileName) {
     try { return process.mainModule.require("../" + fileName); } catch {}
     try { return process.mainModule.require("./" + fileName); } catch {}
   }
+  return null;
+}
+function getFactionCore() { return _tryLoadCoreModule("FactionCore", "faction-core.js"); }
+const RECOGNIZED_FRICTION_PARTIES = new Set(['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist', 'player']);
+function evaluateFactionFriction(game) {
+  const playerPartyId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  const factions = game.factions || [];
+  let updatedGame = { ...game };
+
+  for (const f of factions) {
+    if (!f || !RECOGNIZED_FRICTION_PARTIES.has(f.partyId)) continue;
+    const isPlayerFaction = f.partyId === playerPartyId;
+
+    const curH = Number(updatedGame.factionHappiness?.[f.id] ?? updatedGame.factionHappiness?.[f.name] ?? f.happiness ?? 60);
+    let frictionDelta = 0;
+
+    // REC-07: Rebalanced low-happiness friction curve (<35: +30, <45: +15)
+    if (curH < 35) {
+      f.chronicLowTurns = (f.chronicLowTurns || 0) + 1;
+      frictionDelta += 30;
+    } else if (curH < 45) {
+      f.chronicLowTurns = 0;
+      frictionDelta += 15;
+    } else {
+      f.chronicLowTurns = 0;
+    }
+
+    // REC-07: Platform Abandonment threshold lowered from 4.5 to 3.2 Euclidean points
+    const dist = computeFactionKeyIssuesDistance(updatedGame, f, f.partyId);
+    if (dist > 3.2) {
+      frictionDelta += 15;
+    } else if (curH >= 60 && dist <= 2.5) {
+      frictionDelta -= 15;
+    }
+
+    const isVanguardFounding = isPlayerFaction
+      && updatedGame.identityCrisis?.doctrine === 'vanguard'
+      && (updatedGame.identityCrisis?.foundingFactionIds || []).includes(f.id);
+    if (isVanguardFounding && frictionDelta > 0) {
+      frictionDelta = round(frictionDelta * 0.6, 1);
+    }
+    f.frictionIndex = clamp((f.frictionIndex || 0) + frictionDelta, 0, 100);
+
+    // 3. Ultimatum handling (REC-07: remediation floor raised to Happiness >= 60; threshold lowered to 75)
+    // Bug #24: Post-accord bolt-immunity cooldown prevents immediate boomerang bolts
+    if (Number(f.accordCooldownUntilYear || 0) > Number(updatedGame.year || 2028)) {
+      f.frictionIndex = Math.min(f.frictionIndex, 35);
+      f.ultimatumTurnsRemaining = null;
+      continue;
+    }
+
+    // Bug #25: Mild ideological equilibrium recovery prevents chronic happiness floor compression
+    if (curH < 52 && dist <= 2.8) {
+      const recoveredH = clamp(round(curH + 3, 1), 0, 100);
+      f.happiness = recoveredH;
+      if (updatedGame.factionHappiness) updatedGame.factionHappiness[f.id] = recoveredH;
+      if (updatedGame.factionStandings) updatedGame.factionStandings[f.id] = recoveredH;
+    }
+
+    if (f.ultimatumTurnsRemaining !== null && f.ultimatumTurnsRemaining !== undefined) {
+      if (curH >= 60) {
+        f.ultimatumTurnsRemaining = null;
+        f.frictionIndex = Math.min(f.frictionIndex, 40);
+        if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
+          f.isPuristBoltThreat = false;
+          updatedGame.identityCrisis = {
+            ...updatedGame.identityCrisis,
+            puristRevoltPending: false,
+            puristRevoltTurnsRemaining: null,
+            puristRevoltAppeased: true,
+          };
+          updatedGame.factionBoltThreats = (updatedGame.factionBoltThreats || []).filter((t) => t.factionId !== f.id);
+        }
+        const note = `Ultimatum averted with ${f.name}: Happiness restored to ${curH}/100, Friction Index lowered to ${f.frictionIndex}.`;
+        updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
+      } else {
+        if (!isPlayerFaction && typeof window !== 'undefined' && window.PartySystemsRobots?.evaluateRivalChairUltimatumResponse) {
+          const aiResp = window.PartySystemsRobots.evaluateRivalChairUltimatumResponse(updatedGame, f, f.partyId);
+          if (aiResp && aiResp.action === 'appease') {
+            const note = `Rival Chair appeased ${f.name} (-$${aiResp.cost}M), averting a coalition bolt.`;
+            updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
+            continue;
+          }
+        }
+        f.ultimatumTurnsRemaining -= 1;
+        if (f.isPuristBoltThreat && updatedGame.identityCrisis) {
+          updatedGame.identityCrisis = {
+            ...updatedGame.identityCrisis,
+            puristRevoltTurnsRemaining: Math.max(0, f.ultimatumTurnsRemaining),
+          };
+        }
+        if (f.ultimatumTurnsRemaining <= 0) {
+          updatedGame = boltFaction(updatedGame, f.id);
+        }
+      }
+    } else if (f.frictionIndex >= 75) {
+      f.ultimatumTurnsRemaining = 2;
+      const note = isPlayerFaction
+        ? `CRISIS: The ${f.name} has issued an official ULTIMATUM! Address core grievances within 2 turns or the faction will formally withdraw from the party.`
+        : `NATIONAL CRISIS: The ${f.name} has issued a secession ULTIMATUM to its parent party (${f.partyId})!`;
+      updatedGame.yearLog = [...(updatedGame.yearLog || []), { year: updatedGame.year, turn: (updatedGame.chairTurn || 0) + 1, action: note }].slice(-80);
+      if (isPlayerFaction) updatedGame.lastNote = note;
+    }
+  }
 
   // Bug #25: AI Coalition Re-Admission Loop for bolted Unaffiliated factions
   const curYr = Number(updatedGame.year || 2028);

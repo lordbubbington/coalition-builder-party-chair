@@ -146,7 +146,7 @@
       let bestPid = null;
       let bestDist = 3.25;
       for (const pid of aiCandidates) {
-        if (bf.formerPartyId === pid && bf.boltedYear && (curYr - Number(bf.boltedYear)) < 4) continue;
+        if (bf.formerPartyId === pid && ((bf.reunificationCooldownYear && curYr < Number(bf.reunificationCooldownYear)) || (bf.boltedYear && (curYr - Number(bf.boltedYear)) < 6))) continue;
         const d = computeFactionKeyIssuesDistance(updatedGame, bf, pid);
         if (d < bestDist) {
           bestDist = d;
@@ -208,6 +208,7 @@
     // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
     f.formerPartyId = sourcePartyId;
     f.boltedYear = game.year || 2028;
+    f.reunificationCooldownYear = Number(game.year || 2028) + 6;
     f.activelyCourting = true;
     f.partyId = 'unaffiliated';
     f.ultimatumTurnsRemaining = null;
@@ -387,17 +388,17 @@
         canCourt: Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50) < 50,
       };
     }
+    // Bug #24 & Chunk 2.3: 6-year cooldown against immediately re-admitting a faction that just bolted from this same party
+    if (f.formerPartyId === playerPartyId && ((f.reunificationCooldownYear && Number(game.year || 2028) < Number(f.reunificationCooldownYear)) || (f.boltedYear && ((Number(game.year || 2028) - Number(f.boltedYear)) < 6)))) {
+      return {
+        eligible: false,
+        reason: `${f.name} recently seceded from your party (${f.boltedYear}) and refuses immediate reunification talks (6-year cooldown active).`,
+      };
+    }
     const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
     const courtshipScore = Number(game.factionCourtship?.[f.id]?.[playerPartyId] || 0);
     if (f.partyId !== 'none' && curH > 30 && courtshipScore < 15) {
       return { eligible: false, reason: 'The faction is satisfied with its current independent course (Happiness > 30) and refuses merger talks. Court them first to build goodwill.' };
-    }
-    // Bug #24: Cooldown against immediately re-admitting a faction that just bolted from this same party
-    if (f.formerPartyId === playerPartyId && f.boltedYear && ((Number(game.year || 2028) - Number(f.boltedYear)) < 4)) {
-      return {
-        eligible: false,
-        reason: `${f.name} recently seceded from your party (${f.boltedYear}) and refuses immediate reunification talks.`,
-      };
     }
     // Bug #22: Hard ideological-distance guard on Coalition Summits
     const summitDist = computeFactionKeyIssuesDistance(game, f, playerPartyId);
@@ -564,6 +565,16 @@
     const f = factions.find((x) => x.id === factionId);
     if (!f) return game;
 
+    // Chunk 2.3: Cap Coalition Accords at 2 per organizing phase
+    const accordsThisCycle = Number(game.accordsThisCycle || 0);
+    if (accordsThisCycle >= 2) {
+      return {
+        ...game,
+        lastNote: 'Maximum 2 Coalition Accords per Organizing Phase reached.',
+        error: 'Maximum 2 Coalition Accords per Organizing Phase reached.',
+      };
+    }
+
     const resolvedDemands = demands || (generateMergerCoalitionDemandsFn
       ? generateMergerCoalitionDemandsFn(game, factionId)
       : generateMergerCoalitionDemands(game, factionId, deps));
@@ -597,12 +608,14 @@
       });
     }
 
-    // 3. Ideological Cohabitation Backlash (SUM-05)
+    // 3. Ideological Cohabitation Backlash (SUM-05, scaled by accordsThisCycle)
+    const cohabScale = 1 + 0.15 * accordsThisCycle;
     const nextHappiness = { ...(game.factionHappiness || {}) };
     let severeBacklashCount = 0;
     (resolvedDemands.cohabitationPreview || []).forEach((cp) => {
       const curH = Number(nextHappiness[cp.factionId] ?? 60);
-      nextHappiness[cp.factionId] = clamp(curH + cp.happinessDelta, 0, 100);
+      const scaledDelta = round(cp.happinessDelta * cohabScale, 1);
+      nextHappiness[cp.factionId] = clamp(curH + scaledDelta, 0, 100);
       if (cp.impact === 'hostile') {
         severeBacklashCount++;
       }
@@ -626,7 +639,8 @@
 
     // Propagate cohabitation deltas to politicians (REQ-159)
     (resolvedDemands.cohabitationPreview || []).forEach((cp) => {
-      applyFactionHappinessDelta(game, cp.factionId, cp.happinessDelta);
+      const scaledDelta = round(cp.happinessDelta * cohabScale, 1);
+      applyFactionHappinessDelta(game, cp.factionId, scaledDelta);
     });
     if (Array.isArray(game.politicians)) {
       game.politicians.filter((p) => p.factionId === f.id).forEach((p) => { p.happiness = 65; });
@@ -695,6 +709,7 @@
 
     const signedState = {
       ...game,
+      accordsThisCycle: accordsThisCycle + 1,
       organizingActionsRemaining: nextActions,
       actionsLeft: nextActions,
       issuePositions: nextIssuePositions,
