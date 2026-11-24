@@ -5437,9 +5437,9 @@ function campaignDashboardMarkup() {
             </div>
           </div>
         </div>
+        <!-- [v0.18.5 PLAYTEST-FIXES] War Room actions consolidated directly into Monthly Grand-Strategy Actions -->
+        ${v0180CampaignWarRoomMarkup(true)}
       </section>
-
-      ${v0180CampaignWarRoomMarkup()}
 
       <div class="v07-step-nav panel">
         <span class="v07-turn-note">
@@ -5453,7 +5453,7 @@ function campaignDashboardMarkup() {
 }
 
 
-function v0180CampaignWarRoomMarkup() {
+function v0180CampaignWarRoomMarkup(embeddedInGrandStrategy = false) {
   const CO = window.CampaignOverhaul;
   const c = game?.campaign;
   if (!CO || !c) return '';
@@ -5490,10 +5490,10 @@ function v0180CampaignWarRoomMarkup() {
   const defaultBlitz = _recIds.length >= 3 ? _recIds.slice(0, 3) : ['PA', 'MI', 'WI'];
 
   return `
-    <section class="panel section-panel v0180-war-room" style="margin-top:14px;border:1px solid rgba(226,189,112,0.35);">
+    <div class="v0180-war-room" style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(226,189,112,0.35);">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <div>
-          <h3 style="margin:0;">Campaign War Room · Month ${month} (${safe(eff.name)})</h3>
+          <h3 style="margin:0;">${embeddedInGrandStrategy ? 'Monthly Field, Media &amp; Surrogate Operations' : 'Campaign War Room'} · Month ${month} (${safe(eff.name)})</h3>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Persuasion Efficiency: <b>${Math.round(eff.persuasion * 100)}%</b> · Turnout Efficiency: <b>${Math.round(eff.turnout * 100)}%</b></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -5689,7 +5689,7 @@ function v0180CampaignWarRoomMarkup() {
           <b>Toss-Up Watch (Months 4–5):</b> ${tossups.map((t) => `${safe(t.stateId)} (${safe(t.office || 'Race')} ±${t.margin}%)`).join(' · ')}
         </div>
       ` : ''}
-    </section>
+    </div>
   `;
 }
 

@@ -839,6 +839,8 @@
   }
 
   function rollMonthlyTraitCrises(game, month) {
+    // [v0.18.5 PLAYTEST-FIXES] No crises during the starting cycle
+    if (Number(game?.year || 2028) <= Number(game?.startingYear || 2028)) return [];
     if (month < 2) return [];
     const pId = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
     const fired = new Set(game?.campaign?.firedCrisisIds || []);

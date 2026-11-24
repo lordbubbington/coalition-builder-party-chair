@@ -1942,9 +1942,9 @@ const OVERALL_PRIORITY_QUESTS = [
     eligibilityRequirementText: 'Open to all parties.',
     checkEligibility: () => true,
     checkCompletion: (game, outcome) => {
-      const pid = game.player?.baseTemplateId || 'people';
-      const actual = outcome?.nationalVote?.[pid] ?? outcome?.legislature?.nationalVote?.[pid] ?? 0;
-      const baseline = game.startingNationalVoteShare ?? 48.0;
+      const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+      const actual = outcome?.nationalVote?.[pid] ?? outcome?.nationalVote?.player ?? outcome?.legislature?.nationalVote?.[pid] ?? 0;
+      const baseline = game.startingNationalVoteShare ?? game.player?.lastPresidentialShare ?? game.player?.baseShare ?? 1.0;
       return (actual - baseline) >= 3.0;
     },
   },
@@ -2012,9 +2012,9 @@ const OVERALL_PRIORITY_QUESTS = [
     eligibilityRequirementText: 'Open to all parties.',
     checkEligibility: () => true,
     checkCompletion: (game) => {
-      const pid = game.player?.baseTemplateId || 'people';
-      const current = game.partyApprovals?.[pid]?.approval ?? 44;
-      const start = game.startingPartyApproval ?? 40;
+      const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+      const current = game.partyApprovals?.[pid]?.approval ?? game.partyApprovals?.player?.approval ?? 44;
+      const start = game.startingPartyApproval ?? current;
       return (current - start) >= 6.0;
     },
   },
@@ -2314,10 +2314,12 @@ const OVERALL_PRIORITY_QUESTS = [
       return !hasMajorLeg && houseSeats === 0;
     },
     checkCompletion: (game, outcome) => {
-      const pid = game.player?.baseTemplateId || 'people';
+      const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
       const legChambers = Object.values(game.stateLegislatures || {}).flat();
-      const houseSeats = game.seats || 0;
-      return legChambers.includes(pid) || houseSeats >= 1;
+      const shCounts = outcome?.stateHouseSeatCounts || game.stateHouseSeatCounts || {};
+      const hasLegSeat = Object.values(shCounts).some((st) => Number(st?.[pid] || 0) >= 1);
+      const houseSeats = outcome?.seats?.[pid] ?? outcome?.legislature?.seats?.[pid] ?? (game.seats || 0);
+      return hasLegSeat || legChambers.includes(pid) || houseSeats >= 1;
     },
   },
   {
@@ -2541,11 +2543,14 @@ const OVERALL_PRIORITY_QUESTS = [
     checkEligibility: (game) => {
       const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
       const isMinor = !['people', 'heritage'].includes(pid);
-      const qualifiedCount = Object.values(game.ballotAccess || {}).filter(Boolean).length;
+      const pBa = game.ballotAccess?.[pid]?.presidential || game.ballotAccess?.[pid] || {};
+      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && Boolean(v)).length;
       return isMinor && (51 - qualifiedCount) >= 15;
     },
     checkCompletion: (game, outcome) => {
-      const qualifiedCount = Object.values(game.ballotAccess || {}).filter(Boolean).length;
+      const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+      const pBa = game.ballotAccess?.[pid]?.presidential || game.ballotAccess?.[pid] || {};
+      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && Boolean(v)).length;
       return qualifiedCount >= 51;
     },
   },

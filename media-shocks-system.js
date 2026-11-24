@@ -638,7 +638,8 @@
   function initializeState(game) {
     if (!game) return game;
     const mediaEcosystem = createInitialMediaEcosystem(game);
-    const activeMacroArc = pickDeterministicShock(game.seed || 2028, game.year || 2028, null);
+    // [v0.18.5 PLAYTEST-FIXES] No national crisis arc during the starting cycle
+    const activeMacroArc = null;
     return {
       ...game,
       mediaEcosystem,
@@ -1069,18 +1070,7 @@
         </div>
       </div>
 
-      <!-- v0.18.4 Proposal #8: National Crisis Pivot -->
-      ${arc ? `
-      <div class="action-card ms-crisis-card">
-        <div class="action-head"><i>⚡</i><b>Crisis Pivot · ${escapeHtml(arc.shortTitle || arc.title)}</b><span>1 action · ${String(arc.stage || 'onset').toUpperCase()} (${arc.cycleIndex}/${arc.totalCycles})</span></div>
-        <p>${escapeHtml(arc.summary)}</p>
-        <div class="inline-controls" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-          <button type="button" class="button button-small button-gold" data-ms-action="crisis-pivot" data-ms-mode="slider_pivot" ${noAct ? 'disabled' : ''}>Pivot 2 Crisis Sliders (50% Friction)</button>
-          ${arc.polarity !== 'positive' ? `
-            <button type="button" class="button button-small" data-ms-action="crisis-pivot" data-ms-mode="emergency_response" ${noAct || cash < 3 || arc.emergencyShortened ? 'disabled' : ''}>${arc.emergencyShortened ? 'Emergency Passed' : 'Emergency Response (-1 Cycle · $3M)'}</button>
-          ` : ''}
-        </div>
-      </div>` : ''}
+      <!-- [v0.18.5 PLAYTEST-FIXES] Crisis Pivot action removed -->
     `;
   }
 

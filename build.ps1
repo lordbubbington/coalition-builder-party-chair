@@ -49,6 +49,7 @@ try {
         (Join-Path $projectDir 'atlas-multiplayer-system.js'),
         (Join-Path $projectDir 'leading-faction-system.js'),
         (Join-Path $projectDir 'faction-era-stability.js'),
+        (Join-Path $projectDir 'v0185-playtest-fixes.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
