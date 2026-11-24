@@ -4075,6 +4075,12 @@ function wavePendulumMarkup() {
 }
 
 function forecastersMarkup() {
+  if (game && (game._deferredDistricts || !game.forecasters)) {
+    if (typeof PartyChairEngine !== 'undefined' && typeof PartyChairEngine.buildForecasters === 'function') {
+      game.forecasters = PartyChairEngine.buildForecasters(game);
+      delete game._deferredDistricts;
+    }
+  }
   const outlets = game.forecasters?.outlets || {
     cooked: 'The Cooked Political Report',
     sallow: "Sallow's Crystal Ball",

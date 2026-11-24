@@ -196,6 +196,9 @@ for (let cycle = 1; cycle <= targetCycles; cycle++) {
   // 7. Test Save & Load Compaction periodic checkpoint
   if (cycle % 10 === 0 || cycle === targetCycles) {
     const serialized = Engine.compactGameForSave ? Engine.compactGameForSave(game) : JSON.parse(JSON.stringify(game));
+    const jsonStr = JSON.stringify(serialized);
+    const sizeMb = (Buffer.byteLength(jsonStr, 'utf8') / (1024 * 1024)).toFixed(2);
+    console.log(`[Cycle ${cycle}] Compacted save size: ${sizeMb} MB (target: < 3.0 MB)`);
     const rehydrated = Engine.normalizeGame(serialized);
     if (rehydrated && rehydrated.version && rehydrated.year === game.year) {
       stats.saveMigrationChecksPassed++;

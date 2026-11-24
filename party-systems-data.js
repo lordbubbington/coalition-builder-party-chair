@@ -1462,7 +1462,18 @@
     });
   });
 
+  const EXTREMIST_FACTION_IDS = new Set([
+    'lib_ancaps',
+    'con_christian_dominionists',
+    'soc_socialists',
+    'soc_communists',
+    'unaff_the_klan',
+    'unaff_groypers',
+    'gop_blood_and_soil',
+  ]);
+
   const api = {
+    EXTREMIST_FACTION_IDS,
     BASELINE_ERA_ID,
     BASELINE_ACTIVE_ISSUE_IDS,
     BASELINE_ERA,
