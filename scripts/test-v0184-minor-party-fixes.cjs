@@ -132,4 +132,46 @@ console.log('=== [v0.18.4] Running Minor Party Polling, Triage & Spoiler Floor T
   console.log('PASS [3]: Spoiler penalty capped at 2/3 across all tiers (>= 1/3 voters always retained)');
 }
 
+
+// -----------------------------------------------------------------------------
+// TEST 4: State Legislatures — 0% spoiler penalty, registration % floor,
+//         independents divided proportionally by party popularity
+// -----------------------------------------------------------------------------
+{
+  const g = Engine.createGame('green', { seed: 202816 });
+
+  // 4a. computeStrategicVotingDefection strictly 0% for stateLeg / state-leg
+  ['state-leg', 'stateLeg', 'leg'].forEach((kind) => {
+    const def = Engine.computeStrategicVotingDefection(g, 'green', 'CA', kind, 4.5);
+    assert.strictEqual(def.defectionRate, 0, `State leg (${kind}) must have 0% spoiler defection`);
+    assert.strictEqual(def.bypassed, true, `State leg (${kind}) must bypass strategic defection`);
+    assert.strictEqual(def.retainedShare, 4.5, `State leg (${kind}) must retain 100% of projected share`);
+  });
+
+  // 4b. reallocateStateHouseSeatCounts gives registration % floor + popularity-divided independents
+  g.ballotAccess.green.leg.CA = true;
+  g.contestedStateLegSlates = { CA: true };
+  g.partyApprovals.people.approval = 40;
+  g.partyApprovals.heritage.approval = 40;
+  g.partyApprovals.green.approval = 20;
+  g.partyApprovals.player.approval = 20;
+
+  const ca = g.voterModel.states.find((s) => (s.stateId || s.id) === 'CA');
+  const aff = ca.affiliations;
+  const totalAff = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other']
+    .reduce((sum, k) => sum + Number(aff[k] || 0), 0);
+  const expectedGreenRegPct = (Number(aff.green || 0) / totalAff) * 100;
+  const expectedIndPct = (Number(aff.independent || 0) / totalAff) * 100;
+  const expectedGreenShare = expectedGreenRegPct + expectedIndPct * (20 / (40 + 40 + 20));
+
+  const updated = Engine.reallocateStateHouseSeatCounts(g.stateHouseSeatCounts, {}, {}, g);
+  const caShares = updated.CA.slateShares;
+  assert(caShares.green >= expectedGreenRegPct, `Green CA state-leg share (${caShares.green}%) must be >= registration floor (${expectedGreenRegPct.toFixed(2)}%)`);
+  assert(
+    Math.abs(caShares.green - expectedGreenShare) < 0.05,
+    `Green CA state-leg share (${caShares.green}%) must equal regPct (${expectedGreenRegPct.toFixed(2)}%) + 20% of independents (${expectedGreenShare.toFixed(2)}%)`
+  );
+  console.log(`PASS [4]: State Leg CA Green share = ${caShares.green}% (reg floor ${expectedGreenRegPct.toFixed(2)}% + pop-weighted independents)`);
+}
+
 console.log('ALL v0.18.4 MINOR PARTY POLLING, TRIAGE & SPOILER TESTS PASSED!');

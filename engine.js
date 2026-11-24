@@ -6747,6 +6747,11 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
     ? (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people'))
     : partyId;
 
+  // [v0.18.4 MINOR-PARTY-FIXES] Bypass 0: State Legislatures have zero spoiler penalty
+  if (['state-leg', 'stateLeg', 'leg', 'state_legislature'].includes(String(raceKind || ''))) {
+    return { defectionRate: 0, defectedShare: 0, retainedShare: round(share, 2), recipientPartyId: null, threshold: 0, regionalRelief: false, bypassed: true, reason: 'state-legislature-no-spoiler' };
+  }
+
   // Bypass 1: Tier 5 Major Party
   if (getPartyInstitutionalTier(game, resolved) >= 5) {
     return { defectionRate: 0, defectedShare: 0, retainedShare: round(share, 2), recipientPartyId: null, threshold: 0, regionalRelief: false, bypassed: true, reason: 'major-party' };
@@ -10935,44 +10940,56 @@ function reallocateStateHouseSeatCounts(currentCounts, oldControls, newControls,
     const total = Number(seats.total) || Object.values(seats).filter(Number.isFinite).reduce((sum, value) => sum + value, 0);
 
     if (game) {
-      const shares = supportByState(game, state);
+      // [v0.18.4 MINOR-PARTY-FIXES] State legislatures: 0% spoiler penalty, registration % floor, independents divided by party popularity
+      const shares = supportByState(game, state, { raceId: 'state-leg:' + stateId });
       let partyVotes = {};
       const playerIdentity = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
       const isMajor = isMajorParty(game, 'player');
       const playerHouseTier = isMajor
         ? 5
         : Number(game.contestedStateHouseSlates?.[stateId] ?? (game.contestedStateLegSlates?.[stateId] ? 5 : 0));
-      const isContestedByPlayer = isMajor || playerHouseTier > 0 || Boolean(game.contestedStateLegSlates?.[stateId]);
-      const tierSpec = getSlateTierSpec(playerHouseTier);
+      const isContestedByPlayer = isMajor || playerHouseTier > 0 || Boolean(game.contestedStateLegSlates?.[stateId]) || hasBallotAccess(game, playerIdentity, 'state-leg:' + stateId);
 
-      for (const [partyId, share] of Object.entries(shares)) {
+      const contestingIds = [];
+      for (const partyId of Object.keys(shares)) {
         const id = partyId === 'player' ? playerIdentity : partyId;
-        if (id === playerIdentity && !isContestedByPlayer) {
-          continue;
+        if (id === playerIdentity && !isContestedByPlayer) continue;
+        if (!hasBallotAccess(game, id, 'state-leg:' + stateId) && !hasBallotAccess(game, partyId, 'state-leg:' + stateId)) continue;
+        if (!contestingIds.includes(id)) contestingIds.push(id);
+      }
+
+      const vmSt = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === stateId);
+      const aff = vmSt?.affiliations;
+      if (aff && contestingIds.length > 0) {
+        const knownPartyKeys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
+        const allAffKeys = [...new Set([...knownPartyKeys, ...contestingIds])];
+        const totalAff = allAffKeys.reduce((sum, k) => sum + Math.max(0, Number(aff[k] || 0)), 0);
+        const indPct = totalAff > 0 ? (Math.max(0, Number(aff.independent || 0)) / totalAff) * 100 : 0;
+
+        const popWeights = {};
+        let totalPopWeight = 0;
+        contestingIds.forEach((id) => {
+          const apprRec = game.partyApprovals?.[id] ?? (id === playerIdentity ? game.partyApprovals?.player : null);
+          const rawPop = (apprRec && typeof apprRec === 'object')
+            ? Number(apprRec.approval ?? apprRec.leaderPopularity ?? 0)
+            : Number(apprRec ?? 0);
+          const w = Math.max(0.05, Number.isFinite(rawPop) && rawPop > 0 ? rawPop : Math.max(0.05, Number(shares[id] ?? (id === playerIdentity ? shares.player : 0) ?? 0)));
+          popWeights[id] = w;
+          totalPopWeight += w;
+        });
+
+        contestingIds.forEach((id) => {
+          const regVoters = Math.max(0, Number(aff[id] || 0));
+          const regPct = totalAff > 0 ? (regVoters / totalAff) * 100 : 0;
+          const indShare = totalPopWeight > 0 ? indPct * (popWeights[id] / totalPopWeight) : 0;
+          partyVotes[id] = round(Math.max(regPct, regPct + indShare), 3);
+        });
+      } else {
+        for (const [partyId, share] of Object.entries(shares)) {
+          const id = partyId === 'player' ? playerIdentity : partyId;
+          if (!contestingIds.includes(id)) continue;
+          partyVotes[id] = (partyVotes[id] || 0) + share;
         }
-        // REQ-258 Part 4: If party lacks ballot access for this state's legislature, slate share is strictly 0.0%
-        if (!hasBallotAccess(game, id, 'state-leg:' + stateId) && !hasBallotAccess(game, partyId, 'state-leg:' + stateId)) {
-          continue;
-        }
-        let adjustedShare = share;
-        // v0.16.9 Grassroots Haven: 100% faction mobilization at Tier 5, scaled strictly by 5-tier turnout penalty & hard vote cap
-        if (id === playerIdentity && !isMajor) {
-          const vmSt = (game.voterModel?.states || []).find((x) => (x.stateId || x.id) === stateId);
-          const catalog = getFactionsCatalog();
-          const pFids = catalog.filter((f) => f.partyId === id).map((f) => f.id);
-          const totV = Number(vmSt?.representedVoters || 0);
-          const facV = (vmSt?.factions && pFids.length)
-            ? pFids.reduce((s, fid) => s + Number(vmSt.factions[fid] || 0), 0)
-                    : (Number(vmSt?.affiliations?.[id] || 0) * ((game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000) ? 1 : 100));
-          const baseFactionPct = totV > 0 ? (facV / totV) * 100 : 0;
-          const grassrootsPotential = Math.max(share, baseFactionPct);
-          adjustedShare = Math.min(tierSpec.voteCap, grassrootsPotential * tierSpec.effectiveTurnout);
-        }
-        // REQ-259 Part 3: 2028 initial state legislature vote share ceiling (<= 3.0%) for non-major parties
-        const finalShare = (game?.year === 2028 && (!game.chairTurn || game.chairTurn === 0) && !['people', 'heritage'].includes(id))
-          ? Math.min(adjustedShare, 3.0)
-          : adjustedShare;
-        partyVotes[id] = (partyVotes[id] || 0) + finalShare;
       }
 
       seats.slateShares = { ...partyVotes };
