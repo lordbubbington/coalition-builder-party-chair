@@ -11924,13 +11924,19 @@ function startCampaignPhase(game) {
     ballotMeasures: {},
     weeklyLog: [`Campaign Month 1 of 5 begins. ${fundingInit.initialCommitmentNote}`],
   };
-  return {
+  let started = {
     ...withFunding,
     campaign,
     forecasters,
     waveMomentum,
-    lastNote: `Primaries resolved. The 15-Week Grand-Strategy Campaign begins (Week 1/15).`,
+    lastNote: `Primaries resolved. Campaign Month 1 of 5 begins.`,
   };
+  // [v0.18.5 CAMPAIGN-EVENTS] Roll Month 1 dynamic campaign event
+  const _cesStart = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesStart && typeof _cesStart.rollMonthlyCampaignEvent === 'function') {
+    started = _cesStart.rollMonthlyCampaignEvent(started, 1);
+  }
+  return started;
 }
 
 function pullCandidateFunds(game, raceKey, amount = null) {
@@ -14220,7 +14226,7 @@ function advanceCampaignWeek(game) {
   const nextUltimatum = coAdv ? coAdv.checkFactionTrailUltimatum(updatedBase, nextWeek) : null;
   const nextFiredCrisisIds = [...(updatedBase.campaign.firedCrisisIds || []), ...newCrises.map((c) => c.id)];
 
-  return {
+  const _nextCampState = {
     ...simPhaseGame,
     waveMomentum,
     forecasters,
@@ -14260,6 +14266,9 @@ function advanceCampaignWeek(game) {
       ? `MONTH 4 OCTOBER SURPRISE: ${nextEvent.title}!`
       : `Campaign Month ${nextWeek} of 5 begins (8 actions available).`,
   };
+  // [v0.18.5 CAMPAIGN-EVENTS] Roll next month's dynamic campaign event
+  const _cesAdv = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  return (_cesAdv && typeof _cesAdv.rollMonthlyCampaignEvent === 'function') ? _cesAdv.rollMonthlyCampaignEvent(_nextCampState, nextWeek) : _nextCampState;
 }
 
 // ============================================================================
@@ -16014,6 +16023,11 @@ function resolveVersion01GeneralElection(game) {
   const amsElec = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
   if (amsElec && typeof amsElec.recordAtlasSnapshot === 'function') {
     finalElectionState = amsElec.recordAtlasSnapshot(finalElectionState);
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS] Attach cycle defining event to Political Atlas
+  const _cesAtlas = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesAtlas && typeof _cesAtlas.attachDefiningEventToAtlas === 'function') {
+    finalElectionState = _cesAtlas.attachDefiningEventToAtlas(finalElectionState);
   }
   return finalElectionState;
 }
@@ -18513,6 +18527,11 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   if (actionId === 'resolve-campaign-event') {
     return applyCampaignEventChoice(game, Number(payload.choiceIndex || 0));
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  if (actionId === 'resolve-campaign-event-v2') {
+    const _cesAct = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+    return (_cesAct && typeof _cesAct.resolveCampaignEvent === 'function') ? _cesAct.resolveCampaignEvent(game, payload.choiceId ?? payload.choiceIndex ?? 0) : game;
   }
   if (actionId === 'respond-pac-demand') {
     const psePac = getPartySystemsEngine();
@@ -21394,6 +21413,11 @@ function normalizeGame(parsed) {
   if (amsNorm && typeof amsNorm.normalizeAtlasAndMultiplayer === 'function') {
     ready = amsNorm.normalizeAtlasAndMultiplayer(ready);
   }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  const _cesNorm = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesNorm && typeof _cesNorm.normalizeCampaignEvents === 'function') {
+    ready = _cesNorm.normalizeCampaignEvents(ready);
+  }
 
   return ready;
 }
@@ -21790,6 +21814,11 @@ function compactGameForSave(game, options = {}) {
   const amsComp = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
   if (amsComp && typeof amsComp.compactAtlasForSave === 'function') {
     amsComp.compactAtlasForSave(copy);
+  }
+  // [v0.18.5 CAMPAIGN-EVENTS]
+  const _cesComp = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+  if (_cesComp && typeof _cesComp.compactCampaignEventsForSave === 'function') {
+    _cesComp.compactCampaignEventsForSave(copy);
   }
   return copy;
 }

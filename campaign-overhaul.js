@@ -92,6 +92,8 @@
     lift += Number(c.actionStateEffects?.[stateId] || 0);
     lift += Number(c.surrogateStateEffects?.[stateId] || 0);
     lift += Number(c.crisisStatePolls?.[stateId] || 0);
+    // [v0.18.5 CAMPAIGN-EVENTS]
+    lift += Number(c.eventStatePolls?.[stateId] || 0);
     lift += Number(c.finalBlitzEffects?.[stateId] || 0);
     lift += Number(c.themePersuasionLift || 0) * 0.45;
     lift += Number(c.debatePersuasionLift || 0) * 0.45;
@@ -670,6 +672,10 @@
       picked.push(mappedIssueId !== rawQ.issueId ? { ...rawQ, issueId: mappedIssueId } : rawQ);
     }
 
+    // [v0.18.5 CAMPAIGN-EVENTS] Inject arc callback debate question if active
+    const _cesDeb = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
+    const _arcQ = _cesDeb?.getArcDebateCallbackQuestion ? _cesDeb.getArcDebateCallbackQuestion(game) : null;
+    if (_arcQ && picked.length) picked[picked.length - 1] = _arcQ;
     const pId = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
     const isMajor = isPlayerMajorParty(game);
     const liveAffShare = Number(game?.voterModel?.affiliations?.[pId]?.sharePercent);
