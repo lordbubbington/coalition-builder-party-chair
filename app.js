@@ -10690,6 +10690,7 @@ function renderSaveSlotsModalMarkup() {
           <button type="button" class="button button-small" id="close-save-slots">Close</button>
         </div>
         <p class="map-summary" style="margin-bottom:10px">Save and load up to 5 local campaigns right in your browser or desktop app.</p>
+        ${/* [v0.18.5 SAVE-MIGRATIONS] */ window.SaveMigrations?.renderBackupButtonsMarkup ? window.SaveMigrations.renderBackupButtonsMarkup(Boolean(game)) : ''}
         ${slots.map((s) => {
           const ts = s.savedAt ? new Date(s.savedAt).toLocaleString() : '';
           return `
@@ -12445,6 +12446,10 @@ function bind() {
       render();
     }
   }));
+  // [v0.18.5 SAVE-MIGRATIONS] Bind Save Backup Export/Import buttons
+  if (window.SaveMigrations?.bindBackupUiEvents) {
+    window.SaveMigrations.bindBackupUiEvents(() => game, (g) => { game = g; }, window.PartyChairEngine?.saveGame || null, render, () => { saveSlotsModalOpen = false; });
+  }
   // [v0.18.4 COALITION-POLITICS] Bind Proposals #5, #6, #9 UI listeners
   if (window.CoalitionPoliticsSystem?.bindEvents) {
     window.CoalitionPoliticsSystem.bindEvents(game, dispatchAction, render);
