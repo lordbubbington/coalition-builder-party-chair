@@ -2131,6 +2131,80 @@ function defaultConventionResolutions() {
   ]));
 }
 
+// [v0.18.5] Ensure all eligible leadership roles start filled across every party
+function populateAllStartingLeadershipRoles(game) {
+  if (!game) return game;
+  const v07 = (typeof window !== 'undefined' && window.PartyChairV07) || (typeof global !== 'undefined' && global.PartyChairV07) || {};
+  const data = (typeof window !== 'undefined' && window.PartyChairData) || (typeof global !== 'undefined' && global.PartyChairData) || {};
+  const schema = v07.LEADERSHIP_ROLES_SCHEMA || data.LEADERSHIP_ROLES || [];
+  if (!schema.length) return game;
+  const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  const governing = game.governingParty || 'heritage';
+  const oppParty = governing === 'heritage' ? 'people' : 'heritage';
+  const sitting = game.sittingMembers || [];
+  const allRoster = (game.roster || []).map((id) => memberFor(game, id)).filter(Boolean);
+  const existingRoles = game.leadershipRoles && typeof game.leadershipRoles === 'object' ? { ...game.leadershipRoles } : {};
+
+  const fillForParty = (pid) => {
+    const cur = { ...(pid === playerPid ? (existingRoles.player || existingRoles[pid] || {}) : (existingRoles[pid] || {})) };
+    const pSitting = sitting.filter((m) => m && (m.party === pid || m.partyId === pid));
+    const pPool = [...pSitting, ...(pid === playerPid ? allRoster : [])]
+      .filter((v, i, arr) => v && v.id && arr.findIndex((x) => x.id === v.id) === i)
+      .sort((a, b) => Number(b.fame || 50) - Number(a.fame || 50));
+    if (!pPool.length) return cur;
+    const senList = pPool.filter((m) => m.office === 'senate');
+    const houseList = pPool.filter((m) => m.office === 'house');
+    const govList = pPool.filter((m) => m.office === 'governor');
+    const isGovParty = pid === governing;
+    const isOppParty = pid === oppParty;
+    const hasHouseMaj = houseList.length >= 218;
+    const usedInstitutional = new Set(Object.values(cur).filter(Boolean));
+
+    schema.forEach((role) => {
+      if (!role?.id || cur[role.id]) return;
+      if (role.partyId && role.partyId !== pid) return;
+      if (role.requiresPresidency && !isGovParty) return;
+      if (role.requiresOpposition && !isOppParty) return;
+      if (role.requiresMajority && role.requiredOffice === 'house' && !hasHouseMaj) return;
+
+      let candidates = pPool;
+      if (role.category === 'faction' && role.factionId) {
+        const fMatch = pPool.filter((m) => m.factionId === role.factionId);
+        candidates = fMatch.length ? fMatch : pPool;
+      } else if (role.requiredOffice === 'senate') {
+        if (role.minSeats && senList.length < role.minSeats && !['people', 'heritage'].includes(pid)) return;
+        candidates = senList.length ? senList : pPool;
+      } else if (role.requiredOffice === 'house') {
+        if (role.minSeats && houseList.length < role.minSeats && !['people', 'heritage'].includes(pid)) return;
+        candidates = houseList.length ? houseList : pPool;
+      } else if (role.requiredOffice === 'governor') {
+        if (role.minSeats && govList.length < role.minSeats && !['people', 'heritage'].includes(pid)) return;
+        candidates = govList.length ? govList : pPool;
+      }
+
+      const pick = role.allowOverlap
+        ? candidates[0]
+        : (candidates.find((c) => !usedInstitutional.has(c.id)) || candidates[0]);
+      if (pick?.id) {
+        cur[role.id] = pick.id;
+        if (!role.allowOverlap) usedInstitutional.add(pick.id);
+      }
+    });
+    return cur;
+  };
+
+  const playerFilled = fillForParty(playerPid);
+  const nextRoles = { ...existingRoles, ...playerFilled, player: playerFilled, [playerPid]: playerFilled };
+  ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'].forEach((pid) => {
+    if (pid !== playerPid) nextRoles[pid] = fillForParty(pid);
+  });
+  return {
+    ...game,
+    leadershipRoles: nextRoles,
+    player: { ...(game.player || {}), leadershipRoles: playerFilled },
+  };
+}
+
 function syncLeadershipRolesState(game, playerRolesMap) {
   const existing = game.leadershipRoles && typeof game.leadershipRoles === 'object' ? game.leadershipRoles : {};
   const cleanPlayerRoles = { ...(playerRolesMap || existing.player || game.player?.leadershipRoles || {}) };
@@ -5546,6 +5620,8 @@ function createGame(options = {}) {
   if (_v185Init?.generateCycleAutoCandidates) {
     game = _v185Init.generateCycleAutoCandidates(game, getPartyInstitutionalTier);
   }
+  // [v0.18.5] Ensure ALL eligible leadership roles start filled for player and rivals
+  game = populateAllStartingLeadershipRoles(game);
   game.version = '0.18.4';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
@@ -8595,14 +8671,20 @@ function calculateDistrictElection(game, year) {
     // [v0.18.4 MAPS-BALLOT] Ballot initiative & redistricting backlash lift
     const _rbsDist = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
     const _rbsDistLift = _rbsDist?.getBallotAndRedistrictingStateLift ? Number(_rbsDist.getBallotAndRedistrictingStateLift(game, stateId) || 0) * 0.5 : 0;
-    const districtMargin = (districtLean - avgDistrictLean) + (natEnv * 1.08) + candidateLift + fundingLift + incumbentLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
+    // [v0.18.5] Align House wave with Presidential landslide overperformance (430 EV / D+20 -> ~300+ House seats)
+    const presMargin = presidentialStateMargin(game, stateId);
+    const stateBaseLean = stateObj.leanPercent !== undefined ? Number(stateObj.leanPercent) : (-Number(stateObj.lean || 0) * 100);
+    const presOverperf = presMargin - stateBaseLean;
+    const isPresYearDist = (Number(year || game.year || 2028) % 4) === 0;
+    const effectiveWave = isPresYearDist
+      ? (presOverperf * 0.85 + natEnv * 0.25)
+      : (natEnv * 1.08);
+    const districtMargin = (districtLean - avgDistrictLean) + effectiveWave + candidateLift + fundingLift + incumbentLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
     const demTwoParty = clamp(50 + districtMargin / 2, 0.5, 99.5);
     const repTwoParty = clamp(50 - districtMargin / 2, 0.5, 99.5);
 
     firstChoice[demParty.id] = (demTwoParty / 100) * majorPool;
     firstChoice[repParty.id] = (repTwoParty / 100) * majorPool;
-
-    const presMargin = presidentialStateMargin(game, stateId);
 
     const localCampaign = game.districtCampaigns?.[district.id] || 0;
     if (localCampaign && firstChoice.player !== undefined) {
@@ -11878,14 +11960,35 @@ function drawCampaignEvent(game, week) {
 
 function startCampaignPhase(game) {
   game = synchronizePoliticianPartyWithFaction(game);
-  const fundingInit = initializeCandidateFunding(game);
-  let withFunding = {
+  // [v0.18.5] Major parties gain $2,500M general-election warchest after primaries
+  const MAJOR_POST_PRIMARY_GRANT = 2500;
+  const _isPlayerMaj = isMajorParty(game, 'player');
+  const _boostedOrgs = { ...(game.organizations || {}) };
+  const _boostedParties = game.parties ? { ...game.parties } : undefined;
+  (game.rivals || []).forEach((r) => {
+    if (['people', 'heritage'].includes(r.id) || isMajorParty(game, r.id)) {
+      const curOrg = _boostedOrgs[r.id] || {};
+      const nextT = round(Number(curOrg.treasury || 100) + MAJOR_POST_PRIMARY_GRANT, 1);
+      _boostedOrgs[r.id] = { ...curOrg, treasury: nextT };
+      if (_boostedParties && _boostedParties[r.id]) {
+        _boostedParties[r.id] = { ..._boostedParties[r.id], treasury: nextT };
+      }
+    }
+  });
+  const _preFundGame = {
     ...game,
+    treasury: _isPlayerMaj ? round(Number(game.treasury || 0) + MAJOR_POST_PRIMARY_GRANT, 1) : game.treasury,
+    organizations: _boostedOrgs,
+    ...(_boostedParties ? { parties: _boostedParties } : {}),
+  };
+  const fundingInit = initializeCandidateFunding(_preFundGame);
+  let withFunding = {
+    ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
     version: '0.18.4',
     primariesResolved: true,
-    superPacs: evaluateSuperPacDemands(game, 1),
+    superPacs: evaluateSuperPacDemands(_preFundGame, 1),
   };
   // Bug #13: Guarantee Presidential nominee & ticket exist for third parties and Custom Parties in presidential cycles
   if ((Number(withFunding.year || 2028) % 4) === 0) {
@@ -12021,10 +12124,8 @@ function pullCandidateFunds(game, raceKey, amount = null) {
     candidateFunding: { ...(game.candidateFunding || {}), [raceKey]: nextEntry },
     lastNote: `Pulled $${pullAmt}M from ${entry.candidateName} (${raceKey}). ${upset === 0 ? 'Safe lead; minimal upset.' : upset <= 5 ? 'Moderate upset.' : 'Close/trailing race: candidate is furious (-4 Sitting Member Happiness)!'}`,
   };
-  return {
-    ...withPull,
-    forecasters: buildForecasters(withPull),
-  };
+  // [v0.18.5] Skip synchronous 435-district buildForecasters() on individual Pull clicks to eliminate UI lag
+  return withPull;
 }
 
 
@@ -13892,10 +13993,30 @@ function allocateCandidateFunds(game, raceKey, amount = null) {
   const _nextSpendCamp = game.campaign?.active
     ? { ...game.campaign, playerStateSpendLastMonth: { ...(game.campaign.playerStateSpendLastMonth || {}), [_spendStateId]: round((game.campaign.playerStateSpendLastMonth?.[_spendStateId] || 0) + spend, 2) } }
     : game.campaign;
+  // [v0.18.5] Skip synchronous 435-district buildForecasters() on individual Allocate clicks to eliminate UI lag
   return {
     ...withAlloc,
-    forecasters: buildForecasters(withAlloc),
-      ...(game.campaign?.active ? { campaign: _nextSpendCamp } : {}),
+    ...(game.campaign?.active ? { campaign: _nextSpendCamp } : {}),
+  };
+}
+
+function allocateCandidateFundsBatch(game, raceKeys = [], amountPerRace = 1.0) {
+  if (!game || !Array.isArray(raceKeys) || !raceKeys.length) return game;
+  const spendEach = Math.max(0.1, Number(amountPerRace) || 1.0);
+  let cur = game;
+  let fundedCount = 0;
+  for (const rk of raceKeys) {
+    if ((cur.treasury || 0) < spendEach) break;
+    const next = allocateCandidateFunds(cur, rk, spendEach);
+    if (next && next.treasury < cur.treasury) {
+      cur = next;
+      fundedCount += 1;
+    }
+  }
+  if (fundedCount === 0) return { ...game, lastNote: 'Insufficient treasury to fund races in this view.' };
+  return {
+    ...cur,
+    lastNote: `Batch funded ${fundedCount} race${fundedCount === 1 ? '' : 's'} with +$${spendEach}M each (-$${round(fundedCount * spendEach, 1)}M total).`,
   };
 }
 
@@ -14761,14 +14882,17 @@ function startNextCycleInternal(game) {
   // REQ-67: Persistent Warchest Rollover (100% of unspent treasury carried forward)
   const playerTreasury = round(Number(game.treasury || 0), 1);
   const rolledOrgs = { ...(game.organizations || {}) };
+  // [v0.18.5] Hardcode AI parties to never have > $100M left over after an election; major parties gain passive cycle income
   (game.rivals || []).forEach((rival) => {
     const existing = rolledOrgs[rival.id] || {};
-    const unspent = Number(existing.treasury ?? (window.PartyChairV07 ? window.PartyChairV07.startingBudgetForParty(rival.id, false) : 18));
+    const rawUnspent = Number(existing.treasury ?? (window.PartyChairV07 ? window.PartyChairV07.startingBudgetForParty(rival.id, false) : 18));
+    const cappedPostElection = Math.min(100, Math.max(0, rawUnspent));
     const isRivalMajor = ['people', 'heritage'].includes(rival.id) || (typeof isMajorParty === 'function' && isMajorParty(game, rival.id));
-    const rivalMajorGrant = isRivalMajor ? 100 : 0;
+    const rivalCycleGrant = isRivalMajor ? 500 : 0;
     rolledOrgs[rival.id] = {
       ...existing,
-      treasury: round(unspent + rivalMajorGrant, 1),
+      postElectionLeftover: round(cappedPostElection, 1),
+      treasury: round(cappedPostElection + rivalCycleGrant, 1),
     };
   });
 
@@ -15604,6 +15728,21 @@ function resolveVersion01GeneralElection(game) {
   const electedGovernors = { ...(game.governorships || {}) };
   governorResults.forEach((race) => { electedGovernors[race.stateId] = race.winner; });
   const electedSenators = Object.fromEntries(senateResults.map((race) => [race.stateId, race.winner]));
+  // [v0.18.5] Enforce AI post-election treasury cap (<= $100M leftover after an election)
+  if (result && result.organizations) {
+    const _capOrgs = { ...result.organizations };
+    (game.rivals || []).forEach((r) => {
+      if (_capOrgs[r.id] && Number(_capOrgs[r.id].treasury || 0) > 100) {
+        _capOrgs[r.id] = { ..._capOrgs[r.id], treasury: 100 };
+      }
+    });
+    result = { ...result, organizations: _capOrgs };
+  }
+  if (result && result.campaign?.rivalTreasuries) {
+    const _capRT = { ...result.campaign.rivalTreasuries };
+    Object.keys(_capRT).forEach((rk) => { if (Number(_capRT[rk] || 0) > 100) _capRT[rk] = 100; });
+    result = { ...result, campaign: { ...result.campaign, rivalTreasuries: _capRT } };
+  }
   const nextGoverningParty = isPresidential ? presForecast.winner : (game.governingParty || 'heritage');
 
   let nextIncumbentTermNumber = game.incumbentTermNumber ?? 1;
@@ -18755,6 +18894,9 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   if (actionId === 'allocate-candidate-funds') {
     return allocateCandidateFunds(game, payload.raceKey, payload.amount ?? null);
+  }
+  if (actionId === 'allocate-candidate-funds-batch') {
+    return allocateCandidateFundsBatch(game, payload?.raceKeys || [], payload?.amount ?? 1.0);
   }
   if (actionId === 'commission-race-poll') {
     return commissionRacePoll(game, payload);
@@ -22320,6 +22462,8 @@ window.PartyChairEngine = {
   presidentialForecast,
   presidentialStateMargin,
   primaryScore,
+  allocateCandidateFundsBatch,
+  populateAllStartingLeadershipRoles,
   pullCandidateFunds,
   realignVotingBlocksBetweenElections,
   reallocateStateHouseSeatCounts,

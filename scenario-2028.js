@@ -6730,6 +6730,16 @@ function resolvePoliticianFactionId(member) {
     'Mitt Romney': 'gop_mormons',
     'Spencer Cox': 'gop_mormons',
     'John Curtis': 'gop_mormons',
+    'Mark Warner': 'dem_neo_liberals',
+    'Tim Kaine': 'dem_liberal_establishment',
+    'Amy Klobuchar': 'dem_liberal_establishment',
+    'Mark Kelly': 'dem_neo_liberals',
+    'Jon Ossoff': 'dem_liberal_establishment',
+    'Gretchen Whitmer': 'dem_liberal_establishment',
+    'Josh Shapiro': 'dem_neo_liberals',
+    'Gavin Newsom': 'dem_liberal_establishment',
+    'Andy Beshear': 'dem_blue_dog',
+    'Roy Cooper': 'dem_liberal_establishment',
     'Mario Diaz-Balart': 'gop_cubans',
     'Maria Elvira Salazar': 'gop_cubans',
     'Carlos Gimenez': 'gop_cubans',
@@ -6756,8 +6766,7 @@ function resolvePoliticianFactionId(member) {
   const h = typeof version01Hash === 'function' ? version01Hash(seedKey) : (name.length * 31 + (state ? state.charCodeAt(0) : 0));
 
   if (party === 'heritage') {
-    if ((state === 'UT' || state === 'ID' || state === 'WY') && (h % 3 === 0)) return 'gop_mormons';
-    if (state === 'FL' && (h % 5 === 0)) return 'gop_cubans';
+    // [v0.18.5] Do not randomly hash generic politicians into racial/ethnic demographic factions (only explicit PROMINENT_FACTIONS)
     const gopFactions = [
       'gop_faith_and_flag',
       'gop_maga',
@@ -6785,15 +6794,14 @@ function resolvePoliticianFactionId(member) {
     return (h % 2 === 0) ? 'soc_socialists' : 'soc_communists';
   }
 
+  // [v0.18.5] Keep generic hash fallback strictly ideological (never randomly assign racial/demographic factions)
   const demFactions = [
     'dem_liberal_establishment',
-    'dem_black_voters',
     'dem_capital_l_left',
     'dem_neo_liberals',
     'dem_bernie_bros',
     'dem_faith_based_liberals',
     'dem_blue_dog',
-    'dem_traditional_latin',
   ];
   return demFactions[h % demFactions.length];
 }

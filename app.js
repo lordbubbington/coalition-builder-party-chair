@@ -4608,6 +4608,26 @@ function forecastersMarkup() {
     </section>`;
 }
 
+function renderPriorCycleMapSvg(cycle, mode = 'presidential') {
+  const stateRows = window.PartyChairData?.VERSION_03_MAP_DATA?.states || [];
+  if (!stateRows.length) return '';
+  const presStates = cycle?.presidential?.states || cycle?.presidentialResults || {};
+  const senByState = Object.fromEntries((cycle?.senate || []).map((r) => [r.stateId || r.state, r.winner]));
+  const colorFor = (p) => p === 'people' ? '#3478c7' : p === 'heritage' ? '#d94b4b' : p === 'green' ? '#55bf78' : p === 'liberty' ? '#e2bd45' : '#64748b';
+  const shapes = stateRows.map((st) => {
+    let winner = null;
+    if (mode === 'senate') {
+      winner = senByState[st.id] || null;
+    } else {
+      const row = Array.isArray(presStates) ? presStates.find((x) => (x.stateId || x.id) === st.id) : presStates[st.id];
+      winner = row?.winner || cycle?.governorships?.[st.id] || null;
+    }
+    const fill = winner ? colorFor(winner) : '#334155';
+    return `<path d="${st.q.split('!').map(decodePath).join('')}" style="fill:${fill};stroke:#0f172a;stroke-width:0.8"><title>${safe(st.id)}: ${safe(winner || 'No race')}</title></path>`;
+  }).join('');
+  return `<div style="margin-top:10px;padding:10px;background:rgba(15,23,42,0.7);border:1px solid var(--line);border-radius:8px"><div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--gold)">${cycle.year} ${mode === 'senate' ? 'U.S. Senate' : 'Presidential / State'} Election Map</div><svg viewBox="0 0 960 600" style="width:100%;max-height:320px;display:block">${shapes}</svg></div>`;
+}
+
 function electionHistoryMarkup() {
   const simulatedCycles = (game.elections || []).slice().reverse();
   const historicalCycles = (window.PartyChairData.HISTORICAL_ELECTIONS || []);
@@ -4652,6 +4672,11 @@ function electionHistoryMarkup() {
                 <p class="v08-history-summary">
                   Player-generated simulated general election outcome resulting from grand-strategy organizing and the 5-month campaign.
                 </p>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                  <button type="button" class="button button-small" data-history-map-year="${cycle.year}" data-history-map-mode="presidential">View ${cycle.year} Pres/State Map</button>
+                  <button type="button" class="button button-small" data-history-map-year="${cycle.year}" data-history-map-mode="senate">View ${cycle.year} Senate Map</button>
+                </div>
+                ${window.__historyMapYear === cycle.year ? renderPriorCycleMapSvg(cycle, window.__historyMapMode || 'presidential') : ''}
               </article>`;
           }).join('')
         : ''}
@@ -4891,6 +4916,7 @@ function superPacsPanelMarkup() {
 }
 
 function campaignPollingMapMarkup() {
+  const isPresYear = (Number(game?.year || 2028) % 4) === 0;
   const activeClass = game?.activeSenateClass || (window.PartyChairEngine?.getSenateClassForYear ? window.PartyChairEngine.getSenateClassForYear(game?.year || 2028) : 3);
   const activeRoman = activeClass === 1 ? 'I' : activeClass === 2 ? 'II' : 'III';
 
@@ -4899,10 +4925,14 @@ function campaignPollingMapMarkup() {
   forecasterMapSource = 'consensus';
   senateMapClass = activeRoman;
 
+  const effectiveTab = (!campaignPollingTab || (campaignPollingTab === 'presidential' && !isPresYear))
+    ? (isPresYear ? 'presidential' : 'senate')
+    : campaignPollingTab;
   let mapMode = 'senate';
-  if (campaignPollingTab === 'house') mapMode = 'house';
-  else if (campaignPollingTab === 'governor') mapMode = 'governors';
-  else if (campaignPollingTab === 'stateLeg') mapMode = 'state-legislatures';
+  if (effectiveTab === 'presidential' && isPresYear) mapMode = 'presidential';
+  else if (effectiveTab === 'house') mapMode = 'house';
+  else if (effectiveTab === 'governor') mapMode = 'governors';
+  else if (effectiveTab === 'stateLeg') mapMode = 'state-legislatures';
   else mapMode = 'senate';
 
   const mapResult = nationalMapSvg(mapMode);
@@ -4919,10 +4949,11 @@ function campaignPollingMapMarkup() {
           <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Synthesized consensus projections across active chambers.</p>
         </div>
         <div class="v07-filter-tabs">
-          <button type="button" class="tab-btn ${campaignPollingTab === 'senate' ? 'selected' : ''}" data-camp-poll-tab="senate">Senators</button>
-          <button type="button" class="tab-btn ${campaignPollingTab === 'house' ? 'selected' : ''}" data-camp-poll-tab="house">House</button>
-          <button type="button" class="tab-btn ${campaignPollingTab === 'governor' ? 'selected' : ''}" data-camp-poll-tab="governor">Governor</button>
-          <button type="button" class="tab-btn ${campaignPollingTab === 'stateLeg' ? 'selected' : ''}" data-camp-poll-tab="stateLeg">State Legislature</button>
+          ${isPresYear ? `<button type="button" class="tab-btn ${effectiveTab === 'presidential' ? 'selected' : ''}" data-camp-poll-tab="presidential">Presidential</button>` : ''}
+          <button type="button" class="tab-btn ${effectiveTab === 'senate' ? 'selected' : ''}" data-camp-poll-tab="senate">Senators</button>
+          <button type="button" class="tab-btn ${effectiveTab === 'house' ? 'selected' : ''}" data-camp-poll-tab="house">House</button>
+          <button type="button" class="tab-btn ${effectiveTab === 'governor' ? 'selected' : ''}" data-camp-poll-tab="governor">Governor</button>
+          <button type="button" class="tab-btn ${effectiveTab === 'stateLeg' ? 'selected' : ''}" data-camp-poll-tab="stateLeg">State Legislature</button>
         </div>
       </div>
       <div class="v08-campaign-map-container" style="min-height:360px">
@@ -5088,7 +5119,19 @@ function campaignDashboardMarkup() {
   const currentEvent = c.currentEvent;
   const isOctoberSurpriseWeek = week === 4 || (currentEvent?.isOctoberSurprise && !c.octoberSurpriseResolved);
 
-  const filteredCandidates = fundingEntries.filter((entry) => {
+  // [v0.18.5] Annotate estimated margin so Close Races (<=10 pts) have dedicated sub-menus
+  const estFn = window.PartyChairEngine?.estimateRaceMarginInternal;
+  const enrichedFunding = fundingEntries.map((entry) => {
+    const m = estFn ? Math.abs(Number(estFn(game, entry.raceKey) || 0)) : 5;
+    return { ...entry, absMargin: m, isClose: m <= 10.0 };
+  });
+  const closeHouseEntries = enrichedFunding.filter((f) => f.kind === 'House' && f.isClose);
+  const closeSenateEntries = enrichedFunding.filter((f) => f.kind === 'Senate' && f.isClose);
+  const closeGovEntries = enrichedFunding.filter((f) => f.kind === 'Governor' && f.isClose);
+  const filteredCandidates = enrichedFunding.filter((entry) => {
+    if (campaignTriageFilter === 'close-house' && !(entry.kind === 'House' && entry.isClose)) return false;
+    if (campaignTriageFilter === 'close-senate' && !(entry.kind === 'Senate' && entry.isClose)) return false;
+    if (campaignTriageFilter === 'close-governor' && !(entry.kind === 'Governor' && entry.isClose)) return false;
     if (campaignTriageFilter === 'senate' && entry.kind !== 'Senate') return false;
     if (campaignTriageFilter === 'governor' && entry.kind !== 'Governor') return false;
     if (campaignTriageFilter === 'house' && entry.kind !== 'House') return false;
@@ -5282,14 +5325,20 @@ function campaignDashboardMarkup() {
           Manage general election funding across all 480 congressional & gubernatorial races. Pulling funds from close/trailing races triggers fury and Sitting Member Happiness loss; unendorsed primary winners start unhappy (-1.2% general penalty) until pacified.
         </p>
 
-        <div class="v08-triage-controls">
-          <div class="v07-filter-tabs">
+        <div class="v08-triage-controls" style="flex-wrap:wrap;gap:8px">
+          <div class="v07-filter-tabs" style="flex-wrap:wrap">
+            <button type="button" data-triage-filter="close-house" class="${campaignTriageFilter === 'close-house' ? 'selected' : ''}" style="border-color:rgba(226,189,112,0.6)">Close House ≤10pts (${closeHouseEntries.length})</button>
+            <button type="button" data-triage-filter="close-senate" class="${campaignTriageFilter === 'close-senate' ? 'selected' : ''}" style="border-color:rgba(226,189,112,0.6)">Close Senate ≤10pts (${closeSenateEntries.length})</button>
+            <button type="button" data-triage-filter="close-governor" class="${campaignTriageFilter === 'close-governor' ? 'selected' : ''}" style="border-color:rgba(226,189,112,0.6)">Close Governors ≤10pts (${closeGovEntries.length})</button>
             <button type="button" data-triage-filter="all" class="${campaignTriageFilter === 'all' ? 'selected' : ''}">All Nominees (${fundingEntries.length})</button>
             <button type="button" data-triage-filter="senate" class="${campaignTriageFilter === 'senate' ? 'selected' : ''}">Senate (${fundingEntries.filter((f) => f.kind === 'Senate').length})</button>
             <button type="button" data-triage-filter="governor" class="${campaignTriageFilter === 'governor' ? 'selected' : ''}">Governors (${fundingEntries.filter((f) => f.kind === 'Governor').length})</button>
             <button type="button" data-triage-filter="house" class="${campaignTriageFilter === 'house' ? 'selected' : ''}">House (${fundingEntries.filter((f) => f.kind === 'House').length})</button>
           </div>
-          <input type="text" id="triage-search" placeholder="Search candidate or race..." value="${safe(campaignTriageSearch)}" style="padding:6px 12px;background:#101923;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px" />
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button type="button" class="button button-small button-gold" id="btn-batch-fund-view" data-batch-race-keys="${safe(filteredCandidates.map((c) => c.raceKey).join(','))}" ${!filteredCandidates.length || game.treasury < 1 ? 'disabled' : ''}>Fund All in View +$1M Each (${filteredCandidates.length} races · $${filteredCandidates.length}M)</button>
+            <input type="text" id="triage-search" placeholder="Search candidate or race..." value="${safe(campaignTriageSearch)}" style="padding:6px 12px;background:#101923;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px" />
+          </div>
         </div>
 
         <div class="v08-triage-table-wrap">
@@ -11221,6 +11270,17 @@ function bind() {
     historyViewTab = btn.dataset.historyTab;
     render();
   }));
+  document.querySelectorAll('[data-history-map-year]').forEach((btn) => btn.addEventListener('click', () => {
+    const yr = Number(btn.dataset.historyMapYear);
+    const md = btn.dataset.historyMapMode || 'presidential';
+    if (window.__historyMapYear === yr && window.__historyMapMode === md) {
+      window.__historyMapYear = null;
+    } else {
+      window.__historyMapYear = yr;
+      window.__historyMapMode = md;
+    }
+    render();
+  }));
 
   // MAS-01: Active Era Dossier & Historic Realignment Transition Modal controls
   document.querySelectorAll('[data-open-era-dossier]').forEach((btn) => btn.addEventListener('click', () => {
@@ -11463,6 +11523,13 @@ function bind() {
     dispatchAction('allocate-candidate-funds', { raceKey, amount });
     render();
   }));
+  document.querySelector('#btn-batch-fund-view')?.addEventListener('click', (e) => {
+    const keys = String(e.currentTarget.dataset.batchRaceKeys || '').split(',').filter(Boolean);
+    if (keys.length) {
+      dispatchAction('allocate-candidate-funds-batch', { raceKeys: keys, amount: 1 });
+      render();
+    }
+  });
   document.querySelectorAll('[data-pull-funds]').forEach((btn) => btn.addEventListener('click', () => {
     dispatchAction('pull-candidate-funds', { raceKey: btn.dataset.pullFunds });
     render();

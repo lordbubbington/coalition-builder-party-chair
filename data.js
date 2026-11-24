@@ -9704,8 +9704,8 @@ const STARTING_STATEWIDE_OFFICERS = [
     "stateId": "MI",
     "party": "people",
     "rawParty": "D",
-    "factionId": "dem_black_voters",
-    "factionLabel": "Fighter / Civil Rights",
+    "factionId": "dem_capital_l_left",
+    "factionLabel": "Progressive Prosecutor / Civil Rights",
     "isIncumbent": true,
     "traits": [
       "Polished",
