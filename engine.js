@@ -23205,7 +23205,6 @@ function compactGameForSave(game, options = {}) {
   }
 
   // Developer 1 (Chunk 1.4): Deduplicate currentHouseMap and decennial map duplicate
-  const activeMapKey = copy.activeHouseMapKey || '';
   if (activeMapKey && copy[activeMapKey] && copy.currentHouseMap) {
     delete copy[activeMapKey];
   }
