@@ -500,6 +500,9 @@
           e.st.affiliations.thirdParty = THIRD_KEYS.reduce((s, tk) => s + Number(e.st.affiliations[tk] || 0), 0);
         }
       }
+
+      // [QA-BATCH2-FIX] B2-01: Renormalize state faction breakdown to match state representedVoters exactly
+      normalizeStateFactionVoters(e.st);
     });
 
     voterModel.representedVoters = targetTotal;
@@ -594,11 +597,51 @@
     return voterModel;
   }
 
+  // [QA-BATCH2-FIX] B2-01: State-level faction voter conservation normalization via Hare-Niemeyer
+  function normalizeStateFactionVoters(stateModel) {
+    if (!stateModel || !stateModel.factions || typeof stateModel.factions !== 'object') return stateModel;
+    const target = Math.max(0, Math.round(Number(stateModel.representedVoters || stateModel.sampleVoters || 0)));
+    if (target <= 0) return stateModel;
+
+    const entries = Object.entries(stateModel.factions)
+      .filter(([, v]) => Number.isFinite(Number(v)) && Number(v) > 0)
+      .map(([fid, v]) => ({ fid, raw: Math.max(0, Number(v)) }));
+    const curSum = entries.reduce((acc, e) => acc + e.raw, 0);
+    if (curSum <= 0 || curSum === target) return stateModel;
+
+    let floorSum = 0;
+    const allocs = entries.map((e) => {
+      const exact = (e.raw / curSum) * target;
+      const floored = Math.floor(exact);
+      floorSum += floored;
+      return { fid: e.fid, raw: e.raw, remainder: exact - floored, assigned: floored };
+    });
+
+    const rem = target - floorSum;
+    allocs.sort((a, b) => {
+      if (Math.abs(b.remainder - a.remainder) > 1e-9) return b.remainder - a.remainder;
+      if (b.raw !== a.raw) return b.raw - a.raw;
+      return String(a.fid).localeCompare(String(b.fid));
+    });
+    for (let i = 0; i < rem && i < allocs.length; i++) {
+      allocs[i].assigned += 1;
+    }
+
+    Object.keys(stateModel.factions).forEach((k) => {
+      stateModel.factions[k] = 0;
+    });
+    allocs.forEach((a) => {
+      stateModel.factions[a.fid] = a.assigned;
+    });
+    return stateModel;
+  }
+
   const exportObj = {
     DEMOGRAPHIC_CONFIG,
     selectDeterministicMigrationPatterns,
     applyInterstateMigration,
     applyGenerationalTurnover,
+    normalizeStateFactionVoters,
     renormalizeElectorateHareNiemeyer,
     applyCyclePopulationGrowth,
   };
@@ -609,6 +652,7 @@
     window.PartyChairData.selectDeterministicMigrationPatterns = selectDeterministicMigrationPatterns;
     window.PartyChairData.applyInterstateMigration = applyInterstateMigration;
     window.PartyChairData.applyGenerationalTurnover = applyGenerationalTurnover;
+    window.PartyChairData.normalizeStateFactionVoters = normalizeStateFactionVoters;
     window.PartyChairData.renormalizeElectorateHareNiemeyer = renormalizeElectorateHareNiemeyer;
     window.PartyChairData.applyCyclePopulationGrowth = applyCyclePopulationGrowth;
   }
