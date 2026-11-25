@@ -459,9 +459,27 @@
       lastPresShare = Number((isPlayerArg ? (nv.player ?? nv[resolvedKey] ?? 0) : (nv[resolvedKey] ?? 0)) || 0);
     }
 
-    const path1Voters = voters >= 350000;
+    // [v0.18.7 QA-FIX] BUG-02: Require genuine net voter growth (+150k above baseline or >=500k), >=3 state leg seats, or >=5 new pres ballot states so Tier-0 never auto-completes Cycle 1 with 0 actions
+    const tier0Baselines = {
+      liberty: 1147900,
+      green: 493400,
+      constitution: 235600,
+      socialist: 241200,
+    };
+    const startingBaseline = Number(
+      game?.startingPartyVoters?.[resolvedKey]
+      ?? (isCustomPlayer ? (game?.player?.customStartVoters ?? 100000) : (tier0Baselines[resolvedKey] ?? 100000))
+    );
+    const netVoterGrowth = voters - startingBaseline;
+    const startingBallotCount = Number(
+      game?.startingPresBallotCount?.[resolvedKey]
+      ?? (isCustomPlayer ? 1 : 0)
+    );
+    const newBallotStates = Math.max(0, presBallotStates - startingBallotCount);
+
+    const path1Voters = (netVoterGrowth >= 150000) || (voters >= 500000);
     const path2Statehouse = stateLegSeats >= 3;
-    const path3Ballot = presBallotStates >= 5;
+    const path3Ballot = newBallotStates >= 5;
     const path4PopularVote = lastPresShare >= 1.0;
 
     const achievedPaths = [];
@@ -476,13 +494,15 @@
       completed: persistedMemory || achievedPaths.length > 0,
       achievedPaths,
       voters,
+      netVoterGrowth,
       stateLegSeats,
       presBallotStates,
+      newBallotStates,
       lastPresShare,
       paths: {
-        grassroots_expansion: { met: path1Voters, current: voters, target: 350000, ratio: Math.min(1, voters / 350000) },
+        grassroots_expansion: { met: path1Voters, current: Math.max(0, netVoterGrowth), target: 150000, ratio: Math.min(1, Math.max(0, netVoterGrowth) / 150000) },
         statehouse_foothold: { met: path2Statehouse, current: stateLegSeats, target: 3, ratio: Math.min(1, stateLegSeats / 3) },
-        multi_state_footprint: { met: path3Ballot, current: presBallotStates, target: 5, ratio: Math.min(1, presBallotStates / 5) },
+        multi_state_footprint: { met: path3Ballot, current: newBallotStates, target: 5, ratio: Math.min(1, newBallotStates / 5) },
         popular_vote_beachhead: { met: path4PopularVote, current: lastPresShare, target: 1.0, ratio: Math.min(1, lastPresShare / 1.0) },
       },
     };
@@ -621,19 +641,43 @@
     const partyKeys = ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'];
     if (game?.player?.custom) partyKeys.push('player');
     const nextTiers = {};
+    const lastPres = (game?.elections || []).slice().reverse().find((e) => e.type !== 'midterm' && e.nationalVote);
+    const curYear = Number(game?.year || 2028);
+    // [v0.18.7 QA-FIX] BUG-08: Allow 1-tier drop-down per presidential cycle whenever computed < prev
+    const isPresCycleEval = Boolean(lastPres) && ((curYear % 4 === 0) || Number(lastPres?.year) === curYear);
     partyKeys.forEach((key) => {
       const computed = computePartyInstitutionalTierRaw(game, key);
+      const seatCounts = partySeatCounts(game, key);
+      const senateFloor = (seatCounts?.senate || 0) >= 1 ? 2 : 0;
+      const floor = Math.max(game?.ascensionGauntletCompleted?.[key] ? 1 : 0, senateFloor);
+      const target = clamp(Math.max(floor, computed), 0, 5);
       const prev = Number(game?.partyTiers?.[key]);
       const isBaselineMajor = ['people', 'heritage'].includes(key);
-      const lastPres = (game?.elections || []).slice().reverse().find((e) => e.type !== 'midterm' && e.nationalVote);
-      if (isBaselineMajor && lastPres && computed < 5) {
-        nextTiers[key] = computed;
+      if (isBaselineMajor && lastPres && target < 5) {
+        if (Number.isFinite(prev) && target < prev) {
+          const alreadyDroppedThisCycle = Number(game?.lastTierDropYear?.[key] || 0) === curYear;
+          nextTiers[key] = (isPresCycleEval && !alreadyDroppedThisCycle) ? Math.max(target, prev - 1) : prev;
+          if (nextTiers[key] < prev && game && typeof game === 'object') {
+            game.lastTierDropYear = { ...(game.lastTierDropYear || {}), [key]: curYear };
+          }
+        } else {
+          nextTiers[key] = target;
+        }
       } else if (Number.isFinite(prev)) {
-        const floor = game?.ascensionGauntletCompleted?.[key] ? 1 : 0;
-        nextTiers[key] = clamp(Math.max(floor, prev, computed), 0, 5);
+        // [v0.18.7 QA-FIX] BUG-02 & BUG-08: Cap Tier 0 single-cycle exit to Tier 1; drop 1 tier/presidential cycle when below threshold
+        if (prev === 0) {
+          nextTiers[key] = Math.min(1, Math.max(prev, target));
+        } else if (target < prev) {
+          const alreadyDroppedThisCycle = Number(game?.lastTierDropYear?.[key] || 0) === curYear;
+          nextTiers[key] = (isPresCycleEval && !alreadyDroppedThisCycle) ? Math.max(target, prev - 1) : prev;
+          if (nextTiers[key] < prev && game && typeof game === 'object') {
+            game.lastTierDropYear = { ...(game.lastTierDropYear || {}), [key]: curYear };
+          }
+        } else {
+          nextTiers[key] = target;
+        }
       } else {
-        const floor = game?.ascensionGauntletCompleted?.[key] ? 1 : 0;
-        nextTiers[key] = Math.max(floor, computed);
+        nextTiers[key] = target;
       }
     });
     return nextTiers;

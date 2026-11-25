@@ -1489,12 +1489,13 @@
     "name": "Socialists",
     "partyId": "socialist",
     "type": "ideological",
-    "status": "fringe",
+    // [v0.18.7 QA-FIX] BUG-01: Lead founding wing + aligned initial happiness/axes
+    "status": "leading",
     "targetVoters": 144800,
     "sliders": {
       "social": 2,
       "economic": 1.2,
-      "governance": 9
+      "governance": 5.5
     },
     "keyIssues": [
       "Worker-Owned Enterprises",
@@ -1506,7 +1507,7 @@
     ],
     "flavor": "These voters are socialists, who idealize Karl Marx.",
     "isExtremist": true,
-    "startingHappiness": 34,
+    "startingHappiness": 48,
     "cohesion": 0.95,
     "growthProfile": {
       "archetype": "labor_stronghold",
@@ -1533,10 +1534,11 @@
     "type": "ideological",
     "status": "fringe",
     "targetVoters": 96400,
+    // [v0.18.7 QA-FIX] BUG-01: Align sliders so Turn 1 Euclidean platform distance <= 2.2
     "sliders": {
-      "social": 5,
+      "social": 2,
       "economic": 1,
-      "governance": 7
+      "governance": 5.5
     },
     "keyIssues": [
       "Expropriation of Corporate Monopolies",
@@ -1548,7 +1550,7 @@
     ],
     "flavor": "These are communists, who want total state control over the economy.",
     "isExtremist": true,
-    "startingHappiness": 28,
+    "startingHappiness": 46,
     "cohesion": 0.95,
     "growthProfile": {
       "archetype": "labor_stronghold",

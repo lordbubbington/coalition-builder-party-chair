@@ -58,12 +58,14 @@
         f.chronicLowTurns = 0;
       }
 
-      // REC-07: Platform Abandonment threshold lowered from 4.5 to 3.2 Euclidean points
+      // REC-07 + [v0.18.7 QA-FIX] BUG-11: Platform Abandonment threshold 3.2; cool friction -10/turn when dist <= 2.8 and curH >= 52
       const dist = computeFactionKeyIssuesDistance(updatedGame, f, f.partyId);
       if (dist > 3.2) {
         frictionDelta += 15;
       } else if (curH >= 60 && dist <= 2.5) {
         frictionDelta -= 15;
+      } else if (curH >= 52 && dist <= 2.8) {
+        frictionDelta -= 10;
       }
 
       const isVanguardFounding = isPlayerFaction
@@ -72,7 +74,23 @@
       if (isVanguardFounding && frictionDelta > 0) {
         frictionDelta = round(frictionDelta * 0.6, 1);
       }
+      // [v0.18.7 QA-FIX] BUG-01: Early-game stability protection for minor parties with <= 2 factions (first 3 cycles)
+      const partyFactionCount = factions.filter((x) => x && x.partyId === f.partyId).length;
+      const isMinorProtectedWindow = !['people', 'heritage'].includes(f.partyId)
+        && partyFactionCount <= 2
+        && Number(updatedGame.year || 2028) <= Number(updatedGame.startYear || 2028) + 6;
+      const isLeadFoundingWing = f.status === 'leading'
+        || f.id === updatedGame.leadingFactionByParty?.[f.partyId]
+        || ['soc_socialists', 'con_christian_dominionists', 'grn_eco_socialist_vanguard', 'lib_true_libertarians'].includes(f.id);
+      if (isMinorProtectedWindow && frictionDelta > 0) {
+        frictionDelta = round(frictionDelta * 0.5, 1);
+      }
       f.frictionIndex = clamp((f.frictionIndex || 0) + frictionDelta, 0, 100);
+      if (isMinorProtectedWindow && (isLeadFoundingWing || partyFactionCount <= 1) && curH >= 20) {
+        f.frictionIndex = Math.min(f.frictionIndex, 55);
+        f.ultimatumTurnsRemaining = null;
+        continue;
+      }
 
       // 3. Ultimatum handling (REC-07: remediation floor raised to Happiness >= 60; threshold lowered to 75)
       // Bug #24: Post-accord bolt-immunity cooldown prevents immediate boomerang bolts
@@ -706,6 +724,26 @@
 
     const accordVoters = Number(vm?.factions?.[f.id] ?? f.targetVoters ?? 0);
     const note = `Coalition Accord signed with ${f.name}: 100% of faction voters admitted to party rolls (${(accordVoters / 1_000_000).toFixed(2)}M voters).`;
+
+    // [v0.18.7 QA-FIX] BUG-11: Coalition-Wide Summit Splash (+2 Happiness, -5 Friction to aligned party factions with dist <= 2.8)
+    const _splashDistFn = deps?.computeFactionKeyIssuesDistance;
+    (factions || []).forEach((otherF) => {
+      if (!otherF || otherF.id === f.id || otherF.partyId !== playerPartyId) return;
+      const d = typeof _splashDistFn === 'function'
+        ? _splashDistFn(game, otherF, playerPartyId)
+        : Math.hypot(
+            (Number(otherF.sliders?.economic ?? 5) - Number(f.sliders?.economic ?? 5)),
+            (Number(otherF.sliders?.social ?? 5) - Number(f.sliders?.social ?? 5)),
+            (Number(otherF.sliders?.governance ?? 5) - Number(f.sliders?.governance ?? 5))
+          );
+      if (d <= 2.8) {
+        const curH = Number(nextHappiness[otherF.id] ?? otherF.happiness ?? 60);
+        const splashedH = clamp(round(curH + 2, 1), 0, 100);
+        nextHappiness[otherF.id] = splashedH;
+        otherF.happiness = splashedH;
+        otherF.frictionIndex = clamp(round((otherF.frictionIndex || 0) - 5, 1), 0, 100);
+      }
+    });
 
     const signedState = {
       ...game,

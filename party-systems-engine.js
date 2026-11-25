@@ -962,6 +962,61 @@
     return working;
   }
 
+  // [v0.18.7 QA-FIX] BUG-09: Decay era-specific third-party boosts by 50% per cycle once sponsoring era ends
+  function decayExpiredEraBoosts(game) {
+    if (!game || typeof game !== 'object') return game;
+    const ps = game.partySystems;
+    if (!ps || !ps.eraState) return game;
+    const activeEraId = ps.currentEraId || 'era_07_baseline';
+    const es = ps.eraState;
+
+    const greenEraActive = activeEraId === 'era_13_green_transition' || activeEraId === 'era_17_ecological_collapse';
+    if (!greenEraActive) {
+      if (Number(es.greenBaselineBoost || 0) > 0) {
+        const decayed = round(Number(es.greenBaselineBoost) * 0.5, 2);
+        es.greenBaselineBoost = decayed < 0.5 ? 0 : decayed;
+      }
+      es.greenZeroCostChapters = false;
+      es.greenSmallDollarMultiplier = 1.0;
+
+      // Decay Green baseShare inflation when not in active Green/Left-Replacement era & below Tier 5
+      const greenTier = Number(game.partyTiers?.green ?? 1);
+      if (activeEraId !== 'era_06_left_replacement' && greenTier < 5) {
+        if (Array.isArray(game.rivals)) {
+          game.rivals = game.rivals.map((r) => {
+            if ((r.id === 'green' || r.baseTemplateId === 'green') && Number(r.baseShare || 0) > 2.0) {
+              const nextShare = round(2.0 + (Number(r.baseShare) - 2.0) * 0.5, 2);
+              return { ...r, baseShare: nextShare < 2.25 ? 2.0 : nextShare };
+            }
+            return r;
+          });
+        }
+        if (game.player && !game.player.custom && game.player.baseTemplateId === 'green' && Number(game.player.baseShare || 0) > 2.0) {
+          const nextPShare = round(2.0 + (Number(game.player.baseShare) - 2.0) * 0.5, 2);
+          game.player = { ...game.player, baseShare: nextPShare < 2.25 ? 2.0 : nextPShare };
+        }
+      }
+    }
+
+    // Decay Regional Party emergent surges once regional eras end
+    if (activeEraId !== 'era_10_regional_parties' && activeEraId !== 'era_22_neo_federalist' && Array.isArray(game.rivals)) {
+      game.rivals = game.rivals.map((r) => {
+        if (r && r.isRegional && Number(r.baseShare || 0) > 3.0) {
+          const nextReg = round(3.0 + (Number(r.baseShare) - 3.0) * 0.5, 2);
+          return { ...r, baseShare: nextReg < 3.4 ? 3.0 : nextReg };
+        }
+        return r;
+      });
+    }
+
+    if (activeEraId !== 'era_01_anti_extremist' && Number(es.crossEndorsementBoost || 0) > 0) {
+      const nextCross = round(Number(es.crossEndorsementBoost) * 0.5, 2);
+      es.crossEndorsementBoost = nextCross < 0.25 ? 0 : nextCross;
+    }
+
+    return game;
+  }
+
   function ordinalSuffix(n) {
     const num = Number(n) || 7;
     const mod100 = num % 100;
@@ -3617,6 +3672,7 @@
     selectNextPartySystem,
     evaluateEraTransition,
     transitionToPartySystem,
+    decayExpiredEraBoosts,
     registerEraPlugin,
     getEraMetadata,
     getEraPlugin,
