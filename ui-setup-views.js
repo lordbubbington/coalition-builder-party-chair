@@ -22,6 +22,7 @@
       custom100kSliders,
       custom100kIssues,
       customSelectedFactionIds,
+      customLeadingFactionId,
       customSchismParent,
       customPartyName,
       customPartyCode,
@@ -235,14 +236,18 @@
                       ? 'Ironclad Major Party Anchor Lock: Cannot leave parent party.'
                       : (isPairwiseIncompatible ? `Ideological friction too severe with ${conflictName}` : '');
 
+                    const isChosenLeader = isSelected && (customLeadingFactionId === f.id || (!customLeadingFactionId && customSelectedFactionIds[0] === f.id));
                     return `
-                      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:${isDisabled ? 'rgba(255,255,255,0.4)' : '#fff'};cursor:${isDisabled ? 'not-allowed' : 'pointer'}" title="${safe(tooltip)}">
-                        <input type="checkbox" data-custom-faction="${safe(f.id)}" ${isSelected ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
-                        <div>
-                          <b>${safe(f.name)}</b> ${isAnchor ? '<span style="font-size:10px;color:var(--gold)">🔒 ANCHOR</span>' : ''}
-                          <small style="display:block;font-size:11px;color:var(--text-muted)">Econ ${fEcon.toFixed(1)} · Soc ${fSoc.toFixed(1)} · ${(fVoters / 1000000).toFixed(2)}M Voters</small>
-                        </div>
-                      </label>
+                      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:${isDisabled ? 'rgba(255,255,255,0.4)' : '#fff'};cursor:${isDisabled ? 'not-allowed' : 'pointer'};flex:1" title="${safe(tooltip)}">
+                          <input type="checkbox" data-custom-faction="${safe(f.id)}" ${isSelected ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
+                          <div>
+                            <b>${safe(f.name)}</b> ${isAnchor ? '<span style="font-size:10px;color:var(--gold)">🔒 ANCHOR</span>' : ''}
+                            <small style="display:block;font-size:11px;color:var(--text-muted)">Econ ${fEcon.toFixed(1)} · Soc ${fSoc.toFixed(1)} · ${(fVoters / 1000000).toFixed(2)}M Voters</small>
+                          </div>
+                        </label>
+                        ${isSelected ? `<button type="button" class="button button-small" data-set-custom-leading-faction="${safe(f.id)}" style="padding:2px 7px;font-size:10.5px;white-space:nowrap;${isChosenLeader ? 'background:rgba(226,189,112,0.25);border-color:var(--gold);color:var(--gold);font-weight:700' : 'opacity:0.75'}" title="Set as your party's Leading Faction (sets initial issue stances)">${isChosenLeader ? '👑 Leading Faction' : 'Set Leading'}</button>` : ''}
+                      </div>
                     `;
                   }).join('')}
                 </div>

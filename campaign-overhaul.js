@@ -1493,6 +1493,73 @@
       };
     }
 
+    // 6. [v0.18.8 PLAYTEST-FIX #4] Statehouse Door-Knock Blitz (+1.0% to +3.0% random voter registration in target state)
+    if (actionId === 'campaign-statehouse-blitz' || actionId === 'statehouse-door-knock-blitz') {
+      const cost = 1.5;
+      if ((game.treasury || 0) < cost) return { ...game, lastNote: 'Need $1.5M for Statehouse Door-Knock Blitz.' };
+      const stateId = payload.stateId || 'PA';
+      const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+      const blitzCount = Number(c.statehouseBlitzCount || 0);
+      const rngVal = hashFloat(`shBlitz:${game.seed || 2028}:${game.year || 2028}:${month}:${stateId}:${blitzCount}`);
+      const regPctGain = round(1.0 + rngVal * 2.0, 2); // Random 1.00% to 3.00%
+
+      let nextVoterModel = game.voterModel;
+      let addedVoters = 0;
+      if (game.voterModel && Array.isArray(game.voterModel.states)) {
+        nextVoterModel = {
+          ...game.voterModel,
+          states: game.voterModel.states.map((st) => {
+            if ((st.stateId || st.id) !== stateId || !st.affiliations) return st;
+            const aff = { ...st.affiliations };
+            const knownKeys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
+            const allKeys = [...new Set([...knownKeys, playerPid])];
+            const totalVoters = allKeys.reduce((sum, k) => sum + Math.max(0, Number(aff[k] || 0)), 0);
+            if (totalVoters <= 0) return st;
+            const targetAdd = Math.round(totalVoters * (regPctGain / 100));
+            const donorKeys = allKeys.filter((k) => k !== playerPid && Number(aff[k] || 0) > 0);
+            const donorPool = donorKeys.reduce((sum, k) => sum + Math.max(0, Number(aff[k] || 0)), 0);
+            if (donorPool > 0 && targetAdd > 0) {
+              const actualAdd = Math.min(targetAdd, Math.round(donorPool * 0.5));
+              let deducted = 0;
+              donorKeys.forEach((dk, idx) => {
+                const take = idx === donorKeys.length - 1
+                  ? Math.max(0, actualAdd - deducted)
+                  : Math.min(Math.max(0, Number(aff[dk] || 0)), Math.round(actualAdd * (Number(aff[dk] || 0) / donorPool)));
+                aff[dk] = Math.max(0, Math.round(Number(aff[dk] || 0) - take));
+                deducted += take;
+              });
+              aff[playerPid] = Math.round(Number(aff[playerPid] || 0) + deducted);
+              if (aff.thirdParty !== undefined) {
+                aff.thirdParty = Math.round(
+                  Number(aff.liberty || 0) + Number(aff.green || 0) + Number(aff.constitution || 0) + Number(aff.socialist || 0) + Number(aff.other || 0)
+                );
+              }
+              addedVoters = deducted;
+            }
+            return { ...st, affiliations: aff };
+          }),
+        };
+      }
+
+      const nextRegBoosts = { ...(game.stateRegistrationBoosts || {}), [stateId]: round((game.stateRegistrationBoosts?.[stateId] || 0) + regPctGain, 2) };
+      const nextSpend = { ...(c.playerStateSpendLastMonth || {}), [stateId]: round((c.playerStateSpendLastMonth?.[stateId] || 0) + cost, 2) };
+      const remAct = Math.max(0, (c.monthlyActionsLeft ?? 1) - 1);
+      return {
+        ...game,
+        treasury: round((game.treasury || 0) - cost, 2),
+        voterModel: nextVoterModel,
+        stateRegistrationBoosts: nextRegBoosts,
+        campaign: {
+          ...c,
+          monthlyActionsLeft: remAct,
+          weeklyActionsLeft: remAct,
+          statehouseBlitzCount: blitzCount + 1,
+          playerStateSpendLastMonth: nextSpend,
+        },
+        lastNote: `Statehouse Door-Knock Blitz in ${stateId}: +${regPctGain.toFixed(2)}% party voter registration (${addedVoters.toLocaleString()} voters mobilized for state legislature races).`,
+      };
+    }
+
     return null;
   }
 

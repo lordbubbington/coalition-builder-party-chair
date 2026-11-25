@@ -42,6 +42,36 @@
     return { validChosenIds, factionLookup };
   }
 
+  // [v0.18.8 PLAYTEST-FIX #11] Derive full platform issuePositions directly from the chosen Leading Faction's sliders & keyIssues
+  function deriveIssuePositionsFromFaction(leadingFaction, issuesCatalog = null, fallbackPositions = null) {
+    const issues = Array.isArray(issuesCatalog) && issuesCatalog.length
+      ? issuesCatalog
+      : ((typeof window !== 'undefined' && window.PartyChairData?.VERSION_021_ISSUES) || (typeof global !== 'undefined' && global.PartyChairData?.VERSION_021_ISSUES) || []);
+    const base = { ...(fallbackPositions || {}) };
+    if (!leadingFaction || !issues.length) return base;
+    const econ = Number(leadingFaction.sliders?.economic ?? leadingFaction.economic ?? 5.5);
+    const soc = Number(leadingFaction.sliders?.social ?? leadingFaction.social ?? 5.5);
+    const gov = Number(leadingFaction.sliders?.governance ?? leadingFaction.governance ?? 5.5);
+    const clamp10 = (v) => Math.max(1, Math.min(10, Math.round(v)));
+    issues.forEach((issue) => {
+      if (!issue || !issue.id) return;
+      const cat = String(issue.category || '').toLowerCase();
+      const axis = String(issue.axis || '').toLowerCase();
+      let score = (econ + soc) / 2;
+      if (axis === 'economic' || cat.includes('econ') || cat.includes('tax') || cat.includes('fiscal') || cat.includes('labor') || cat.includes('trade') || cat.includes('health')) {
+        score = econ;
+      } else if (axis === 'social' || cat.includes('social') || cat.includes('cultur') || cat.includes('civil') || cat.includes('rights') || cat.includes('immig')) {
+        score = soc;
+      } else if (axis === 'governance' || cat.includes('gov') || cat.includes('democ') || cat.includes('instit') || cat.includes('foreign') || cat.includes('security')) {
+        score = gov;
+      } else if (axis === 'climate' || cat.includes('climat') || cat.includes('energ') || cat.includes('envir')) {
+        score = (econ * 0.65 + soc * 0.35);
+      }
+      base[issue.id] = clamp10(score);
+    });
+    return base;
+  }
+
   function computeDerivedCustomPartyAxes(validChosenIds, factionLookup, deps = {}) {
     const roundFn = deps.round || ((v, d = 2) => { const m = 10 ** d; return Math.round(v * m) / m; });
     const clampFn = deps.clamp || ((v, lo, hi) => Math.max(lo, Math.min(hi, v)));
@@ -290,6 +320,19 @@
 
         // Bug #10: Derive Custom Party ideological axes from voter-weighted centroid of selected starting factions
         const derivedAxes = computeDerivedCustomPartyAxes(validChosenIds, factionLookup, { round, clamp });
+        // [v0.18.8 PLAYTEST-FIX #11] Respect player-chosen Leading Faction and derive issuePositions from it
+        const chosenLeadingId = (opts?.customLeadingFactionId && validChosenIds.includes(opts.customLeadingFactionId))
+          ? opts.customLeadingFactionId
+          : (derivedAxes?.largestFid || validChosenIds[0]);
+        if (chosenLeadingId) {
+          game.leadingFactionId = chosenLeadingId;
+          if (!game.factionDesignations) game.factionDesignations = {};
+          game.factionDesignations[chosenLeadingId] = 'leading';
+          const leadObj = factionLookup.get(chosenLeadingId);
+          if (leadObj) {
+            game.issuePositions = deriveIssuePositionsFromFaction(leadObj, null, game.issuePositions);
+          }
+        }
         if (derivedAxes) {
           player.economic = derivedAxes.economic;
           player.social = derivedAxes.social;
@@ -498,6 +541,7 @@
 
   const CustomPartyCore = {
     filterCompatibleCustomFactions,
+    deriveIssuePositionsFromFaction,
     computeDerivedCustomPartyAxes,
     initializeCustomPartyState,
   };

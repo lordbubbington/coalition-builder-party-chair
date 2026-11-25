@@ -35,6 +35,7 @@ let customOrigin = 'civic_reform';
 let customSchismParent = 'people';
 let customCharterTraits = ['big_tent_pragmatism', 'state_first_federation'];
 let customSelectedFactionIds = [];
+let customLeadingFactionId = null;
 let custom100kName = 'Heartland Civic League';
 let custom100kSliders = { economic: 5.0, social: 5.0, governance: 5.0 };
 let custom100kIssues = ['campaign-finance', 'healthcare-model'];
@@ -113,6 +114,7 @@ function resetCustomPartySetupDefaults() {
   customSchismParent = 'people';
   customCharterTraits = ['big_tent_pragmatism', 'state_first_federation'];
   customSelectedFactionIds = [];
+  customLeadingFactionId = null;
   custom100kName = 'Heartland Civic League';
   custom100kSliders = { economic: 5.0, social: 5.0, governance: 5.0 };
   custom100kIssues = ['campaign-finance', 'healthcare-model'];
@@ -1564,7 +1566,7 @@ function customPartyCreatorMarkup() {
   return uiv.customPartyCreatorMarkup(
     {
       STATES, customSelectedEmblem, customOrigin, customCharterTraits, custom100kStateAllocations,
-      custom100kName, custom100kSliders, custom100kIssues, customSelectedFactionIds, customSchismParent,
+      custom100kName, custom100kSliders, custom100kIssues, customSelectedFactionIds, customLeadingFactionId, customSchismParent,
       customPartyName, customPartyCode, customFoundingStateId, customPartyColor, customPartyMotto,
       customLeaderName, selectedLeaderArchetype, unaffiliatedPartyIds: ['independent', 'none', 'unaffiliated'],
     },
@@ -5767,6 +5769,7 @@ function v0180CampaignWarRoomMarkup(embeddedInGrandStrategy = false) {
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
         <button type="button" class="button button-secondary" data-v0180-action="campaign-microtarget-faction">Micro-Target Faction Ads ($1.5M · Regional +Persuasion &amp; Membership)</button>
         <button type="button" class="button button-secondary" data-v0180-action="campaign-town-hall-barnstorm">Town Hall Barnstorm ($0.5M · +Persuasion &amp; Turnout)</button>
+        <button type="button" class="button button-gold" data-v0180-action="campaign-statehouse-blitz">🚪 Statehouse Door-Knock Blitz ($1.5M · +1–3% State Reg)</button>
         <button type="button" class="button button-secondary" data-v0180-action="campaign-coalition-unity-summit" ${c.unitySummitUsedMonth === month ? 'disabled' : ''}>Coalition Unity Summit ($0 · +5 Hap to 2 Factions)</button>
         ${isMajor ? `<button type="button" class="button button-secondary" data-v0180-action="campaign-spoiler-wedge">Spoiler Wedge Blitz ($1.5M · Siphon Rival)</button>` : ''}
         <button type="button" class="button button-secondary" data-v0180-action="campaign-viral-telethon" ${c.telethonUsedMonth === month ? 'disabled' : ''}>Viral Livestream Telethon ($0 · +$2–5M &amp; Membership)</button>
@@ -6137,7 +6140,35 @@ function decodePath(encoded) {
   return `M${coordinates.map(([px, py]) => `${px},${py}`).join('L')}Z`;
 }
 const svgPath = (row, cls, title) => `<path class="${cls}" d="${row.q.split('!').map(decodePath).join('')}" data-map-state="${row.stateId || row.id}" tabindex="0"><title>${safe(title)}</title></path>`;
-const partyClass = (party) => party === 'people' ? 'party-dem' : party === 'heritage' ? 'party-rep' : party === 'split' ? 'party-split' : party === 'ind-dem' ? 'party-ind-dem' : ['ind-rep', 'independent', 'other', 'liberty', 'green'].includes(party) ? 'party-other' : 'party-pending';
+// [v0.18.8 PLAYTEST-FIX #10] Full 3rd-party & custom-party control color/label resolution for House, State Leg, Senate & Governor maps
+function resolveControlPartyColor(party, g = game) {
+  if (!party || party === 'pending' || party === 'unknown') return null;
+  if (party === 'people') return '#3478c8';
+  if (party === 'heritage') return '#c9474e';
+  if (party === 'green') return '#22c55e';
+  if (party === 'liberty') return '#eab308';
+  if (party === 'constitution') return '#a855f7';
+  if (party === 'socialist') return '#f97316';
+  if (party === 'independent' || party === 'ind-dem' || party === 'ind-rep') return '#14b8a6';
+  if (party === 'player' || (g?.player?.custom && party === g.player.id)) return g?.player?.color || '#8b5cf6';
+  if (party === 'split') return '#8654a4';
+  if (party === 'nonpartisan') return '#475569';
+  return '#14b8a6';
+}
+function resolveControlPartyLabel(party, g = game) {
+  if (party === 'people') return 'Democratic';
+  if (party === 'heritage') return 'Republican';
+  if (party === 'green') return 'Green';
+  if (party === 'liberty') return 'Libertarian';
+  if (party === 'constitution') return 'Constitution';
+  if (party === 'socialist') return 'Socialist / PFP';
+  if (party === 'independent' || party === 'ind-dem' || party === 'ind-rep') return 'Independent';
+  if (party === 'player' || (g?.player?.custom && party === g.player.id)) return g?.player?.name || 'Custom Party';
+  if (party === 'split') return 'Split Control';
+  if (party === 'nonpartisan') return 'Nonpartisan';
+  return party ? String(party) : 'Unknown';
+}
+const partyClass = (party) => party === 'people' ? 'party-dem' : party === 'heritage' ? 'party-rep' : party === 'split' ? 'party-split' : party === 'ind-dem' ? 'party-ind-dem' : ['ind-rep', 'independent', 'other', 'liberty', 'green', 'constitution', 'socialist', 'player', 'moderate'].includes(party) ? 'party-other' : 'party-pending';
 
 function nationalMapSvg(mode, options = {}) {
   const isPres = mode === 'presidential';
@@ -6291,7 +6322,11 @@ function nationalMapSvg(mode, options = {}) {
           ? ` · Pres. coattail: ${coattail >= 0 ? 'D+' : 'R+'}${Math.abs(coattail).toFixed(1)}%`
           : ` · Pres. coattail: ${coattail >= 2 ? 'Strong Dem' : coattail >= 0.5 ? 'Lean Dem' : coattail > -0.5 ? 'Neutral' : coattail > -2 ? 'Lean Rep' : 'Strong Rep'}`;
         const mix = voters ? ` · D ${formatMillions(voters.affiliations.people)}M · R ${formatMillions(voters.affiliations.heritage)}M · I ${formatMillions(voters.affiliations.independent)}M · third party ${formatMillions(((voters.affiliations.liberty || 0) + (voters.affiliations.green || 0) + (voters.affiliations.constitution || 0) + (voters.affiliations.socialist || 0) + (voters.affiliations.other || 0)))}M` : '';
-        return svgPath(district, `map-district ${cls} ${result?.pending ? 'uncalled' : ''}`, `${district.id}: ${result?.label || 'Result pending'}${result?.pending ? ' (uncalled)' : ''}${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}${coattailNote}${mix}`);
+        const customFill = (result?.party && !['people', 'heritage', 'pending', 'unknown'].includes(result.party)) ? resolveControlPartyColor(result.party, game) : null;
+        const houseTitle = `${district.id}: ${result?.label || 'Result pending'}${result?.pending ? ' (uncalled)' : ''}${voters ? ` · ${formatMillions(voters.representedVoters)}M modeled voters` : ''}${coattailNote}${mix}`;
+        return customFill
+          ? `<path style="fill:${customFill}" class="map-district ${cls} ${result?.pending ? 'uncalled' : ''}" d="${district.q.split('!').map(decodePath).join('')}" data-map-state="${district.stateId || district.id}" tabindex="0"><title>${safe(houseTitle)}</title></path>`
+          : svgPath(district, `map-district ${cls} ${result?.pending ? 'uncalled' : ''}`, houseTitle);
       }).join('');
       geometry += stateRows.map((state) => svgPath(state, 'map-state-outline', state.id)).join('');
     }
@@ -6425,6 +6460,8 @@ function nationalMapSvg(mode, options = {}) {
         const isDem = (s) => s && (s.caucus === 'people' || s.party === 'people');
         const isGop = (s) => s && (s.caucus === 'heritage' || s.party === 'heritage');
 
+        const p1 = s1?.party || s1?.caucus;
+        const p2 = s2?.party || s2?.caucus;
         let fillColor, statusLabel;
         if (isDem(s1) && isDem(s2)) {
           fillColor = '#3478c8'; // Blue
@@ -6432,6 +6469,13 @@ function nationalMapSvg(mode, options = {}) {
         } else if (isGop(s1) && isGop(s2)) {
           fillColor = '#c9474e'; // Red
           statusLabel = 'Republican Delegation (Both GOP)';
+        } else if (p1 && p1 === p2 && !['people', 'heritage'].includes(p1)) {
+          fillColor = resolveControlPartyColor(p1, game) || '#14b8a6';
+          statusLabel = `${resolveControlPartyLabel(p1, game)} Delegation (Both ${resolveControlPartyLabel(p1, game)})`;
+        } else if ((p1 && !['people', 'heritage'].includes(p1)) || (p2 && !['people', 'heritage'].includes(p2))) {
+          const thirdP = !['people', 'heritage'].includes(p1) ? p1 : p2;
+          fillColor = resolveControlPartyColor(thirdP, game) || '#14b8a6';
+          statusLabel = `Split Delegation (${resolveControlPartyLabel(p1, game)} + ${resolveControlPartyLabel(p2, game)})`;
         } else {
           fillColor = '#8654a4'; // Purple
           statusLabel = 'Split Delegation (1 Dem + 1 GOP)';
@@ -6465,7 +6509,7 @@ function nationalMapSvg(mode, options = {}) {
           return `<path style="fill:${fillColor}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(govTitle)}</title></path>`;
         }
         party = game.governorships?.[state.id] || MAPS.governors[state.id];
-        title = `${state.id}: ${party === 'people' ? 'Democratic' : party === 'heritage' ? 'Republican' : 'Unknown'} governor${MAPS.pendingGovernors.includes(state.id) ? ' (race pending)' : ''}`;
+        title = `${state.id}: ${resolveControlPartyLabel(party, game)} governor${MAPS.pendingGovernors.includes(state.id) ? ' (race pending)' : ''}`;
       } else if (mode === 'senate' || mode === 'senate-class') {
         const seat = senateByState.get(state.id);
         const stateVoters = voterStates.get(state.id);
@@ -6522,7 +6566,11 @@ function nationalMapSvg(mode, options = {}) {
         title = `${state.id}: lower ${lower || 'unknown'}, upper ${upper || 'unknown'}`;
       }
       const stateVoters = voterStates.get(state.id);
-      return svgPath(state, `map-state-shape ${partyClass(party)}`, `${title} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`);
+      const fullTitle = `${title} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`;
+      const customFill = (party && !['people', 'heritage', 'split', 'pending', 'unknown', 'nonpartisan'].includes(party)) ? resolveControlPartyColor(party, game) : null;
+      return customFill
+        ? `<path style="fill:${customFill}" class="map-state-shape ${partyClass(party)}" d="${state.q.split('!').map(decodePath).join('')}" data-map-state="${state.id}" tabindex="0"><title>${safe(fullTitle)}</title></path>`
+        : svgPath(state, `map-state-shape ${partyClass(party)}`, fullTitle);
     }).join('');
   }
   const labels = stateRows.map((state) => `<text x="${state.cx}" y="${state.cy}" class="map-label" pointer-events="none">${state.id}</text>`).join('');
@@ -7763,16 +7811,21 @@ function factionsTabMarkup() {
         <p class="v15-faction-flavor">${safe(f.flavor || '')}</p>
 
         ${courtshipGoodwill > 0 ? `<div style="margin-top:6px;font-size:11.5px;color:#75c89a">Coalition Goodwill: <b>${courtshipGoodwill} / 100</b></div>` : ''}
-        ${canConveneSummit ? `
-          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-            <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:pointer">
+        ${canConveneSummit ? (() => {
+          const elig = window.PartyChairEngine?.checkSummitEligibility ? window.PartyChairEngine.checkSummitEligibility(game, f.id) : { eligible: true };
+          return `
+          <div style="margin-top:8px;font-size:11.5px;color:${elig.eligible ? '#75c89a' : '#fbbf24'}">
+            ${elig.eligible ? '✔ Ready for Coalition Summit — click below to invite into your party!' : `ℹ ${safe(elig.reason || 'Court this faction first to build Coalition Goodwill (>= 15).')}`}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" ${elig.eligible ? '' : 'disabled'} title="${safe(elig.eligible ? 'Open Coalition Summit to sign an accord and bring this faction into your party' : (elig.reason || 'Not yet eligible'))}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:${elig.eligible ? 'pointer' : 'not-allowed'};opacity:${elig.eligible ? '1' : '0.45'}">
               🏛️ Convene Coalition Summit (1 Action)
             </button>
             <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" style="padding:8px 10px">
-              🤝 Court Independent ($1.5M)
+              🤝 Court Independent ($1.5M · +15 Goodwill)
             </button>
-          </div>
-        ` : isInOtherParty && isOrganizing ? `
+          </div>`;
+        })() : isInOtherParty && isOrganizing ? `
           <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
             ${canOpenCourtship ? `
               <button type="button" class="v15-summit-btn" data-faction-op="open-courtship-dialogue" data-faction-id="${f.id}" style="flex:1;padding:8px 10px;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#7dd3fc;border-radius:4px;font-weight:700;cursor:pointer">
@@ -7954,6 +8007,12 @@ function factionsTabMarkup() {
       <!-- Active Coalition Compacts Widget -->
       ${activeCompactsWidgetMarkup()}
 
+      <!-- [v0.18.8 PLAYTEST-FIX #6] Clear Faction Recruitment Guide -->
+      <div class="v15-demographic-disclaimer" style="border-left:3px solid var(--gold);margin-bottom:10px">
+        <span class="v15-disclaimer-title" style="color:var(--gold)">🧭 How to Bring New Factions Into Your Party:</span>
+        <b>Independent / Unaffiliated factions:</b> Click <i>Court Independent ($1.5M)</i> once to reach <b>15+ Coalition Goodwill</b> (or wait until their Happiness drops ≤ 40), then click <b>Convene Coalition Summit</b> to negotiate and sign a Coalition Accord.
+        <b>Rival-party factions:</b> First destabilize them below <b>50 Happiness</b> (via <i>Drive Wedge</i> or platform friction) and fray any protective Caucus below 45 Strength; once they secede to Independent, court and recruit them via Summit.
+      </div>
       <!-- Demographic Voting-Bloc Representation Disclaimer -->
       <div class="v15-demographic-disclaimer">
         <span class="v15-disclaimer-title">ℹ Demographic Faction Scope:</span>
@@ -10903,11 +10962,10 @@ function bind() {
     render();
   });
 
-  // Major Priorities Confirmation Modal & Lock Handlers (REQ-97)
+  // Major Priorities Confirmation Modal & Lock Handlers (REQ-97 & [v0.18.8 PLAYTEST-FIX #3])
   document.querySelector('#btn-lock-major-priorities-confirm')?.addEventListener('click', () => {
     majorPrioritiesConfirmModalOpen = false;
-    game.prioritiesLocked = true;
-    dispatchAction('lock-priorities', {});
+    dispatchAction('lock-priorities', { selectedQuestIds: [...(game.priorities?.main || [])] });
     render();
   });
   document.querySelector('#btn-lock-major-priorities-cancel')?.addEventListener('click', () => {
@@ -11201,6 +11259,20 @@ function bind() {
       customCharterTraits = customCharterTraits.filter((t) => t !== trait);
     }
     render();
+  }));
+  document.querySelectorAll('[data-set-custom-leading-faction]').forEach((btn) => btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fid = btn.dataset.setCustomLeadingFaction;
+    if (fid && customSelectedFactionIds.includes(fid)) {
+      customLeadingFactionId = fid;
+      const cat = window.PartyChairData?.FACTIONS_CATALOG || [];
+      const leadObj = cat.find((x) => x.id === fid);
+      if (leadObj && window.CustomPartyCore?.deriveIssuePositionsFromFaction) {
+        customIssuePositions = window.CustomPartyCore.deriveIssuePositionsFromFaction(leadObj, window.PartyChairData?.VERSION_021_ISSUES || [], getCustomPartyIssuePositions());
+      }
+      render();
+    }
   }));
   document.querySelectorAll('[data-custom-faction]').forEach((cb) => cb.addEventListener('change', () => {
     const fid = cb.dataset.customFaction;

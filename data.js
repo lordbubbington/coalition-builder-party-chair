@@ -14933,6 +14933,7 @@ const UNIVERSAL_PARTY_ACTIONS_CATALOG = [
   { actionType: 'BUY_AIRWAVES_BLITZ', phase: 'campaign', consumesAction: true, description: 'Purchase television, radio, and digital ad blitz in target state.' },
   { actionType: 'DEPLOY_SURROGATE', phase: 'campaign', consumesAction: true, description: 'Deploy high-fame surrogate to rally voters in target state.' },
   { actionType: 'MOBILIZE_GOTV_DRIVE', phase: 'campaign', consumesAction: true, description: 'Fund field offices and grassroots GOTV turnout infrastructure.' },
+  { actionType: 'STATEHOUSE_DOOR_KNOCK_BLITZ', phase: 'campaign', consumesAction: true, costMillions: 1.5, description: 'Targeted state legislative voter registration blitz adding +1.0% to +3.0% party registration in a target state.' },
   { actionType: 'INVESTIGATE_OPPO', phase: 'campaign', consumesAction: true, costMillions: 1.5, description: 'Commission opposition research dossier against rival candidate.' },
   { actionType: 'DETONATE_OPPO_DOSSIER', phase: 'campaign', consumesAction: true, description: 'Detonate completed opposition research dossier in battleground airwaves.' },
   { actionType: 'RESOLVE_CRISIS_DECISION', phase: 'campaign', consumesAction: false, description: 'Handle candidate trait scandal crisis.' },

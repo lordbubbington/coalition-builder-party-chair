@@ -581,7 +581,7 @@
         const duration = getStateReportingDuration(stateId);
         const margin = Number(presData.margin || presData.lead || 0);
         const winner = presData.winner || (margin >= 0 ? 'people' : 'heritage');
-        const ev = presData.ev || STATE_EV_WEIGHTS[stateId] || 3;
+        const ev = presData.ev || safeGame.electoralVotesByState?.[stateId] || (safeGame.states || []).find((s) => s.id === stateId)?.ev || STATE_EV_WEIGHTS[stateId] || 3;
         const isRecount = Math.abs(margin) <= 0.50;
 
         // Modeled ballots on 1:100 scale (e.g. 50k to 200k units)
@@ -706,17 +706,34 @@
     });
 
     // 4. State Legislative Summary Chambers
+    const legSharesByState = safeElection.stateLegislatureShares || {};
+    const seatCountsByState = safeElection.stateHouseSeatCounts || safeGame.stateHouseSeatCounts || {};
     Object.keys(legResults).forEach((stateId) => {
       const chambers = legResults[stateId] || ['heritage', 'heritage'];
       const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
       const duration = getStateReportingDuration(stateId);
       const winner = chambers[0] === chambers[1] ? chambers[0] : 'split';
-      const margin = winner === 'people' ? 6.0 : winner === 'heritage' ? -6.0 : 0.0;
       const cast = 20000;
-      const finalShares = {
-        people: winner === 'people' ? 53 : winner === 'heritage' ? 47 : 50,
-        heritage: winner === 'people' ? 47 : winner === 'heritage' ? 53 : 50,
-      };
+      // [v0.18.8 PLAYTEST-FIX #1] Use real multi-party state legislature vote shares (including Green/3rd/Custom) instead of hardcoded Dem/GOP only
+      const rawLegShares = legSharesByState[stateId] || seatCountsByState[stateId]?.slateShares || null;
+      let finalShares;
+      let margin = winner === 'people' ? 6.0 : winner === 'heritage' ? -6.0 : 0.0;
+      if (rawLegShares && Object.keys(rawLegShares).length > 0) {
+        finalShares = {};
+        Object.entries(rawLegShares).forEach(([pKey, val]) => {
+          const v = Number(val || 0);
+          if (v > 0) finalShares[pKey] = Math.round(v * 10) / 10;
+        });
+        const sortedEntries = Object.entries(finalShares).sort((a, b) => b[1] - a[1]);
+        if (sortedEntries.length >= 2) {
+          margin = Math.round((sortedEntries[0][1] - sortedEntries[1][1]) * 10) / 10;
+        }
+      } else {
+        finalShares = {
+          people: winner === 'people' ? 53 : winner === 'heritage' ? 47 : 50,
+          heritage: winner === 'people' ? 47 : winner === 'heritage' ? 53 : 50,
+        };
+      }
 
       const raceDef = {
         id: `state_leg:${stateId}`,

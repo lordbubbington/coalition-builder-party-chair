@@ -439,8 +439,15 @@
     }
     const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
     const courtshipScore = Number(game.factionCourtship?.[f.id]?.[playerPartyId] || 0);
-    if (f.partyId !== 'none' && curH > 30 && courtshipScore < 15) {
-      return { eligible: false, reason: 'The faction is satisfied with its current independent course (Happiness > 30) and refuses merger talks. Court them first to build goodwill.' };
+    // [v0.18.8 PLAYTEST-FIX #6] Independent/Unaffiliated factions qualify when Goodwill >= 15 (1 Court action) OR Happiness <= 40
+    if (f.partyId !== 'none' && curH > 40 && courtshipScore < 15) {
+      return {
+        eligible: false,
+        needsCourtship: true,
+        courtshipScore,
+        requiredGoodwill: 15,
+        reason: `Build at least 15 Coalition Goodwill (currently ${courtshipScore}/15 — click "Court Independent ($1.5M)" once) or wait for Independent Happiness <= 40 (currently ${Math.round(curH)}) before convening a Coalition Summit.`,
+      };
     }
     // Bug #22: Hard ideological-distance guard on Coalition Summits
     const summitDist = computeFactionKeyIssuesDistance(game, f, playerPartyId);
