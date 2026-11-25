@@ -477,15 +477,14 @@
     );
     const newBallotStates = Math.max(0, presBallotStates - startingBallotCount);
 
+    // [v0.18.9 STAGE 2] Tier 0 -> 1: 3 paths (Grassroots Base, >= 1 state leg seat, >= 1.0% national Pres vote)
     const path1Voters = (netVoterGrowth >= 150000) || (voters >= 500000);
-    const path2Statehouse = stateLegSeats >= 3;
-    const path3Ballot = newBallotStates >= 5;
+    const path2Statehouse = stateLegSeats >= 1;
     const path4PopularVote = lastPresShare >= 1.0;
 
     const achievedPaths = [];
     if (path1Voters) achievedPaths.push('grassroots_expansion');
     if (path2Statehouse) achievedPaths.push('statehouse_foothold');
-    if (path3Ballot) achievedPaths.push('multi_state_footprint');
     if (path4PopularVote) achievedPaths.push('popular_vote_beachhead');
 
     return {
@@ -501,8 +500,7 @@
       lastPresShare,
       paths: {
         grassroots_expansion: { met: path1Voters, current: Math.max(0, netVoterGrowth), target: 150000, ratio: Math.min(1, Math.max(0, netVoterGrowth) / 150000) },
-        statehouse_foothold: { met: path2Statehouse, current: stateLegSeats, target: 3, ratio: Math.min(1, stateLegSeats / 3) },
-        multi_state_footprint: { met: path3Ballot, current: newBallotStates, target: 5, ratio: Math.min(1, newBallotStates / 5) },
+        statehouse_foothold: { met: path2Statehouse, current: stateLegSeats, target: 1, ratio: Math.min(1, stateLegSeats / 1) },
         popular_vote_beachhead: { met: path4PopularVote, current: lastPresShare, target: 1.0, ratio: Math.min(1, lastPresShare / 1.0) },
       },
     };
@@ -542,45 +540,54 @@
     const govMapCount = Object.values(game?.governorships || {}).filter((p) => p === resolvedKey || (isPlayerArg && p === 'player')).length;
     const governorSeats = Math.max(seatCounts.governors || 0, govMapCount);
 
-    const hasCriticalMass = houseSeats >= 35 || senateSeats >= 8 || governorSeats >= 5;
+    // [v0.18.9 STAGE 2] Reworked Party Tiers 0-5 Promotion Ladder
+    // Count state legislatures controlled by this party (at least 1 chamber majority or unified control)
+    const controlledStateLegs = Object.entries(game?.stateLegislatures || {}).filter(([stId, chambers]) => {
+      if (stId === 'NE' || !Array.isArray(chambers)) return false;
+      const ownCount = chambers.filter((c) => c === resolvedKey || (isPlayerArg && c === 'player')).length;
+      return ownCount >= Math.ceil(chambers.length / 2);
+    }).length;
+    const combinedSenGov = senateSeats + governorSeats;
+    const combinedLegFoothold = houseSeats + senateSeats + governorSeats;
 
-    // Tier 5: Major Party Status (20% Pres, Institutional Critical Mass, Major Eclipse, or starting baseline major)
+    // Tier 5: Major Party Status (>= 15 state legs, >= 20% Pres vote, >= 100 House AND >= 10 Gov AND >= 10 Senate, major eclipse, or baseline major)
+    const hasTier5LegFoothold = houseSeats >= 100 && governorSeats >= 10 && senateSeats >= 10;
     if (
-      (lastPresShare !== null && lastPresShare >= 20.0)
-      || hasCriticalMass
+      controlledStateLegs >= 15
+      || (lastPresShare !== null && lastPresShare >= 20.0)
+      || hasTier5LegFoothold
       || eclipsedMajor
       || (lastPresShare === null && isBaselineMajor)
     ) {
       return 5;
     }
 
-    // Live polling check for Tier 4 dynamic qualification (>= 15% polling)
-    const pollMap = game?.lastNationalPoll || game?.nationalPolling || null;
-    const livePollShare = pollMap
-      ? Number((isPlayerArg ? (pollMap.player ?? pollMap[resolvedKey]) : pollMap[resolvedKey]) ?? 0)
-      : 0;
-
-    const fullBallotStates = countFullBallotStatesForParty(game, resolvedKey);
-    const presBallotCount = Object.values(game?.ballotAccess?.[resolvedKey]?.presidential || {}).filter(Boolean).length;
-    const federalSeats = houseSeats + senateSeats;
-
-    // Tier 4: Debate-Qualified Contender (>= 12% Polling/Pres Vote OR 40+ pres ballot states & 12+ federal seats)
-    if ((lastPresShare !== null && lastPresShare >= 12.0) || livePollShare >= 12.0 || (presBallotCount >= 40 && federalSeats >= 12)) {
+    // Tier 4: Debate-Qualified Contender (4 paths: >= 5 state legs, >= 10% Pres vote, >= 50 House & >= 5 Sen+Gov, OR >= 10 Sen+Gov)
+    const hasTier4PathA = houseSeats >= 50 && combinedSenGov >= 5;
+    const hasTier4PathB = combinedSenGov >= 10;
+    if (
+      controlledStateLegs >= 5
+      || (lastPresShare !== null && lastPresShare >= 10.0)
+      || hasTier4PathA
+      || hasTier4PathB
+    ) {
       return 4;
     }
 
-    // Tier 3: Federally Recognized Party (>= 3.5% Pres Vote OR 25+ pres ballot states & 5+ federal seats OR statehouse farm team bridge: 18+ pres ballot states & 5+ federal/statehouse seats)
-    const stateLegSeatsCount = Object.values(game?.stateHouseSeatCounts || {}).reduce((sum, row) => sum + Number(row?.[resolvedKey] || 0), 0);
-    const standoutsCount = (game?.stateLegStandouts?.[resolvedKey] || []).length;
-    if ((lastPresShare !== null && lastPresShare >= 3.5) || (presBallotCount >= 25 && federalSeats >= 5) || (presBallotCount >= 18 && (federalSeats * 2 + stateLegSeatsCount + standoutsCount) >= 5)) {
+    // Tier 3: Federally Recognized Party (3 paths: >= 1 state leg, >= 5% Pres vote, OR >= 10 combined House/Gov/Senate)
+    if (
+      controlledStateLegs >= 1
+      || (lastPresShare !== null && lastPresShare >= 5.0)
+      || combinedLegFoothold >= 10
+    ) {
       return 3;
     }
 
-    // Tier 2: Ballot-Qualified Minor (>= 1.5% Pres Vote OR sustaining multi-state ballot access across 10+ states OR 2+ Senate / 5+ House)
-    const retainedCount = Array.isArray(game?.retainedBallotStates?.[resolvedKey]) ? game.retainedBallotStates[resolvedKey].length : 0;
-    const legAccessCount = Object.values(game?.ballotAccess?.[resolvedKey]?.leg || {}).filter(Boolean).length;
-    const hasSustainedBallot = retainedCount >= 10 || legAccessCount >= 10 || presBallotCount >= 15 || ((game?.elections || []).length > 0 && fullBallotStates >= 10);
-    if ((lastPresShare !== null && lastPresShare >= 1.5) || hasSustainedBallot || senateSeats >= 2 || houseSeats >= 5) {
+    // Tier 2: Ballot-Qualified Minor (2 paths: >= 2.5% Pres vote OR >= 1 House/Gov/Senate)
+    if (
+      (lastPresShare !== null && lastPresShare >= 2.5)
+      || combinedLegFoothold >= 1
+    ) {
       return 2;
     }
 
@@ -633,8 +640,8 @@
 
   function getMaxFocusSlots(game, partyId = 'player') {
     const tier = getPartyInstitutionalTier(game, partyId);
-    if (tier <= 0) return 1;
-    return tier >= 5 ? 7 : tier >= 3 ? 5 : 3;
+    const map = { 0: 1, 1: 3, 2: 4, 3: 5, 4: 6, 5: 7 };
+    return map[Math.max(0, Math.min(5, Math.round(Number(tier ?? 0))))] ?? 1;
   }
 
   function evaluatePartyInstitutionalTiers(game) {

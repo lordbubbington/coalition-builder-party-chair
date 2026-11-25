@@ -408,6 +408,19 @@
     if (f.partyId === playerPartyId) {
       return { eligible: false, reason: 'The faction is already a member of your party.' };
     }
+    // [v0.18.9 STAGE 2] Faction recruitment is disabled for Tier 0 & Tier 1 parties (unlocks at Tier 2)
+    const pTierCheck = (typeof window !== 'undefined' && window.PartyChairEngine?.getPartyInstitutionalTier)
+      ? window.PartyChairEngine.getPartyInstitutionalTier(game, 'player')
+      : (typeof global !== 'undefined' && global.PartyChairEngine?.getPartyInstitutionalTier)
+        ? global.PartyChairEngine.getPartyInstitutionalTier(game, 'player')
+        : Number(game?.partyTiers?.[playerPartyId] ?? 5);
+    if (pTierCheck < 2) {
+      return {
+        eligible: false,
+        canCourt: false,
+        reason: `Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor). Your party is currently Tier ${pTierCheck}.`,
+      };
+    }
     // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Anti-Poaching Lock
     const fcsPoach = (typeof window !== 'undefined' && window.FactionCaucusSystem)
       || (typeof global !== 'undefined' && global.FactionCaucusSystem)

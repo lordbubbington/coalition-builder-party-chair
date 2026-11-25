@@ -373,9 +373,9 @@ function formatPartyDisplayName(partyId, format = 'short') {
 const FALLBACK_INSTITUTIONAL_TIERS = [
   { tier: 0, id: 'extremist', name: 'Extremist Movement', shortLabel: 'Extremist', maxFocusSlots: 1, badgeColor: '#b91c1c', description: 'Operating on the ideological periphery under intense civic stigma, radioactive ballot scrutiny, and severe media hostility.', nextRequirement: 'Build a broad grassroots base, win state legislative footholds, secure multi-state ballot access, or break through in federal voting to become a recognized Fringe Party.' },
   { tier: 1, id: 'fringe', name: 'Fringe Party', shortLabel: 'Fringe', maxFocusSlots: 3, badgeColor: '#6b7280', description: 'Operating outside national broadcast coverage with limited ballot lines.', nextRequirement: 'Reach 2% national presidential vote or secure full ballot access in 10+ states to become Ballot-Qualified.' },
-  { tier: 2, id: 'ballot_qualified', name: 'Ballot-Qualified Minor', shortLabel: 'Ballot-Qualified', maxFocusSlots: 3, badgeColor: '#0284c7', description: 'Multi-state ballot lines unlock Regional Chapter Momentum waves and Fusion cross-endorsement deals.', nextRequirement: 'Win 5% national presidential popular vote to earn Federal Recognition, FEC Matching Funds, and 5 Focus Slots.' },
-  { tier: 3, id: 'federally_recognized', name: 'Federally Recognized Party', shortLabel: 'Recognized', maxFocusSlots: 5, badgeColor: '#7c3aed', description: 'Qualifies for FEC Public Matching Funds, automatic ballot retention, and 5 strategic Party Focus slots.', nextRequirement: 'Reach 15% in national polling or presidential vote to break the media blackout and qualify for the Debate Stage.' },
-  { tier: 4, id: 'debate_contender', name: 'Debate-Qualified Contender', shortLabel: 'Contender', maxFocusSlots: 5, badgeColor: '#d97706', description: 'Shatters the national broadcast blackout, qualifies for the Presidential Debate Stage, and unlocks allied Super PACs.', nextRequirement: 'Win 20% presidential vote, hold 35 House / 8 Senate / 5 Governor seats, or eclipse a major party to achieve Major Party Status.' },
+  { tier: 2, id: 'ballot_qualified', name: 'Ballot-Qualified Minor', shortLabel: 'Ballot-Qualified', maxFocusSlots: 4, badgeColor: '#0284c7', description: 'Unlocks Faction Recruitment, Courting Politicians, Fusion cross-endorsement deals, 4 Focus Slots, and 40 starting Statehouse slates.', nextRequirement: 'Hold >= 1 state legislature, win >= 5% presidential vote, or hold >= 10 combined House/Gov/Senate seats.' },
+  { tier: 3, id: 'federally_recognized', name: 'Federally Recognized Party', shortLabel: 'Recognized', maxFocusSlots: 5, badgeColor: '#7c3aed', description: 'Removes spoiler effect in states where you hold federal/gov office, unlocks Regional Chapter Momentum (+2% neighbor spillover), Super PACs, 5 Focus Slots, and 100 starting Statehouse slates.', nextRequirement: 'Hold >= 5 state legislatures, win >= 10% presidential vote, hold >= 50 House + >= 5 Sen/Gov, or hold >= 10 Sen/Gov.' },
+  { tier: 4, id: 'debate_contender', name: 'Debate-Qualified Contender', shortLabel: 'Contender', maxFocusSlots: 6, badgeColor: '#d97706', description: 'Shatters Media Blackout, guarantees Debate qualification, massive compatible Super PAC advantages, halves Duverger spoiler in ALL races, 6 Focus Slots, and 250 starting Statehouse slates.', nextRequirement: 'Hold >= 15 state legislatures, win >= 20% presidential vote, or hold >= 100 House + 10 Governors + 10 Senators.' },
   { tier: 5, id: 'major_party', name: 'Major Party', shortLabel: 'Major', maxFocusSlots: 7, badgeColor: '#059669', description: 'Full national institutional parity with 7 Party Focus slots and immunity to tactical wasted-vote squeezes.', nextRequirement: 'Maximum institutional standing achieved.' },
 ];
 
@@ -9384,6 +9384,19 @@ function campaignMarkup() {
       ${renderScandalCrisisModalMarkup(game)}
       ${renderSuccessionCrisisModalMarkup(game)}
       ${renderInternalAnchorCrisisModalMarkup(game)}
+      ${game?.pendingTierUpModal ? `
+        <div class="modal-backdrop" id="tier-up-modal-overlay" style="position:fixed;inset:0;background:rgba(5,10,18,0.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+          <div class="panel" style="max-width:520px;width:100%;border:2px solid var(--gold);padding:22px;background:#0e1726">
+            <div class="eyebrow" style="color:var(--gold)">★ Institutional Tier Promotion · ${game.pendingTierUpModal.year || game.year}</div>
+            <h2 style="margin:6px 0 8px">Congratulations! Reached Tier ${game.pendingTierUpModal.newTier}: ${safe(game.pendingTierUpModal.tierName)}</h2>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Your party has ascended from Tier ${game.pendingTierUpModal.prevTier} to Tier ${game.pendingTierUpModal.newTier} (${game.pendingTierUpModal.focusSlots} Party Focus Slots unlocked). Here's what changed:</p>
+            <ul style="margin:0 0 16px;padding-left:18px;font-size:13px;line-height:1.55">
+              ${(game.pendingTierUpModal.perks || []).map((p) => `<li>${safe(p)}</li>`).join('')}
+            </ul>
+            <button type="button" class="button button-gold" id="btn-dismiss-tier-up-modal" style="width:100%;font-weight:700">Continue →</button>
+          </div>
+        </div>
+      ` : ''}
       ${/* [v0.18.4 LEADING-FACTION] */ (window.LeadingFactionSystem && game?.pendingLeadingFactionChallenge ? window.LeadingFactionSystem.renderLeadingFactionChallengeModal(game, safe) : '')}
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
@@ -11782,6 +11795,10 @@ function bind() {
     summitModalOpen = true;
     render();
   }));
+  document.querySelector('#btn-dismiss-tier-up-modal')?.addEventListener('click', () => {
+    dispatchAction('dismiss-tier-up-modal', {});
+    render();
+  });
   document.querySelectorAll('[data-close-summit]').forEach((btn) => btn.addEventListener('click', () => {
     summitModalOpen = false;
     summitModalFactionId = null;
