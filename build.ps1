@@ -62,6 +62,12 @@ try {
         (Join-Path $projectDir 'ui-setup-views.js'),
         # [OFF-CYCLE]
         (Join-Path $projectDir 'off-cycle-interlude.js'),
+        # [v0.18.8 CAUCUSES & DYNAMIC FACTIONS]
+        (Join-Path $projectDir 'procedural-faction-naming.js'),
+        (Join-Path $projectDir 'faction-caucus-system.js'),
+        (Join-Path $projectDir 'dynamic-faction-lifecycle.js'),
+        (Join-Path $projectDir 'identity-bloc-system.js'),
+        (Join-Path $projectDir 'faction-caucus-ui.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

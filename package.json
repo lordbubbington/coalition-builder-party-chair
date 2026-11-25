@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.18.7",
-  "description": "Coalition Builder: Party Chair — Version 0.18.7 (QA Balance & Bugfix Release: Treasury Caps, Tier Drop-Down, Era Decay, Viability Breakthroughs & Off-Cycle Polish)",
+  "version": "0.18.8",
+  "description": "Coalition Builder: Party Chair — Version 0.18.8 (Intra-Party Faction Caucuses, Non-Geographic Procedural Faction Naming, Dynamic Faction Lifecycle, Mergers, Vanguard Pull & Identity Blocs)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

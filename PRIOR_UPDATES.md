@@ -2296,3 +2296,89 @@ Categorized primarily by **Size** per workspace rules:
 - **Electorate Invariant:** Strictly verified 155,000,000 represented voters with 0 variance across all 51 jurisdictions.
 - **UI Vibe Invariant:** Zero `REQ-XX` technical identifiers rendered in customer-facing UI markup.
 - **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.
+
+---
+
+## VERSION 0.18.8
+
+# Coalition Builder: Party Chair — Version 0.18.8
+
+Version 0.18.8 is a major architectural milestone delivering intra-party faction caucuses, dynamic procedural faction lifecycles, 3-party realignment chaos, procedural faction naming with ideological temperaments, kicker mechanics (mergers, vanguard Overton window pulls, coalition modifiers), identity & religious voting blocs, and save schema v9 migration with full backward compatibility.
+
+Categorized primarily by **Size** per workspace rules:
+
+### 1. Massive Requirements (2 Requirements)
+
+1. **REQ-335: Intra-Party Faction Caucuses System (Massive | `faction-caucus-system.js`, `faction-core.js`, `engine.js`, `app.js`, `scripts/test-v0188-caucuses.cjs`):**
+   - Canonical Starting Caucuses: Initialized across major parties on cycle zero:
+     - Democratic Party: Progressive Caucus (`prog_squad`, `prog_labor`), Moderate Coalition (`mod_blue_dog`, `mod_new_dem`).
+     - Republican Party: MAGA Front (`maga_populist`, `maga_america_first`), Conservative Alliance (`con_traditional`, `con_freedom`).
+   - Compatibility Validation: Euclidean distance in 3D policy space $\le 2.2$ for standard caucus invites; relaxed to $\le 2.6$ for historical partner factions.
+   - Caucus Solidarity Dynamics: 45% happiness splash within the caucus on appeasement or policy wins; +50% appeasement goodwill bonus to caucus members.
+   - Bolt Exit Shock: -18 Happiness and +20 Friction to remaining caucus partners when a member bolts or defects.
+   - Anti-Poaching Lock: Rival parties are strictly blocked from poaching or courting factions belonging to caucuses with strength $\ge 45$.
+   - Primary Non-Aggression: ~88% unified candidate selection in non-presidential primaries when caucus strength $\ge 35$, avoiding self-defeating vote splits.
+   - Historic Caucus Status: Achieved at 4+ consecutive cycles; confers -80% fraying resistance against ideological drift.
+
+2. **REQ-336: Dynamic Faction Lifecycle & 3-Party Realignment Chaos (Massive | `dynamic-faction-lifecycle.js`, `engine.js`, `app.js`, `scripts/test-v0188-lifecycle.cjs`):**
+   - Two-Party vs. Three-Party Realignment Split: Standard two-party systems maintain 85–90% faction preservation; when third parties become competitive ($\ge 15\%$ national vote or $\ge 1$ governor/senate seat), three-party chaos activates, dropping preservation to 35–45% and accelerating splintering.
+   - High-Impact Growth & Decline Swings: Winning factions grow $+12\%$ to $+22\%$; losing factions shrink $-15\%$ to $-22\%$; catastrophic election defeats induce $-25\%$ to $-35\%$ collapse.
+   - Procedural Birth Modes: Emerge (brand new ideological movement from unrepresented voters), Sever (splinter off an established wing when friction $\ge 75$), and Split (peaceful division of an oversized faction $\ge 12\text{M}$ members).
+   - End-of-Cycle Dissolution: Factions falling below 100,000 members dissolve at cycle-end. Extremist factions (`prog_green_left`, `maga_populist`, `lib_ancaps`) are protected with full immunity from dissolution. Politician-tied factions dissolve if their patron loses office or retires.
+
+### 2. Huge Requirements (2 Requirements)
+
+1. **REQ-337: Procedural Faction Naming Engine & Ideological Temperaments (Huge | `procedural-faction-naming.js`, `scripts/test-v0188-procedural-naming.cjs`):**
+   - 6 Curated Ideological Word Pools: Generates 1M+ authentic journalistic faction names (e.g., "Liberty Caucus", "New Frontier Coalition", "Main Street Patriots").
+   - Zero Geographic Terms: Strict invariant prohibiting state, regional, or city names in procedural generation.
+   - `usedFactionNames` Deduplication: Prevents duplicate or repeat faction names across the lifetime of the campaign save.
+   - Issue Inheritance & Archetypes: Procedural factions inherit primary issues, birth modes, and 3 distinct temperament archetypes:
+     - `true_believer`: 1.5x happiness penalties on platform betrayal; 0.5x appeasement boost.
+     - `fair_weather`: 1.8x growth during wave victories; 2.0x shrinkage during cycle defeats.
+     - `transactional`: 1.75x appeasement response; 0.6x ideology distance penalty.
+
+2. **REQ-338: Identity & Religious Voting Blocs System (Huge | `identity-bloc-system.js`, `scripts/test-v0188-identity-blocs.cjs`):**
+   - 7 Curated Identity & Religious Blocs: Black Evangelical, Black Secular, Hispanic Catholic, Hispanic Evangelical, Mainline Protestant, White Evangelical, and Mormon/LDS.
+   - Event A (Bloc Splintering): Splits monolithic blocs into competing wings when party platforms diverge.
+   - Event B (Latino Unification): Unifies fragmented Hispanic voting sub-blocs under shared economic/immigration milestones.
+   - Event C (Emergent Identity Formations): Spawns emergent voting blocs when unaligned groups exceed thresholds.
+   - Non-Unification Invariant: White voter sub-blocs strictly never unify into a monolithic single bloc. Demographic sizing mathematically preserved across the 155M electorate.
+
+### 3. Large Requirements (2 Requirements)
+
+1. **REQ-339: Faction Kicker Mechanics (Large | `dynamic-faction-lifecycle.js`, `faction-core.js`, `engine.js`):**
+   - Faction Mergers & Takeovers: Friendly mergers between same-party factions when distance $\le 1.8$ and one faction shrinks below 2,000,000 members, consolidating membership and resources.
+   - Vanguard Overton Window Pull: Factions with `vanguardCyclesLeft > 0` pull the party's platform towards their ideological pole by +0.15 per cycle for 3 cycles.
+   - Coalition Temperament Modifiers: Temperaments dynamically modify faction friction and defection probability under coalition stress.
+
+2. **REQ-340: Faction Caucus, Lifecycle & Realignment Chaos UI (Large | `faction-caucus-ui.js`, `app.js`, `scripts/test-v0188-ui.cjs`):**
+   - Interactive Caucus Overview Panel in Factions Tab: Displays caucus strength, cohesion, partner badges, and non-aggression indicators.
+   - 3-Party Realignment Chaos Banner: Visually warns the player when three-party competitive dynamics activate, displaying heightened volatility and defection risk meters.
+   - Individual Faction Meta Badges: Temperament tags, Vanguard status badges, and Caucus solidarity indicators rendered directly on faction cards.
+   - Post-Cycle Lifecycle Digest Cards: Visual summary cards detailing faction births, splits, mergers, and dissolutions at cycle closeout.
+
+### 4. Medium Requirements (1 Requirement)
+
+1. **REQ-341: Save Schema v9 & Backward Compatibility Framework (Medium | `save-migrations.js`, `engine.js`, `scripts/test-v0185-save-migrations.cjs`):**
+   - Bumped `SAVE_SCHEMA_VERSION` from 8 to 9.
+   - Added `v8 → v9` migration step: backfills `usedFactionNames`, `threePartyChaosActive`, `identityBlocState`, initializes missing `caucuses`, and backfills faction metadata (`primaryIssueId`, `birthMode`, `temperament`, `vanguardCyclesLeft`, `viralRunwayCyclesLeft`).
+   - Preserves full forward/backward compatibility across all historical save schemas (`v1` through `v8`).
+
+---
+
+### 5. Release Packaging & Verification
+
+- **Version Bump:** Promoted version to `0.18.8` across `package.json`, `engine.js`, `app.js`, `build.ps1`, `index.html`.
+- **Save Compatibility:** Save key updated to `partyChairGame.save.v18.8` with backward-compatible migration supporting `v18.7`, `v18.6`, `v18.5`, and earlier save keys via Schema 9 migration.
+- **Automated Verification Matrix:**
+  - `test-v0188-caucuses.cjs`: 7/7 passed (100%).
+  - `test-v0188-procedural-naming.cjs`: 7/7 passed (100%).
+  - `test-v0188-lifecycle.cjs`: 11/11 passed (100%).
+  - `test-v0188-identity-blocs.cjs`: 7/7 passed (100%).
+  - `test-v0188-ui.cjs`: 7/7 passed (100%).
+  - `test-v0188-simulation.cjs`: 4-cycle headless simulation passed (100%).
+  - `test-v0185-save-migrations.cjs`: 13/13 passed (100%).
+  - `test-v0183-bug-fixes.cjs`: 7/7 passed (100%).
+- **Electorate Invariant:** Strictly verified 155,000,000 represented voters with 0 variance across all 51 jurisdictions.
+- **UI Vibe Invariant:** Zero `REQ-XX` technical identifiers rendered in customer-facing UI markup.
+- **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.

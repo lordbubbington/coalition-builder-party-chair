@@ -1578,7 +1578,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.7</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.18.8</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1606,7 +1606,7 @@ function setupMarkup() {
           <!-- [v0.18.4 ATLAS-HOTSEAT] -->
           ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatSetupToggle(isCustomMode ? 'player' : selectedTemplate) : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.18.7 · Multi-Developer Integration · Local autosave</p>
+          <p class="setup-foot">Version 0.18.8 · Multi-Developer Integration · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -6069,6 +6069,7 @@ function actionsTabMarkup() {
       ${game.activeAutopsyModal ? autopsyModalMarkup() : ''}
       ${electionMarkup()}
       ${realignmentSummaryMarkup()}
+      ${/* v0.18.8 CAUCUS & DYNAMIC FACTION HOOK */ (typeof FactionCaucusUI !== 'undefined' && FactionCaucusUI.renderLifecycleDigestCards && game.lastLifecycleDigest) ? FactionCaucusUI.renderLifecycleDigestCards(game.lastLifecycleDigest) : ''}
       <section class="panel section-panel">
         <div class="eyebrow">Cycle Complete · Continuous Politics</div>
         <h2>${game?.year || 2028} General Election Resolved</h2>
@@ -6810,7 +6811,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.18.7 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.18.8 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}</div>
@@ -7712,6 +7713,7 @@ function factionsTabMarkup() {
             ${window.PartyChairData?.getFactionCohesionLabel ? `<span class="v15-badge badge-outline" style="border-color:rgba(131,168,213,0.4);color:#83a8d5">${safe(window.PartyChairData.getFactionCohesionLabel(f))}</span>` : ''}
             ${isUnaffiliated ? `<span class="v15-badge v15-unaffiliated-badge">★ Unaffiliated</span><span class="v15-badge badge-gold" style="margin-left:4px">⚡ Actively Courting Coalitions</span>` : ''}
             ${isUltimatum ? `<span class="v15-badge v15-ultimatum-badge">⚠️ ULTIMATUM (${f.ultimatumTurnsRemaining} Turn${f.ultimatumTurnsRemaining === 1 ? '' : 's'} Left)</span>` : ''}
+            ${/* v0.18.8 CAUCUS & DYNAMIC FACTION HOOK */ (typeof FactionCaucusUI !== 'undefined' && FactionCaucusUI.renderFactionMetaBadges) ? FactionCaucusUI.renderFactionMetaBadges(f, game) : ''}
             <h3>${safe(f.name)}</h3>
             <div class="v15-party-sub"><span class="dot dot-${f.partyId}"></span> ${partyName} · <b>${natVoters.toLocaleString()}</b> voters (${(natVoters / 1_000_000).toFixed(2)}M)</div>
             <div class="v15-friction-tag" style="margin-top:6px;font-size:11.5px;color:${(f.frictionIndex || 0) >= 80 ? '#e8887e' : (f.frictionIndex || 0) >= 50 ? '#e2bd70' : 'var(--text-muted)'}">Friction Index: <b>${f.frictionIndex || 0} / 100</b>${(f.frictionIndex || 0) >= 100 ? ' (Breach Level)' : ''}</div>
@@ -7851,6 +7853,8 @@ function factionsTabMarkup() {
 
   return `
     <div class="v15-factions-layout">
+      ${/* v0.18.8 CAUCUS & DYNAMIC FACTION HOOK */ (typeof FactionCaucusUI !== 'undefined' && FactionCaucusUI.renderThreePartyChaosBanner) ? FactionCaucusUI.renderThreePartyChaosBanner(game) : ''}
+      ${/* v0.18.8 CAUCUS & DYNAMIC FACTION HOOK */ (typeof FactionCaucusUI !== 'undefined' && FactionCaucusUI.renderCaucusOverviewPanel) ? FactionCaucusUI.renderCaucusOverviewPanel(game, identity) : ''}
       <!-- Top Executive Overview & KPI Strip -->
       <section class="panel section-panel">
         <div class="section-heading">
@@ -9252,7 +9256,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.7</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.18.8</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -9308,7 +9312,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.7</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.18.8</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
@@ -10413,6 +10417,10 @@ function renderSaveSlotsModalMarkup() {
 }
 
 function render() {
+  // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Inject scoped caucus & lifecycle styles
+  if (typeof FactionCaucusUI !== 'undefined' && typeof FactionCaucusUI.ensureStylesInjected === 'function') {
+    FactionCaucusUI.ensureStylesInjected();
+  }
   if (typeof document !== 'undefined') { const _tip = document.getElementById('en-hover-tooltip'); if (_tip && _tip.style) _tip.style.display = 'none'; }
   if (typeof ensurePrimaryAutoPlayback === 'function') ensurePrimaryAutoPlayback();
   syncGameSessionState();
@@ -12283,6 +12291,11 @@ window.PartyChairApp = {
 
 window.renderFinanceTab = renderFinanceTab;
 window.renderElectoralSystemsMap = renderElectoralSystemsMap;
+
+// v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Ensure styles injected on app boot
+if (typeof FactionCaucusUI !== 'undefined' && typeof FactionCaucusUI.ensureStylesInjected === 'function') {
+  FactionCaucusUI.ensureStylesInjected();
+}
 
 render();
 

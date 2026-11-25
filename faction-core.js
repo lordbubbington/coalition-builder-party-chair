@@ -224,6 +224,15 @@
     const sourcePartyId = (f.partyId && f.partyId !== 'none' && f.partyId !== 'independent') ? f.partyId : playerPartyId;
 
     // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
+    // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Partner Exit Shock (-18 Happiness / +20 Friction on caucus partners)
+    const fcsBolt = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+      || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+      || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+      || null;
+    if (fcsBolt && typeof fcsBolt.handleCaucusPartnerExit === 'function') {
+      fcsBolt.handleCaucusPartnerExit(game, factionId, 'bolt');
+    }
+
     f.formerPartyId = sourcePartyId;
     f.boltedYear = game.year || 2028;
     f.reunificationCooldownYear = Number(game.year || 2028) + 6;
@@ -397,6 +406,21 @@
     if (!f) return { eligible: false, reason: 'Faction not found.' };
     if (f.partyId === playerPartyId) {
       return { eligible: false, reason: 'The faction is already a member of your party.' };
+    }
+    // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Anti-Poaching Lock
+    const fcsPoach = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+      || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+      || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+      || null;
+    if (fcsPoach && typeof fcsPoach.isProtectedByAntiPoachingLock === 'function') {
+      const lock = fcsPoach.isProtectedByAntiPoachingLock(game, factionId);
+      if (lock && lock.locked) {
+        return {
+          eligible: false,
+          canCourt: false,
+          reason: `${f.name} is protected by the anti-poaching discipline of ${lock.caucusName || 'its caucus'} (Caucus Strength ${lock.strength} >= 45). Disrupt caucus strength below 45 before courting or summit talks.`,
+        };
+      }
     }
     // REC-02 & REC-10 & [v0.18.4 FACTION-ERA-FIXES]: Strict Two-Step Secession Gate
     if (!isUnaffiliatedPartyId(f.partyId)) {

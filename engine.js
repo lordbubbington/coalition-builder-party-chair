@@ -10,8 +10,9 @@ function seededUnit(seedStr) {
 (function PartyChairEngineModule() {
 const { BILLS, CONVENTIONS, EVENTS, FACTIONS, MEMBERS, PARTY_ARCHETYPES, REGIONS, STATES, FACTIONS_CATALOG, FACTION_NAME_TO_ID, FACTION_STATE_MATRIX, FACTION_NATIONAL_TOTALS, getFactionCohesion, getFactionCohesionLabel, getFactionGrowthProfile, calculateFactionRegistrationLift } = (window.PartyChairData || {});
 
-const SAVE_KEY = 'partyChairGame.save.v18.7';
-const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.6';
+const SAVE_KEY = 'partyChairGame.save.v18.8';
+const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.7';
+const PREVIOUS_SAVE_KEY_V186 = 'partyChairGame.save.v18.6';
 const PREVIOUS_SAVE_KEY_V185 = 'partyChairGame.save.v18.5';
 const PREVIOUS_SAVE_KEY_V184 = 'partyChairGame.save.v18.4';
 const PREVIOUS_SAVE_KEY_V183 = 'partyChairGame.save.v18.3';
@@ -34,22 +35,45 @@ const ACTIONS_PER_YEAR = 4;
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const round = (n, places = 1) => Math.round(n * (10 ** places)) / (10 ** places);
 
-// REQ-159: Synchronized Co-Movement: politician happiness moves with faction happiness deltas
+// REQ-159 & v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Synchronized Co-Movement, Caucus Solidarity Splash & Temperament
 function applyFactionHappinessDelta(game, factionId, deltaH) {
   if (!deltaH || !game) return;
+  const fcs = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+    || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+    || null;
+  const dfl = (typeof window !== 'undefined' && window.DynamicFactionLifecycle)
+    || (typeof global !== 'undefined' && global.DynamicFactionLifecycle)
+    || (typeof globalThis !== 'undefined' && globalThis.DynamicFactionLifecycle)
+    || null;
+
+  let effDelta = deltaH;
+  const fObj = Array.isArray(game.factions) ? game.factions.find((f) => f.id === factionId) : null;
+  if (dfl && fObj && fObj.temperament && typeof dfl.applyTemperamentEffects === 'function') {
+    const tRes = dfl.applyTemperamentEffects(game, fObj, { rawHappinessDelta: deltaH, isAppeasement: deltaH > 0 });
+    if (tRes && typeof tRes.happinessDelta === 'number') {
+      effDelta = tRes.happinessDelta;
+    }
+  }
+
   if (Array.isArray(game.politicians)) {
     game.politicians.forEach((p) => {
       if (p.factionId === factionId || p.faction === factionId) {
-        p.happiness = clamp(round((p.happiness ?? 65) + deltaH, 1), 0, 100);
+        p.happiness = clamp(round((p.happiness ?? 65) + effDelta, 1), 0, 100);
       }
     });
   }
   if (Array.isArray(game.sittingMembers)) {
     game.sittingMembers.forEach((p) => {
       if (p.factionId === factionId || p.faction === factionId) {
-        p.happiness = clamp(round((p.happiness ?? 65) + deltaH, 1), 0, 100);
+        p.happiness = clamp(round((p.happiness ?? 65) + effDelta, 1), 0, 100);
       }
     });
+  }
+
+  // Route through FactionCaucusSystem for splash onto caucus partners
+  if (fcs && typeof fcs.applyCaucusHappinessSplash === 'function') {
+    fcs.applyCaucusHappinessSplash(game, factionId, effDelta, { applyToTarget: false });
   }
 }
 
@@ -1207,6 +1231,15 @@ function boltFaction(game, factionId) {
   const sourcePartyId = (f.partyId && f.partyId !== 'none' && f.partyId !== 'independent') ? f.partyId : playerPartyId;
 
   // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
+  // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Partner Exit Shock (-18 Happiness / +20 Friction on caucus partners)
+  const fcsBolt = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+    || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+    || null;
+  if (fcsBolt && typeof fcsBolt.handleCaucusPartnerExit === 'function') {
+    fcsBolt.handleCaucusPartnerExit(game, factionId, 'bolt');
+  }
+
   f.formerPartyId = sourcePartyId;
   f.boltedYear = game.year || 2028;
   f.reunificationCooldownYear = Number(game.year || 2028) + 6;
@@ -1502,6 +1535,21 @@ function checkSummitEligibility(game, factionId) {
   if (!f) return { eligible: false, reason: 'Faction not found.' };
   if (f.partyId === playerPartyId) {
     return { eligible: false, reason: 'The faction is already a member of your party.' };
+  }
+  // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Anti-Poaching Lock
+  const fcsPoach = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+    || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+    || null;
+  if (fcsPoach && typeof fcsPoach.isProtectedByAntiPoachingLock === 'function') {
+    const lock = fcsPoach.isProtectedByAntiPoachingLock(game, factionId);
+    if (lock && lock.locked) {
+      return {
+        eligible: false,
+        canCourt: false,
+        reason: `${f.name} is protected by the anti-poaching discipline of ${lock.caucusName || 'its caucus'} (Caucus Strength ${lock.strength} >= 45). Disrupt caucus strength below 45 before courting or summit talks.`,
+      };
+    }
   }
   // REC-02 & REC-10 & [v0.18.4 FACTION-ERA-FIXES]: Strict Two-Step Secession Gate
   if (!isUnaffiliatedPartyId(f.partyId)) {
@@ -4992,7 +5040,7 @@ function createGame(options = {}) {
   if (window.PartyChairV07) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
-  game.version = '0.18.7';
+  game.version = '0.18.8';
   // [v0.18.4 MEDIA-SHOCKS]
   const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
   if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
@@ -5317,7 +5365,20 @@ function createGame(options = {}) {
   }
   // [v0.18.5] Ensure ALL eligible leadership roles start filled for player and rivals
   game = populateAllStartingLeadershipRoles(game);
-  game.version = '0.18.7';
+
+  // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Initialize Caucuses, Deduplication Pool, Chaos & Blocs
+  game.usedFactionNames = [];
+  game.threePartyChaosActive = false;
+  game.identityBlocState = { unifiedGroups: {}, splitGroups: {}, emergedGroups: [] };
+  const fcsInit = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+    || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+    || null;
+  if (fcsInit && typeof fcsInit.initializeStartingCaucuses === 'function') {
+    game = fcsInit.initializeStartingCaucuses(game);
+  }
+
+  game.version = '0.18.8';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
 
@@ -11046,12 +11107,46 @@ function resolveVersion01Primaries(game) {
     for (const partyId of allPartyIds) {
       const field = version01CandidateField(game, race.id, partyId);
       if (!field || field.length === 0) continue;
+
+      // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Primary Coordination (~88% unified candidate when caucus strength >= 35)
+      let effectiveField = field;
+      const fcsPrim = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+        || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+        || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+        || null;
+      if (fcsPrim && typeof fcsPrim.shouldCoordinatePrimary === 'function' && !race.id.startsWith('presidential')) {
+        const dropCandidateIds = new Set();
+        for (let i = 0; i < field.length; i++) {
+          const cA = field[i];
+          const fA = resolveFaction(cA.factionId || cA.faction || cA.wing, partyId)?.id;
+          if (!fA) continue;
+          for (let j = i + 1; j < field.length; j++) {
+            const cB = field[j];
+            const fB = resolveFaction(cB.factionId || cB.faction || cB.wing, partyId)?.id;
+            if (!fB || fA === fB) continue;
+            if (fcsPrim.shouldCoordinatePrimary(game, fA, fB, null, { raceKind: race.kind || race.id.split(':')[0] })) {
+              // Unified coordination: caucus coordinates around higher quality / poll candidate
+              const qA = Number(cA.quality || 5) * 10 + Number(cA.poll || 10);
+              const qB = Number(cB.quality || 5) * 10 + Number(cB.poll || 10);
+              if (qA >= qB) {
+                dropCandidateIds.add(cB.id);
+              } else {
+                dropCandidateIds.add(cA.id);
+              }
+            }
+          }
+        }
+        if (dropCandidateIds.size > 0 && dropCandidateIds.size < field.length) {
+          effectiveField = field.filter((c) => !dropCandidateIds.has(c.id));
+        }
+      }
+
       // REQ-111: Primary endorsements only apply to candidates of the player's party
       const isPlayerParty = partyId === (game.player?.baseTemplateId || game.player?.id || 'people');
       const endorsedId = isPlayerParty ? (game.filteringSupport?.[race.id] || game.primaryEndorsements?.[race.id] || game.raceEndorsements?.[race.id]) : null;
       const isMajorParty = ['people', 'heritage'].includes(partyId);
 
-      const ranked = field.map((candidate) => {
+      const ranked = effectiveField.map((candidate) => {
         const isEndorsed = Boolean(candidate.endorsed || (endorsedId && candidate.id === endorsedId) || game.filteredCandidates?.[candidate.id]);
         const candFaction = resolveFaction(candidate.factionId || candidate.faction || candidate.wing, partyId);
         const factionVoters = Number(game?.voterModel?.factions?.[candFaction?.id] ?? candFaction?.targetVoters ?? 1000000);
@@ -12437,7 +12532,7 @@ function startCampaignPhase(game) {
     ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
-    version: '0.18.7',
+    version: '0.18.8',
     primariesResolved: true,
     superPacs: evaluateSuperPacDemands(_preFundGame, 1),
   };
@@ -15867,7 +15962,7 @@ function startNextCycleInternal(game) {
 
   let refreshed = {
     ...game,
-    version: '0.18.7',
+    version: '0.18.8',
     stateLegStandouts: standoutUpdated.stateLegStandouts || game.stateLegStandouts || {},
     formerStateReps: standoutUpdated.formerStateReps || game.formerStateReps || {},
     dissolvedParties: Array.isArray(game.dissolvedParties) ? game.dissolvedParties : [],
@@ -16176,6 +16271,66 @@ function startNextCycleInternal(game) {
     pendingBellwetherBonus: null,
     offCycle: finalCycle.offCycle ? { ...finalCycle.offCycle, active: false } : (finalCycle.offCycle ?? null),
   };
+
+  // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Run Dynamic Faction Lifecycle, Identity Blocs & Caucus Advance
+  const dflCycle = (typeof window !== 'undefined' && window.DynamicFactionLifecycle)
+    || (typeof global !== 'undefined' && global.DynamicFactionLifecycle)
+    || (typeof globalThis !== 'undefined' && globalThis.DynamicFactionLifecycle)
+    || null;
+  const ibsCycle = (typeof window !== 'undefined' && window.IdentityBlocSystem)
+    || (typeof global !== 'undefined' && global.IdentityBlocSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.IdentityBlocSystem)
+    || null;
+  const fcsCycle = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+    || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+    || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+    || null;
+
+  let lifecycleDigest = null;
+  let identityDigest = null;
+  let caucusDigest = null;
+
+  if (dflCycle && typeof dflCycle.runDynamicFactionCycle === 'function') {
+    lifecycleDigest = dflCycle.runDynamicFactionCycle(finalCycle);
+  }
+  if (ibsCycle && typeof ibsCycle.evaluateIdentityBlocEvents === 'function') {
+    identityDigest = ibsCycle.evaluateIdentityBlocEvents(finalCycle);
+  }
+  if (fcsCycle && typeof fcsCycle.advanceCaucusesCycle === 'function') {
+    caucusDigest = fcsCycle.advanceCaucusesCycle(finalCycle);
+  }
+
+  const combinedEvents = [];
+  if (Array.isArray(lifecycleDigest?.events)) combinedEvents.push(...lifecycleDigest.events);
+  if (Array.isArray(lifecycleDigest?.births)) combinedEvents.push(...lifecycleDigest.births);
+  if (Array.isArray(lifecycleDigest?.mergers)) combinedEvents.push(...lifecycleDigest.mergers);
+  if (Array.isArray(lifecycleDigest?.dissolutions)) combinedEvents.push(...lifecycleDigest.dissolutions);
+  if (Array.isArray(identityDigest?.events)) combinedEvents.push(...identityDigest.events);
+  if (Array.isArray(caucusDigest?.events)) combinedEvents.push(...caucusDigest.events);
+
+  finalCycle.lastLifecycleDigest = {
+    year: nextYear,
+    threePartyChaosActive: Boolean(finalCycle.threePartyChaosActive),
+    events: combinedEvents,
+    dynamicLifecycle: lifecycleDigest,
+    identityBlocs: identityDigest,
+    caucuses: caucusDigest,
+  };
+
+  // Push headlines to the news feed / yearLog
+  if (combinedEvents.length > 0) {
+    if (!Array.isArray(finalCycle.yearLog)) finalCycle.yearLog = [];
+    combinedEvents.slice(0, 5).forEach((evt) => {
+      const headline = typeof evt === 'string' ? evt : (evt.headline || evt.message || evt.title || evt.description || evt.summary);
+      if (headline) {
+        finalCycle.yearLog.push({
+          year: nextYear,
+          turn: 0,
+          action: `POLITICAL DIGEST: ${headline}`
+        });
+      }
+    });
+  }
   return {
     ...finalCycle,
     partyApprovals: computeUnifiedPartyApproval(finalCycle),
@@ -16613,7 +16768,7 @@ function resolveVersion01GeneralElection(game) {
 
   const resolved = {
     ...questRewardedResult,
-    version: '0.18.7',
+    version: '0.18.8',
     phase: 'complete',
     primariesResolved: true,
     generalElectionResolved: true,
@@ -20297,7 +20452,35 @@ function takeActionInternal(game, actionId, payload = {}) {
     } else {
       if (mode === 'concession') nextTreasury = round(game.treasury - 3, 1);
       else nextMood = clamp(round(game.publicMood - 0.3, 1), -8, 12);
-      standings[factionId] = clamp((standings[factionId] || 30) + 20, 0, 100);
+
+      // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Temperament appeasement modifier & Caucus solidarity splash
+      let appeasementBoost = 20;
+      const dflAppease = (typeof window !== 'undefined' && window.DynamicFactionLifecycle)
+        || (typeof global !== 'undefined' && global.DynamicFactionLifecycle)
+        || (typeof globalThis !== 'undefined' && globalThis.DynamicFactionLifecycle)
+        || null;
+      const targetFactionObj = Array.isArray(game.factions) ? game.factions.find((f) => f.id === factionId) : null;
+      if (dflAppease && targetFactionObj && targetFactionObj.temperament && typeof dflAppease.applyTemperamentEffects === 'function') {
+        const tRes = dflAppease.applyTemperamentEffects(game, targetFactionObj, { rawHappinessDelta: appeasementBoost, isAppeasement: true });
+        if (tRes && typeof tRes.appeasementMultiplier === 'number') {
+          appeasementBoost = Math.round(appeasementBoost * tRes.appeasementMultiplier);
+        }
+      }
+      standings[factionId] = clamp((standings[factionId] || 30) + appeasementBoost, 0, 100);
+      if (game.factionHappiness) {
+        game.factionHappiness[factionId] = clamp((game.factionHappiness[factionId] || 30) + appeasementBoost, 0, 100);
+      }
+      if (targetFactionObj) {
+        targetFactionObj.happiness = clamp((targetFactionObj.happiness || 30) + appeasementBoost, 0, 100);
+      }
+      const fcsAppease = (typeof window !== 'undefined' && window.FactionCaucusSystem)
+        || (typeof global !== 'undefined' && global.FactionCaucusSystem)
+        || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+        || null;
+      if (fcsAppease && typeof fcsAppease.applyCaucusHappinessSplash === 'function') {
+        fcsAppease.applyCaucusHappinessSplash(game, factionId, appeasementBoost, { applyToTarget: false });
+      }
+
       nextSplinters = nextSplinters.filter((s) => s.factionId !== factionId);
       nextTrust = {
         ...nextTrust,
@@ -21743,7 +21926,7 @@ function advanceYear(game) {
     const closed = ready.offCycle ? { ...ready.offCycle, active: false } : null;
     return startNextCycle({ ...ready, offCycle: closed });
   }
-  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
+  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7', '0.18.8'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
   const rivalUpdate = advanceRivalOrganizations(game);
@@ -21975,7 +22158,7 @@ function normalizeGame(parsed) {
   if (_smMod && typeof _smMod.migrateSaveObject === 'function' && parsed && typeof parsed === 'object') {
     parsed = _smMod.migrateSaveObject(parsed);
   }
-  if (!parsed || (parsed.schema !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8].includes(parsed.schema)) || !parsed.player || !Number.isFinite(parsed.year)) return null;
+  if (!parsed || (parsed.schema !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(parsed.schema)) || !parsed.player || !Number.isFinite(parsed.year)) return null;
   const primaryHandoffSave = !parsed.phase && Boolean(parsed.primariesResolved);
   const allArch = allPartyArchetypes();
   const existingRivals = Array.isArray(parsed.rivals) ? parsed.rivals : [];
@@ -22000,8 +22183,8 @@ function normalizeGame(parsed) {
 
   const normalized = {
     ...parsed,
-    schema: 7,
-    version: '0.18.7',
+    schema: 9,
+    version: '0.18.8',
     activeTab: parsed.activeTab || 'actions',
     turnStep: clamp(Number(parsed.turnStep || 1), 1, 5),
     phase: parsed.phase || (parsed.primariesResolved ? 'general-campaign' : 'organizing'),
@@ -22206,13 +22389,13 @@ function normalizeGame(parsed) {
   if (window.PartyChairV07) {
     ready = window.PartyChairV07.hydrateV07GameState(ready);
   }
-  ready.schema = 7;
+  ready.schema = 9;
   if (parsed.activePresidentialPrimary) ready.activePresidentialPrimary = parsed.activePresidentialPrimary;
   if (parsed.phase === 'presidential-primary' || parsed.phase === 'election-night' || parsed.phase === 'off-cycle-interlude') ready.phase = parsed.phase;
   // [OFF-CYCLE] Preserve offCycle interlude & pendingBellwetherBonus across save/reload
   if (parsed.offCycle && typeof parsed.offCycle === 'object') ready.offCycle = parsed.offCycle;
   if (parsed.pendingBellwetherBonus && typeof parsed.pendingBellwetherBonus === 'object') ready.pendingBellwetherBonus = parsed.pendingBellwetherBonus;
-  ready.version = '0.18.7';
+  ready.version = '0.18.8';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
     house: false,
@@ -22605,7 +22788,7 @@ function normalizeGame(parsed) {
     window.CampaignOverhaul.initializeDynamicCorruptTrait(ready);
   }
   ready.grassrootsMultiplier = computeGrassrootsMultiplier(ready);
-  ready.version = '0.18.7';
+  ready.version = '0.18.8';
   ready = ensurePartyStates(ready);
   ready = syncPartyStateWithLegacy(ready);
   // [v0.18.4 ATLAS-HOTSEAT] Backward-compatible Atlas & Hotseat defaults

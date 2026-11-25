@@ -32,9 +32,21 @@ This document maintains the persistent design backlog of future change requests,
 | **Tiny** | **0** | **0** | **0** | All pending | ⏳ Gathering Proposals (0 Tiny pending) |
 
 > **📌 Pipeline Status:**
+> - **Version 0.18.8 (Shipped Architectural Release):** Fully implemented and verified across **7 requirements (`REQ-335` through `REQ-341` — 2 Massive, 2 Huge, 2 Large, 1 Medium)** per [**PRIOR_UPDATES.md**](PRIOR_UPDATES.md). Integrates Intra-Party Faction Caucuses (`REQ-335`), Dynamic Faction Lifecycle & 3-Party Realignment Chaos (`REQ-336`), Procedural Faction Naming Engine & Ideological Temperaments (`REQ-337`), Identity & Religious Voting Blocs System (`REQ-338`), Faction Kicker Mechanics (`REQ-339`), Faction Caucus, Lifecycle & Realignment Chaos UI Module (`REQ-340`), and Save Schema v9 & Backward Compatibility Framework (`REQ-341`).
 > - **Version 0.18.6 (Shipped Comprehensive Multi-Developer Integration Release):** Fully implemented and verified across **10 requirements (`REQ-320` through `REQ-329` — 2 Massive, 2 Huge, 1 Large, 3 Medium, 2 Small)** per [**PRIOR_UPDATES.md**](PRIOR_UPDATES.md). Integrates 100 Interstate Migration Patterns & Generational Cohort Turnover (`REQ-320`), Donor Class Dark-Money Super PAC Blocs & Electoral Reform Sandbox (`REQ-321`), Candidate Mentorship Pipeline & VP Vetting War Room (`REQ-322`), Minor-Party Ascent & Coalition Balance (`REQ-323`), Core Engine Fixes & Save Compaction (`REQ-324`), Organic Decennial Census Growth (`REQ-325`), Campaign Events Overhaul (`REQ-326`), Major-Party Economy & UI Optimization (`REQ-327`), Minor Party Atmospheric Legacy Fallback (`REQ-328`), and Decennial Redistricting Trust Swing Clamp (`REQ-329`).
 > - **Version 0.18.3 (Shipped Opponent AI & Campaign Telemetry Release):** Fully implemented and verified per [**SYMMETRIC_OPPONENT_AI_DESIGN.md**](SYMMETRIC_OPPONENT_AI_DESIGN.md) across **4 requirements (`REQ-300`, `REQ-303`, `REQ-304`, `REQ-310` — 1 Massive, 2 Large, 1 Small)**.
 > - **Version 0.17.0 (Shipped Landmark Build):** Fully implemented and verified per [**VERSION_0.17.0_DESIGN.md**](VERSION_0.17.0_DESIGN.md) across **12 requirements (`REQ-287` through `REQ-298` — 2 Large, 4 Medium, 6 Small)**.
+
+### Version 0.18.8 Sized Inventory Matrix (Shipped in v0.18.8)
+| Req ID | Title | Size | Status | Target Build |
+| :--- | :--- | :---: | :---: | :---: |
+| **REQ-335** | Intra-Party Faction Caucuses System | Massive | ✅ Shipped | v0.18.8 |
+| **REQ-336** | Dynamic Faction Lifecycle & 3-Party Realignment Chaos | Massive | ✅ Shipped | v0.18.8 |
+| **REQ-337** | Procedural Faction Naming Engine & Ideological Temperaments | Huge | ✅ Shipped | v0.18.8 |
+| **REQ-338** | Identity & Religious Voting Blocs System | Huge | ✅ Shipped | v0.18.8 |
+| **REQ-339** | Faction Kicker Mechanics (Mergers, Vanguard Overton Pull, Coalition Modifiers) | Large | ✅ Shipped | v0.18.8 |
+| **REQ-340** | Faction Caucus, Lifecycle & Realignment Chaos UI Module | Large | ✅ Shipped | v0.18.8 |
+| **REQ-341** | Save Schema v9 & Backward Compatibility Framework | Medium | ✅ Shipped | v0.18.8 |
 
 ### Version 0.18.6 Sized Inventory Matrix (Shipped in v0.18.6)
 | Req ID | Title | Size | Status | Target Build |

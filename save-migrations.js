@@ -7,9 +7,12 @@
 (function (global) {
   'use strict';
 
-  const SAVE_SCHEMA_VERSION = 8;
+  const SAVE_SCHEMA_VERSION = 9;
 
   const LEGACY_STORAGE_KEYS = [
+    'partyChairGame.save.v18.7',
+    'partyChairGame.save.v18.6',
+    'partyChairGame.save.v18.5',
     'partyChairGame.save.v18.4',
     'partyChairGame.save.v18.3',
     'partyChairGame.save.v18.2',
@@ -407,6 +410,66 @@
   }
 
   // --------------------------------------------------------------------------
+  // MIGRATION: v8 -> v9 (v0.18.8 CAUCUS & DYNAMIC FACTION HOOK)
+  // --------------------------------------------------------------------------
+  function migrateV8ToV9(game) {
+    if (!isPlainObject(game)) return game;
+    const out = cloneSafe(game);
+
+    // 1. usedFactionNames deduplication pool
+    if (!Array.isArray(out.usedFactionNames)) {
+      out.usedFactionNames = [];
+    }
+
+    // 2. threePartyChaosActive flag
+    if (typeof out.threePartyChaosActive !== 'boolean') {
+      out.threePartyChaosActive = false;
+    }
+
+    // 3. identityBlocState
+    if (!isPlainObject(out.identityBlocState)) {
+      out.identityBlocState = { unifiedGroups: {}, splitGroups: {}, emergedGroups: [] };
+    }
+
+    // 4. caucuses initialized via FactionCaucusSystem if missing
+    const fcs = (typeof global !== 'undefined' && global.FactionCaucusSystem)
+      || (typeof window !== 'undefined' && window.FactionCaucusSystem)
+      || (typeof globalThis !== 'undefined' && globalThis.FactionCaucusSystem)
+      || null;
+
+    if (!Array.isArray(out.caucuses) || out.caucuses.length === 0) {
+      if (fcs && typeof fcs.initializeStartingCaucuses === 'function') {
+        const initC = fcs.initializeStartingCaucuses(out);
+        if (initC && Array.isArray(initC.caucuses)) {
+          out.caucuses = initC.caucuses;
+          if (Array.isArray(initC.factions)) out.factions = initC.factions;
+        } else {
+          out.caucuses = [];
+        }
+      } else {
+        out.caucuses = [];
+      }
+    }
+
+    // 5. Per-faction default fields
+    if (Array.isArray(out.factions)) {
+      out.factions.forEach((f) => {
+        if (!isPlainObject(f)) return;
+        if (!f.primaryIssueId) {
+          f.primaryIssueId = (Array.isArray(f.keyIssues) && f.keyIssues.length > 0) ? f.keyIssues[0] : null;
+        }
+        if (!f.birthMode) f.birthMode = 'starting';
+        if (typeof f.temperament === 'undefined') f.temperament = null;
+        if (!Number.isFinite(Number(f.vanguardCyclesLeft))) f.vanguardCyclesLeft = 0;
+        if (!Number.isFinite(Number(f.viralRunwayCyclesLeft))) f.viralRunwayCyclesLeft = 0;
+      });
+    }
+
+    out.schema = SAVE_SCHEMA_VERSION;
+    return out;
+  }
+
+  // --------------------------------------------------------------------------
   // CORRUPTION & SANITY GUARDRAILS: validateAndRepairSave(game)
   // --------------------------------------------------------------------------
   function validateAndRepairSave(game) {
@@ -538,6 +601,7 @@
     let state = migrateV016ToV0182(raw);
     state = migrateV0182ToV0183(state);
     state = migrateV0183ToV0184(state);
+    state = migrateV8ToV9(state);
     state = validateAndRepairSave(state);
     return state;
   }
@@ -694,6 +758,7 @@
     migrateV016ToV0182,
     migrateV0182ToV0183,
     migrateV0183ToV0184,
+    migrateV8ToV9,
     validateAndRepairSave,
     migrateSaveObject,
     readLegacyLocalStorageSave,

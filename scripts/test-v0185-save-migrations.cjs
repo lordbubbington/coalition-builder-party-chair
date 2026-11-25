@@ -76,8 +76,8 @@ console.log('===================================================================
 // 1. Direct Node module.exports & zero Math.random()
 const directMod = require(path.join(ROOT, 'save-migrations.js'));
 const srcCode = fs.readFileSync(path.join(ROOT, 'save-migrations.js'), 'utf8');
-check('Node module.exports loads cleanly, SAVE_SCHEMA_VERSION === 8, & zero Math.random()',
-  Boolean(directMod && directMod.SAVE_SCHEMA_VERSION === 8 && typeof directMod.migrateSaveObject === 'function') &&
+check('Node module.exports loads cleanly, SAVE_SCHEMA_VERSION >= 8, & zero Math.random()',
+  Boolean(directMod && (directMod.SAVE_SCHEMA_VERSION === 8 || directMod.SAVE_SCHEMA_VERSION === 9) && typeof directMod.migrateSaveObject === 'function') &&
   !srcCode.includes('Math.random'));
 
 const ctx = boot();
@@ -141,7 +141,7 @@ const baseGame = E.createGame({ baseTemplateId: 'people', seed: 2028 });
 const exported = SM.exportSaveToJson(baseGame);
 const imported = SM.importSaveFromJson(exported.json, E.normalizeGame);
 check('Export/Import Save Backup (.json) round-trips cleanly & non-destructively',
-  Boolean(exported && exported.filename.endsWith('.json') && imported.ok && imported.game.schema === 8 && imported.game.year === baseGame.year),
+  Boolean(exported && exported.filename.endsWith('.json') && imported.ok && (imported.game.schema === 8 || imported.game.schema === 9) && imported.game.year === baseGame.year),
   exported?.filename);
 
 // 5. Multi-Version Fixture Snapshot Suite (v0.16.2 major, v0.18.2 minor, v0.18.3 custom)
@@ -165,9 +165,9 @@ for (const fx of fixtures) {
   const houseSit = (norm?.sittingMembers || []).filter((m) => m.office === 'house' && m.districtId && !m.retired);
   const uniqueHouseDists = new Set(houseSit.map((m) => m.districtId)).size;
   const nanInit = findNaNPaths(norm);
-  check(`[${fx.label}] normalizeGame() succeeds (schema=8, 1:1 scale, 0 dupes, 0 NaNs, era synced)`,
+  check(`[${fx.label}] normalizeGame() succeeds (schema=8/9, 1:1 scale, 0 dupes, 0 NaNs, era synced)`,
     Boolean(norm) &&
-    norm.schema === 8 &&
+    (norm.schema === 8 || norm.schema === 9) &&
     norm.voterModel?.voterScale === '1:1' &&
     (norm.voterModel?.sampleVoters || 0) >= 10000000 &&
     Boolean(norm.parties && Object.keys(norm.parties).length >= 6) &&

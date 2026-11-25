@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.6 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.6 Multi-Developer Integration Release implementing REQ-320 through REQ-329; featuring 100 Interstate Migration Patterns, Generational Cohort Turnover, Donor Class Dark-Money Super PAC Blocs & Revolts, Approval Voting & NPVIC, Candidate Mentorship Pipeline & VP Vetting War Room, Minor Party Ascent & Classical Liberals, SOEE Economy Balancing & Save Compaction. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.18.8 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.18.8 Architectural Release implementing REQ-335 through REQ-341; featuring Intra-Party Faction Caucuses, Dynamic Procedural Faction Lifecycles & 3-Party Realignment Chaos, Procedural Faction Naming & Ideological Temperaments, Identity & Religious Voting Blocs, Faction Kicker Mechanics, and Save Schema v9. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 
