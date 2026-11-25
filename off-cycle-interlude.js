@@ -37,6 +37,8 @@
   // --------------------------------------------------------------------------
 
   const BASE_ACTIONS = 4;
+  // [v0.18.7 QA-FIX] BUG-06: Per-state chapter cap
+  const MAX_STATE_CHAPTERS = 25;
 
   const POSTURES = {
     party_building: {
@@ -692,6 +694,14 @@
     const playerPid = resolvePlayerPartyId(game);
     const tier = getPartyTier(game, playerPid);
     const cashCost = getActionCashCost(game, actionId, playerPid);
+    // [v0.18.7 QA-FIX] BUG-06: Enforce MAX_STATE_CHAPTERS = 25 before deducting action/cash
+    if (actionId === 'oc-chapter-drive') {
+      const preStateId = payload.stateId || game?.offCycle?.races?.[0]?.stateId || 'VA';
+      const preChap = getStateChaptersCount(game, preStateId, playerPid);
+      if (preChap >= MAX_STATE_CHAPTERS) {
+        return { ...game, lastNote: `Max Chapters Reached (${preChap}/${MAX_STATE_CHAPTERS}) in ${preStateId}.` };
+      }
+    }
     const check = checkActionBudgetAndPosture(game, 'party', cashCost);
     if (!check.ok) {
       return { ...game, lastNote: check.reason };
@@ -731,7 +741,12 @@
       const nextStateOrgs = JSON.parse(JSON.stringify(working.stateOrganizations || {}));
       nextStateOrgs[targetStateId] ||= {};
       const prevChap = getStateChaptersCount(working, targetStateId, playerPid);
-      const newChap = prevChap + 2;
+      // [v0.18.7 QA-FIX] BUG-06: Cap state chapters at MAX_STATE_CHAPTERS (25)
+      if (prevChap >= MAX_STATE_CHAPTERS) {
+        return { ...game, lastNote: `Max Chapters Reached (${prevChap}/${MAX_STATE_CHAPTERS}) in ${targetStateId}.` };
+      }
+      const newChap = Math.min(MAX_STATE_CHAPTERS, prevChap + 2);
+      const addedCount = Math.max(0, newChap - prevChap);
       const curStrength = Number(nextStateOrgs[targetStateId]?.[playerPid]?.strength || 0);
       nextStateOrgs[targetStateId][playerPid] = {
         ...(nextStateOrgs[targetStateId][playerPid] || {}),
@@ -739,7 +754,7 @@
         strength: Math.min(100, Math.max(curStrength + 10, newChap * 15 + 10)),
       };
       const nextLocalChapters = Array.isArray(working.localChapters) ? [...working.localChapters] : [];
-      for (let i = 1; i <= 2; i++) {
+      for (let i = 1; i <= addedCount; i++) {
         nextLocalChapters.push({
           id: `${playerPid}-${targetStateId}-oc-${oc.oddYear}-${nextLocalChapters.length + i}`,
           name: `${stObj.name || targetStateId} Off-Cycle Chapter`,
@@ -760,12 +775,12 @@
       working.treasury = round(Number(working.treasury || 0) - cashCost, 2);
       working.stateOrganizations = nextStateOrgs;
       working.stateChapters = { ...(working.stateChapters || {}), [targetStateId]: newChap };
-      working.chapters = { ...(working.chapters || {}), [region]: (working.chapters?.[region] || 0) + 2 };
+      working.chapters = { ...(working.chapters || {}), [region]: (working.chapters?.[region] || 0) + addedCount };
       working.localChapters = nextLocalChapters;
       working.stateRegistrationBoosts = nextRegBoosts;
       working.stateVoterDeltas = nextVoterDeltas;
 
-      note = `Pre-Primary Chapter Drive in ${targetStateId} opened +2 chapters and boosted voter-reg delta +0.4% (-$${cashCost.toFixed(2)}M).`;
+      note = `Pre-Primary Chapter Drive in ${targetStateId} opened +${addedCount} chapters (${newChap}/${MAX_STATE_CHAPTERS}) and boosted voter-reg delta +0.4% (-$${cashCost.toFixed(2)}M).`;
       return {
         ...working,
         offCycle: {
@@ -1058,17 +1073,19 @@
       .slice()
       .sort((a, b) => Math.abs(Number(a.baselineLean || 0)) - Math.abs(Number(b.baselineLean || 0)));
 
+    // [v0.18.7 QA-FIX] BUG-04: Cap rival single-race lift at +4.5%
+    const MAX_RIVAL_RACE_LIFT = 4.5;
     let elecSpent = 0;
     for (let i = 0; i < sortedRaces.length && elecSpent < targetElectionCount && actionsLeft > 0; i++) {
       const target = sortedRaces[i];
       const raceRef = races.find((r) => r.id === target.id);
-      if (!raceRef) continue;
+      if (!raceRef || Number(raceRef.rivalLift || 0) >= MAX_RIVAL_RACE_LIFT) continue;
       const adCost = getActionCashCost(game, 'oc-ad-blitz', rivalPid, aiPosture);
       if (aiTreasury - adCost >= TREASURY_FLOOR && raceRef.aiAdBuys < 2) {
         aiTreasury = round(aiTreasury - adCost, 2);
         raceRef.aiAdBuys += 1;
         const lift = round(2.2 * aiPostSpec.electionPersuasionMultiplier, 2);
-        raceRef.rivalLift = round((raceRef.rivalLift || 0) + lift, 2);
+        raceRef.rivalLift = Math.min(MAX_RIVAL_RACE_LIFT, round((raceRef.rivalLift || 0) + lift, 2));
         actionsLeft -= 1;
         elecSpent += 1;
         rivalLogs.push(`Rival (${rivalPid}) ran Ad Blitz in ${raceRef.title} (+${lift.toFixed(2)}%).`);
@@ -1076,7 +1093,7 @@
         const surgeCost = getActionCashCost(game, 'oc-turnout-surge', rivalPid, aiPosture);
         if (aiTreasury - surgeCost >= TREASURY_FLOOR) {
           aiTreasury = round(aiTreasury - surgeCost, 2);
-          raceRef.rivalLift = round((raceRef.rivalLift || 0) + 1.6, 2);
+          raceRef.rivalLift = Math.min(MAX_RIVAL_RACE_LIFT, round((raceRef.rivalLift || 0) + 1.6, 2));
           actionsLeft -= 1;
           elecSpent += 1;
           rivalLogs.push(`Rival (${rivalPid}) ran Turnout Surge in ${raceRef.title} (+1.60%).`);
@@ -1088,19 +1105,21 @@
     let nextStateOrgs = game.stateOrganizations ? JSON.parse(JSON.stringify(game.stateOrganizations)) : {};
     while (actionsLeft > 0 && partySpent < targetPartyCount) {
       const chapCost = getActionCashCost(game, 'oc-chapter-drive', rivalPid, aiPosture);
-      if (aiTreasury - chapCost >= TREASURY_FLOOR && sortedRaces.length) {
-        const stId = sortedRaces[partySpent % sortedRaces.length].stateId;
+      const openRaceState = sortedRaces.find((r) => Number(nextStateOrgs[r.stateId]?.[rivalPid]?.chapters || 1) < MAX_STATE_CHAPTERS);
+      if (aiTreasury - chapCost >= TREASURY_FLOOR && openRaceState) {
+        const stId = openRaceState.stateId;
         aiTreasury = round(aiTreasury - chapCost, 2);
         nextStateOrgs[stId] ||= {};
         const prevC = Number(nextStateOrgs[stId]?.[rivalPid]?.chapters || 1);
+        const newC = Math.min(MAX_STATE_CHAPTERS, prevC + 2);
         nextStateOrgs[stId][rivalPid] = {
           ...(nextStateOrgs[stId][rivalPid] || {}),
-          chapters: prevC + 2,
-          strength: Math.min(100, Math.max(Number(nextStateOrgs[stId]?.[rivalPid]?.strength || 0) + 10, (prevC + 2) * 15 + 10)),
+          chapters: newC,
+          strength: Math.min(100, Math.max(Number(nextStateOrgs[stId]?.[rivalPid]?.strength || 0) + 10, newC * 15 + 10)),
         };
         actionsLeft -= 1;
         partySpent += 1;
-        rivalLogs.push(`Rival (${rivalPid}) built +2 chapters in ${stId}.`);
+        rivalLogs.push(`Rival (${rivalPid}) built +${newC - prevC} chapters in ${stId}.`);
       } else {
         // Free Donor Retreat
         aiTreasury = round(aiTreasury + (DONOR_RETREAT_YIELDS[tier] ?? 1.5), 2);
@@ -1110,14 +1129,14 @@
       }
     }
 
-    // If any actions remain under Blitz/Balanced, invest on top race
+    // If any actions remain under Blitz/Balanced, invest on top race (strictly <= MAX_RIVAL_RACE_LIFT)
     for (let i = 0; i < sortedRaces.length && actionsLeft > 0; i++) {
       const raceRef = races.find((r) => r.id === sortedRaces[i].id);
-      if (!raceRef) continue;
+      if (!raceRef || Number(raceRef.rivalLift || 0) >= MAX_RIVAL_RACE_LIFT) continue;
       const surgeCost = getActionCashCost(game, 'oc-turnout-surge', rivalPid, aiPosture);
       if (aiTreasury - surgeCost >= TREASURY_FLOOR) {
         aiTreasury = round(aiTreasury - surgeCost, 2);
-        raceRef.rivalLift = round((raceRef.rivalLift || 0) + 1.6, 2);
+        raceRef.rivalLift = Math.min(MAX_RIVAL_RACE_LIFT, round((raceRef.rivalLift || 0) + 1.6, 2));
         actionsLeft -= 1;
         rivalLogs.push(`Rival (${rivalPid}) reinforced ${raceRef.title} (+1.60%).`);
       } else {
@@ -1155,22 +1174,29 @@
     const thermostaticShift = whSignOnDemScale * whBacklashMag;
 
     // 2. Off-cycle ground game & base enthusiasm counts 1.35x (Section 3.2)
+    // [v0.18.7 QA-FIX] BUG-04: Clamp chapterDiff to [-3.0, +3.0] and trustDiff to [-2.5, +2.5]
     const pChapters = getStateChaptersCount(game, race.stateId, playerPid);
     const rChapters = getStateChaptersCount(game, race.stateId, rivalPid);
-    const chapterDiff = (pChapters - rChapters) * 0.45 * 1.35;
+    const chapterDiff = clamp((pChapters - rChapters) * 0.35 * 1.35, -3.0, 3.0);
 
     const pSupTrust = Number(game?.trust?.supporters ?? game?.player?.trust?.supporters ?? (getPartyTier(game, playerPid) >= 5 ? 80 : 65));
     const rSupTrust = Number(game?.rivalTrust?.[rivalPid]?.supporters ?? (getPartyTier(game, rivalPid) >= 5 ? 80 : 65));
-    const trustDiff = ((pSupTrust - rSupTrust) * 0.08) * 1.35;
+    const trustDiff = clamp(((pSupTrust - rSupTrust) * 0.08) * 1.35, -2.5, 2.5);
+
+    const rawRivalLift = Number(race.rivalLift || 0);
+    const effectiveRivalLift = rawRivalLift > 0 ? Math.min(4.5, rawRivalLift) : rawRivalLift;
 
     // Deterministic turnout/election-day variance [-1.5, +1.5] (omitted in live preview)
     const noise = includeNoise ? (seededUnit(`oc-resolve:${seed}:${oddYear}:${race.id}`) - 0.5) * 3.0 : 0;
 
-    // 3. Expected Baseline & Actual Player Margin (all 6 party archetypes supported)
+    // 3. Expected Baseline & Actual Player Margin (all 6 party archetypes + Tier 4-5 ascended 3rd parties)
     const baseLeanDem = Number(race.baselineLean || 0); // + Dem (people), - GOP (heritage)
     const candP = race.candidates?.[playerPid];
     const candR = race.candidates?.[rivalPid];
     const candQualDiff = ((Number(candP?.quality ?? 6) - Number(candR?.quality ?? 6)) * 0.4);
+    const tier = getPartyTier(game, playerPid);
+    // [v0.18.7 QA-FIX] BUG-05: Support Tier 4-5 ascended third/custom parties as full major contenders
+    const isMajorContender = ['people', 'heritage'].includes(playerPid) || tier >= 4;
 
     if (playerPid === 'people' || playerPid === 'heritage') {
       const sign = playerPid === 'people' ? 1 : -1;
@@ -1181,7 +1207,7 @@
         + trustDiff
         + candQualDiff
         + Number(race.playerLift || 0)
-        - Number(race.rivalLift || 0)
+        - effectiveRivalLift
         + playerPostureEdge
         - rivalPostureEdge
         + noise;
@@ -1207,16 +1233,17 @@
       };
     }
 
-    // Minor / Third / Custom party resolution:
+    // Minor / Third / Custom party resolution (and 3-way plurality parity for Tier 4-5 ascended contenders):
     const stVoter = (game?.voterModel?.states || []).find((s) => (s.stateId || s.id) === race.stateId);
     const stTotal = Math.max(1, Number(stVoter?.sampleVoters || stVoter?.representedVoters || 1000000));
     const stMinorVoters = Number(stVoter?.affiliations?.[playerPid] || 0);
     const minorVoterSharePct = (stMinorVoters / stTotal) * 100;
-    const tier = getPartyTier(game, playerPid);
-    const baselineMinorShare = clamp(round(minorVoterSharePct + tier * 1.2 + Math.min(5, pChapters * 0.4), 2), 0.5, 42);
+    const baselineMinorShare = isMajorContender
+      ? clamp(round(Math.max(minorVoterSharePct, tier >= 5 ? 30.0 : 24.0) + Math.min(6, pChapters * 0.35), 2), 20.0, 44.0)
+      : clamp(round(minorVoterSharePct + tier * 1.2 + Math.min(5, pChapters * 0.4), 2), 0.5, 42);
 
     // Major-party split for the remaining vote pool
-    const demVsGopMargin = baseLeanDem + thermostaticShift + (playerPid === 'liberty' ? 0 : 0) + noise * 0.5;
+    const demVsGopMargin = baseLeanDem + thermostaticShift + noise * 0.5;
     const remPool = Math.max(10, 100 - baselineMinorShare);
     const demBaseShare = round(remPool * clamp(0.5 + demVsGopMargin / 200, 0.15, 0.85), 2);
     const gopBaseShare = round(remPool - demBaseShare, 2);
@@ -1224,22 +1251,18 @@
     const expectedBaseline = round(baselineMinorShare - topMajorBaseShare, 2);
 
     // Player off-cycle ground-game & lift shifts votes toward player
+    const whDragAgainstAscended = (isMajorContender && whParty === playerPid) ? -whBacklashMag : 0;
+    const contenderDelta = isMajorContender
+      ? (Number(race.playerLift || 0) + chapterDiff + trustDiff + candQualDiff + playerPostureEdge + whDragAgainstAscended + noise)
+      : ((Number(race.playerLift || 0) * 1.35) + (chapterDiff > 0 ? chapterDiff * 0.5 : 0) + (trustDiff > 0 ? trustDiff * 0.4 : 0) + candQualDiff + playerPostureEdge + (noise * 0.4));
+
     const minorActualShare = clamp(
-      round(
-        baselineMinorShare
-        + (Number(race.playerLift || 0) * 1.35)
-        + (chapterDiff > 0 ? chapterDiff * 0.5 : 0)
-        + (trustDiff > 0 ? trustDiff * 0.4 : 0)
-        + candQualDiff
-        + playerPostureEdge
-        + (noise * 0.4),
-        2
-      ),
+      round(baselineMinorShare + contenderDelta, 2),
       0.5,
       78
     );
 
-    const rivalShiftImpact = Number(race.rivalLift || 0) + rivalPostureEdge;
+    const rivalShiftImpact = effectiveRivalLift + rivalPostureEdge;
     const remAfterActual = Math.max(5, 100 - minorActualShare);
     const adjDemMargin = demVsGopMargin + (rivalPid === 'people' ? rivalShiftImpact : -rivalShiftImpact);
     const finalDemShare = round(remAfterActual * clamp(0.5 + adjDemMargin / 200, 0.10, 0.90), 2);
@@ -1264,6 +1287,59 @@
       shares,
       flipped: Boolean(race.incumbentParty && winner !== race.incumbentParty),
     };
+  }
+
+  // [v0.18.7 QA-FIX] BUG-03: Sanitize sittingMembers to guarantee 0 duplicate IDs or duplicate seat slots
+  function deduplicateSittingMembers(sittingMembers) {
+    if (!Array.isArray(sittingMembers)) return [];
+    const byId = new Map();
+    const bySeat = new Map();
+    const ordered = [];
+
+    const seatKeyFor = (m) => {
+      if (!m || !m.office) return null;
+      if (m.office === 'governor' && m.stateId) return `governor:${m.stateId}`;
+      if (m.office === 'house' && (m.districtId || m.district)) return `house:${m.districtId || m.district}`;
+      if (m.office === 'senate' && m.stateId) return `senate:${m.stateId}:class-${m.senateClass || m.class || 1}`;
+      if (m.office === 'statewide_executive' && (m.officeId || (m.stateId && m.subOffice))) {
+        return `seo:${m.officeId || `${m.stateId}-${m.subOffice}`}`;
+      }
+      return null;
+    };
+
+    sittingMembers.forEach((m) => {
+      if (!m || !m.id) return;
+      const sk = seatKeyFor(m);
+      if (sk && bySeat.has(sk)) {
+        const prevIdx = bySeat.get(sk);
+        const prev = ordered[prevIdx];
+        const curYr = Number(m.electionYear || 0);
+        const prevYr = Number(prev?.electionYear || 0);
+        if (curYr >= prevYr) {
+          if (prev?.id && byId.get(prev.id) === prevIdx) byId.delete(prev.id);
+          ordered[prevIdx] = m;
+          byId.set(m.id, prevIdx);
+        }
+        return;
+      }
+      if (byId.has(m.id)) {
+        const prevIdx = byId.get(m.id);
+        const prev = ordered[prevIdx];
+        const curYr = Number(m.electionYear || 0);
+        const prevYr = Number(prev?.electionYear || 0);
+        if (curYr >= prevYr) {
+          ordered[prevIdx] = m;
+          if (sk) bySeat.set(sk, prevIdx);
+        }
+        return;
+      }
+      const nextIdx = ordered.length;
+      ordered.push(m);
+      byId.set(m.id, nextIdx);
+      if (sk) bySeat.set(sk, nextIdx);
+    });
+
+    return ordered;
   }
 
   function updateOfficeholderRecords(game, resolvedRaces, oddYear) {
@@ -1418,10 +1494,11 @@
       }
     });
 
+    // [v0.18.7 QA-FIX] BUG-03: Deduplicate sittingMembers across all seats/IDs after off-cycle updates
     return {
       governorships: nextGovs,
       stateLegislatures: nextLegs,
-      sittingMembers: nextSitting,
+      sittingMembers: deduplicateSittingMembers(nextSitting),
       politicians: nextPols,
       councilOfElders: nextElders,
       representatives: nextReps,
@@ -2101,7 +2178,10 @@
     };
 
     const chapCost = getActionCashCost(working, 'oc-chapter-drive', playerPid);
-    const chapGuard = describeAvailability('party', chapCost);
+    // [v0.18.7 QA-FIX] BUG-06: Disable chapter drive UI when target state reached MAX_STATE_CHAPTERS (25/25)
+    const chapCountSelected = getStateChaptersCount(working, _uiState.chapterStateId, playerPid);
+    const chapMaxReason = chapCountSelected >= MAX_STATE_CHAPTERS ? `Max Chapters Reached (${chapCountSelected}/${MAX_STATE_CHAPTERS})` : null;
+    const chapGuard = describeAvailability('party', chapCost, chapMaxReason);
     const donorGuard = describeAvailability('party', 0, (oc.donorRetreatsUsed || 0) >= 2 ? 'Max 2 retreats reached' : null);
     const donorYield = DONOR_RETREAT_YIELDS[tier] ?? 0.5;
     const mediaCost = getActionCashCost(working, 'oc-media-buildout', playerPid);
@@ -2437,6 +2517,7 @@
 
   const api = {
     BASE_ACTIONS,
+    MAX_STATE_CHAPTERS,
     POSTURES,
     ACTION_COSTS,
     DONOR_RETREAT_YIELDS,
@@ -2444,6 +2525,7 @@
     SCHEDULED_STATES_MOD1,
     SCHEDULED_STATES_MOD3,
     seededUnit,
+    deduplicateSittingMembers,
     getActionCashCost,
     getPartyTier,
     initializeOffCycleInterlude,

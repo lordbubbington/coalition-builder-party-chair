@@ -10,8 +10,9 @@ function seededUnit(seedStr) {
 (function PartyChairEngineModule() {
 const { BILLS, CONVENTIONS, EVENTS, FACTIONS, MEMBERS, PARTY_ARCHETYPES, REGIONS, STATES, FACTIONS_CATALOG, FACTION_NAME_TO_ID, FACTION_STATE_MATRIX, FACTION_NATIONAL_TOTALS, getFactionCohesion, getFactionCohesionLabel, getFactionGrowthProfile, calculateFactionRegistrationLift } = (window.PartyChairData || {});
 
-const SAVE_KEY = 'partyChairGame.save.v18.6';
-const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.5';
+const SAVE_KEY = 'partyChairGame.save.v18.7';
+const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.6';
+const PREVIOUS_SAVE_KEY_V185 = 'partyChairGame.save.v18.5';
 const PREVIOUS_SAVE_KEY_V184 = 'partyChairGame.save.v18.4';
 const PREVIOUS_SAVE_KEY_V183 = 'partyChairGame.save.v18.3';
 const PREVIOUS_SAVE_KEY_V182 = 'partyChairGame.save.v18.2';
@@ -142,6 +143,59 @@ function getOffCycleSystem() {
     try { return require('./off-cycle-interlude.js'); } catch {}
   }
   return null;
+}
+
+// [v0.18.7 QA-FIX] BUG-06: Cap state chapters at 25 per state per party
+const MAX_STATE_CHAPTERS = 25;
+
+// [v0.18.7 QA-FIX] BUG-03: Sanitize sittingMembers to guarantee 0 duplicate IDs or duplicate seat slots
+let _uniqueMemberSeq = 0;
+function deduplicateSittingMembers(sittingMembers) {
+  if (!Array.isArray(sittingMembers)) return [];
+  const ocMod = getOffCycleSystem();
+  if (ocMod && typeof ocMod.deduplicateSittingMembers === 'function') {
+    return ocMod.deduplicateSittingMembers(sittingMembers);
+  }
+  const byId = new Map();
+  const bySeat = new Map();
+  const ordered = [];
+  const seatKeyFor = (m) => {
+    if (!m || !m.office) return null;
+    if (m.office === 'governor' && m.stateId) return `governor:${m.stateId}`;
+    if (m.office === 'house' && (m.districtId || m.district)) return `house:${m.districtId || m.district}`;
+    if (m.office === 'senate' && m.stateId) return `senate:${m.stateId}:class-${m.senateClass || m.class || 1}`;
+    if (m.office === 'statewide_executive' && (m.officeId || (m.stateId && m.subOffice))) {
+      return `seo:${m.officeId || `${m.stateId}-${m.subOffice}`}`;
+    }
+    return null;
+  };
+  sittingMembers.forEach((m) => {
+    if (!m || !m.id) return;
+    const sk = seatKeyFor(m);
+    if (sk && bySeat.has(sk)) {
+      const prevIdx = bySeat.get(sk);
+      const prev = ordered[prevIdx];
+      if (Number(m.electionYear || 0) >= Number(prev?.electionYear || 0)) {
+        if (prev?.id && byId.get(prev.id) === prevIdx) byId.delete(prev.id);
+        ordered[prevIdx] = m;
+        byId.set(m.id, prevIdx);
+      }
+      return;
+    }
+    if (byId.has(m.id)) {
+      const prevIdx = byId.get(m.id);
+      if (Number(m.electionYear || 0) >= Number(ordered[prevIdx]?.electionYear || 0)) {
+        ordered[prevIdx] = m;
+        if (sk) bySeat.set(sk, prevIdx);
+      }
+      return;
+    }
+    const idx = ordered.length;
+    ordered.push(m);
+    byId.set(m.id, idx);
+    if (sk) bySeat.set(sk, idx);
+  });
+  return ordered;
 }
 
 const FALLBACK_MINOR_ARCHETYPES = [
@@ -887,6 +941,9 @@ function getPartyKeyIssueStance(game, issueName) {
   if (pId === 'heritage') return 7;
   if (pId === 'liberty') return 8;
   if (pId === 'green') return 2;
+  // [v0.18.7 QA-FIX] BUG-01: Default stance alignment for socialist & constitution unmapped prose keyIssues
+  if (pId === 'socialist') return 2;
+  if (pId === 'constitution') return 8;
   return 5;
 }
 
@@ -944,12 +1001,14 @@ function evaluateFactionFriction(game) {
       f.chronicLowTurns = 0;
     }
 
-    // REC-07: Platform Abandonment threshold lowered from 4.5 to 3.2 Euclidean points
+    // REC-07 + [v0.18.7 QA-FIX] BUG-11: Platform Abandonment threshold 3.2; cool friction -10/turn when dist <= 2.8 and curH >= 52
     const dist = computeFactionKeyIssuesDistance(updatedGame, f, f.partyId);
     if (dist > 3.2) {
       frictionDelta += 15;
     } else if (curH >= 60 && dist <= 2.5) {
       frictionDelta -= 15;
+    } else if (curH >= 52 && dist <= 2.8) {
+      frictionDelta -= 10;
     }
 
     const isVanguardFounding = isPlayerFaction
@@ -958,7 +1017,23 @@ function evaluateFactionFriction(game) {
     if (isVanguardFounding && frictionDelta > 0) {
       frictionDelta = round(frictionDelta * 0.6, 1);
     }
+    // [v0.18.7 QA-FIX] BUG-01: Early-game stability protection for minor parties with <= 2 factions (first 3 cycles)
+    const partyFactionCount = factions.filter((x) => x && x.partyId === f.partyId).length;
+    const isMinorProtectedWindow = !['people', 'heritage'].includes(f.partyId)
+      && partyFactionCount <= 2
+      && Number(updatedGame.year || 2028) <= Number(updatedGame.startYear || 2028) + 6;
+    const isLeadFoundingWing = f.status === 'leading'
+      || f.id === updatedGame.leadingFactionByParty?.[f.partyId]
+      || ['soc_socialists', 'con_christian_dominionists', 'grn_eco_socialist_vanguard', 'lib_true_libertarians'].includes(f.id);
+    if (isMinorProtectedWindow && frictionDelta > 0) {
+      frictionDelta = round(frictionDelta * 0.5, 1);
+    }
     f.frictionIndex = clamp((f.frictionIndex || 0) + frictionDelta, 0, 100);
+    if (isMinorProtectedWindow && (isLeadFoundingWing || partyFactionCount <= 1) && curH >= 20) {
+      f.frictionIndex = Math.min(f.frictionIndex, 55);
+      f.ultimatumTurnsRemaining = null;
+      continue;
+    }
 
     // 3. Ultimatum handling (REC-07: remediation floor raised to Happiness >= 60; threshold lowered to 75)
     // Bug #24: Post-accord bolt-immunity cooldown prevents immediate boomerang bolts
@@ -1608,6 +1683,21 @@ function signCoalitionAccord(game, factionId, demands = null) {
     if (vm.affiliations[playerPartyId]) vm.affiliations[playerPartyId].representedVoters = statePlayerSum;
     if (vm.affiliations.independent) vm.affiliations.independent.representedVoters = stateIndSum;
   }
+
+  nextHappiness[f.id] = 72;
+
+  // [v0.18.7 QA-FIX] BUG-11: Coalition-Wide Summit Splash (+2 Happiness, -5 Friction for aligned same-party factions, dist <= 2.8)
+  factions.forEach((af) => {
+    if (!af || af.id === f.id || af.partyId !== playerPartyId) return;
+    const alignedDist = computeFactionKeyIssuesDistance(game, af, playerPartyId);
+    if (alignedDist <= 2.8) {
+      const prevHap = Number(nextHappiness[af.id] ?? af.happiness ?? 60);
+      const nextHap = clamp(round(prevHap + 2, 1), 0, 100);
+      nextHappiness[af.id] = nextHap;
+      af.happiness = nextHap;
+      af.frictionIndex = Math.max(0, Number(af.frictionIndex || 0) - 5);
+    }
+  });
 
   const accordVoters = Number(vm?.factions?.[f.id] ?? f.targetVoters ?? 0);
   const note = `Coalition Accord signed with ${f.name}: 100% of faction voters admitted to party rolls (${(accordVoters / 1_000_000).toFixed(2)}M voters).`;
@@ -2897,6 +2987,31 @@ function getStateLegislativeCoattailLift(game, stateId) {
   return round(total, 2);
 }
 
+// [v0.18.7 QA-FIX] BUG-10: Modest +1.5% to +3.0% State-Base Coattail lift when a minor party has >= 10 chapters + >= 1 federal seat in state
+function getMinorStateBaseCoattail(game, partyId, stateId) {
+  if (!game || !stateId) return 0;
+  const resolved = (!partyId || partyId === 'player')
+    ? (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people'))
+    : partyId;
+  if (['people', 'heritage'].includes(resolved)) return 0;
+  if (getPartyInstitutionalTier(game, resolved) >= 5) return 0;
+  const playerResolved = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people');
+  const isPlayerParty = resolved === playerResolved || partyId === 'player';
+  const ch = isPlayerParty
+    ? Number(game.stateChapters?.[stateId] ?? game.stateOrganizations?.[stateId]?.[resolved]?.chapters ?? (['people', 'heritage'].includes(resolved) ? 2 : 0))
+    : Number(game.stateOrganizations?.[stateId]?.[resolved]?.chapters ?? game.aiPartyState?.[resolved]?.chapters?.[stateId] ?? game.rivals?.find((r) => r.id === resolved)?.chapters?.[stateId] ?? 0);
+  if (ch < 10) return 0;
+  const fedSeats = (game.sittingMembers || []).filter((m) => {
+    if (!m || m.vacant) return false;
+    if (m.office !== 'house' && m.office !== 'senate') return false;
+    if ((m.state || m.stateId) !== stateId) return false;
+    const mp = m.caucus || m.party || m.partyId;
+    return mp === resolved || (isPlayerParty && mp === 'player');
+  }).length;
+  if (fedSeats < 1) return 0;
+  return clamp(round(1.5 + Math.min(1.5, (fedSeats - 1) * 0.5 + (ch - 10) * 0.1), 2), 1.5, 3.0);
+}
+
 function getCampaignTierScale(game, partyId = 'player') {
   const tier = getPartyInstitutionalTier(game, partyId);
   return CAMPAIGN_TIER_ACTION_SCALE[clamp(Math.round(Number(tier ?? 0)), 0, 5)] ?? 0.25;
@@ -3226,8 +3341,10 @@ function applyQuestAcceptanceBonus(game, questId, targetState = null) {
 
     case 'build-statehouse-farm-team': {
       const stateIdSpawn = targetState || 'PA';
+      // [v0.18.7 QA-FIX] BUG-03: Guarantee unique stateLeg standout ID even inside same millisecond
+      _uniqueMemberSeq += 1;
       const newStandout = {
-        id: `stateLeg_${stateIdSpawn}_${pid}_${Date.now()}`,
+        id: `stateLeg_${stateIdSpawn}_${pid}_${updated.year || 2028}_${_uniqueMemberSeq}`,
         name: 'Morgan Brooks',
         office: 'stateLeg',
         officeLabel: 'State Leg',
@@ -4875,7 +4992,7 @@ function createGame(options = {}) {
   if (window.PartyChairV07) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
-  game.version = '0.18.6';
+  game.version = '0.18.7';
   // [v0.18.4 MEDIA-SHOCKS]
   const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
   if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
@@ -4935,6 +5052,16 @@ function createGame(options = {}) {
   game.partyApprovals = computeUnifiedPartyApproval(game);
   game.forecasters = buildForecasters(game);
   game.stateFederalism = computeAllStateFederalism(game);
+  // [v0.18.7 QA-FIX] BUG-02: Snapshot Cycle 1 baselines for net-growth Ascension Gauntlet checks
+  game.startYear = Number(game.year || 2028);
+  game.startingPartyVoters = {};
+  game.startingPresBallotCount = {};
+  if (window.PartyChairV07?.getPartyRepresentedVoters) {
+    ['liberty', 'green', 'constitution', 'socialist', ...(game.player?.custom ? ['player'] : [])].forEach((pk) => {
+      game.startingPartyVoters[pk] = window.PartyChairV07.getPartyRepresentedVoters(game, pk);
+      game.startingPresBallotCount[pk] = Object.values(game.ballotAccess?.[pk]?.presidential || {}).filter(Boolean).length;
+    });
+  }
   // [v0.18.4 COALITION-POLITICS] Initialize primaryRules, patronageAppointments, diplomacyPacts
   const cpsInit = (typeof window !== 'undefined' && window.CoalitionPoliticsSystem) || (typeof globalThis !== 'undefined' && globalThis.CoalitionPoliticsSystem) || null;
   if (cpsInit?.normalizeCoalitionPoliticsState) cpsInit.normalizeCoalitionPoliticsState(game);
@@ -5190,7 +5317,7 @@ function createGame(options = {}) {
   }
   // [v0.18.5] Ensure ALL eligible leadership roles start filled for player and rivals
   game = populateAllStartingLeadershipRoles(game);
-  game.version = '0.18.6';
+  game.version = '0.18.7';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
 
@@ -5332,7 +5459,8 @@ function checkAndApplyAscensionGauntlet(game, partyId = 'player') {
   if (!gauntlet.completed) return game;
 
   const nextMemory = { ...prevMemory, [resolvedKey]: true };
-  const nextTiers = { ...(game.partyTiers || {}), [resolvedKey]: Math.max(1, prevTier) };
+  // [v0.18.7 QA-FIX] BUG-02: Cap single-cycle Tier-0 exit promotion strictly at Tier 1
+  const nextTiers = { ...(game.partyTiers || {}), [resolvedKey]: prevTier === 0 ? 1 : Math.max(1, prevTier) };
   const promotedFromTier0 = prevTier === 0;
 
   let nextPriorities = game.priorities;
@@ -6031,14 +6159,17 @@ function evaluatePartyInstitutionalTiers(game) {
         return Object.fromEntries(keys.map((k) => [k, getPartyInstitutionalTier(game, k)]));
       })();
   const eraState = game?.partySystems?.eraState || null;
+  const activeEraId = game?.partySystems?.currentEraId || 'era_07_baseline';
   if (eraState) {
     if (Array.isArray(eraState.displacedMajorParties)) {
       eraState.displacedMajorParties.forEach((pid) => { baseTiers[pid] = Math.min(Number(baseTiers[pid] || 2), 2); });
     }
-    if (Array.isArray(eraState.promotedMajorParties)) {
+    // [v0.18.7 QA-FIX] BUG-08: Only hold replacement promotions at Tier 5 while their replacement era is active; allow organic drop-down afterwards
+    if (Array.isArray(eraState.promotedMajorParties) && ['era_06_left_replacement', 'era_07_right_replacement'].includes(activeEraId)) {
       eraState.promotedMajorParties.forEach((pid) => { baseTiers[pid] = 5; });
     }
-    if (Number(eraState.greenBaselineBoost || 0) > 0) {
+    // [v0.18.7 QA-FIX] BUG-08 & BUG-09: Once greenBaselineBoost decays below 2.0% post-era, stop forcing Tier 4+
+    if (Number(eraState.greenBaselineBoost || 0) >= 2.0) {
       baseTiers.green = Math.max(4, Number(baseTiers.green || 1));
     }
   }
@@ -6466,18 +6597,22 @@ function checkTier4Milestones(game) {
   const isCustom = Boolean(game.player.custom);
   const playerKey = isCustom ? 'player' : (game.player.baseTemplateId || 'people');
   const isOriginalMajor = !isCustom && ['people', 'heritage'].includes(playerKey);
+  const preTier = getPartyInstitutionalTier(game, 'player');
 
   let updated = {
     ...game,
     lastNationalPoll: poll,
   };
   const nextTiers = evaluatePartyInstitutionalTiers(updated);
+  if (preTier > (nextTiers[playerKey] || 0)) {
+    nextTiers[playerKey] = preTier;
+  }
   updated.partyTiers = nextTiers;
 
   const playerTier = getPartyInstitutionalTier(updated, 'player');
   const playerPoll = Number(poll.player ?? poll[playerKey] ?? 0);
 
-  if (!isOriginalMajor && (playerTier >= 4 || playerPoll >= 15.0)) {
+  if (!isOriginalMajor && (preTier >= 4 || playerTier >= 4 || playerPoll >= 15.0)) {
     updated.partyTiers = { ...updated.partyTiers, [playerKey]: Math.max(4, updated.partyTiers[playerKey] || 1) };
     const newlyBrokenBlackout = !updated.mediaBlackoutBroken;
     updated.mediaBlackoutBroken = true;
@@ -6707,9 +6842,22 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
     return { defectionRate: 0, defectedShare: 0, retainedShare: round(share, 2), recipientPartyId: null, threshold, regionalRelief: spillover.active, bypassed: true, reason: 'above-viability-threshold' };
   }
 
+  // [v0.18.7 QA-FIX] BUG-10: Check if minor party holds >= 2 House seats or >= 25% of state's House delegation
+  const _playerRes = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people');
+  const _isPlayerParty = resolved === _playerRes || partyId === 'player';
+  const _stateObj = STATES.find((s) => s.id === stateId);
+  const _stateHouseDistricts = Math.max(1, Number(_stateObj?.houseDistricts || _stateObj?.seats || 1));
+  const _houseRepsInState = (game?.representatives || game?.sittingMembers || []).filter((m) => {
+    if (!m || m.vacant || (m.office && m.office !== 'house')) return false;
+    if ((m.state || m.stateId) !== stateId) return false;
+    const mp = m.partyId || m.caucus || m.party;
+    return mp === resolved || (_isPlayerParty && mp === 'player');
+  }).length;
+  const partyTier = getPartyInstitutionalTier(game, resolved);
+  const _establishedFoothold = partyTier >= 4 || _houseRepsInState >= 2 || (_houseRepsInState / _stateHouseDistricts) >= 0.25;
+
   // [v0.18.4 MINOR-PARTY-FIXES] Cap strategic defection at 2/3 (<= 66.67%) so at least 1/3 of voters always stick
   const MAX_DEFECTION_RATE = 2 / 3;
-  const partyTier = getPartyInstitutionalTier(game, resolved);
   const distRatio = clamp((threshold - share) / Math.max(1, threshold), 0, 1);
   let defectionRate;
   if (partyTier <= 0) {
@@ -6722,6 +6870,9 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
     defectionRate = 0.42 + 0.23 * distRatio; // 42% right under threshold -> 65% near 0%
     if (spillover.active) {
       defectionRate *= 0.5; // Regional snowball halves defection severity
+    }
+    if (_establishedFoothold) {
+      defectionRate *= 0.5; // [v0.18.7 QA-FIX] BUG-10: Tier 4+ or established House delegation halves statewide defection
     }
     defectionRate = round(clamp(defectionRate * eraDefMult, 0, Math.min(0.65, MAX_DEFECTION_RATE)), 4);
   }
@@ -6896,26 +7047,32 @@ function evaluateViabilityBreakthroughs(game, electionData = {}) {
   const governorResults = electionData?.governors || [];
   const houseDistricts = electionData?.legislature?.districts || game?.representatives || [];
 
+  const playerBaseId = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || null);
+
   minorKeys.forEach((pKey) => {
-    if (getPartyInstitutionalTier(game, pKey) >= 5) return;
+    // [v0.18.7 QA-FIX] BUG-12: Populate viability breakthroughs even after reaching Tier 5, normalize 'player' -> pKey, and trigger at >= 15.0% or >= 1 House seat
     nextBreakthroughs[pKey] ||= {};
+    const matchParty = (val) => val === pKey || (playerBaseId === pKey && val === 'player');
 
     STATES.forEach((st) => {
       if (nextBreakthroughs[pKey][st.id]) return;
 
-      const presShare = Number(presByState[st.id]?.shares?.[pKey] ?? 0);
-      const wonGov = governorResults.some((g) => g.stateId === st.id && g.winner === pKey);
-      const wonSen = senateResults.some((s) => s.stateId === st.id && s.winner === pKey);
-      const houseWonInState = houseDistricts.filter((d) => d.stateId === st.id && d.partyId === pKey).length;
+      const presShare = Math.max(
+        Number(presByState[st.id]?.shares?.[pKey] ?? 0),
+        playerBaseId === pKey ? Number(presByState[st.id]?.shares?.player ?? 0) : 0
+      );
+      const wonGov = governorResults.some((g) => g.stateId === st.id && matchParty(g.winner));
+      const wonSen = senateResults.some((s) => (s.stateId === st.id || s.state === st.id) && matchParty(s.winner));
+      const houseWonInState = houseDistricts.filter((d) => (d.stateId === st.id || d.state === st.id) && matchParty(d.partyId || d.party || d.winner)).length;
 
       let trigger = null;
       if (wonGov) trigger = 'governor-victory';
       else if (wonSen) trigger = 'senate-victory';
-      else if (houseWonInState >= 2) trigger = 'house-delegation-breakthrough';
-      else if (presShare >= 16.5) trigger = 'viability-share-threshold';
+      else if (houseWonInState >= 1) trigger = 'house-delegation-breakthrough';
+      else if (presShare >= 15.0) trigger = 'viability-share-threshold';
 
       if (trigger) {
-        nextBreakthroughs[pKey][st.id] = { active: true, year: game.year || 2028, trigger };
+        nextBreakthroughs[pKey][st.id] = { active: true, year: game.year || 2028, trigger, reason: trigger };
         const stRegions = st.regions || (window.PartyChairV07?.regionsForState ? window.PartyChairV07.regionsForState(st.id, st.region) : [st.region]);
         newEvents.push({
           partyId: pKey,
@@ -8269,13 +8426,38 @@ function presidentialForecast(game, options = {}) {
     let libShare = stateMinorShare('liberty', 1.1);
     let grnShare = stateMinorShare('green', 0.5);
     // MAS-01 Era #13 (Green Transition Crucible): Permanent +10.0% Green Party baseline polling lift
+    // [v0.18.7 QA-FIX] BUG-09: Cap era-boosted AI Green share at 36% & protect healthy major parties (>= 3 factions each) >= 35% avg
     const eraGreenBoost = Number(game?.partySystems?.eraState?.greenBaselineBoost || 0);
     if (eraGreenBoost > 0 && playerBase !== 'green') {
-      grnShare = clamp(round(grnShare + eraGreenBoost, 1), 0.5, 45);
+      grnShare = clamp(round(grnShare + eraGreenBoost, 1), 0.5, 36);
     }
     let customShare = 0;
     if (isCustomPlayer) {
       customShare = round(stSupportAll.player || 0, 1);
+    }
+    const _facList = Array.isArray(game?.factions) ? game.factions : [];
+    const _bothMajorsHealthy = _facList.length > 0
+      && _facList.filter((f) => f && f.partyId === 'people').length >= 3
+      && _facList.filter((f) => f && f.partyId === 'heritage').length >= 3;
+    if (_bothMajorsHealthy) {
+      const _playerThirdShare = isCustomPlayer
+        ? customShare
+        : (playerBase === 'constitution' ? conShare : playerBase === 'socialist' ? socShare : playerBase === 'liberty' ? libShare : playerBase === 'green' ? grnShare : 0);
+      const _npcShares = {
+        constitution: playerBase === 'constitution' ? 0 : conShare,
+        socialist: playerBase === 'socialist' ? 0 : socShare,
+        liberty: playerBase === 'liberty' ? 0 : libShare,
+        green: playerBase === 'green' ? 0 : grnShare,
+      };
+      const _npcTotal = _npcShares.constitution + _npcShares.socialist + _npcShares.liberty + _npcShares.green;
+      if (_playerThirdShare + _npcTotal > 30 && _npcTotal > 0) {
+        const _npcCap = Math.max(0, 30 - _playerThirdShare);
+        const _scale = _npcCap / _npcTotal;
+        if (playerBase !== 'constitution') conShare = round(conShare * _scale, 2);
+        if (playerBase !== 'socialist') socShare = round(socShare * _scale, 2);
+        if (playerBase !== 'liberty') libShare = round(libShare * _scale, 2);
+        if (playerBase !== 'green') grnShare = round(grnShare * _scale, 2);
+      }
     }
     const thirdTotal = conShare + socShare + libShare + grnShare + customShare;
     const majorPool = Math.max(20, 100 - thirdTotal);
@@ -8870,6 +9052,7 @@ function supportByState(game, state, options = {}) {
     const campaignOppoLift = sameAsPlayer ? (game.campaign?.oppoTargets?.[stateId] || 0) * 0.6 : 0;
     const campaignAdLift = sameAsPlayer ? (game.campaign?.campaignAdModifiers?.[stateId] || 0) * 0.5 * mediaProfile.earnedMediaMultiplier : 0;
     const regBoost = sameAsPlayer ? ((game.stateRegistrationBoosts?.[stateId] || 0) * 0.35 + getStateLegislativeCoattailLift(game, stateId)) : 0;
+    const stateBaseCoattail = getMinorStateBaseCoattail(game, sameAsPlayer ? 'player' : party.id, stateId);
     const counterBoost = !sameAsPlayer ? (game.minorPartyCounterGrowth?.[party.id] || 0) * 0.8 : 0;
     const splinterSpoilerLoss = sameAsPlayer
       ? (game.activeSplinters || []).reduce((pen, sp) => (
@@ -8888,7 +9071,7 @@ function supportByState(game, state, options = {}) {
     }
     let rawScore = isOutOfTerritoryRegional
       ? 0.05
-      : Math.max(minFloor, (party.baseShare || 0.2) + regionalLean + affinity + rawCampaign + precisePlayerIdentity + generalCampaignLift + campaignDeployLift + campaignOppoLift + campaignAdLift + regBoost + counterBoost + regionalEraBonus + regionalCalibration - splinterSpoilerLoss);
+      : Math.max(minFloor, (party.baseShare || 0.2) + regionalLean + affinity + rawCampaign + precisePlayerIdentity + generalCampaignLift + campaignDeployLift + campaignOppoLift + campaignAdLift + regBoost + stateBaseCoattail + counterBoost + regionalEraBonus + regionalCalibration - splinterSpoilerLoss);
 
     // MAS-01: Independent Presidential Candidate Dual-Party Siphoning & Active Era Support Modifiers
     if (pseSup && game?.partySystems?.independentPresidency?.activeCampaign) {
@@ -12254,7 +12437,7 @@ function startCampaignPhase(game) {
     ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
-    version: '0.18.6',
+    version: '0.18.7',
     primariesResolved: true,
     superPacs: evaluateSuperPacDemands(_preFundGame, 1),
   };
@@ -12507,8 +12690,10 @@ function generateFreshPoliticianForSeat(opts = {}) {
   };
   const avgQ = round(Object.values(ratings).reduce((a, b) => a + b, 0) / 10, 1);
   const fame = clamp(25 + (h3 % 38), 18, 72);
+  // [v0.18.7 QA-FIX] BUG-03: Deterministic unique ID with seat scope + sequence suffix
+  _uniqueMemberSeq += 1;
   const rec = {
-    id: `gen-${office}-${stateId}-${districtId || officeId || senateClass || 'seat'}-${year}-${h1 % 9999}`,
+    id: `gen-${year}-${office}-${stateId}-${districtId || officeId || senateClass || 'atlarge'}-${h1 % 9999}-${_uniqueMemberSeq}`,
     name,
     office,
     chamber: office,
@@ -12692,9 +12877,21 @@ function replenishVacantSittingMembers(game, nextYear) {
     }
   });
 
-  const houseDists = (Array.isArray(game.currentHouseMap) && game.currentHouseMap.length >= 435)
+  const _activeHouseMapDists = Array.isArray(game.currentHouseMap)
     ? game.currentHouseMap
+    : (Array.isArray(game.currentHouseMap?.districts) ? game.currentHouseMap.districts : []);
+  const houseDists = _activeHouseMapDists.length >= 435
+    ? _activeHouseMapDists
     : (Array.isArray(data.VERSION_01_HOUSE_DISTRICTS) ? data.VERSION_01_HOUSE_DISTRICTS : []);
+  if (houseDists.length === 435) {
+    const _validHouseDistIds = new Set(houseDists.map((d) => d.id));
+    for (let si = sitting.length - 1; si >= 0; si--) {
+      const sm = sitting[si];
+      if (sm && sm.office === 'house' && !_validHouseDistIds.has(sm.districtId || sm.district)) {
+        sitting.splice(si, 1);
+      }
+    }
+  }
   houseDists.forEach((d) => {
     const exists = sitting.some((m) => m.office === 'house' && (m.districtId === d.id || m.district === d.id));
     if (!exists) {
@@ -12762,7 +12959,8 @@ function replenishVacantSittingMembers(game, nextYear) {
       activePolCount++;
     }
   }
-  return { ...game, sittingMembers: sitting, politicians: existingPols };
+  // [v0.18.7 QA-FIX] BUG-03: Deduplicate sittingMembers at end of replenishVacantSittingMembers
+  return { ...game, sittingMembers: deduplicateSittingMembers(sitting), politicians: existingPols };
 }
 
 
@@ -15608,7 +15806,10 @@ function startNextCycleInternal(game) {
     }
   });
   const majorPartyCycleGrant = (isMajorPartyPlayer || nextPlayerTier >= 5) ? 100 : 0;
-  const rolledTreasury = round(playerTreasury * budgetMultiplier + fecBonusAmount + majorPartyCycleGrant, 1);
+  // [v0.18.7 QA-FIX] BUG-07: Enforce post-election carryover tier cap ($250M T5, $50M T3-4, $20M T0-2) and <= $250M cycle entry cap
+  const _cycleCarryCap = nextPlayerTier >= 5 ? 250 : nextPlayerTier >= 3 ? 50 : 20;
+  const _cappedCarry = Math.min(_cycleCarryCap, Math.max(0, playerTreasury));
+  const rolledTreasury = Math.min(250, round(_cappedCarry * budgetMultiplier + fecBonusAmount + majorPartyCycleGrant, 1));
   const newCompacts = generateStartingJointCompacts(playerIdentity, game.seed, nextYear);
 
   // REQ-130: State Legislative Slate Single-Cycle Scope & Foothold
@@ -15666,7 +15867,7 @@ function startNextCycleInternal(game) {
 
   let refreshed = {
     ...game,
-    version: '0.18.6',
+    version: '0.18.7',
     stateLegStandouts: standoutUpdated.stateLegStandouts || game.stateLegStandouts || {},
     formerStateReps: standoutUpdated.formerStateReps || game.formerStateReps || {},
     dissolvedParties: Array.isArray(game.dissolvedParties) ? game.dissolvedParties : [],
@@ -15731,6 +15932,7 @@ function startNextCycleInternal(game) {
     nationalEnvironment: nextEnv,
     macroEnvironmentReason: macroReason,
     treasury: rolledTreasury,
+    lastTierDropYear: { ...(tierEvalContext.lastTierDropYear || game.lastTierDropYear || {}) },
     organizations: rolledOrgs,
     sittingMembers: updatedSittingMembers,
     politicians: (() => {
@@ -15846,9 +16048,22 @@ function startNextCycleInternal(game) {
     syncedCycle = pseCycle.normalizePartySystemsState(syncedCycle);
     const eraRollRes = pseCycle.evaluateEraTransition(syncedCycle, nextYear);
     syncedCycle = eraRollRes.game;
+    // [v0.18.7 QA-FIX] BUG-09: Decay expired era-specific third-party surges by 50%/cycle once their era ends
+    if (typeof pseCycle.decayExpiredEraBoosts === 'function') {
+      syncedCycle = pseCycle.decayExpiredEraBoosts(syncedCycle);
+    }
     const indRollRes = pseCycle.rollIndependentPresidentialCandidate(syncedCycle, nextYear);
     syncedCycle = indRollRes.game;
     pseCycle.dispatchEraHook(syncedCycle, 'onCycleStart');
+  }
+  // [v0.18.7 QA-FIX] BUG-09: Decay minorPartyCounterGrowth by 50%/cycle (floor < 0.2 -> 0)
+  if (syncedCycle.minorPartyCounterGrowth && typeof syncedCycle.minorPartyCounterGrowth === 'object') {
+    const _decayedCounter = {};
+    for (const [mpId, val] of Object.entries(syncedCycle.minorPartyCounterGrowth)) {
+      const nextVal = round(Number(val || 0) * 0.5, 2);
+      if (nextVal >= 0.2) _decayedCounter[mpId] = nextVal;
+    }
+    syncedCycle.minorPartyCounterGrowth = _decayedCounter;
   }
 
   // v0.16.9.1 (High #4): Legacy Cluster A presidentialPrimaries retired in favor of unified presidential-primary phase
@@ -15877,9 +16092,16 @@ function startNextCycleInternal(game) {
   syncedCycle.contestedStatewideOffices = {};
   syncedCycle.majorSlateSurges = {};
   syncedCycle.partyTiers = evaluatePartyInstitutionalTiers(syncedCycle);
+  syncedCycle.lastTierDropYear = { ...(syncedCycle.lastTierDropYear || {}) };
   const maxFocus = getMaxFocusSlots(syncedCycle, 'player');
   if (Array.isArray(syncedCycle.focusStates) && syncedCycle.focusStates.length > maxFocus) {
     syncedCycle.focusStates = syncedCycle.focusStates.slice(0, maxFocus);
+  }
+  if (Array.isArray(syncedCycle.priorities?.additional) && syncedCycle.priorities.additional.length > maxFocus) {
+    syncedCycle.priorities = {
+      ...syncedCycle.priorities,
+      additional: syncedCycle.priorities.additional.slice(0, maxFocus),
+    };
   }
 
   // v0.16.9 (Issue #6 Option B): Pull all 37 factions 25% toward ideological/macro equilibrium
@@ -15949,6 +16171,8 @@ function startNextCycleInternal(game) {
   }
   finalCycle = {
     ...finalCycle,
+    // [v0.18.7 QA-FIX] BUG-07: Enforce <= $250M cycle-entry treasury cap after Bellwether donor adjustments
+    treasury: Math.min(250, Math.max(0, round(Number(finalCycle.treasury || 0), 1))),
     pendingBellwetherBonus: null,
     offCycle: finalCycle.offCycle ? { ...finalCycle.offCycle, active: false } : (finalCycle.offCycle ?? null),
   };
@@ -16034,9 +16258,10 @@ function resolveVersion01GeneralElection(game) {
     const playerKey = game.player?.custom ? 'player' : playerIdentityId;
     if (game.fusionEndorsements?.[raceId]) return defaultWinner; // Cross-endorsed major nominee runs on fusion line
     // [v0.18.5 PLAYTEST-FIXES] Use race-specific ballot access when evaluating downballot multi-party contests
+    // [v0.18.7 QA-FIX] BUG-10: Lower early-skip gate from 15% to 5% so breakthrough/Foothold states can contest statewide plurality/RCV
     const stSupport = supportByState(game, state, { raceId });
     const pRaw = Number(stSupport.player || 0);
-    if (pRaw < 15) return defaultWinner;
+    if (pRaw < 5) return defaultWinner;
     const stSys = getStateElectoralSystem(game, state.id, raceId.split(':')[0]);
     const majorPool = Math.max(10, 100 - pRaw);
     let shares = {
@@ -16388,13 +16613,14 @@ function resolveVersion01GeneralElection(game) {
 
   const resolved = {
     ...questRewardedResult,
-    version: '0.18.6',
+    version: '0.18.7',
     phase: 'complete',
     primariesResolved: true,
     generalElectionResolved: true,
     governingParty: nextGoverningParty,
     incumbentTermNumber: nextIncumbentTermNumber,
-    sittingMembers: finalSittingMembers,
+    // [v0.18.7 QA-FIX] BUG-03: Deduplicate sittingMembers after general-election replacements
+    sittingMembers: deduplicateSittingMembers(finalSittingMembers),
     generatedMembers: finalGeneratedMembers,
     generationCounter: genCounter,
     activeSenateClass,
@@ -16578,6 +16804,43 @@ function resolveVersion01GeneralElection(game) {
   finalElectionState.partyTiers = evaluatePartyInstitutionalTiers(finalElectionState);
   enforceGameTrustCaps(finalElectionState);
 
+  // [v0.18.7 QA-FIX] BUG-07: Post-election player treasury carryover cap ($250M Tier 5, $50M Tier 3-4, $20M Tier 0-2)
+  const _postElecPlayerTier = getPartyInstitutionalTier(finalElectionState, 'player');
+  const _postElecCap = _postElecPlayerTier >= 5 ? 250 : _postElecPlayerTier >= 3 ? 50 : 20;
+  const _rawPostElecTreasury = round(Number(finalElectionState.treasury || 0), 1);
+  if (_rawPostElecTreasury > _postElecCap) {
+    const _excessFunds = round(_rawPostElecTreasury - _postElecCap, 1);
+    const _trustGoodwill = _excessFunds >= 100 ? 2 : 1;
+    finalElectionState.treasury = _postElecCap;
+    const _trustObj = (finalElectionState.trust && typeof finalElectionState.trust === 'object')
+      ? finalElectionState.trust
+      : ((finalElectionState.player?.trust && typeof finalElectionState.player.trust === 'object')
+        ? finalElectionState.player.trust
+        : { supporters: Number.isFinite(Number(finalElectionState.supporterTrust)) ? Number(finalElectionState.supporterTrust) : 65, independents: 50, opponents: 25 });
+    const _curTrust = Number.isFinite(Number(_trustObj.supporters)) ? Number(_trustObj.supporters) : 65;
+    const _nextTrust = clamp(round(_curTrust + _trustGoodwill, 1), 0, 100);
+    const _updatedTrustObj = {
+      independents: 50,
+      opponents: 25,
+      ..._trustObj,
+      supporters: _nextTrust,
+    };
+    finalElectionState.trust = _updatedTrustObj;
+    finalElectionState.supporterTrust = _nextTrust;
+    if (finalElectionState.player) {
+      finalElectionState.player = { ...finalElectionState.player, trust: { ..._updatedTrustObj } };
+    }
+    enforceGameTrustCaps(finalElectionState);
+    finalElectionState.yearLog = [
+      ...(finalElectionState.yearLog || []),
+      {
+        year: game.year,
+        turn: (game.chairTurn || 0) + 1,
+        action: `Post-Election Campaign Account Closeout: $${_excessFunds.toFixed(1)}M above Tier ${_postElecPlayerTier} $${_postElecCap}M carryover cap retired to statutory reserves (+${_trustGoodwill} Supporter Trust goodwill).`,
+      },
+    ].slice(-80);
+  }
+
   // [v0.18.4 MAPS-BALLOT] Resolve Election Night Ballot Initiatives before Decennial Redistricting
   const _rbsElec = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
   if (_rbsElec && typeof _rbsElec.resolveElectionNightBallotInitiatives === 'function') {
@@ -16590,8 +16853,11 @@ function resolveVersion01GeneralElection(game) {
   if (game.year % 10 === 0) {
     finalElectionState = runDecennialRedistricting(finalElectionState, game.year);
     // Bug #4: Prune obsolete pre-redistricting House seats & immediately replenish new districts 1:1 with representatives
-    if (Array.isArray(finalElectionState.currentHouseMap) && finalElectionState.currentHouseMap.length === 435) {
-      const validDists = new Set(finalElectionState.currentHouseMap.map((d) => d.id));
+    const _redistrHouseList = Array.isArray(finalElectionState.currentHouseMap)
+      ? finalElectionState.currentHouseMap
+      : (Array.isArray(finalElectionState.currentHouseMap?.districts) ? finalElectionState.currentHouseMap.districts : []);
+    if (_redistrHouseList.length === 435) {
+      const validDists = new Set(_redistrHouseList.map((d) => d.id));
       finalElectionState = {
         ...finalElectionState,
         sittingMembers: (finalElectionState.sittingMembers || []).filter((m) => !m || m.office !== 'house' || validDists.has(m.districtId || m.district)),
@@ -17100,14 +17366,15 @@ function applyMachineOperation(game, partyId, operationId, payload = {}) {
     case 'open_state_chapter':
     case 'chapter': {
       const cost = 6.0;
-      if (curParty.treasury >= cost) {
+      const pKey = partyId === 'player' && !nextGame.player?.custom ? (nextGame.player?.baseTemplateId || 'people') : partyId;
+      const prevCount = nextGame.stateOrganizations?.[targetState.id]?.[pKey]?.chapters || 0;
+      // [v0.18.7 QA-FIX] BUG-06: Enforce MAX_STATE_CHAPTERS = 25 for SOEE machine operations
+      if (curParty.treasury >= cost && prevCount < MAX_STATE_CHAPTERS) {
         curParty.treasury = round(curParty.treasury - cost, 2);
         curParty.organizingActionsRemaining -= 1;
         if (!nextGame.stateOrganizations) nextGame.stateOrganizations = {};
         nextGame.stateOrganizations[targetState.id] = nextGame.stateOrganizations[targetState.id] || {};
-        const pKey = partyId === 'player' && !nextGame.player?.custom ? (nextGame.player?.baseTemplateId || 'people') : partyId;
-        const prevCount = nextGame.stateOrganizations[targetState.id][pKey]?.chapters || 0;
-        const newChapters = prevCount + 1;
+        const newChapters = Math.min(MAX_STATE_CHAPTERS, prevCount + 1);
         const curStrength = Number(nextGame.stateOrganizations[targetState.id][pKey]?.strength || 0);
         const targetStrength = Math.min(100, Math.max(curStrength + 6, newChapters * 15 + 10));
         nextGame.stateOrganizations[targetState.id][pKey] = {
@@ -17165,6 +17432,15 @@ function applyMachineOperation(game, partyId, operationId, payload = {}) {
         const lowestFId = Object.keys(curParty.factionHappiness || {}).sort((a, b) => curParty.factionHappiness[a] - curParty.factionHappiness[b])[0];
         if (lowestFId) {
           curParty.factionHappiness[lowestFId] = clamp((curParty.factionHappiness[lowestFId] ?? 50) + 11, 0, 100);
+          // [v0.18.7 QA-FIX] BUG-11: Coalition-Wide Summit Splash (+2 Happiness, -5 Friction for aligned factions, dist <= 2.8)
+          const pPartyId = curParty.id || game?.player?.baseTemplateId || 'people';
+          factionsForParty(pPartyId).forEach((af) => {
+            if (!af || af.id === lowestFId) return;
+            if (computeFactionKeyIssuesDistance(game, af, pPartyId) <= 2.8) {
+              curParty.factionHappiness[af.id] = clamp(round((curParty.factionHappiness[af.id] ?? af.happiness ?? 60) + 2, 1), 0, 100);
+              af.frictionIndex = Math.max(0, Number(af.frictionIndex || 0) - 5);
+            }
+          });
         }
       }
       break;
@@ -20929,14 +21205,21 @@ function takeActionInternal(game, actionId, payload = {}) {
     const analogMult = pseCh ? pseCh.getAnalogCampaignMultiplier(game) : 1.0;
     if (!targetState || game.treasury < chapterCost) return game;
     const stId = targetState.id;
+    const targetPartyKey = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || identityId);
+    const prevCount = game.stateChapters?.[stId] ?? game.stateOrganizations?.[stId]?.[targetPartyKey]?.chapters ?? (['people', 'heritage'].includes(targetPartyKey) ? 2 : 0);
+    // [v0.18.7 QA-FIX] BUG-06: Enforce MAX_STATE_CHAPTERS = 25 with zero action/cash deduction when maxed
+    if (prevCount >= MAX_STATE_CHAPTERS) {
+      return {
+        ...game,
+        lastNote: `Max Chapters Reached (${prevCount}/${MAX_STATE_CHAPTERS}) in ${targetState.name} (${stId}).`,
+      };
+    }
     const macroRegion = REGIONS.includes(targetState.region) ? targetState.region : 'Midwest';
     next.treasury = round(game.treasury - chapterCost, 1);
     next.chapters = { ...game.chapters, [macroRegion]: (game.chapters[macroRegion] || 0) + 1 };
-    const targetPartyKey = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || identityId);
     const nextStateOrgs = JSON.parse(JSON.stringify(game.stateOrganizations || {}));
     nextStateOrgs[stId] ||= {};
-    const prevCount = game.stateChapters?.[stId] ?? nextStateOrgs[stId][targetPartyKey]?.chapters ?? (['people', 'heritage'].includes(targetPartyKey) ? 2 : 0);
-    const newChapters = prevCount + 1;
+    const newChapters = Math.min(MAX_STATE_CHAPTERS, prevCount + 1);
     const curStrength = Number(nextStateOrgs[stId][targetPartyKey]?.strength || 0);
     const targetStrength = Math.min(100, Math.max(curStrength + Math.round(5 * analogMult), newChapters * 15 + 10));
     nextStateOrgs[stId][targetPartyKey] = {
@@ -20977,17 +21260,54 @@ function takeActionInternal(game, actionId, payload = {}) {
     }
     next.lastNote = `Opened a state party chapter in ${targetState.name} (${stId}), deepening local field capacity.${waveNote}`;
   } else if (actionId === 'summit') {
-    const partyFactions = factionsForParty(identityId);
+    const partyFactions = (Array.isArray(game.factions) && game.factions.length)
+      ? game.factions.filter((f) => f && f.partyId === identityId)
+      : factionsForParty(identityId);
     const matchedFaction = partyFactions.find((f) => f.id === payload.factionId || f.legacyId === payload.factionId) || partyFactions[0] || resolveFaction('pragmatists', identityId);
     const factionId = matchedFaction.id;
     const cost = 3;
     if (game.treasury < cost) return game;
     next.treasury = round(game.treasury - cost);
-    standings[factionId] = clamp((standings[factionId] || 50) + 11, 0, 100);
+    const nextFH = { ...(game.factionHappiness || {}) };
+    const baseTargetH = Number(nextFH[factionId] ?? standings[factionId] ?? matchedFaction.happiness ?? 50);
+    standings[factionId] = clamp(round(baseTargetH + 11, 1), 0, 100);
+    nextFH[factionId] = standings[factionId];
+    // [v0.18.7 QA-FIX] BUG-11: Coalition-Wide Summit Splash (+2 Happiness, -5 Friction for aligned factions, dist <= 2.8)
+    const alignedIds = new Set();
+    partyFactions.forEach((af) => {
+      if (!af || af.id === factionId) return;
+      if (computeFactionKeyIssuesDistance(game, af, identityId) <= 2.8) {
+        const curAlignedH = Number(nextFH[af.id] ?? standings[af.id] ?? af.happiness ?? 60);
+        const splashedH = clamp(round(curAlignedH + 2, 1), 0, 100);
+        standings[af.id] = splashedH;
+        nextFH[af.id] = splashedH;
+        alignedIds.add(af.id);
+      }
+    });
+    next.factionHappiness = nextFH;
+    // Sync SOEE player party factionHappiness ledger before end-of-action syncPartyStateWithLegacy()
+    if (game.parties && typeof game.parties === 'object') {
+      const pKey = getPlayerPartyId(game);
+      const nextParties = { ...game.parties };
+      [pKey, identityId, 'player'].filter((k, idx, arr) => k && arr.indexOf(k) === idx && nextParties[k]).forEach((k) => {
+        const clonedFH = { ...(nextParties[k].factionHappiness || {}), [factionId]: nextFH[factionId] };
+        alignedIds.forEach((aid) => { clonedFH[aid] = nextFH[aid]; });
+        nextParties[k] = { ...nextParties[k], factionHappiness: clonedFH };
+      });
+      next.parties = nextParties;
+    }
+    if (Array.isArray(game.factions) && (alignedIds.size > 0 || factionId)) {
+      next.factions = game.factions.map((f) => {
+        if (!f) return f;
+        if (f.id === factionId) return { ...f, happiness: standings[f.id], frictionIndex: Math.max(0, Number(f.frictionIndex || 0) - 5) };
+        if (alignedIds.has(f.id)) return { ...f, happiness: standings[f.id], frictionIndex: Math.max(0, Number(f.frictionIndex || 0) - 5) };
+        return f;
+      });
+    }
     next.publicMood = round(clamp(game.publicMood + 0.25, -8, 12));
     next.sittingMemberHappiness = clamp((game.sittingMemberHappiness ?? 70) + 3, 0, 100);
     next.environmentCounterActionsThisTurn = (game.environmentCounterActionsThisTurn || 0) + 1;
-    next.lastNote = `A focused faction summit brought ${matchedFaction.name} closer into alignment and steadied caucus morale.`;
+    next.lastNote = `A focused faction summit brought ${matchedFaction.name} closer into alignment and cooled friction across allied factions.`;
   } else if (actionId === 'fundraise') {
     // REQ-86: State-Targeted Small Donor Drive Overhaul
     const targetStateId = payload.stateId || game.activeTargetState || 'PA';
@@ -21038,7 +21358,7 @@ function takeActionInternal(game, actionId, payload = {}) {
     const _msDon = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
     const _msDonorMult = (_msDon && typeof _msDon.getSmallDonorYieldMultiplier === 'function') ? _msDon.getSmallDonorYieldMultiplier(game) : 1.0;
     const raised = round(Math.max(0.5, B * visitMult * memberMult * factionMult * financeMult * fedMult * mediaFundMult * institutionalDonorMult * eraSmallDollarMult * topLeaderTraits.donorViralityMultiplier * _msDonorMult), 1);
-    next.treasury = round(game.treasury + raised, 1);
+    next.treasury = Math.min(3000, round(game.treasury + raised, 1));
     next.donorDriveVisits = stateVisits;
     bumpFactionStanding(standings, 'funders', 5, identityId);
     bumpFactionStanding(standings, 'organizers', -2, identityId);
@@ -21329,7 +21649,7 @@ function advanceChairTurn(game) {
     chairTurn: nextTurn,
     turnsUntilPrimaries: Math.max(0, 20 - nextTurn),
     seed: nextSeed,
-    treasury: Math.max(0, round(game.treasury + turnRevenue - turnCosts)),
+    treasury: Math.min(3000, Math.max(0, round(game.treasury + turnRevenue - turnCosts))),
     actionsLeft: ACTIONS_PER_YEAR,
     endorsementsThisTurn: 0,
     environmentCounterActionsThisTurn: 0,
@@ -21423,7 +21743,7 @@ function advanceYear(game) {
     const closed = ready.offCycle ? { ...ready.offCycle, active: false } : null;
     return startNextCycle({ ...ready, offCycle: closed });
   }
-  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
+  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
   const rivalUpdate = advanceRivalOrganizations(game);
@@ -21681,7 +22001,7 @@ function normalizeGame(parsed) {
   const normalized = {
     ...parsed,
     schema: 7,
-    version: '0.18.6',
+    version: '0.18.7',
     activeTab: parsed.activeTab || 'actions',
     turnStep: clamp(Number(parsed.turnStep || 1), 1, 5),
     phase: parsed.phase || (parsed.primariesResolved ? 'general-campaign' : 'organizing'),
@@ -21892,7 +22212,7 @@ function normalizeGame(parsed) {
   // [OFF-CYCLE] Preserve offCycle interlude & pendingBellwetherBonus across save/reload
   if (parsed.offCycle && typeof parsed.offCycle === 'object') ready.offCycle = parsed.offCycle;
   if (parsed.pendingBellwetherBonus && typeof parsed.pendingBellwetherBonus === 'object') ready.pendingBellwetherBonus = parsed.pendingBellwetherBonus;
-  ready.version = '0.18.6';
+  ready.version = '0.18.7';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
     house: false,
@@ -22285,7 +22605,7 @@ function normalizeGame(parsed) {
     window.CampaignOverhaul.initializeDynamicCorruptTrait(ready);
   }
   ready.grassrootsMultiplier = computeGrassrootsMultiplier(ready);
-  ready.version = '0.18.6';
+  ready.version = '0.18.7';
   ready = ensurePartyStates(ready);
   ready = syncPartyStateWithLegacy(ready);
   // [v0.18.4 ATLAS-HOTSEAT] Backward-compatible Atlas & Hotseat defaults
@@ -22475,7 +22795,7 @@ function migrateVoterModelToOneToOne(vm) {
 function getPersistenceCore() { return _tryLoadCoreModule("PersistenceCore", "persistence-core.js"); }
 function loadGame() {
   try {
-    const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V184) || localStorage.getItem(PREVIOUS_SAVE_KEY_V183) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
+    const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V185) || localStorage.getItem(PREVIOUS_SAVE_KEY_V184) || localStorage.getItem(PREVIOUS_SAVE_KEY_V183) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
     if (!value) return null;
     return migrateSave(JSON.parse(value));
   } catch { return null; }
@@ -23372,6 +23692,8 @@ window.PartyChairEngine = {
   leaveNpvic,
   // [OFF-CYCLE] Exports
   getOffCycleSystem,
+  MAX_STATE_CHAPTERS,
+  deduplicateSittingMembers,
   initializeOffCycleInterlude: (game, oddYear) => getOffCycleSystem()?.initializeOffCycleInterlude?.(game, oddYear) || game,
   resolveOffCycleInterlude: (game) => getOffCycleSystem()?.resolveOffCycleInterlude?.(game) || game,
   completeOffCycleInterlude: (game) => getOffCycleSystem()?.completeOffCycleInterlude?.(game) || game,

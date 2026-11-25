@@ -316,10 +316,10 @@ test('4. Bellwether clamping [-3.5, +3.5], governorships/sittingMembers updates 
   assertNoNaN(afterAdvance.offCycle, 'afterAdvance-offCycle', true);
   assertNoNaN(afterAdvance.lastBellwetherSummary, 'afterAdvance-bellwether', true);
 
-  // Verify negative clamp at -3.5
+  // Verify negative clamp at -3.5 (with BUG-04 rival lift capped at +4.5%)
   let gNeg = Eng.createGame('people', { seed: 202912 });
   gNeg = OCI.initializeOffCycleInterlude({ ...gNeg, phase: 'complete' }, 2029);
-  gNeg.offCycle.races.forEach((r) => { r.rivalLift = 50; });
+  gNeg.offCycle.races.forEach((r) => { r.playerLift = -50; });
   gNeg = OCI.resolveOffCycleInterlude(gNeg);
   assert.strictEqual(gNeg.pendingBellwetherBonus.bellwetherWave, -3.5, 'Negative Bellwether Wave clamped strictly at -3.5');
 });

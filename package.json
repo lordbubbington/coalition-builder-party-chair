@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.18.6",
-  "description": "Coalition Builder: Party Chair — Version 0.18.6 (Comprehensive Multi-Developer Integration: Super PACs, VP Vetting, Demographics & Minor Party Ascent)",
+  "version": "0.18.7",
+  "description": "Coalition Builder: Party Chair — Version 0.18.7 (QA Balance & Bugfix Release: Treasury Caps, Tier Drop-Down, Era Decay, Viability Breakthroughs & Off-Cycle Polish)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

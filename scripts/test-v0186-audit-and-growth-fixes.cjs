@@ -133,7 +133,7 @@ test('Bug #4: ensureAndAdvancePoliticianAges with skipSittingAging does not doub
 test('Bug #5: actionsLeft decrements cleanly to 3 on refill and normalizeGame preserves organizingActionsRemaining', () => {
   let g = Eng.createGame('people', { seed: 4205 });
   g = { ...g, actionsLeft: 0, organizingActionsRemaining: 16 };
-  const afterChap = Eng.takeAction(g, 'chapter', { stateId: 'PA' });
+  const afterChap = Eng.takeAction(g, 'chapter', { stateId: 'MI' });
   assert.strictEqual(afterChap.organizingActionsRemaining, 15, `Expected organizingActionsRemaining=15, got ${afterChap.organizingActionsRemaining}`);
   assert.strictEqual(afterChap.actionsLeft, 3, `Expected actionsLeft=3, got ${afterChap.actionsLeft}`);
 
