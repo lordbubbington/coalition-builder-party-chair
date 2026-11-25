@@ -567,11 +567,90 @@
     const seedKey = `${year}|${safeGame.seed || 'pc'}`;
     const races = [];
 
-    const presResults = safeElection.presidentialResults || (safeElection.presidential?.byState) || safeGame.presidentialResults || {};
-    const senateResults = safeElection.senate || safeGame.senateResults || [];
-    const governorResults = safeElection.governors || safeGame.governorResults || [];
+    let presResults = safeElection.presidentialResults || (safeElection.presidential?.byState) || safeGame.presidentialResults || {};
+    let senateResults = Array.isArray(safeElection.senate) ? safeElection.senate
+      : (Array.isArray(safeGame.senateResults) ? safeGame.senateResults : []);
+    let governorResults = Array.isArray(safeElection.governors) ? safeElection.governors
+      : (Array.isArray(safeGame.governorResults) ? safeGame.governorResults : []);
     const legResults = safeElection.stateLegislatures || safeGame.stateLegislatures || {};
     const representatives = safeElection.representatives || safeGame.representatives || [];
+
+    // [QA-BATCH2-FIX] B2-16: Synthesize fallback projections on active campaign state when resolved election results are absent
+    const stateList = Array.isArray(safeGame.states) && safeGame.states.length > 0
+      ? safeGame.states
+      : Object.keys(STATE_EV_WEIGHTS).map((id) => ({ id, name: id, ev: STATE_EV_WEIGHTS[id], lean: 0 }));
+    const statesById = Object.fromEntries(stateList.map((st) => [st.id || st.stateId, st]));
+    const natEnv = Number(safeGame.nationalEnvironment || 0);
+    const getProjectedMargin = (stateId, officeForecast) => {
+      if (officeForecast && Number.isFinite(Number(officeForecast.margin))) {
+        return Number(officeForecast.margin);
+      }
+      const st = statesById[stateId];
+      const baseLean = st?.leanPercent !== undefined
+        ? Number(st.leanPercent)
+        : (Math.abs(Number(st?.lean || 0)) <= 1 ? Number(st?.lean || 0) * 100 : Number(st?.lean || 0));
+      const jitter = (fnv1aUnit(`${seedKey}|fallback|${stateId}`) - 0.5) * 3.0;
+      return Math.round((baseLean + natEnv + jitter) * 10) / 10;
+    };
+
+    if (isPresidential && Object.keys(presResults).length === 0) {
+      const fallbackPres = {};
+      const presFcStates = safeGame.forecasters?.presidential?.byState || safeGame.forecasters?.presidential?.states || {};
+      Object.keys(STATE_EV_WEIGHTS).forEach((stateId) => {
+        const margin = getProjectedMargin(stateId, presFcStates[stateId]);
+        const ev = Number(statesById[stateId]?.ev || STATE_EV_WEIGHTS[stateId] || 3);
+        fallbackPres[stateId] = {
+          stateId,
+          name: statesById[stateId]?.name || stateId,
+          ev,
+          margin,
+          expectedMargin: margin,
+          winner: margin >= 0 ? 'people' : 'heritage',
+        };
+      });
+      presResults = fallbackPres;
+    }
+
+    if (senateResults.length === 0) {
+      const senFc = safeGame.forecasters?.senate?.races || {};
+      const activeSen = (Array.isArray(safeGame.activeSenateRaces) && safeGame.activeSenateRaces.length > 0)
+        ? safeGame.activeSenateRaces
+        : (Array.isArray(safeGame.sittingMembers)
+            ? safeGame.sittingMembers.filter((m) => m && m.office === 'senate' && (!safeGame.activeSenateClass || Number(m.senateClass || m.class) === Number(safeGame.activeSenateClass)))
+            : []);
+      const seenSenStates = new Set();
+      senateResults = activeSen
+        .map((s) => {
+          const stId = s.stateId || s.state;
+          if (!stId || seenSenStates.has(stId)) return null;
+          seenSenStates.add(stId);
+          const margin = getProjectedMargin(stId, senFc[stId] || senFc[`senate:${stId}`]);
+          return { stateId: stId, margin, winner: margin >= 0 ? 'people' : 'heritage' };
+        })
+        .filter(Boolean);
+      if (senateResults.length === 0) {
+        senateResults = stateList.filter((s) => (s.id || s.stateId) !== 'DC').slice(0, 33).map((s) => {
+          const stId = s.id || s.stateId;
+          const margin = getProjectedMargin(stId, senFc[stId]);
+          return { stateId: stId, margin, winner: margin >= 0 ? 'people' : 'heritage' };
+        });
+      }
+    }
+
+    if (governorResults.length === 0) {
+      const govFc = safeGame.forecasters?.governors?.races || {};
+      const activeGov = (Array.isArray(safeGame.activeGubernatorialStates) && safeGame.activeGubernatorialStates.length > 0)
+        ? safeGame.activeGubernatorialStates
+        : stateList.filter((s) => (s.id || s.stateId) !== 'DC').slice(0, isPresidential ? 11 : 36);
+      governorResults = activeGov
+        .map((g) => {
+          const stId = typeof g === 'string' ? g : (g.stateId || g.state || g.id);
+          if (!stId || stId === 'DC') return null;
+          const margin = getProjectedMargin(stId, govFc[stId] || govFc[`governor:${stId}`]);
+          return { stateId: stId, margin, winner: margin >= 0 ? 'people' : 'heritage' };
+        })
+        .filter(Boolean);
+    }
 
     // 1. Presidential Races (50 States + DC)
     if (isPresidential) {

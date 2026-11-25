@@ -724,7 +724,8 @@
         pct = clamp(rawDrift, -0.06, 0.07) * volatilityMult;
       }
 
-      pct = clamp(pct, -0.75, 1.25);
+      // [QA-BATCH2-FIX] B2-06: Clamp extreme single-cycle contraction to <= 35% (45% in 3-party chaos)
+      pct = clamp(pct, chaos ? -0.45 : -0.35, 1.25);
       const rawDelta = Math.round(curV * pct);
 
       if (rawDelta < 0) {
@@ -1006,12 +1007,26 @@
     const allowMaxSevers = Number.isFinite(Number(options.maxSevers)) ? Number(options.maxSevers) : 1;
     const allowMaxEmerges = Number.isFinite(Number(options.maxEmerges)) ? Number(options.maxEmerges) : 1;
 
+    // [QA-BATCH2-FIX] B2-02: Enforce active-faction cap (<= 45) and >= 4-cycle cooldown on unforced organic births
+    const maxActiveFactions = Number.isFinite(Number(options.maxActiveFactions)) ? Number(options.maxActiveFactions) : 45;
+    const cooldownCycles = Number.isFinite(Number(options.cooldownCycles)) ? Number(options.cooldownCycles) : 4;
+    const isForcedBirth = Boolean(options.forceSplit || options.forceSever || options.forceEmerge);
+    const curYear = Number(game.year || 2028);
+    const lastOrgYear = Number(game.lastOrganicEmergenceYear || 0);
+    if (!isForcedBirth && game.factions.length >= maxActiveFactions) {
+      return { events: [], emerged: [], severed: [], split: [] };
+    }
+    if (!isForcedBirth && lastOrgYear > 0 && (curYear - lastOrgYear) < cooldownCycles * 2) {
+      return { events: [], emerged: [], severed: [], split: [] };
+    }
+
     const events = [];
     const emerged = [];
     const severed = [];
     const split = [];
     const toRemoveIds = new Set();
     const toAppend = [];
+    const stateMutationOps = [];
 
     // 1. Split (Parent >= 4M normal / >= 3M chaos, low cohesion, non-identity)
     let splitCount = 0;
@@ -1070,6 +1085,7 @@
 
       toRemoveIds.add(parent.id);
       toAppend.push(childA, childB);
+      stateMutationOps.push({ mode: 'split', parentId: parent.id, childA, childB, shareA });
       splitCount++;
       const evt = {
         mode: 'split',
@@ -1121,6 +1137,7 @@
       }, rand);
 
       toAppend.push(child);
+      stateMutationOps.push({ mode: 'sever', parentId: parent.id, child, severPct });
       severCount++;
       const evt = {
         mode: 'sever',
@@ -1173,6 +1190,7 @@
       emergedFaction.vanguardCyclesLeft = THRESHOLDS.VANGUARD_CYCLES;
 
       toAppend.push(emergedFaction);
+      stateMutationOps.push({ mode: 'emerge', faction: emergedFaction, voters: emergeVoters });
       emergeCount++;
       const evt = {
         mode: 'emerge',
@@ -1186,6 +1204,52 @@
 
     if (toRemoveIds.size > 0 || toAppend.length > 0) {
       game.factions = game.factions.filter((f) => f && !toRemoveIds.has(f.id)).concat(toAppend);
+      // [QA-BATCH2-FIX] B2-01 & B2-02: Propagate split/sever/emerge voters across voterModel.states[*].factions conservatively
+      if (Array.isArray(game.voterModel?.states) && game.voterModel.states.length > 0) {
+        const states = game.voterModel.states;
+        for (const op of stateMutationOps) {
+          if (op.mode === 'split') {
+            states.forEach((st) => {
+              if (!st.factions) return;
+              const pSt = Math.max(0, Math.round(Number(st.factions[op.parentId] || 0)));
+              if (pSt > 0) {
+                const aSt = Math.round(pSt * op.shareA);
+                st.factions[op.childA.id] = (st.factions[op.childA.id] || 0) + aSt;
+                st.factions[op.childB.id] = (st.factions[op.childB.id] || 0) + (pSt - aSt);
+              }
+              delete st.factions[op.parentId];
+            });
+          } else if (op.mode === 'sever') {
+            states.forEach((st) => {
+              if (!st.factions) return;
+              const pSt = Math.max(0, Math.round(Number(st.factions[op.parentId] || 0)));
+              if (pSt > 0) {
+                const cSt = Math.round(pSt * op.severPct);
+                st.factions[op.parentId] = pSt - cSt;
+                st.factions[op.child.id] = (st.factions[op.child.id] || 0) + cSt;
+              }
+            });
+          } else if (op.mode === 'emerge') {
+            const totalRep = states.reduce((acc, st) => acc + Math.max(1, Number(st.representedVoters || 0)), 0) || 1;
+            let rem = op.voters;
+            states.forEach((st, idx) => {
+              if (!st.factions) st.factions = {};
+              const slice = idx === states.length - 1
+                ? rem
+                : Math.round(op.voters * (Math.max(1, Number(st.representedVoters || 0)) / totalRep));
+              rem -= slice;
+              if (slice <= 0) return;
+              // Draw conservatively from largest non-protected swing/adjacent faction in state
+              const donorIds = Object.keys(st.factions).filter((fid) => fid !== op.faction.id && !fid.includes('black_voters') && !fid.includes('latin') && !fid.includes('mormons') && Number(st.factions[fid] || 0) > slice);
+              const preferred = donorIds.find((fid) => fid.startsWith('swg_')) || donorIds.sort((a, b) => (st.factions[b] || 0) - (st.factions[a] || 0))[0];
+              if (preferred) {
+                st.factions[preferred] = Math.max(0, Number(st.factions[preferred] || 0) - slice);
+              }
+              st.factions[op.faction.id] = (st.factions[op.faction.id] || 0) + slice;
+            });
+          }
+        }
+      }
       if (game.voterModel?.factions) {
         toRemoveIds.forEach((id) => { delete game.voterModel.factions[id]; });
         toAppend.forEach((f) => { game.voterModel.factions[f.id] = getFactionVoters(game, f); });
@@ -1194,7 +1258,10 @@
         toRemoveIds.forEach((id) => { delete game.factionHappiness[id]; });
         toAppend.forEach((f) => { game.factionHappiness[f.id] = f.happiness ?? 58; });
       }
-      // Clean split parents out of caucuses
+      if (!isForcedBirth) {
+        game.lastOrganicEmergenceYear = curYear;
+      }
+      // Clean split parents out of caucuses and leadingFactionByParty
       if (Array.isArray(game.caucuses)) {
         game.caucuses.forEach((c) => {
           if (Array.isArray(c.memberFactionIds)) {
@@ -1469,6 +1536,51 @@
     }
 
     game.factions = survivors;
+    // [QA-BATCH2-FIX] B2-03: Record dissolvedFactions, strip state faction keys conservatively, clear leadership refs, and log
+    if (!Array.isArray(game.dissolvedFactions)) game.dissolvedFactions = [];
+    const curYr = Number(game.year || 2028);
+    dissolutions.forEach((dEvt) => {
+      game.dissolvedFactions.push({
+        id: dEvt.factionId,
+        name: dEvt.factionName,
+        partyId: dEvt.partyId,
+        reason: dEvt.reason,
+        year: curYr,
+        votersRedistributed: dEvt.votersRedistributed,
+      });
+      if (Array.isArray(game.voterModel?.states)) {
+        const primaryRecipientId = dEvt.recipients?.[0]?.factionId || survivors.find((s) => s && !isProtectedIdentityBloc(s))?.id || null;
+        game.voterModel.states.forEach((st) => {
+          if (!st.factions) return;
+          const remSt = Number(st.factions[dEvt.factionId] || 0);
+          if (remSt > 0 && primaryRecipientId) {
+            st.factions[primaryRecipientId] = (st.factions[primaryRecipientId] || 0) + remSt;
+          }
+          delete st.factions[dEvt.factionId];
+        });
+      }
+      if (game.leadingFactionByParty && game.leadingFactionByParty[dEvt.partyId] === dEvt.factionId) {
+        const nextLead = survivors
+          .filter((s) => s && s.partyId === dEvt.partyId)
+          .sort((a, b) => getFactionVoters(game, b) - getFactionVoters(game, a))[0];
+        if (nextLead) game.leadingFactionByParty[dEvt.partyId] = nextLead.id;
+        else delete game.leadingFactionByParty[dEvt.partyId];
+      }
+      const roleKey = `faction_${dEvt.factionId}`;
+      if (game.leadershipRoles && typeof game.leadershipRoles === 'object') {
+        delete game.leadershipRoles[roleKey];
+        Object.values(game.leadershipRoles).forEach((sub) => {
+          if (sub && typeof sub === 'object' && !Array.isArray(sub)) delete sub[roleKey];
+        });
+      }
+      if (Array.isArray(game.yearLog)) {
+        game.yearLog.push({
+          year: curYr,
+          turn: (game.chairTurn || 0) + 1,
+          action: `${dEvt.factionName} has dissolved into political irrelevance.`,
+        });
+      }
+    });
     if (game.voterModel?.factions) {
       dissolvedIds.forEach((id) => { delete game.voterModel.factions[id]; });
     }

@@ -3545,6 +3545,33 @@
   }
 };
 
+// [QA-BATCH2-FIX] B2-06: Seed lib_classical_liberals (350,000 voters) into FACTION_STATE_MATRIX conserving 155,000,000 exact state totals
+(function seedClassicalLiberalsInStateMatrix() {
+  const TARGET_TOTAL = 350000;
+  const preferredStates = new Set(['NH', 'CO', 'VA', 'AZ', 'NV', 'TX', 'FL']);
+  const stateKeys = Object.keys(FACTION_STATE_MATRIX);
+  const weights = stateKeys.map((stId) => {
+    const cent = Number(FACTION_STATE_MATRIX[stId]?.swg_true_centrists || 0);
+    return cent > 0 ? cent * (preferredStates.has(stId) ? 3.0 : 1.0) : 0;
+  });
+  const totalW = weights.reduce((a, b) => a + b, 0);
+  if (totalW <= 0) return;
+  let remaining = TARGET_TOTAL;
+  stateKeys.forEach((stId, idx) => {
+    if (remaining <= 0) return;
+    const row = FACTION_STATE_MATRIX[stId];
+    const avail = Number(row?.swg_true_centrists || 0);
+    if (avail <= 0) return;
+    const exact = idx === stateKeys.length - 1 ? remaining : Math.round(TARGET_TOTAL * (weights[idx] / totalW));
+    const slice = Math.min(avail, remaining, exact);
+    if (slice > 0) {
+      row.lib_classical_liberals = (row.lib_classical_liberals || 0) + slice;
+      row.swg_true_centrists = avail - slice;
+      remaining -= slice;
+    }
+  });
+})();
+
   const FACTION_NATIONAL_TOTALS = {
   "dem_liberal_establishment": 10616200,
   "dem_black_voters": 11029800,
@@ -3562,7 +3589,7 @@
   "gop_paleocons": 3083400,
   "gop_traditional_farmers": 2056400,
   "gop_market_country_club": 2062300,
-  "swg_true_centrists": 9006000,
+  "swg_true_centrists": 8656000,
   "swg_hard_hats": 6004000,
   "swg_podcast_bros": 6004000,
   "swg_country_club_centrists": 5503500,

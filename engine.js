@@ -1126,7 +1126,8 @@ function evaluateFactionFriction(game) {
   const aiCandidates = ['people', 'heritage', 'green', 'liberty', 'constitution', 'socialist']
     .filter((pid) => pid !== playerPartyId && !(updatedGame.dissolvedParties || []).includes(pid));
   for (const bf of (updatedGame.factions || [])) {
-    if (!bf || bf.partyId !== 'none') continue;
+    // [QA-BATCH2-FIX] B2-05: Recognize all unaffiliated/independent/none party IDs for AI coalition re-admission
+    if (!bf || !isUnaffiliatedPartyId(bf.partyId)) continue;
     if (bf.boltedYear && (curYr - Number(bf.boltedYear)) < 2) continue;
     let bestPid = null;
     let bestDist = 3.25;
@@ -1228,7 +1229,7 @@ function boltFaction(game, factionId) {
   const factions = game.factions || [];
   const f = factions.find((x) => x.id === factionId);
   if (!f) return game;
-  const sourcePartyId = (f.partyId && f.partyId !== 'none' && f.partyId !== 'independent') ? f.partyId : playerPartyId;
+  const sourcePartyId = !isUnaffiliatedPartyId(f.partyId) ? f.partyId : playerPartyId; // [QA-BATCH2-FIX] B2-05
 
   // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
   // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Partner Exit Shock (-18 Happiness / +20 Friction on caucus partners)
@@ -1417,8 +1418,8 @@ function synchronizePoliticianPartyWithFaction(game) {
     if (!factionId) return null;
     const fObj = (game.factions || []).find((f) => f.id === factionId) || catalog.find((f) => f.id === factionId);
     if (!fObj) return null;
-    // Check if faction is affiliated with a recognized party
-    if (fObj.partyId && fObj.partyId !== 'independent' && fObj.partyId !== 'unaffiliated' && fObj.partyId !== 'none') {
+    // Check if faction is affiliated with a recognized party [QA-BATCH2-FIX] B2-05
+    if (!isUnaffiliatedPartyId(fObj.partyId)) {
       if (game.player?.custom) {
         return fObj.partyId === 'custom' ? 'player' : fObj.partyId;
       }
@@ -2635,11 +2636,10 @@ function addVotersToModel(voterModel, stateId, voterCount, partyId) {
         ? remaining
         : Math.round(voterCount * (weights[idx] / totalWeight));
       remaining -= share;
+      // [QA-BATCH2-FIX] B2-01: Write strictly by canonical faction ID to avoid double-counting st.factions
       targetState.factions[f.id] = (targetState.factions[f.id] || 0) + share;
-      if (f.name) targetState.factions[f.name] = (targetState.factions[f.name] || 0) + share;
       if (voterModel.factions) {
         voterModel.factions[f.id] = (voterModel.factions[f.id] || 0) + share;
-        if (f.name) voterModel.factions[f.name] = (voterModel.factions[f.name] || 0) + share;
       }
     });
   }
@@ -3137,11 +3137,10 @@ function transferVotersInModel(voterModel, stateId, voterCount, partyId, options
     recipientFactions.forEach((f, idx) => {
       const share = idx === recipientFactions.length - 1 ? remCredit : Math.round(transferred * (weights[idx] / totalWeight));
       remCredit -= share;
+      // [QA-BATCH2-FIX] B2-01: Write strictly by canonical faction ID to avoid double-counting st.factions
       targetState.factions[f.id] = Number(targetState.factions[f.id] || 0) + share;
-      if (f.name) targetState.factions[f.name] = Number(targetState.factions[f.name] || 0) + share;
       if (voterModel.factions) {
         voterModel.factions[f.id] = Number(voterModel.factions[f.id] || 0) + share;
-        if (f.name) voterModel.factions[f.name] = Number(voterModel.factions[f.name] || 0) + share;
       }
     });
   } else {
@@ -4862,7 +4861,7 @@ function createGame(options = {}) {
       liberty: 'lib_true_libertarians',
       green: 'grn_eco_socialist_vanguard',
       constitution: 'con_christian_dominionists',
-      socialist: 'soc_democratic_socialists',
+      socialist: 'soc_socialists', // [QA-BATCH2-FIX] B2-07
     }, // [v0.18.4 LEADING-FACTION]
     pendingLeadingFactionChallenge: null, // [v0.18.4 LEADING-FACTION]
     stateElectoralSystems: buildDefaultStateElectoralSystems(),
@@ -5328,6 +5327,13 @@ function createGame(options = {}) {
       game.voterModel.affiliations.independent.sampleVoters = _indNat;
       game.voterModel.affiliations.independent.representedVoters = _indNat * _initMult;
     }
+    // [QA-BATCH2-FIX] B2-01 & B2-04: Normalize Turn-1 state faction sums to exact representedVoters and sync faction voters/tiers
+    if (window.PartyChairData?.normalizeStateFactionVoters) {
+      game.voterModel.states.forEach((st) => window.PartyChairData.normalizeStateFactionVoters(st));
+    }
+    if (getFactionCore()?.recalculateFactionStatusTiers) {
+      getFactionCore().recalculateFactionStatusTiers(game);
+    }
     if (game.voterModel.affiliations?.thirdParty?.byParty) {
       const _tpTot = Object.values(game.voterModel.affiliations.thirdParty.byParty).reduce((a, b) => a + Number(b || 0), 0);
       game.voterModel.affiliations.thirdParty.sampleVoters = _tpTot;
@@ -5591,6 +5597,11 @@ function syncPartySuperPacsForTiers(game, tiers) {
       }
     }
   });
+  // [QA-BATCH2-FIX] B2-08: Keep game.tier4SuperPacsSeeded synced with player seededSuperPacs state
+  const activePlayerKey = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  if (!(!game.player?.custom && ['people', 'heritage'].includes(activePlayerKey))) {
+    game.tier4SuperPacsSeeded = Boolean(game.seededSuperPacs && Array.isArray(game.seededSuperPacs[activePlayerKey]) && game.seededSuperPacs[activePlayerKey].length > 0);
+  }
 }
 
 function isFactionSuperPacAccessible(game, pacId, partyId = null) {
@@ -6559,26 +6570,28 @@ function calculatePartyFundraising(game, partyId = 'player', baseAmount = 10) {
 }
 
 // REQ-179: Tier 3 FEC Public Matching Funds & Automatic Ballot Retention
+// [QA-BATCH2-FIX] B2-13: Qualify Tier 2+ non-original-major parties or >=5% presidential threshold & credit treasury
 function computeFecMatchingFunds(game, partyId = 'player') {
   const tier = getPartyInstitutionalTier(game, partyId);
   const resolvedKey = (!partyId || partyId === 'player')
     ? (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people'))
     : partyId;
-  if (tier < 3) return { eligible: false, amount: 0, voteShare: 0 };
-  // Tier 3+ non-starting-major parties (or any party qualifying via >=5% Pres vote) receive matching funds
-  const lastPres = (game?.elections || []).slice().reverse().find((e) => e.type !== 'midterm' && e.nationalVote);
-  const share = Number(
-    (!partyId || partyId === 'player')
-      ? (lastPres?.nationalVote?.player ?? lastPres?.nationalVote?.[resolvedKey] ?? (tier >= 3 ? 5.0 : 0))
-      : (lastPres?.nationalVote?.[resolvedKey] ?? (tier >= 3 ? 5.0 : 0))
-  );
-  if (share < 5.0 && tier < 3) return { eligible: false, amount: 0, voteShare: share };
-  // Major starting parties already operate on full committee budgets; matching grant scales for ascending parties (Tiers 3-4, or newly promoted Tier 5)
   const isOriginalMajor = !game?.player?.custom && ['people', 'heritage'].includes(resolvedKey);
-  if (isOriginalMajor) return { eligible: false, amount: 0, voteShare: share };
-  const effectiveShare = Math.max(5.0, share);
-  const amount = round(clamp(effectiveShare * 1.8, 8.0, 45.0), 1);
-  return { eligible: true, amount, voteShare: round(effectiveShare, 2) };
+  if (isOriginalMajor) return { eligible: false, amount: 0, voteShare: 0 };
+
+  const lastPres = (game?.elections || []).slice().reverse().find((e) => e.type !== 'midterm' && e.nationalVote);
+  const pollMap = game?.lastNationalPoll || game?.nationalPolling || {};
+  const voteShareRaw = lastPres?.nationalVote
+    ? Number((!partyId || partyId === 'player') ? (lastPres.nationalVote.player ?? lastPres.nationalVote[resolvedKey] ?? 0) : (lastPres.nationalVote[resolvedKey] ?? 0))
+    : 0;
+  const pollShareRaw = Number((!partyId || partyId === 'player') ? (pollMap.player ?? pollMap[resolvedKey] ?? 0) : (pollMap[resolvedKey] ?? 0));
+  const share = Math.max(voteShareRaw, pollShareRaw);
+
+  if (tier < 2 && share < 5.0) return { eligible: false, amount: 0, voteShare: round(share, 2) };
+  const effectiveShare = Math.max(tier >= 3 ? 5.0 : 2.5, share);
+  const minGrant = tier >= 3 ? 8.0 : 4.5;
+  const amount = round(clamp(effectiveShare * 1.8, minGrant, 45.0), 1);
+  return { eligible: true, amount, voteShare: round(effectiveShare, 2), tier };
 }
 
 function applyAutomaticBallotRetention(game, electionOutcome = null) {
@@ -12521,9 +12534,24 @@ function startCampaignPhase(game) {
       }
     }
   });
+  // [QA-BATCH2-FIX] B2-13: Credit FEC public matching funds for qualifying Tier 2+ minor/custom parties on presidential cycles
+  const curCampYear = Number(game.year || 2028);
+  const pKeyCamp = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  let _campTreasury = _isPlayerMaj ? round(Number(game.treasury || 0) + MAJOR_POST_PRIMARY_GRANT, 1) : Number(game.treasury || 0);
+  let _campFecGrant = game.lastFecMatchingGrant || null;
+  if (curCampYear % 4 === 0 && Number(_campFecGrant?.year || 0) !== curCampYear) {
+    const _fecPre = computeFecMatchingFunds({ ...game, organizations: _boostedOrgs, ...(_boostedParties ? { parties: _boostedParties } : {}) }, 'player');
+    if (_fecPre.eligible && _fecPre.amount > 0) {
+      _campTreasury = round(_campTreasury + _fecPre.amount, 1);
+      _campFecGrant = { ..._fecPre, partyId: pKeyCamp, year: curCampYear };
+      if (_boostedOrgs[pKeyCamp]) _boostedOrgs[pKeyCamp] = { ..._boostedOrgs[pKeyCamp], treasury: round(Number(_boostedOrgs[pKeyCamp].treasury || 0) + _fecPre.amount, 1) };
+      if (_boostedParties?.[pKeyCamp]) _boostedParties[pKeyCamp] = { ..._boostedParties[pKeyCamp], treasury: round(Number(_boostedParties[pKeyCamp].treasury || 0) + _fecPre.amount, 1) };
+    }
+  }
   const _preFundGame = {
     ...game,
-    treasury: _isPlayerMaj ? round(Number(game.treasury || 0) + MAJOR_POST_PRIMARY_GRANT, 1) : game.treasury,
+    treasury: _campTreasury,
+    lastFecMatchingGrant: _campFecGrant,
     organizations: _boostedOrgs,
     ...(_boostedParties ? { parties: _boostedParties } : {}),
   };
@@ -12972,9 +13000,12 @@ function replenishVacantSittingMembers(game, nextYear) {
     }
   });
 
+  // [QA-BATCH2-FIX] B2-19: Read modelDistricts (435 seats) from object-shaped currentHouseMap
   const _activeHouseMapDists = Array.isArray(game.currentHouseMap)
     ? game.currentHouseMap
-    : (Array.isArray(game.currentHouseMap?.districts) ? game.currentHouseMap.districts : []);
+    : (Array.isArray(game.currentHouseMap?.modelDistricts)
+      ? game.currentHouseMap.modelDistricts
+      : (Array.isArray(game.currentHouseMap?.districts) ? game.currentHouseMap.districts : []));
   const houseDists = _activeHouseMapDists.length >= 435
     ? _activeHouseMapDists
     : (Array.isArray(data.VERSION_01_HOUSE_DISTRICTS) ? data.VERSION_01_HOUSE_DISTRICTS : []);
@@ -14491,7 +14522,56 @@ function computeFundingPollingLift(dollarsMillions) {
   return 8.0; // Clamped at +8.0% for >= $500M
 }
 
+function isValidActiveRaceKey(game, raceKey) {
+  if (typeof raceKey !== 'string') return false;
+  const trimmed = raceKey.trim();
+  if (!trimmed) return false;
+  if (game?.candidateFunding?.[trimmed] || game?.generalCampaigns?.[trimmed] || game?.districtCampaigns?.[trimmed]) {
+    return true;
+  }
+  const colonIdx = trimmed.indexOf(':');
+  if (colonIdx <= 0) return false;
+  const prefix = trimmed.slice(0, colonIdx).toLowerCase();
+  const target = trimmed.slice(colonIdx + 1);
+  if (!target) return false;
+
+  if (prefix === 'senate') {
+    const activeSen = game?.activeSenateRaces || [];
+    return activeSen.length > 0
+      ? activeSen.some((r) => (r.state || r.stateId) === target)
+      : STATES.some((s) => s.id === target && s.id !== 'DC');
+  }
+  if (prefix === 'governor' || prefix === 'gov') {
+    const activeGov = game?.activeGubernatorialStates || [];
+    return activeGov.length > 0
+      ? activeGov.some((g) => (typeof g === 'string' ? g : (g.stateId || g.state || g.id)) === target)
+      : STATES.some((s) => s.id === target && s.id !== 'DC');
+  }
+  if (prefix === 'house') {
+    const dists = legislativeDistricts(game);
+    return dists.some((d) => d.id === target || d.districtId === target);
+  }
+  if (prefix === 'pres' || prefix === 'president') {
+    return target === 'national' || STATES.some((s) => s.id === target);
+  }
+  if (prefix === 'statewide') {
+    const registry = window.PartyChairData?.STATEWIDE_OFFICES_REGISTRY || [];
+    return registry.some((o) => o.id === target) || STATES.some((s) => s.id === target);
+  }
+  return false;
+}
+
 function allocateCandidateFunds(game, raceKey, amount = null) {
+  // [QA-BATCH2-FIX] B2-09 & B2-10: Guard null/empty/invalid raceKey values and block during organizing phase
+  if (!game || typeof raceKey !== 'string' || !raceKey.trim()) {
+    return { ...game, lastNote: 'Invalid race specified for candidate funding allocation.' };
+  }
+  if (game.phase === 'organizing' || (game.phase && !['campaign', 'general-campaign'].includes(game.phase))) {
+    return { ...game, lastNote: 'Candidate funding is only available during an active general campaign phase.' };
+  }
+  if (!isValidActiveRaceKey(game, raceKey)) {
+    return { ...game, lastNote: `Invalid or inactive race "${raceKey}"; no candidate funds deducted.` };
+  }
   if (amount !== null && amount !== undefined && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
     return { ...game, lastNote: 'Funding allocation must be greater than $0M.' };
   }
@@ -15478,6 +15558,10 @@ function renormalizeVoterModelHareNiemeyer(voterModel, targetNationalTotal = 155
         }
       }
     }
+    // [QA-BATCH2-FIX] B2-01: Enforce exact state-level faction voter conservation matching state representedVoters
+    if (window.PartyChairData?.normalizeStateFactionVoters) {
+      window.PartyChairData.normalizeStateFactionVoters(e.st);
+    }
   });
 
   voterModel.representedVoters = targetNationalTotal;
@@ -15829,7 +15913,8 @@ function startNextCycleInternal(game) {
     ...(game.rivals || []).map((r) => ({ id: r.id, econ: clamp(5.5 + Number(r.economic || 0) * 4.5, 1, 10), soc: clamp(5.5 + Number(r.social || 0) * 4.5, 1, 10) })),
   ];
   (game.factions || []).forEach((f) => {
-    if (!f || f.partyId !== 'none') return;
+    // [QA-BATCH2-FIX] B2-05: Use shared isUnaffiliatedPartyId helper
+    if (!f || !isUnaffiliatedPartyId(f.partyId)) return;
     f.activelyCourting = true;
     const fEcon = Number(f.sliders?.economic ?? 5);
     const fSoc = Number(f.sliders?.social ?? 5);
@@ -15987,7 +16072,24 @@ function startNextCycleInternal(game) {
     pendingScandalCrisis: null,
     partyTiers: nextPartyTiers,
     mediaBlackoutBroken: Boolean(game.mediaBlackoutBroken) || nextPlayerTier >= 4,
-    lastFecMatchingGrant: fecGrant.eligible ? { ...fecGrant, year: nextYear } : game.lastFecMatchingGrant,
+    // [QA-BATCH2-FIX] B2-13: Record partyId and sync FEC matching grant into organizations/parties treasury ledgers
+    lastFecMatchingGrant: fecGrant.eligible ? { ...fecGrant, partyId: playerPartyId, year: nextYear } : game.lastFecMatchingGrant,
+    ...(fecBonusAmount > 0 && game.organizations?.[playerPartyId]
+      ? {
+          organizations: {
+            ...game.organizations,
+            [playerPartyId]: { ...game.organizations[playerPartyId], treasury: rolledTreasury },
+          },
+        }
+      : {}),
+    ...(fecBonusAmount > 0 && game.parties?.[playerPartyId]
+      ? {
+          parties: {
+            ...game.parties,
+            [playerPartyId]: { ...game.parties[playerPartyId], treasury: rolledTreasury },
+          },
+        }
+      : {}),
     stateElectoralSystems: reformRoll.stateElectoralSystems,
     pendingElectoralReformEvent: reformRoll.triggered ? reformRoll.reformEvent : null,
     viabilityBreakthroughs: game.viabilityBreakthroughs || {},
@@ -16291,13 +16393,33 @@ function startNextCycleInternal(game) {
   let caucusDigest = null;
 
   if (dflCycle && typeof dflCycle.runDynamicFactionCycle === 'function') {
-    lifecycleDigest = dflCycle.runDynamicFactionCycle(finalCycle);
+    // [QA-BATCH2-FIX] B2-01 & B2-06: Enforce strict 155M conservation across organic faction shifts
+    lifecycleDigest = dflCycle.runDynamicFactionCycle(finalCycle, { strictConservation: true });
+  }
+  const fcCycle = getFactionCore();
+  if (fcCycle && typeof fcCycle.evaluateDynamicFactionEmergence === 'function' && (!lifecycleDigest?.births?.events || lifecycleDigest.births.events.length === 0)) {
+    const fcEmerg = fcCycle.evaluateDynamicFactionEmergence(finalCycle);
+    if (fcEmerg?.emerged?.length > 0 && lifecycleDigest?.births) {
+      lifecycleDigest.births.events.push(...fcEmerg.emerged);
+    }
   }
   if (ibsCycle && typeof ibsCycle.evaluateIdentityBlocEvents === 'function') {
     identityDigest = ibsCycle.evaluateIdentityBlocEvents(finalCycle);
   }
   if (fcsCycle && typeof fcsCycle.advanceCaucusesCycle === 'function') {
     caucusDigest = fcsCycle.advanceCaucusesCycle(finalCycle);
+  }
+  // [QA-BATCH2-FIX] B2-03 & B2-01 & B2-04: Prune <25k ghost factions, normalize state factions to representedVoters, and sync faction status/sizeTier
+  if (fcCycle && typeof fcCycle.pruneExtinctFactions === 'function') {
+    fcCycle.pruneExtinctFactions(finalCycle);
+  }
+  if (finalCycle.voterModel && Array.isArray(finalCycle.voterModel.states)) {
+    if (window.PartyChairData?.normalizeStateFactionVoters) {
+      finalCycle.voterModel.states.forEach((st) => window.PartyChairData.normalizeStateFactionVoters(st));
+    }
+  }
+  if (fcCycle && typeof fcCycle.recalculateFactionStatusTiers === 'function') {
+    fcCycle.recalculateFactionStatusTiers(finalCycle);
   }
 
   const combinedEvents = [];
@@ -17007,10 +17129,12 @@ function resolveVersion01GeneralElection(game) {
   // Run redistricting immediately post-election before advancing the calendar year.
   if (game.year % 10 === 0) {
     finalElectionState = runDecennialRedistricting(finalElectionState, game.year);
-    // Bug #4: Prune obsolete pre-redistricting House seats & immediately replenish new districts 1:1 with representatives
+    // [QA-BATCH2-FIX] B2-19: Read modelDistricts (435 seats) before fallback to districts
     const _redistrHouseList = Array.isArray(finalElectionState.currentHouseMap)
       ? finalElectionState.currentHouseMap
-      : (Array.isArray(finalElectionState.currentHouseMap?.districts) ? finalElectionState.currentHouseMap.districts : []);
+      : (Array.isArray(finalElectionState.currentHouseMap?.modelDistricts)
+        ? finalElectionState.currentHouseMap.modelDistricts
+        : (Array.isArray(finalElectionState.currentHouseMap?.districts) ? finalElectionState.currentHouseMap.districts : []));
     if (_redistrHouseList.length === 435) {
       const validDists = new Set(_redistrHouseList.map((d) => d.id));
       finalElectionState = {
@@ -17018,6 +17142,28 @@ function resolveVersion01GeneralElection(game) {
         sittingMembers: (finalElectionState.sittingMembers || []).filter((m) => !m || m.office !== 'house' || validDists.has(m.districtId || m.district)),
       };
       finalElectionState = replenishVacantSittingMembers(finalElectionState, game.year);
+      // [QA-BATCH2-FIX] B2-19: Synchronize game.representatives 1:1 with post-redistricting 435 districts so synchronizePoliticianPartyWithFaction preserves new districts
+      const oldRepsByDist = new Map((finalElectionState.representatives || []).map((r) => [r && (r.districtId || r.id), r]));
+      const sitHouseByDist = new Map((finalElectionState.sittingMembers || []).filter((m) => m && m.office === 'house').map((m) => [m.districtId || m.district, m]));
+      finalElectionState = {
+        ...finalElectionState,
+        representatives: _redistrHouseList.map((d) => {
+          const prevRep = oldRepsByDist.get(d.id);
+          const sm = sitHouseByDist.get(d.id);
+          const pid = sm?.partyId || sm?.party || prevRep?.partyId || prevRep?.party || (Number(d.lean || 0) >= 0 ? 'people' : 'heritage');
+          return {
+            ...(prevRep || {}),
+            id: d.id,
+            districtId: d.id,
+            stateId: d.stateId,
+            district: d.district || d.districtNumber,
+            lean: d.lean ?? prevRep?.lean ?? 0,
+            party: pid,
+            partyId: pid,
+            incumbentName: sm?.name || prevRep?.incumbentName || 'Representative',
+          };
+        }),
+      };
     }
   }
 
@@ -18782,27 +18928,32 @@ function takeActionInternal(game, actionId, payload = {}) {
     updated.priorities.main = main;
     return updated;
   }
-  if (actionId === 'lock-main-priorities' || actionId === 'lock-priorities') {
+  // [QA-BATCH2-FIX] B2-14: Handle lock-focus-priorities cleanly alongside lock-main-priorities / lock-priorities
+  if (actionId === 'lock-main-priorities' || actionId === 'lock-priorities' || actionId === 'lock-focus-priorities') {
     let updated = { ...game };
     if (!updated.priorities) updated.priorities = {};
-    if (updated.priorities.handLocked) return updated;
+    if (updated.priorities.handLocked && updated.focusesLocked) return updated;
     const p = payload?.payload ? payload.payload : payload;
-    const selected = Array.isArray(p.selectedQuestIds) ? p.selectedQuestIds : (updated.priorities.main || []);
+    const selected = Array.isArray(p?.selectedQuestIds) ? p.selectedQuestIds : (updated.priorities.main || []);
     const offered = new Set(updated.priorities.offeredQuestIds || []);
     const validSelected = selected.filter((id) => offered.has(id)).slice(0, 3);
 
-    validSelected.forEach((qId) => {
-      const tracking = updated.customPriorityTracking?.[qId] || {};
-      const tScope = p.targetScope || tracking.targetScope;
-      const tId = p.targetId || tracking.targetId;
-      updated = applyQuestAcceptanceBonus(updated, qId, tScope, tId);
-    });
+    if (!updated.priorities.handLocked) {
+      validSelected.forEach((qId) => {
+        const tracking = updated.customPriorityTracking?.[qId] || {};
+        const tScope = p?.targetScope || tracking.targetScope;
+        const tId = p?.targetId || tracking.targetId;
+        updated = applyQuestAcceptanceBonus(updated, qId, tScope, tId);
+      });
+    }
 
     updated.priorities.main = [...validSelected];
     updated.priorities.lockedMainPriorities = [...validSelected];
     updated.priorities.handLocked = true;
     updated.prioritiesLocked = true;
+    updated.focusesLocked = true;
     updated.priorities.lastCycleOffered = [...(updated.priorities.offeredQuestIds || [])];
+    updated.lastNote = `Locked focuses and ${validSelected.length} main priorities for the ${updated.year || 2028} cycle.`;
     return updated;
   }
   // Version 0.16.2 Cluster A: Statehouse Farm Team Actions (REQ-224 - REQ-226)
@@ -19018,46 +19169,73 @@ function takeActionInternal(game, actionId, payload = {}) {
   if (actionId === 'finish-presidential-primary') {
     const app = game.activePresidentialPrimary;
     const year = Number(app?.year || game.year || 2028);
-    const partyId = app?.partyId || game.player?.baseTemplateId || 'people';
-    const nomineeId = app?.nomineeId || game.nomineeId || '';
-    const nomineeName = app?.nomineeName || game.presidentialTicket?.[partyId] || '';
+    const partyId = app?.partyId || (game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people'));
+    const existingCandidates = Array.isArray(app?.candidates) && app.candidates.length ? app.candidates.slice() : generatePrimaryField(game, partyId);
+    const sortedCands = existingCandidates.slice().sort((a, b) => (b.delegates || 0) - (a.delegates || 0) || (b.votes || 0) - (a.votes || 0));
+    const nomineeObj = sortedCands.find((c) => c.id === app?.nomineeId) || sortedCands[0] || null;
+    const nomineeId = app?.nomineeId || game.nomineeId || nomineeObj?.id || `nom-${partyId}-${year}`;
+    const nomineeName = app?.nomineeName || game.presidentialTicket?.[partyId] || nomineeObj?.name || `${game.player?.name || partyId} Nominee`;
     const clinchTarget = app?.clinchTarget || 1968;
     const brokered = Boolean(app?.brokered);
-    const candidates = Array.isArray(app?.candidates) ? app.candidates.slice() : [];
 
     const summaryRecord = {
       year,
       partyId,
       nomineeId,
       nomineeName,
+      nomineeFactionId: nomineeObj?.factionId || null,
       clinchTarget,
       brokered,
-      candidates,
+      candidates: sortedCands,
     };
+
+    // [QA-BATCH2-FIX] B2-15: Record player's own party (and AI rivals if absent) into game.simulatedPrimaries[year]
+    const simForYear = { ...(game.simulatedPrimaries?.[year] || {}) };
+    const syncedTickets = { ...(game.presidentialTicket || {}), [partyId]: nomineeName };
+    if (year % 4 === 0) {
+      ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'].forEach((rid) => {
+        if (rid !== partyId && !simForYear[rid]) {
+          simForYear[rid] = simulateFullPrimaryForParty(game, rid);
+          if (simForYear[rid]?.nomineeName && !syncedTickets[rid]) {
+            syncedTickets[rid] = simForYear[rid].nomineeName;
+          }
+        }
+      });
+    }
+    simForYear[partyId] = {
+      ...summaryRecord,
+      stateResults: app?.stateResults || {},
+      neutralityBonusAwarded: Boolean(app?.neutralityBonusAwarded),
+    };
+    const nextSimulatedPrimaries = { ...(game.simulatedPrimaries || {}), [year]: simForYear };
 
     const existingHistory = Array.isArray(game.primaryHistory) ? game.primaryHistory.filter((h) => !(h.year === year && h.partyId === partyId)) : [];
     const nextPrimaryHistory = [...existingHistory, summaryRecord].slice(-20);
 
     const prepped = {
       ...game,
+      nomineeId,
+      presidentialTicket: syncedTickets,
+      simulatedPrimaries: nextSimulatedPrimaries,
       primaryHistory: nextPrimaryHistory,
       phase: 'organizing',
       primariesResolved: true,
       prioritiesLocked: true,
-      priorities: { ...(game.priorities || {}), locked: true },
+      priorities: { ...(game.priorities || {}), locked: true, handLocked: true },
       activePresidentialPrimary: null,
     };
     const started = startCampaignPhase(prepped);
     if (started.phase !== 'campaign') {
       return {
         ...started,
+        simulatedPrimaries: nextSimulatedPrimaries,
         primaryHistory: nextPrimaryHistory,
         phase: 'campaign',
         activePresidentialPrimary: null,
         campaign: started.campaign || { active: true, week: 1, maxWeeks: 5, weeklyActionsLeft: 3 },
       };
     }
-    return { ...started, primaryHistory: nextPrimaryHistory, activePresidentialPrimary: null };
+    return { ...started, simulatedPrimaries: nextSimulatedPrimaries, primaryHistory: nextPrimaryHistory, activePresidentialPrimary: null };
   }
 
   if (actionId === 'contest-statewide-office') {
@@ -20626,7 +20804,8 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   // Priorities System Rework: 3 Main Priorities & 5 Additional Priorities
   if (actionId === 'select-main-priority' || actionId === 'set-main-priority') {
-    if (game.prioritiesLocked) {
+    // [QA-BATCH2-FIX] B2-14: Check both prioritiesLocked and priorities.handLocked
+    if (game.prioritiesLocked || game.priorities?.handLocked) {
       return {
         ...game,
         lastNote: `Main Priorities are permanently locked for the ${game.year || 2028} cycle.`,
@@ -20753,7 +20932,7 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
 
   if (actionId === 'set-additional-priority') {
-    if (game.focusesLocked) return game;
+    if (game.focusesLocked || game.priorities?.handLocked) return game;
     const maxFocusSlots = getMaxFocusSlots(game, 'player');
 
     const slotIndex = Number(payload.slotIndex ?? 0);
@@ -20780,7 +20959,7 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
 
   if (actionId === 'set-additional-priority-type') {
-    if (game.focusesLocked) return game;
+    if (game.focusesLocked || game.priorities?.handLocked) return game;
     const maxFocusSlots = getMaxFocusSlots(game, 'player');
     const slotIndex = Number(payload.slotIndex ?? 0);
     if (slotIndex < 0 || slotIndex >= maxFocusSlots) return game;
@@ -20804,7 +20983,7 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
 
   if (actionId === 'clear-additional-priority') {
-    if (game.focusesLocked) return game;
+    if (game.focusesLocked || game.priorities?.handLocked) return game;
     const maxFocusSlots = getMaxFocusSlots(game, 'player');
 
     const slotIndex = Number(payload.slotIndex ?? 0);
@@ -20826,7 +21005,7 @@ function takeActionInternal(game, actionId, payload = {}) {
 
   // REQ-155: Lock In Party Focuses Action & Immediate Bonus Grant
   if (actionId === 'lock-party-focuses') {
-    if (game.focusesLocked) return game;
+    if (game.focusesLocked || game.priorities?.handLocked) return game;
     const maxFocusSlots = getMaxFocusSlots(game, 'player');
 
     let updated = { ...game };
@@ -21254,6 +21433,13 @@ function takeActionInternal(game, actionId, payload = {}) {
       environmentCounterActionsThisTurn: (game.environmentCounterActionsThisTurn || 0) + 1,
       lastNote: `Deployed a statewide field campaign in ${state.name}.`,
       yearLog: [...(game.yearLog || []), { year: game.year, turn: game.chairTurn, action: `General election campaign in ${state.name}.` }].slice(-80),
+    };
+  }
+  // [QA-BATCH2-FIX] B2-10: Block organizing-only economic actions outside the organizing phase with zero deductions
+  if (['fundraise', 'chapter', 'summit'].includes(actionId) && game.phase && game.phase !== 'organizing') {
+    return {
+      ...game,
+      lastNote: `Action "${actionId}" is only available during the organizing phase (current phase: ${game.phase}).`,
     };
   }
   if (game.phase === 'organizing' && (game.actionsLeft <= 0 || typeof game.actionsLeft !== 'number') && (game.organizingActionsRemaining > 0)) {
@@ -22234,16 +22420,20 @@ function normalizeGame(parsed) {
       ...defaultConfidence,
       ...(parsed.factionConfidence || {}),
     },
-    // [v0.18.4 LEADING-FACTION]
-    leadingFactionByParty: {
-      people: 'dem_liberal_establishment',
-      heritage: 'gop_maga',
-      liberty: 'lib_true_libertarians',
-      green: 'grn_eco_socialist_vanguard',
-      constitution: 'con_christian_dominionists',
-      socialist: 'soc_democratic_socialists',
-      ...((parsed.leadingFactionByParty && typeof parsed.leadingFactionByParty === 'object') ? parsed.leadingFactionByParty : {}),
-    },
+    // [v0.18.4 LEADING-FACTION] [QA-BATCH2-FIX] B2-07
+    leadingFactionByParty: (() => {
+      const lb = {
+        people: 'dem_liberal_establishment',
+        heritage: 'gop_maga',
+        liberty: 'lib_true_libertarians',
+        green: 'grn_eco_socialist_vanguard',
+        constitution: 'con_christian_dominionists',
+        socialist: 'soc_socialists',
+        ...((parsed.leadingFactionByParty && typeof parsed.leadingFactionByParty === 'object') ? parsed.leadingFactionByParty : {}),
+      };
+      if (lb.socialist === 'soc_democratic_socialists') lb.socialist = 'soc_socialists';
+      return lb;
+    })(),
     pendingLeadingFactionChallenge: parsed.pendingLeadingFactionChallenge || null,
     factionDesignations: parsed.factionDesignations || evaluateFactionTiers(parsed),
     factions: Array.isArray(parsed.factions) && parsed.factions.length

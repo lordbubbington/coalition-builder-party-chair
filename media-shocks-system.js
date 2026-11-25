@@ -779,6 +779,10 @@
     const p = payload?.payload ? payload.payload : (payload || {});
 
     if (actionId === 'invest-media-channel') {
+      // [QA-BATCH2-FIX] B2-10: Block organizing-only invest-media-channel outside organizing phase
+      if (game.phase && game.phase !== 'organizing') {
+        return { ...game, lastNote: 'Media channel investments are only available during the organizing phase.' };
+      }
       const cost = 6;
       const channel = CHANNEL_IDS.includes(p.channel) ? p.channel : 'digital';
       const acts = consumeOrganizingAction(game);

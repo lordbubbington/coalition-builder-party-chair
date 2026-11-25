@@ -668,7 +668,7 @@
     socialist: [
       { id: 'vp_soc_ca', name: 'Gloria La Riva', stateId: 'CA', office: 'party_leader', fame: 44, quality: 6, factionId: 'soc_anti_imperialists', traits: ['Union Stalwart', 'Doctrinal Purist', 'Established Politician'] },
       { id: 'vp_soc_ny', name: 'Claudia De la Cruz', stateId: 'NY', office: 'party_leader', fame: 46, quality: 7, factionId: 'soc_militant_labor', traits: ['Grassroots Organizer', 'Populist Firebrand', 'Rising Star'] },
-      { id: 'vp_soc_nj', name: 'Cornel West', stateId: 'NJ', office: 'party_leader', fame: 62, quality: 7, factionId: 'soc_democratic_socialists', traits: ['Oratorical Phenom', 'Academic Theorist', 'Floor Speech Maverick'] },
+      { id: 'vp_soc_nj', name: 'Cornel West', stateId: 'NJ', office: 'party_leader', fame: 62, quality: 7, factionId: 'soc_socialists', traits: ['Oratorical Phenom', 'Academic Theorist', 'Floor Speech Maverick'] }, // [QA-BATCH2-FIX] B2-07
       { id: 'vp_soc_il', name: 'Karina Garcia', stateId: 'IL', office: 'party_leader', fame: 40, quality: 6, factionId: 'soc_militant_labor', traits: ['Grassroots Organizer', 'Digital Native'] },
     ],
   };

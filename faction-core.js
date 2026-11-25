@@ -159,7 +159,8 @@
     const aiCandidates = ['people', 'heritage', 'green', 'liberty', 'constitution', 'socialist']
       .filter((pid) => pid !== playerPartyId && !(updatedGame.dissolvedParties || []).includes(pid));
     for (const bf of (updatedGame.factions || [])) {
-      if (!bf || bf.partyId !== 'none') continue;
+      // [QA-BATCH2-FIX] B2-05: Recognize all unaffiliated/independent/none party IDs for AI coalition re-admission
+      if (!bf || !isUnaffiliatedPartyId(bf.partyId)) continue;
       if (bf.boltedYear && (curYr - Number(bf.boltedYear)) < 2) continue;
       let bestPid = null;
       let bestDist = 3.25;
@@ -221,7 +222,7 @@
     const factions = game.factions || [];
     const f = factions.find((x) => x.id === factionId);
     if (!f) return game;
-    const sourcePartyId = (f.partyId && f.partyId !== 'none' && f.partyId !== 'independent') ? f.partyId : playerPartyId;
+    const sourcePartyId = !isUnaffiliatedPartyId(f.partyId) ? f.partyId : playerPartyId; // [QA-BATCH2-FIX] B2-05
 
     // 1. Status update: shift to Unaffiliated / Independent (REC-02 + REC-12)
     // v0.18.8 CAUCUS & DYNAMIC FACTION HOOK: Partner Exit Shock (-18 Happiness / +20 Friction on caucus partners)
@@ -439,7 +440,7 @@
     }
     const curH = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 50);
     const courtshipScore = Number(game.factionCourtship?.[f.id]?.[playerPartyId] || 0);
-    if (f.partyId !== 'none' && curH > 30 && courtshipScore < 15) {
+    if (!isUnaffiliatedPartyId(f.partyId) && curH > 30 && courtshipScore < 15) { // [QA-BATCH2-FIX] B2-05
       return { eligible: false, reason: 'The faction is satisfied with its current independent course (Happiness > 30) and refuses merger talks. Court them first to build goodwill.' };
     }
     // Bug #22: Hard ideological-distance guard on Coalition Summits
@@ -797,6 +798,226 @@
     return signedState;
   }
 
+  // [QA-BATCH2-FIX] B2-04: Dynamically recalculate faction status & sizeTier from live conserved voters
+  function recalculateFactionStatusTiers(game) {
+    if (!game || !Array.isArray(game.factions)) return game;
+    const vmStates = Array.isArray(game.voterModel?.states) ? game.voterModel.states : null;
+    const stateTotals = {};
+    if (vmStates) {
+      vmStates.forEach((st) => {
+        if (!st?.factions) return;
+        Object.entries(st.factions).forEach(([fid, v]) => {
+          stateTotals[fid] = (stateTotals[fid] || 0) + Math.max(0, Math.round(Number(v || 0)));
+        });
+      });
+    }
+    if (game.voterModel) {
+      game.voterModel.factions = vmStates ? stateTotals : (game.voterModel.factions || {});
+    }
+    game.factions.forEach((f) => {
+      if (!f) return;
+      const liveVoters = vmStates
+        ? Math.max(0, Number(stateTotals[f.id] || 0))
+        : Math.max(0, Math.round(Number(game.voterModel?.factions?.[f.id] ?? f.voters ?? f.targetVoters ?? 0)));
+      f.voters = liveVoters;
+      f.nationalVoters = liveVoters;
+      f.targetVoters = liveVoters;
+      const sizeTier = liveVoters >= 12000000 ? 'major' : (liveVoters >= 2000000 ? 'minor' : 'fringe');
+      f.sizeTier = sizeTier;
+      const isLead = Boolean(f.id === game.leadingFactionByParty?.[f.partyId] || f.isLeading);
+      f.status = isLead ? 'leading' : sizeTier;
+    });
+    return game;
+  }
+
+  // [QA-BATCH2-FIX] B2-03: Dissolve non-protected <25k / 0-voter ghost factions after 2 consecutive low cycles
+  function pruneExtinctFactions(game) {
+    if (!game || !Array.isArray(game.factions)) return { game, dissolved: [] };
+    const protectedTypes = new Set(['racial', 'identity', 'religious']);
+    const dissolved = [];
+    const curYear = Number(game.year || 2028);
+    if (!Array.isArray(game.dissolvedFactions)) game.dissolvedFactions = [];
+
+    const vmStates = Array.isArray(game.voterModel?.states) ? game.voterModel.states : null;
+    const stateTotals = {};
+    if (vmStates) {
+      vmStates.forEach((st) => {
+        if (!st?.factions) return;
+        Object.entries(st.factions).forEach(([fid, cnt]) => {
+          stateTotals[fid] = (stateTotals[fid] || 0) + Math.max(0, Math.round(Number(cnt || 0)));
+        });
+      });
+    }
+
+    const remaining = [];
+    const toRemoveIds = new Set();
+    game.factions.forEach((f) => {
+      if (!f) return;
+      const voters = vmStates
+        ? Number(stateTotals[f.id] || 0)
+        : Number(game.voterModel?.factions?.[f.id] ?? f.voters ?? f.targetVoters ?? 0);
+      const isProtected = Boolean(
+        f.isExtremist
+        || f.extremist
+        || f.isIdentityBloc
+        || f.protectedIdentityBloc
+        || protectedTypes.has(String(f.type || '').toLowerCase())
+      );
+      if (isProtected) {
+        f.lowVoterCycles = 0;
+        remaining.push(f);
+        return;
+      }
+      if (voters < 25000) {
+        f.lowVoterCycles = Number(f.lowVoterCycles || 0) + 1;
+        if (f.lowVoterCycles >= 2) {
+          toRemoveIds.add(f.id);
+          dissolved.push({ id: f.id, name: f.name, partyId: f.partyId, voters, year: curYear, reason: 'below_25k_extinct' });
+          return;
+        }
+      } else {
+        f.lowVoterCycles = 0;
+      }
+      remaining.push(f);
+    });
+
+    if (dissolved.length > 0) {
+      game.factions = remaining;
+      dissolved.forEach((d) => {
+        game.dissolvedFactions.push(d);
+        const neighbor = remaining
+          .filter((r) => r && r.partyId === d.partyId)
+          .sort((a, b) => Number(b.voters || b.targetVoters || 0) - Number(a.voters || a.targetVoters || 0))[0]
+          || remaining.find((r) => r && !protectedTypes.has(String(r.type || '').toLowerCase()));
+        if (vmStates) {
+          vmStates.forEach((st) => {
+            if (!st?.factions) return;
+            const residual = Number(st.factions[d.id] || 0);
+            if (residual > 0 && neighbor) {
+              st.factions[neighbor.id] = (st.factions[neighbor.id] || 0) + residual;
+            }
+            delete st.factions[d.id];
+          });
+        }
+        if (game.voterModel?.factions) delete game.voterModel.factions[d.id];
+        if (game.factionHappiness) delete game.factionHappiness[d.id];
+        if (game.factionStandings) delete game.factionStandings[d.id];
+        if (game.leadingFactionByParty && game.leadingFactionByParty[d.partyId] === d.id) {
+          const nextLead = remaining
+            .filter((r) => r && r.partyId === d.partyId)
+            .sort((a, b) => Number(b.voters || b.targetVoters || 0) - Number(a.voters || a.targetVoters || 0))[0];
+          if (nextLead) game.leadingFactionByParty[d.partyId] = nextLead.id;
+          else delete game.leadingFactionByParty[d.partyId];
+        }
+        const roleKey = `faction_${d.id}`;
+        if (game.leadershipRoles && typeof game.leadershipRoles === 'object') {
+          delete game.leadershipRoles[roleKey];
+          Object.values(game.leadershipRoles).forEach((sub) => {
+            if (sub && typeof sub === 'object' && !Array.isArray(sub)) delete sub[roleKey];
+          });
+        }
+        if (Array.isArray(game.yearLog)) {
+          game.yearLog.push({
+            year: curYear,
+            turn: (game.chairTurn || 0) + 1,
+            action: `${d.name} has dissolved into political irrelevance.`,
+          });
+        }
+      });
+    }
+    return { game, dissolved };
+  }
+
+  // [QA-BATCH2-FIX] B2-02: Organic inter-cycle faction emergence & splinter generator with voter conservation
+  function evaluateDynamicFactionEmergence(game, options = {}) {
+    if (!game || !Array.isArray(game.factions)) return { game, emerged: [] };
+    const maxFactions = Number(options.maxActiveFactions ?? 45);
+    const cooldownCycles = Number(options.cooldownCycles ?? 4);
+    const curYear = Number(game.year || 2028);
+    const lastYear = Number(game.lastOrganicEmergenceYear || 0);
+    if (game.factions.length >= maxFactions) return { game, emerged: [] };
+    if (!options.force && lastYear > 0 && (curYear - lastYear) < cooldownCycles * 2) {
+      return { game, emerged: [] };
+    }
+
+    const protectedTypes = new Set(['racial', 'identity', 'religious']);
+    const partyTotals = {};
+    game.factions.forEach((f) => {
+      if (!f || isUnaffiliatedPartyId(f.partyId)) return;
+      partyTotals[f.partyId] = (partyTotals[f.partyId] || 0) + Number(f.voters || f.targetVoters || 0);
+    });
+
+    const vmStates = Array.isArray(game.voterModel?.states) ? game.voterModel.states : null;
+    const emerged = [];
+
+    // Trigger A: Large unhappy/drifting faction (>= 18M voters OR >= 25% of major party) splinters 20-30%
+    const candidateParent = game.factions.find((f) => {
+      if (!f || isUnaffiliatedPartyId(f.partyId) || protectedTypes.has(String(f.type || '').toLowerCase())) return false;
+      const fv = Number(f.voters || f.targetVoters || game.voterModel?.factions?.[f.id] || 0);
+      const pShare = partyTotals[f.partyId] > 0 ? fv / partyTotals[f.partyId] : 0;
+      const isLarge = fv >= 18000000 || (['people', 'heritage'].includes(f.partyId) && pShare >= 0.25 && fv >= 4000000);
+      const hap = Number(game.factionHappiness?.[f.id] ?? f.happiness ?? 60);
+      const fric = Number(f.frictionIndex || 0);
+      return isLarge && (hap < 35 || fric >= 65);
+    });
+
+    if (candidateParent) {
+      const parentVoters = Number(candidateParent.voters || candidateParent.targetVoters || game.voterModel?.factions?.[candidateParent.id] || 0);
+      const splitShare = 0.25;
+      const childVoters = Math.round(parentVoters * splitShare);
+      if (childVoters >= 350000) {
+        const seq = (game.factions.length + 1);
+        const childId = `org_splinter_${candidateParent.partyId}_${curYear}_${seq}`;
+        const childName = `${candidateParent.name.replace(/^The\s+/i, '')} Dissidents (${curYear})`;
+        const baseSliders = candidateParent.sliders || { social: 5, economic: 5, governance: 5 };
+        const child = {
+          id: childId,
+          name: childName,
+          partyId: candidateParent.partyId,
+          type: 'ideological',
+          status: childVoters >= 12000000 ? 'major' : (childVoters >= 2000000 ? 'minor' : 'fringe'),
+          sizeTier: childVoters >= 12000000 ? 'major' : (childVoters >= 2000000 ? 'minor' : 'fringe'),
+          voters: childVoters,
+          targetVoters: childVoters,
+          sliders: {
+            social: Math.max(1, Math.min(10, Number(baseSliders.social ?? 5) + (candidateParent.partyId === 'people' ? -0.8 : 0.8))),
+            economic: Math.max(1, Math.min(10, Number(baseSliders.economic ?? 5) + (candidateParent.partyId === 'people' ? -0.8 : 0.8))),
+            governance: Math.max(1, Math.min(10, Number(baseSliders.governance ?? 5) + 0.7)),
+          },
+          keyIssues: Array.isArray(candidateParent.keyIssues) ? candidateParent.keyIssues.slice(0, 2) : ['taxes-spending', 'institutional-trust'],
+          birthMode: 'sever',
+          parentFactionId: candidateParent.id,
+          happiness: 55,
+          startingHappiness: 55,
+          cohesion: 0.6,
+          frictionIndex: 0,
+        };
+        candidateParent.voters = parentVoters - childVoters;
+        candidateParent.targetVoters = candidateParent.voters;
+        if (vmStates) {
+          vmStates.forEach((st) => {
+            if (!st?.factions) return;
+            const pv = Math.max(0, Math.round(Number(st.factions[candidateParent.id] || 0)));
+            const take = Math.round(pv * splitShare);
+            st.factions[candidateParent.id] = pv - take;
+            st.factions[child.id] = (st.factions[child.id] || 0) + take;
+          });
+        }
+        if (game.voterModel?.factions) {
+          game.voterModel.factions[candidateParent.id] = candidateParent.voters;
+          game.voterModel.factions[child.id] = childVoters;
+        }
+        if (game.factionHappiness) game.factionHappiness[child.id] = 55;
+        if (game.factionStandings) game.factionStandings[child.id] = 55;
+        game.factions.push(child);
+        game.lastOrganicEmergenceYear = curYear;
+        emerged.push({ mode: 'splinter', parentId: candidateParent.id, faction: child });
+      }
+    }
+
+    return { game, emerged };
+  }
+
   const FactionCore = {
     RECOGNIZED_FRICTION_PARTIES,
     isUnaffiliatedPartyId,
@@ -806,6 +1027,9 @@
     checkSummitEligibility,
     generateMergerCoalitionDemands,
     signCoalitionAccord,
+    recalculateFactionStatusTiers,
+    pruneExtinctFactions,
+    evaluateDynamicFactionEmergence,
   };
 
   if (typeof window !== 'undefined') window.FactionCore = FactionCore;

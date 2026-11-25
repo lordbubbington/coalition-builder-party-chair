@@ -253,6 +253,8 @@
 
     if (partyId === 'heritage' && partyFactions.some((f) => f.id === 'gop_maga')) return 'gop_maga';
     if (partyId === 'people' && partyFactions.some((f) => f.id === 'dem_liberal_establishment')) return 'dem_liberal_establishment';
+    // [QA-BATCH2-FIX] B2-07: Repair ghost starting ID 'soc_democratic_socialists' -> 'soc_socialists'
+    if (partyId === 'socialist' && partyFactions.some((f) => f.id === 'soc_socialists')) return 'soc_socialists';
 
     const sorted = partyFactions.slice().sort((a, b) => {
       const diff = getFactionVoters(game, b) - getFactionVoters(game, a);
@@ -369,6 +371,10 @@
         partyFactions
       );
       const currentLeadingObj = partyFactions.find((f) => f.id === currentLeadingId) || partyFactions[0];
+      // [QA-BATCH2-FIX] B2-07: Guarantee leadingFactionByParty[pid] always points to an active faction in game.factions
+      if (currentLeadingObj && nextLeadingByParty[pid] !== currentLeadingObj.id) {
+        nextLeadingByParty[pid] = currentLeadingObj.id;
+      }
       const partyName = getPartyDisplayName(game, pid);
 
       // Rule 1: Presidential Override (All Parties)
