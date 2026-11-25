@@ -139,20 +139,27 @@ test('Stage 2 #6: Starting statehouse slates (0/10/40/100/250/All) + seat-contro
   const sumSlates = (m) => Object.values(m).reduce((s, v) => s + Number(v || 0), 0);
   const maxSlate = (m) => Math.max(0, ...Object.values(m).map(Number));
 
+  const sumBoth = (res) => sumSlates(res.houseSlates) + sumSlates(res.senateSlates);
+  const maxBoth = (res) => Math.max(maxSlate(res.houseSlates), maxSlate(res.senateSlates));
+
   const t0 = E.generateStartingStateLegSlates(g, 'green', 0);
-  assert.strictEqual(sumSlates(t0.houseSlates), 0, 'Tier 0 gets 0 starting slates');
+  assert.strictEqual(sumBoth(t0), 0, 'Tier 0 gets 0 starting slates');
 
   const t1 = E.generateStartingStateLegSlates(g, 'green', 1);
-  assert.strictEqual(sumSlates(t1.houseSlates), 10, 'Tier 1 gets 10 starting slates');
-  assert.strictEqual(maxSlate(t1.houseSlates), 1, 'Tier 1 cap is max 1 slate/state');
+  assert.strictEqual(sumBoth(t1), 10, 'Tier 1 gets 10 starting slates');
+  assert(maxBoth(t1) <= 1, 'Tier 1 cap is max 1 slate/chamber');
 
   const t2 = E.generateStartingStateLegSlates(g, 'green', 2);
-  assert.strictEqual(sumSlates(t2.houseSlates), 40, 'Tier 2 gets 40 starting slates');
-  assert(maxSlate(t2.houseSlates) <= 2, 'Tier 2 cap is max 2 slates/state');
+  assert.strictEqual(sumBoth(t2), 40, 'Tier 2 gets 40 starting slates');
+  assert(maxBoth(t2) <= 2, 'Tier 2 cap is max 2 slates/chamber');
 
   const t3 = E.generateStartingStateLegSlates(g, 'green', 3);
-  assert.strictEqual(sumSlates(t3.houseSlates), 100, 'Tier 3 gets 100 starting slates');
-  assert(maxSlate(t3.houseSlates) <= 3, 'Tier 3 cap is max 3 slates/state');
+  assert.strictEqual(sumBoth(t3), 100, 'Tier 3 gets 100 starting slates');
+  assert(maxBoth(t3) <= 3, 'Tier 3 cap is max 3 slates/chamber');
+
+  const t4 = E.generateStartingStateLegSlates(g, 'green', 4);
+  assert.strictEqual(sumBoth(t4), 250, 'Tier 4 gets 250 starting slates');
+  assert(maxBoth(t4) <= 4, 'Tier 4 cap is max 4 slates/chamber');
 
   // Seat-Control Bonus: Majority in VT -> free full slate (5) ignoring Tier 1 cap of 1!
   g.stateHouseSeatCounts.VT = { total: 150, green: 80, people: 50, heritage: 20 };

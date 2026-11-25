@@ -8443,17 +8443,29 @@ function kingmakerModalMarkup() {
   const st1 = neg.stateId || (reformStateOptions.some((s) => s.id === kingmakerTargetState1) ? kingmakerTargetState1 : (reformStateOptions[0]?.id || 'PA'));
   const st2 = reformStateOptions.some((s) => s.id === kingmakerTargetState2 && s.id !== st1) ? kingmakerTargetState2 : (reformStateOptions.find((s) => s.id !== st1)?.id || 'CO');
 
+  const isPluralityLeader = neg.role === 'plurality_leader_offer' || Boolean(neg.canOfferMajorityDeal);
+  const hasLegitTax = Boolean(neg.minorPartyLegitimizationTax);
+  const reqConcessions = Number(neg.requiredConcessions || 1);
+  const taxMult = Number(neg.concessionCostMultiplier || 1.0);
+
   return `
     <div class="v08-modal-overlay" id="kingmaker-modal-overlay">
       <div class="v159-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kingmaker-modal-title">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-          <div class="eyebrow" style="color:var(--gold)">Hung Chamber · Balance of Power Bargaining</div>
+          <div class="eyebrow" style="color:var(--gold)">${isPluralityLeader ? 'Hung Chamber · Plurality Leader Majority Bargaining' : 'Hung Chamber · Balance of Power Bargaining'}</div>
           ${list.length > 1 ? `<span class="turnout-chip">Chamber 1 of ${list.length} Pending</span>` : ''}
         </div>
-        <h2 id="kingmaker-modal-title">Kingmaker Caucus: ${safe(neg.chamberLabel)}</h2>
+        <h2 id="kingmaker-modal-title">${isPluralityLeader ? 'Plurality Leader Offer' : 'Kingmaker Caucus'}: ${safe(neg.chamberLabel)}</h2>
         <p style="font-size:13.5px;line-height:1.5;color:var(--muted);margin:6px 0 0">
-          Neither major party cleared the ${neg.majorityNeeded}-seat majority threshold. Your ${playerSeats}-seat caucus holds the decisive votes to organize the chamber under a Confidence-and-Supply agreement.
+          ${isPluralityLeader
+            ? `Your ${playerSeats}-seat caucus finished as the largest party in the ${safe(neg.chamberLabel)}, short of the ${neg.majorityNeeded}-seat majority. Offer a Confidence-and-Supply deal to assemble a governing majority.`
+            : `Neither major party cleared the ${neg.majorityNeeded}-seat majority threshold. Your ${playerSeats}-seat caucus holds the decisive votes to organize the chamber under a Confidence-and-Supply agreement.`}
         </p>
+        ${hasLegitTax ? `
+          <div class="v159-warning-callout" style="margin-top:8px">
+            ⚠ <b>Minor-Party Legitimization Tax (${taxMult.toFixed(2)}× Cost · ${reqConcessions} Concessions Required):</b> As a Tier 1–3 party leading a hung chamber, the major parties are reluctant to legitimize your leadership and will demand far steeper concessions than a major party would pay.
+          </div>
+        ` : ''}
 
         <div class="v159-modal-summary-strip">
           <span class="v159-tally-chip" style="border-color:#3478c8;color:#7fb4f2">Democrats: ${demSeats}</span>
@@ -8465,11 +8477,11 @@ function kingmakerModalMarkup() {
         <div class="eyebrow" style="margin-top:10px">1. Choose Coalition Partner</div>
         <div class="v159-option-grid">
           <button type="button" class="v159-option-card ${activePartner === 'people' ? 'selected' : ''}" data-kingmaker-partner="people" ${neg.canKingmakeDem ? '' : 'disabled'}>
-            <b>Back Democratic Leadership</b>
+            <b>${isPluralityLeader ? 'Offer Majority Deal to Democrats' : 'Back Democratic Leadership'}</b>
             <small>${neg.canKingmakeDem ? `Combined ${demSeats + playerSeats} seats (${neg.majorityNeeded} needed).` : 'Insufficient combined seats for majority.'}${distantMajor === 'people' && neg.canKingmakeDem ? ' ⚠ Expect fierce backlash from purist base factions.' : ''}</small>
           </button>
           <button type="button" class="v159-option-card ${activePartner === 'heritage' ? 'selected' : ''}" data-kingmaker-partner="heritage" ${neg.canKingmakeRep ? '' : 'disabled'}>
-            <b>Back Republican Leadership</b>
+            <b>${isPluralityLeader ? 'Offer Majority Deal to Republicans' : 'Back Republican Leadership'}</b>
             <small>${neg.canKingmakeRep ? `Combined ${repSeats + playerSeats} seats (${neg.majorityNeeded} needed).` : 'Insufficient combined seats for majority.'}${distantMajor === 'heritage' && neg.canKingmakeRep ? ' ⚠ Expect fierce backlash from purist base factions.' : ''}</small>
           </button>
           <button type="button" class="v159-option-card ${activePartner === 'independent' ? 'selected' : ''}" data-kingmaker-partner="independent">
@@ -8485,7 +8497,7 @@ function kingmakerModalMarkup() {
             </div>
           ` : ''}
 
-          <div class="eyebrow" style="margin-top:10px">2. Demand Confidence-and-Supply Concession</div>
+          <div class="eyebrow" style="margin-top:10px">${isPluralityLeader ? (hasLegitTax ? `2. Offer Confidence-and-Supply Concession Package (${reqConcessions}× Minor-Party Cost)` : '2. Offer Confidence-and-Supply Concession') : '2. Demand Confidence-and-Supply Concession'}</div>
           <div class="v159-option-grid">
             <button type="button" class="v159-option-card ${activeConcession === 'gavels' ? 'selected' : ''}" data-kingmaker-concession="gavels">
               <b>Committee Gavels</b>

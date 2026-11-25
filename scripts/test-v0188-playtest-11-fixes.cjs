@@ -209,6 +209,7 @@ test('Fix #5: Decennial Redistricting recalculates EVs to 538 total without bogu
 // =========================================================================
 test('Fix #6: Independent faction unlocks Coalition Summit after 1 Court action (15 Goodwill)', () => {
   let g = E.createGame({ templateId: 'green', seed: 2028 });
+  g.partyTiers.green = 2; // v0.18.9: Faction recruitment unlocks at Tier 2
   g.treasury = 20;
   g.organizingActionsRemaining = 10;
   const indFaction = g.factions.find((f) => f.partyId === 'independent');

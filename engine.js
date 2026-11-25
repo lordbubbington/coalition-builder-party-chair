@@ -3214,6 +3214,16 @@ function applyRegionalChapterMomentum(game) {
         taken += take;
       });
       aff[pid] = Math.round(Number(aff[pid] || 0) + taken);
+      if (nSt.factions && typeof nSt.factions === 'object' && Array.isArray(game.factions)) {
+        const partyFactions = game.factions.filter((f) => f && f.partyId === pid);
+        if (partyFactions.length > 0) {
+          const curSum = partyFactions.reduce((s, f) => s + Math.max(0, Number(nSt.factions[f.id] || 0)), 0);
+          partyFactions.forEach((f, idx) => {
+            const share = curSum > 0 ? (Math.max(0, Number(nSt.factions[f.id] || 0)) / curSum) : (1 / partyFactions.length);
+            nSt.factions[f.id] = Math.round(Math.max(0, Number(nSt.factions[f.id] || 0)) + taken * share);
+          });
+        }
+      }
       if (aff.thirdParty !== undefined) {
         aff.thirdParty = Math.round(Number(aff.liberty || 0) + Number(aff.green || 0) + Number(aff.constitution || 0) + Number(aff.socialist || 0) + Number(aff.other || 0));
       }
@@ -3248,17 +3258,22 @@ function generateStartingStateLegSlates(game, partyId = 'player', tierOverride =
   const spec = TIER_SLATE_BUDGET[clamp(Math.round(tier), 0, 4)] || { total: 0, cap: 0 };
   eligibleStates.forEach((sid) => { houseSlates[sid] = 0; senateSlates[sid] = 0; });
 
+  const chamberSlots = [];
+  eligibleStates.forEach((sid) => {
+    chamberSlots.push({ sid, map: houseSlates });
+    chamberSlots.push({ sid, map: senateSlates });
+  });
+
   let remaining = spec.total;
   let step = 0;
-  while (remaining > 0 && step < 5000) {
+  while (remaining > 0 && step < 10000) {
     step += 1;
-    const idx = Math.floor(seededUnit(`init-slates:${game?.seed || 2028}:${game?.year || 2028}:${resolved}:${step}`) * eligibleStates.length);
-    const sid = eligibleStates[idx];
-    if ((houseSlates[sid] || 0) < spec.cap) {
-      houseSlates[sid] = (houseSlates[sid] || 0) + 1;
-      senateSlates[sid] = Math.min(spec.cap, houseSlates[sid]);
+    const idx = Math.floor(seededUnit(`init-slates:${game?.seed || 2028}:${game?.year || 2028}:${resolved}:${step}`) * chamberSlots.length);
+    const slot = chamberSlots[idx];
+    if ((slot.map[slot.sid] || 0) < spec.cap) {
+      slot.map[slot.sid] = (slot.map[slot.sid] || 0) + 1;
       remaining -= 1;
-    } else if (eligibleStates.every((id) => (houseSlates[id] || 0) >= spec.cap)) {
+    } else if (chamberSlots.every((c) => (c.map[c.sid] || 0) >= spec.cap)) {
       break;
     }
   }
@@ -16097,7 +16112,7 @@ function startNextCycleInternal(game) {
   // REQ-145: Elimination of flat 6.09% automatic electorate expansion.
   // Voter registration expansion is driven dynamically by GOTV operations.
   // REQ-172: Cumulative multi-cycle voter registration carryover without baseline reset
-  const voterModel = game.voterModel ? JSON.parse(JSON.stringify(game.voterModel)) : null;
+  let voterModel = game.voterModel ? JSON.parse(JSON.stringify(game.voterModel)) : null;
   let activeMigrationPatterns = [];
   let migrationTransferred = 0;
   if (voterModel && Array.isArray(voterModel.states)) {
@@ -16180,6 +16195,9 @@ function startNextCycleInternal(game) {
   let postAttritionGame = { ...game, voterModel };
   if (voterModel) {
     postAttritionGame = applyFactionPowerAttrition(postAttritionGame, game.player?.baseTemplateId || 'people');
+    if (postAttritionGame?.voterModel) {
+      voterModel = postAttritionGame.voterModel;
+    }
   }
 
   // REQ-92: Seniority Turnover, Aging & Council of Party Elders
@@ -16454,11 +16472,8 @@ function startNextCycleInternal(game) {
   const pendingTierUpModal = (nextPlayerTier > prevPlayerTier)
     ? buildTierUpModalPayload(prevPlayerTier, nextPlayerTier, nextYear)
     : null;
-  const rcmResult = applyRegionalChapterMomentum(tierAwareGame);
-  if (rcmResult?.voterModel) {
-    voterModel = rcmResult.voterModel;
-  }
-  const nextStartingSlates = generateStartingStateLegSlates({ ...tierAwareGame, year: nextYear }, 'player', nextPlayerTier);
+
+  const nextStartingSlates = generateStartingStateLegSlates({ ...tierAwareGame, voterModel, year: nextYear }, 'player', nextPlayerTier);
 
   // REQ-179: Tier 3+ FEC Public Matching Funds passive cycle treasury infusion
   const fecGrant = computeFecMatchingFunds(tierAwareGame, 'player');
@@ -16641,7 +16656,7 @@ function startNextCycleInternal(game) {
     activeCoalitionPacts: (game.activeCoalitionPacts || []).map((p) => ({ ...p, filtersAppliedThisCycle: 0 })),
     jointCompacts: newCompacts,
     vacatedHouseSeats: {},
-    voterModel: postAttritionGame.voterModel || voterModel || game.voterModel,
+    voterModel: voterModel || postAttritionGame.voterModel || game.voterModel,
     factionPowerAudit: postAttritionGame.factionPowerAudit || null,
     focusesLocked: false,
     priorities: {
@@ -16773,7 +16788,6 @@ function startNextCycleInternal(game) {
   syncedCycle.contestedStateHouseSlates = nextStartingSlates.houseSlates;
   syncedCycle.contestedStateSenateSlates = nextStartingSlates.senateSlates;
   syncedCycle.pendingTierUpModal = pendingTierUpModal;
-  syncedCycle.contestedStateSenateSlates = {};
   syncedCycle.contestedStatewideOffices = {};
   syncedCycle.majorSlateSurges = {};
   syncedCycle.partyTiers = evaluatePartyInstitutionalTiers(syncedCycle);
@@ -16905,6 +16919,26 @@ function startNextCycleInternal(game) {
     if (window.PartyChairData?.normalizeStateFactionVoters) {
       finalCycle.voterModel.states.forEach((st) => window.PartyChairData.normalizeStateFactionVoters(st));
     }
+    const rcmLate = applyRegionalChapterMomentum(finalCycle);
+    if (rcmLate?.voterModel) {
+      finalCycle.voterModel = rcmLate.voterModel;
+    }
+    finalCycle.voterModel.states.forEach((st) => {
+      if (!st?.affiliations) return;
+      const aff = st.affiliations;
+      const tpKeys = Object.keys(aff).filter((k) => !['people', 'heritage', 'independent', 'thirdParty'].includes(k));
+      aff.thirdParty = Math.round(tpKeys.reduce((s, k) => s + Math.max(0, Number(aff[k]) || 0), 0));
+      const targetPop = Math.round(Number(st.representedVoters || 0));
+      const curPop = Math.round(Number(aff.people || 0) + Number(aff.heritage || 0) + Number(aff.independent || 0) + Number(aff.thirdParty || 0));
+      if (targetPop > 0 && curPop > 0 && curPop !== targetPop) {
+        const ratio = targetPop / curPop;
+        aff.people = Math.round(Math.max(0, Number(aff.people || 0)) * ratio);
+        aff.heritage = Math.round(Math.max(0, Number(aff.heritage || 0)) * ratio);
+        tpKeys.forEach((k) => { aff[k] = Math.round(Math.max(0, Number(aff[k]) || 0) * ratio); });
+        aff.thirdParty = Math.round(tpKeys.reduce((s, k) => s + Math.max(0, Number(aff[k]) || 0), 0));
+        aff.independent = Math.max(0, targetPop - aff.people - aff.heritage - aff.thirdParty);
+      }
+    });
   }
   if (fcCycle && typeof fcCycle.recalculateFactionStatusTiers === 'function') {
     fcCycle.recalculateFactionStatusTiers(finalCycle);
