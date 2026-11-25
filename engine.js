@@ -20890,7 +20890,10 @@ function takeActionInternal(game, actionId, payload = {}) {
         lastNote: 'Courting a politician is an off-cycle Party Building (Organizing) action so they can file and run under your party banner before primaries begin.',
       };
     }
-    const availOrgActions = Number(game.actionsLeft ?? game.organizingActionsRemaining ?? 0);
+    const inOffCycleInterlude = game.phase === 'off-cycle-interlude' && game.offCycle?.active;
+    const availOrgActions = inOffCycleInterlude
+      ? Number(game.offCycle?.actionsRemaining ?? 0)
+      : Number(game.actionsLeft ?? game.organizingActionsRemaining ?? 0);
     if (availOrgActions <= 0) return { ...game, lastNote: 'No off-cycle Party Building actions remaining.' };
     if ((game.treasury || 0) < 4) return { ...game, lastNote: 'Courting a sitting politician requires $4.0M treasury.' };
 

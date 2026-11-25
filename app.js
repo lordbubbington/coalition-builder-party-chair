@@ -3316,6 +3316,7 @@ function step4WorkMarkup() {
                 ${optionsHtml || '<option value="" disabled>[ No Discontent Lawmakers Meeting Ideological Bridge ]</option>'}
               </select>
               ${roleOptions}
+              <div style="font-size:11.5px;color:#7df2da;margin-bottom:4px">ℹ Unhappy caucus courting is now primarily an <b>Off-Cycle Interlude</b> action (so defectors run on your ticket from Day 1).</div>
               <button type="button" class="button button-small" style="border-color:#1abc9c;color:#7df2da" data-action="persuade-independent-caucus" ${disabled || game.treasury < 4 || !eligibleTargets.length ? 'disabled' : ''}>Court Defection</button>
             </div>`;
           })()}
@@ -6110,7 +6111,7 @@ function actionsTabMarkup() {
 
   const step = currentStep();
   const stepDefs = [
-    { step: 1, id: 'issues', label: 'Unified Platform Issues' },
+    { step: 1, id: 'leadership-bylaws', label: 'Party Leaders & Rules/Bylaws' },
     { step: 2, id: 'priorities', label: 'Major Priorities & Focus' },
     { step: 3, id: 'endorsements', label: 'Primary Endorsements' },
     { step: 4, id: 'state-leg', label: 'State Legislative Slates' },
@@ -6119,7 +6120,7 @@ function actionsTabMarkup() {
   const { canConfirm, confirmLabel } = getTurnStepButtonState();
 
   let bodyMarkup = '';
-  if (step === 1) bodyMarkup = step1IssuesMarkup();
+  if (step === 1) bodyMarkup = step1LeadershipAndBylawsMarkup();
   else if (step === 2) bodyMarkup = step2PrioritiesMarkup();
   else if (step === 3) bodyMarkup = step3PrimariesMarkup();
   else if (step === 4) bodyMarkup = step4StateLegMarkup();
@@ -7481,6 +7482,77 @@ const CABINET_AND_OPPOSITION_ROLES = [
   { id: 'opposition_gov', label: 'Gubernatorial Opposition Leader', category: 'institutional', requiredOffice: 'governor', requiresOpposition: true, multiplier: 1.0, passiveDesc: 'High-visibility Governors counterweight to White House (+2.0 national media spotlight, +1.5% turnout mobilization across gubernatorial battlegrounds).' },
 ];
 
+// [v0.18.9 STAGE 3] Step 1 of Recruitment / Organizing Phase: Party Leaders + Rules & Bylaws Committee
+function step1LeadershipAndBylawsMarkup() {
+  const identity = playerIdentity();
+  const baseRoleDefs = V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || [];
+  const allRoleDefs = [...baseRoleDefs];
+  CABINET_AND_OPPOSITION_ROLES.forEach((ar) => {
+    if (!allRoleDefs.some((r) => r.id === ar.id)) allRoleDefs.push(ar);
+  });
+  const governingParty = game?.governingParty || game?.lastElection?.presidentialWinner || 'people';
+  const holdsPresidency = governingParty === identity;
+  const partySitting = (game.sittingMembers || []).filter((m) => m.party === identity);
+  const benchMembers = [...(game.roster || []), ...MEMBERS.filter((m) => m.party === identity).map((m) => m.id)]
+    .map((id) => memberById(id))
+    .filter((m) => m && (m.party === identity || !m.party));
+  const senators = partySitting.filter((m) => m.office === 'senate').sort((a, b) => (b.fame || 0) - (a.fame || 0));
+  const reps = partySitting.filter((m) => m.office === 'house').sort((a, b) => (b.fame || 0) - (a.fame || 0));
+  const govs = partySitting.filter((m) => m.office === 'governor').sort((a, b) => (b.fame || 0) - (a.fame || 0));
+  const allEligible = [...partySitting, ...benchMembers];
+  const seenIds = new Set();
+  const dedupedAll = allEligible.filter((m) => { if (!m || seenIds.has(m.id)) return false; seenIds.add(m.id); return true; });
+  const assignedMap = game.leadershipRoles?.player || game.player?.leadershipRoles || {};
+  const accessibleRoles = allRoleDefs.filter((role) => {
+    if (role.requiresPresidency && !holdsPresidency) return false;
+    if (role.requiresOpposition && holdsPresidency) return false;
+    return true;
+  });
+  const filteredRoles = roleCategoryFilter === 'all'
+    ? accessibleRoles
+    : accessibleRoles.filter((r) => (roleCategoryFilter === 'institutional' ? r.category === 'institutional' : r.category !== 'institutional'));
+  const rolesHtml = filteredRoles.map((role) => {
+    const currentId = assignedMap[role.id];
+    const holder = currentId ? (dedupedAll.find((m) => m.id === currentId || m.name === currentId) || memberById(currentId)) : null;
+    const pool = role.officeFilter === 'senate' ? senators : role.officeFilter === 'house' ? reps : role.officeFilter === 'governor' ? govs : dedupedAll;
+    return `<article class="v07-role-card">
+      <div class="v07-role-head"><b>${safe(role.label || role.title)}</b><small>${safe(role.category || 'party')}</small></div>
+      <div class="v07-role-assign">
+        <select data-assign-role="${role.id}" aria-label="Assign ${safe(role.label || role.title)}">
+          <option value="">— Vacant —</option>
+          ${pool.map((c) => `<option value="${c.id}" ${holder && (holder.id === c.id || holder.name === c.name) ? 'selected' : ''}>${safe(c.name)} · Fame ${Math.round(c.fame || 40)} · Q${c.quality || 6}</option>`).join('')}
+        </select>
+      </div>
+    </article>`;
+  }).join('');
+
+  return `
+    <div class="v07-forecast-layout">
+      <section class="panel section-panel">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Step 1 · Choose Party Leaders</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <h2 style="margin:0">Party Leadership Hierarchy</h2>
+              ${institutionalStatusBadgeMarkup(game)}
+              ${partyDoctrineBadgeMarkup(game)}
+            </div>
+          </div>
+          <div class="v07-filter-tabs">
+            <button type="button" data-role-filter="all" class="${roleCategoryFilter === 'all' ? 'selected' : ''}">All (${accessibleRoles.length})</button>
+            <button type="button" data-role-filter="institutional" class="${roleCategoryFilter === 'institutional' ? 'selected' : ''}">Institutional</button>
+            <button type="button" data-role-filter="party" class="${roleCategoryFilter === 'party' ? 'selected' : ''}">Party &amp; Factions</button>
+          </div>
+        </div>
+        <div class="v07-role-grid">${rolesHtml}</div>
+      </section>
+
+      <!-- Rules & Bylaws Committee directly below Party Leaders -->
+      ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPrimaryRulesPanel(game) : '<section class="panel section-panel"><div class="eyebrow">Rules &amp; Bylaws Committee</div><h3>Primary Calendar &amp; Party Rules</h3><p style="font-size:13px;color:var(--muted)">Rules &amp; Bylaws module active when Coalition Politics system is loaded.</p></section>'}
+    </div>
+  `;
+}
+
 function partyInfoTabMarkup() {
   const identity = playerIdentity();
   const isMajor = window.PartyChairEngine.isMajorParty
@@ -7599,32 +7671,12 @@ function partyInfoTabMarkup() {
     </article>`;
   }).join('');
 
+  // [v0.18.9 STAGE 3] Leadership & Rules/Bylaws now live in Step 1; Party Platform now lives here in Party Information
   return `
     <div class="v07-forecast-layout">
-      <!-- Structured Party Hierarchy -->
-      <section class="panel section-panel">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow">Structured Party Hierarchy</div>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <h2 style="margin:0">Party Leadership Hierarchy</h2>
-              ${institutionalStatusBadgeMarkup(game)}
-              ${partyDoctrineBadgeMarkup(game)}
-            </div>
-          </div>
-          <div class="v07-filter-tabs">
-            <button type="button" data-role-filter="all" class="${roleCategoryFilter === 'all' ? 'selected' : ''}">All Accessible (${accessibleRoles.length})</button>
-            <button type="button" data-role-filter="institutional" class="${roleCategoryFilter === 'institutional' ? 'selected' : ''}">Institutional (${accessibleRoles.filter(r => r.category === 'institutional').length})</button>
-            <button type="button" data-role-filter="party" class="${roleCategoryFilter === 'party' ? 'selected' : ''}">Party & Factions (${accessibleRoles.filter(r => r.category !== 'institutional').length})</button>
-          </div>
-        </div>
-        ${snubbedHighFame.length ? `<div class="v07-backlash-warning" style="margin-bottom:12px">⚠ High-Fame Ambition Warning: <b>${snubbedHighFame.length}</b> politician(s) with Fame ≥ 75 have no major leadership role (${snubbedHighFame.slice(0, 5).map((m) => `${safe(m.name)} [${Math.round(m.fame)}]`).join(', ')}${snubbedHighFame.length > 5 ? ', …' : ''}). Appoint them below to stop Sitting Member Happiness decay.</div>` : ''}
-        <div class="v07-role-grid">${rolesMarkup}</div>
-      </section>
+      ${step1IssuesMarkup()}
       ${/* [v0.18.4 MEDIA-SHOCKS] */ window.MediaShocksSystem ? window.MediaShocksSystem.renderMediaBalanceBar(game) : ''}
-
-      <!-- [v0.18.4 COALITION-POLITICS] Proposals #5 & #6 Panels -->
-      ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPrimaryRulesPanel(game) + window.CoalitionPoliticsSystem.renderPatronageGridPanel(game) : ''}
+      ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPatronageGridPanel(game) : ''}
 
       ${renderDonorBlocsDossierMarkup(game)}
 

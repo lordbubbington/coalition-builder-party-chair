@@ -1703,6 +1703,57 @@
   // --------------------------------------------------------------------------
 
   function handleAction(game, actionId, payload = {}) {
+    // [v0.18.9 STAGE 3] Off-Cycle Unhappy Caucus Member Courting & Faction Recruitment
+    if (actionId === 'oc-court-politician') {
+      const eng = getEngine();
+      if (!eng?.takeAction) return game;
+      const tier = getPartyTier(game, 'player');
+      if (tier < 2) {
+        return { ...game, lastNote: 'Courting sitting lawmakers unlocks at Tier 2 (Ballot-Qualified Minor).' };
+      }
+      if ((game.offCycle?.actionsRemaining ?? 0) < 1) {
+        return { ...game, lastNote: 'No Off-Cycle actions remaining.' };
+      }
+      const res = eng.takeAction(game, 'court-politician', { memberId: payload?.memberId || payload?.targetId, roleId: payload?.roleId });
+      if (res && res !== game && res.sittingMembers !== game.sittingMembers) {
+        const nextRem = Math.max(0, Number(game.offCycle?.actionsRemaining ?? 1) - 1);
+        return {
+          ...res,
+          offCycle: {
+            ...(res.offCycle || game.offCycle),
+            actionsRemaining: nextRem,
+            actionLog: [...(game.offCycle?.actionLog || []), { actionId, note: res.lastNote || 'Courted unhappy caucus member.' }].slice(-40),
+          },
+        };
+      }
+      return res || game;
+    }
+    if (actionId === 'oc-court-independent' || actionId === 'oc-drive-wedge') {
+      const eng = getEngine();
+      if (!eng?.takeAction) return game;
+      const tier = getPartyTier(game, 'player');
+      if (tier < 2) {
+        return { ...game, lastNote: 'Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor).' };
+      }
+      if ((game.offCycle?.actionsRemaining ?? 0) < 1) {
+        return { ...game, lastNote: 'No Off-Cycle actions remaining.' };
+      }
+      const engAction = actionId === 'oc-court-independent' ? 'court-independent-faction' : 'drive-coalition-wedge';
+      const tempGame = { ...game, organizingActionsRemaining: Math.max(1, Number(game.offCycle?.actionsRemaining ?? 1)) };
+      const res = eng.takeAction(tempGame, engAction, { factionId: payload?.factionId || payload?.id });
+      if (res && res !== tempGame && res.treasury !== game.treasury) {
+        const nextRem = Math.max(0, Number(game.offCycle?.actionsRemaining ?? 1) - 1);
+        return {
+          ...res,
+          offCycle: {
+            ...(res.offCycle || game.offCycle),
+            actionsRemaining: nextRem,
+            actionLog: [...(game.offCycle?.actionLog || []), { actionId, note: res.lastNote || 'Off-cycle faction diplomacy executed.' }].slice(-40),
+          },
+        };
+      }
+      return res || game;
+    }
     const canonical = ACTION_ALIAS_MAP[actionId];
     if (!canonical) return null;
     if (canonical === 'oc-set-posture') {
@@ -2301,6 +2352,64 @@
 
         <div class="oc-track-divider"></div>
 
+        <!-- [v0.18.9 STAGE 3] Track C: Off-Cycle Caucus Courting & Faction Recruitment -->
+        <div class="oc-track-block" id="oc-faction-recruitment">
+          <div class="oc-track-head">
+            <div>
+              <div class="eyebrow">Track C · Off-Cycle Coalitions &amp; Defections</div>
+              <h3>Unhappy Caucus Recruitment &amp; Faction Recruitment</h3>
+            </div>
+            <span class="oc-bonus-tag">${getPartyTier(working, 'player') >= 2 ? 'Tier 2+ Unlocked' : 'Unlocks at Tier 2'}</span>
+          </div>
+          ${(() => {
+            const pTier = getPartyTier(working, 'player');
+            const pPid = resolvePlayerPartyId(working);
+            if (pTier < 2) {
+              return '<p style="font-size:12.5px;color:#fbbf24;margin:6px 0">Reach <b>Tier 2 (Ballot-Qualified Minor)</b> to court unhappy caucus lawmakers and recruit factions during off-cycle years.</p>';
+            }
+            const unhappyLawmakers = (working.sittingMembers || []).filter((m) => m && !m.vacant && m.party !== pPid && (m.party === 'independent' || Number(m.happiness ?? 50) <= 40)).slice(0, 25);
+            const indFactions = (working.factions || []).filter((f) => f && ['independent', 'none', 'unaffiliated'].includes(f.partyId));
+            const rivalFactions = (working.factions || []).filter((f) => f && f.partyId !== pPid && !['independent', 'none', 'unaffiliated'].includes(f.partyId) && Number(working.factionHappiness?.[f.id] ?? f.happiness ?? 50) < 60).slice(0, 12);
+            const noActs = (working.offCycle?.actionsRemaining ?? 0) < 1;
+            return `
+              <div class="oc-action-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:8px">
+                <div class="oc-action-card">
+                  <div class="oc-action-head"><b>🤝 Court Unhappy Caucus Member</b><span>1 Act · $4.0M</span></div>
+                  <p>Recruit a discontent lawmaker now so they run under your party banner in the upcoming election.</p>
+                  <div class="oc-action-controls">
+                    <select id="oc-court-pol-select" aria-label="Unhappy Lawmaker">
+                      ${unhappyLawmakers.length ? unhappyLawmakers.map((m) => `<option value="${safeHtml(m.id)}">${safeHtml(m.name)} (${safeHtml(m.stateId || m.districtId || '')} · ${safeHtml(m.party)})</option>`).join('') : '<option value="">No unhappy lawmakers available</option>'}
+                    </select>
+                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-politician" ${noActs || !unhappyLawmakers.length || (working.treasury || 0) < 4 ? 'disabled' : ''}>Court Defection</button>
+                  </div>
+                </div>
+                <div class="oc-action-card">
+                  <div class="oc-action-head"><b>🏛️ Faction Recruitment (Independent)</b><span>1 Act · $1.5M</span></div>
+                  <p>Build +15 Coalition Goodwill with Independent/Unaffiliated factions during off-cycle realignments.</p>
+                  <div class="oc-action-controls">
+                    <select id="oc-court-fac-select" aria-label="Independent Faction">
+                      ${indFactions.length ? indFactions.map((f) => `<option value="${safeHtml(f.id)}">${safeHtml(f.name)} (Goodwill ${Math.round(working.factionCourtship?.[f.id]?.[pPid] || 0)})</option>`).join('') : '<option value="">No independent factions</option>'}
+                    </select>
+                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-independent" ${noActs || !indFactions.length || (working.treasury || 0) < 1.5 ? 'disabled' : ''}>Court Faction</button>
+                  </div>
+                </div>
+                <div class="oc-action-card">
+                  <div class="oc-action-head"><b>🪓 Drive Off-Cycle Wedge</b><span>1 Act · $2.0M</span></div>
+                  <p>Destabilize restless rival-party factions during off-cycle years to trigger secessions.</p>
+                  <div class="oc-action-controls">
+                    <select id="oc-wedge-fac-select" aria-label="Rival Faction">
+                      ${rivalFactions.length ? rivalFactions.map((f) => `<option value="${safeHtml(f.id)}">${safeHtml(f.name)} (${safeHtml(f.partyId)})</option>`).join('') : '<option value="">No restless rival factions</option>'}
+                    </select>
+                    <button type="button" class="button button-small" data-oc-action="oc-drive-wedge" ${noActs || !rivalFactions.length || (working.treasury || 0) < 2 ? 'disabled' : ''}>Drive Wedge</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          })()}
+        </div>
+
+        <div class="oc-track-divider"></div>
+
         <div class="oc-track-block">
           <div class="oc-track-head">
             <div>
@@ -2486,6 +2595,15 @@
           payload.stateId = _uiState.chapterStateId;
         } else if (actId === 'oc-media-buildout') {
           payload.channel = _uiState.mediaChannel;
+        } else if (actId === 'oc-court-politician') {
+          const sel = document.getElementById('oc-court-pol-select');
+          payload.memberId = sel ? sel.value : '';
+        } else if (actId === 'oc-court-independent') {
+          const sel = document.getElementById('oc-court-fac-select');
+          payload.factionId = sel ? sel.value : '';
+        } else if (actId === 'oc-drive-wedge') {
+          const sel = document.getElementById('oc-wedge-fac-select');
+          payload.factionId = sel ? sel.value : '';
         } else if (actId === 'oc-faction-mend') {
           payload.factionId = _uiState.factionId;
         } else if (actId === 'oc-federal-scout') {
