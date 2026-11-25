@@ -3437,7 +3437,9 @@ function step4WorkMarkup() {
                   <option value="prudent" selected>Prudent Buffer</option>
                   <option value="ironclad">Ironclad Defense</option>
                 </select>
-                <button type="button" class="button button-small" style="flex:1.5;border-color:var(--blue);color:var(--blue)" data-action="launch-petition-drive" ${disabled || game.treasury < 1.0 ? 'disabled' : ''}>Petition Presidential Ballot Line</button>
+                ${(Number(game.year || 2028) % 4) !== 0
+                  ? `<button type="button" class="button button-small" style="flex:1.5;opacity:0.55;cursor:not-allowed" disabled title="Presidential ballot access cannot be gained during midterm elections.">Closed in Midterm (${game.year})</button>`
+                  : `<button type="button" class="button button-small" style="flex:1.5;border-color:var(--blue);color:var(--blue)" data-action="launch-petition-drive" ${disabled || game.treasury < 1.0 ? 'disabled' : ''}>Petition Presidential Ballot Line</button>`}
               </div>
             </div>
             ` : `
@@ -4387,24 +4389,39 @@ function forecastersMarkup() {
     </section>`;
 }
 
+// [v0.18.9 STAGE 1 FIX #1] Fix 2028+ Historical Maps (use MAPS.states, support byState/senateResults, 3rd-party colors, DC callout)
 function renderPriorCycleMapSvg(cycle, mode = 'presidential') {
-  const stateRows = window.PartyChairData?.VERSION_03_MAP_DATA?.states || [];
-  if (!stateRows.length) return '';
-  const presStates = cycle?.presidential?.states || cycle?.presidentialResults || {};
-  const senByState = Object.fromEntries((cycle?.senate || []).map((r) => [r.stateId || r.state, r.winner]));
-  const colorFor = (p) => p === 'people' ? '#3478c7' : p === 'heritage' ? '#d94b4b' : p === 'green' ? '#55bf78' : p === 'liberty' ? '#e2bd45' : '#64748b';
-  const shapes = stateRows.map((st) => {
+  const stateRows = (typeof MAPS !== 'undefined' && Array.isArray(MAPS?.states) && MAPS.states.length)
+    ? MAPS.states
+    : (window.PartyChairData?.VERSION_03_MAPS?.states || window.PartyChairData?.VERSION_03_MAP_DATA?.states || []);
+  if (!stateRows.length) return '<div style="margin-top:8px;font-size:12px;color:var(--muted)">Map geometry unavailable.</div>';
+  const presStates = cycle?.presidential?.byState || cycle?.presidential?.states || cycle?.presidentialResults || {};
+  const senArr = Array.isArray(cycle?.senate) ? cycle.senate : (Array.isArray(cycle?.senateResults) ? cycle.senateResults : []);
+  const senByState = Object.fromEntries(senArr.map((r) => [r.stateId || r.state, r.winner]));
+  const colorFor = (p) => resolveControlPartyColor(p, game) || '#64748b';
+  const labelFor = (p) => resolveControlPartyLabel(p, game);
+  const shapes = stateRows.filter((st) => st.id !== 'DC').map((st) => {
     let winner = null;
     if (mode === 'senate') {
       winner = senByState[st.id] || null;
     } else {
       const row = Array.isArray(presStates) ? presStates.find((x) => (x.stateId || x.id) === st.id) : presStates[st.id];
-      winner = row?.winner || cycle?.governorships?.[st.id] || null;
+      winner = (typeof row === 'string' ? row : row?.winner) || cycle?.governorships?.[st.id] || null;
     }
     const fill = winner ? colorFor(winner) : '#334155';
-    return `<path d="${st.q.split('!').map(decodePath).join('')}" style="fill:${fill};stroke:#0f172a;stroke-width:0.8"><title>${safe(st.id)}: ${safe(winner || 'No race')}</title></path>`;
+    return `<path d="${st.q.split('!').map(decodePath).join('')}" style="fill:${fill};stroke:#0f172a;stroke-width:0.8"><title>${safe(st.id)}: ${safe(winner ? labelFor(winner) : 'No race')}</title></path>`;
   }).join('');
-  return `<div style="margin-top:10px;padding:10px;background:rgba(15,23,42,0.7);border:1px solid var(--line);border-radius:8px"><div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--gold)">${cycle.year} ${mode === 'senate' ? 'U.S. Senate' : 'Presidential / State'} Election Map</div><svg viewBox="0 0 960 600" style="width:100%;max-height:320px;display:block">${shapes}</svg></div>`;
+  let dcDot = '';
+  if (mode !== 'senate') {
+    const dcGeo = stateRows.find((s) => s.id === 'DC');
+    const dcRow = Array.isArray(presStates) ? presStates.find((x) => (x.stateId || x.id) === 'DC') : presStates.DC;
+    const dcWinner = (typeof dcRow === 'string' ? dcRow : dcRow?.winner) || 'people';
+    if (dcGeo) {
+      dcDot = `<circle cx="${dcGeo.cx}" cy="${dcGeo.cy}" r="5" style="fill:${colorFor(dcWinner)};stroke:#fff;stroke-width:1"><title>DC (3 EV): ${safe(labelFor(dcWinner))}</title></circle>`;
+    }
+  }
+  const viewBox = (typeof MAPS !== 'undefined' && MAPS?.viewBox) ? MAPS.viewBox : '0 0 960 600';
+  return `<div style="margin-top:10px;padding:10px;background:rgba(15,23,42,0.7);border:1px solid var(--line);border-radius:8px"><div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--gold)">${cycle.year} ${mode === 'senate' ? 'U.S. Senate' : 'Presidential / State'} Election Map</div><svg viewBox="${viewBox}" style="width:100%;max-height:320px;display:block">${shapes}${dcDot}</svg></div>`;
 }
 
 function electionHistoryMarkup() {
@@ -4455,7 +4472,7 @@ function electionHistoryMarkup() {
                   <button type="button" class="button button-small" data-history-map-year="${cycle.year}" data-history-map-mode="presidential">View ${cycle.year} Pres/State Map</button>
                   <button type="button" class="button button-small" data-history-map-year="${cycle.year}" data-history-map-mode="senate">View ${cycle.year} Senate Map</button>
                 </div>
-                ${window.__historyMapYear === cycle.year ? renderPriorCycleMapSvg(cycle, window.__historyMapMode || 'presidential') : ''}
+                ${Number(window.__historyMapYear) === Number(cycle.year) ? renderPriorCycleMapSvg(cycle, window.__historyMapMode || 'presidential') : ''}
               </article>`;
           }).join('')
         : ''}
@@ -9792,10 +9809,55 @@ function renderElectionNightScreen() {
 
   const mapGeometry = stateRows.map((state) => {
     const _enStName = state.name || window.PartyChairData?.STATES?.find((s) => s.id === state.id)?.name || state.id;
-    const race = timeline.races.find((r) => r.raceKind === activeTab && r.stateId === state.id);
     let fillColor = '#22304F';
     let fillOpacity = 0.5;
     let title = `${_enStName} (${state.id})`;
+
+    // [v0.18.9 STAGE 1 FIX #4] For House tab, aggregate ALL districts in the state (majority party color, purple if no majority)
+    if (activeTab === 'house') {
+      const stateHouseRaces = timeline.races.filter((r) => r.raceKind === 'house' && r.stateId === state.id);
+      if (stateHouseRaces.length > 0) {
+        const evalMap = new Map(snapshot.raceEvaluations.map((re) => [re.id, re]));
+        const tallies = {};
+        let openCount = 0;
+        let calledCount = 0;
+        let pctSum = 0;
+        stateHouseRaces.forEach((hr) => {
+          const ev = evalMap.get(hr.id);
+          const isOpen = ev ? ev.isOpen : (elapsed >= hr.closeMinutes);
+          const isCalled = ev ? ev.isCalled : false;
+          if (isOpen) openCount += 1;
+          if (isCalled) calledCount += 1;
+          pctSum += ev ? (ev.pct || 0) : 0;
+          if (isOpen) {
+            const p = isCalled ? hr.finalWinner : (ev?.liveLeader || hr.finalWinner);
+            if (p) tallies[p] = (tallies[p] || 0) + 1;
+          }
+        });
+        if (openCount === 0) {
+          fillColor = '#22304F';
+          fillOpacity = 0.45;
+          title = `${_enStName} (${state.id}) · ${stateHouseRaces.length} House Seats · Polls close at ${enEngine.formatSimTime(stateHouseRaces[0].closeMinutes)}`;
+        } else {
+          const avgPct = pctSum / stateHouseRaces.length;
+          fillOpacity = calledCount === stateHouseRaces.length ? 1.0 : Math.round((0.45 + 0.55 * (avgPct / 100)) * 100) / 100;
+          const sortedTally = Object.entries(tallies).sort((a, b) => b[1] - a[1]);
+          const topParty = sortedTally[0]?.[0];
+          const topSeats = sortedTally[0]?.[1] || 0;
+          const hasMajority = topSeats > (stateHouseRaces.length / 2);
+          fillColor = hasMajority ? getElectionPartyColor(topParty) : '#8654a4';
+          const breakdown = sortedTally.map(([p, cnt]) => `${cnt} ${getElectionPartyShort(p)}`).join(' · ');
+          title = `${_enStName} (${state.id}) · U.S. House Delegation (${calledCount}/${stateHouseRaces.length} called): ${breakdown}${hasMajority ? '' : ' (No Majority — Split)'}`;
+        }
+      } else {
+        fillColor = '#1a2432';
+        fillOpacity = 0.35;
+        title = `${_enStName} (${state.id}) · No House districts`;
+      }
+      return `<path style="fill:${fillColor};fill-opacity:${fillOpacity}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-desk-state="${state.id}" tabindex="0"><title>${safe(title)}</title></path>`;
+    }
+
+    const race = timeline.races.find((r) => r.raceKind === activeTab && r.stateId === state.id);
 
     if (race) {
       const stateEval = snapshot.raceEvaluations.find((re) => re.id === race.id);
@@ -9835,8 +9897,25 @@ function renderElectionNightScreen() {
     return `<path style="fill:${fillColor};fill-opacity:${fillOpacity}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-desk-state="${state.id}" tabindex="0"><title>${safe(title)}</title></path>`;
   }).join('');
 
+  // [v0.18.9 STAGE 1 FIX #6] Render DC (3 EV) callout circle on Election Night Presidential map
+  let dcCalloutSvg = '';
+  if (activeTab === 'president') {
+    const dcGeo = MAPS.states.find((s) => s.id === 'DC');
+    const dcRace = timeline.races.find((r) => r.raceKind === 'president' && r.stateId === 'DC');
+    if (dcGeo && dcRace) {
+      const dcEval = snapshot.raceEvaluations.find((re) => re.id === dcRace.id);
+      const dcOpen = dcEval ? dcEval.isOpen : (elapsed >= dcRace.closeMinutes);
+      const dcCalled = dcEval ? dcEval.isCalled : false;
+      const dcLeader = dcCalled ? dcRace.finalWinner : (dcEval?.liveLeader || dcRace.finalWinner);
+      const dcFill = dcOpen ? getElectionPartyColor(dcLeader) : '#22304F';
+      const dcTitle = dcOpen
+        ? `District of Columbia (DC) · 3 EV · ${dcCalled ? `CALLED for ${getElectionPartyShort(dcRace.finalWinner)}` : `Leading: ${getElectionPartyShort(dcLeader)}`}`
+        : `District of Columbia (DC) · 3 EV · Polls close at ${enEngine.formatSimTime(dcRace.closeMinutes)}`;
+      dcCalloutSvg = `<circle cx="${dcGeo.cx}" cy="${dcGeo.cy}" r="5.5" style="fill:${dcFill};stroke:#fff;stroke-width:1.2" data-desk-state="DC" tabindex="0"><title>${safe(dcTitle)}</title></circle>`;
+    }
+  }
   const mapLabels = stateRows.map((state) => `<text x="${state.cx}" y="${state.cy}" class="map-label" pointer-events="none">${state.id}</text>`).join('');
-  const mapSvg = `<svg class="desk-map-svg" viewBox="${MAPS.viewBox}" role="img" aria-label="Election Night Live Results Map">${mapGeometry}${mapLabels}</svg>`;
+  const mapSvg = `<svg class="desk-map-svg" viewBox="${MAPS.viewBox}" role="img" aria-label="Election Night Live Results Map">${mapGeometry}${dcCalloutSvg}${mapLabels}</svg>`;
 
   // 5. "The Count" Live Closest-First Table for Active Tab
   const seoNightResults = (activeTab === 'statewide' || activeTab === 'statewide_executive')

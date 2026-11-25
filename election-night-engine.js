@@ -653,9 +653,21 @@
     }
 
     // 1. Presidential Races (50 States + DC)
+    // [v0.18.9 STAGE 1 FIX #6] Guarantee DC (3 EV) is always included in Presidential Election Night results (538 EV parity)
     if (isPresidential) {
-      Object.keys(presResults).forEach((stateId) => {
-        const presData = presResults[stateId];
+      const presResultsWithDc = { ...presResults };
+      if (!presResultsWithDc.DC) {
+        presResultsWithDc.DC = {
+          stateId: 'DC',
+          name: 'District of Columbia',
+          ev: 3,
+          margin: 84.0,
+          winner: 'people',
+          shares: { people: 90.0, heritage: 6.5, green: 1.8, liberty: 1.2, other: 0.5 },
+        };
+      }
+      Object.keys(presResultsWithDc).forEach((stateId) => {
+        const presData = presResultsWithDc[stateId];
         const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
         const duration = getStateReportingDuration(stateId);
         const margin = Number(presData.margin || presData.lead || 0);
@@ -843,12 +855,32 @@
     });
 
     // 5. U.S. House Districts (All 435 Districts)
+    // [v0.18.9 STAGE 1 FIX #4] Derive real district margins from district lean + national environment instead of hardcoded +-8
+    const houseModelList = safeGame.currentHouseMap?.modelDistricts
+      || (typeof window !== 'undefined' && window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS)
+      || (typeof global !== 'undefined' && global.PartyChairData?.VERSION_01_HOUSE_DISTRICTS)
+      || [];
+    const houseLeanLookup = new Map(houseModelList.map((d) => [d.id, Number(d.lean ?? d.baselineLean ?? 0)]));
+    const natEnvHouse = Number(safeGame.nationalEnvironment || 0);
     representatives.forEach((rep, repIdx) => {
       const distId = rep.districtId || rep.district || rep.id || `${rep.stateId || 'AL'}-${repIdx + 1}`;
       const stateId = rep.stateId || (distId ? String(distId).split('-')[0] : 'PA');
       const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
       const duration = getStateReportingDuration(stateId);
-      const margin = Number(rep.margin !== undefined ? rep.margin : (rep.partyId === 'people' ? 8 : -8));
+      let margin;
+      if (rep.margin !== undefined && Number.isFinite(Number(rep.margin))) {
+        margin = Number(rep.margin);
+      } else {
+        const dLean = houseLeanLookup.get(distId) ?? houseLeanLookup.get(String(distId).replace(/-0(\d)$/, '-$1'));
+        if (Number.isFinite(dLean)) {
+          const rawM = Math.round((dLean + natEnvHouse * 0.65) * 10) / 10;
+          if (rep.partyId === 'people') margin = Math.max(1.2, Math.abs(rawM));
+          else if (rep.partyId === 'heritage') margin = -Math.max(1.2, Math.abs(rawM));
+          else margin = Math.max(1.5, Math.abs(rawM));
+        } else {
+          margin = rep.partyId === 'people' ? 8 : -8;
+        }
+      }
       const winner = rep.partyId || (margin >= 0 ? 'people' : 'heritage');
       const cast = 10000;
       const finalShares = {

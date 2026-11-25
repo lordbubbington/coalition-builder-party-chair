@@ -576,6 +576,37 @@ function petitionBallotAccess(game, payload = {}) {
   };
 }
 
+// [v0.18.9 STAGE 1 FIX #2] Check if party holds ANY office in a state (Minor Statewide, State Leg, House, Senate, Governor)
+function partyHoldsAnyOfficeInState(game, partyId, stateId) {
+  if (!game || !partyId || !stateId) return false;
+  const isPlayerArg = partyId === 'player' || (game.player && (partyId === game.player.id || partyId === game.player.baseTemplateId));
+  const resolved = (partyId === 'player')
+    ? (game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people'))
+    : partyId;
+  const matchesParty = (p) => {
+    if (!p) return false;
+    if (p === resolved || p === partyId) return true;
+    if (isPlayerArg && (p === 'player' || p === game.player?.id || (!game.player?.custom && p === game.player?.baseTemplateId))) return true;
+    return false;
+  };
+  // 1. Governor
+  if (matchesParty(game.governorships?.[stateId])) return true;
+  // 2. State Legislature chambers or State House seats
+  const legs = game.stateLegislatures?.[stateId];
+  if (Array.isArray(legs) && legs.some((c) => matchesParty(c))) return true;
+  const shRow = game.stateHouseSeatCounts?.[stateId];
+  if (shRow && Object.entries(shRow).some(([k, v]) => k !== 'total' && k !== 'slateShares' && matchesParty(k) && Number(v || 0) > 0)) return true;
+  // 3. U.S. House representatives
+  if (Array.isArray(game.representatives) && game.representatives.some((r) => r && !r.vacant && (r.stateId === stateId || r.state === stateId || String(r.districtId || '').startsWith(`${stateId}-`)) && matchesParty(r.partyId || r.party))) {
+    return true;
+  }
+  // 4. Sitting Members (House, Senate, Governor, Minor Statewide Executive, State Leg)
+  if (Array.isArray(game.sittingMembers) && game.sittingMembers.some((m) => m && !m.vacant && (m.stateId === stateId || m.state === stateId || String(m.districtId || '').startsWith(`${stateId}-`)) && matchesParty(m.party || m.partyId || m.caucus))) {
+    return true;
+  }
+  return false;
+}
+
 function hasBallotAccess(game, partyId, raceId) {
   if (!partyId || !raceId) return true;
   if (['people', 'heritage'].includes(partyId)) return true;
@@ -592,7 +623,13 @@ function hasBallotAccess(game, partyId, raceId) {
   if (!access && partyId !== 'player' && game?.player && (game.player.baseTemplateId === partyId || game.player.id === partyId)) {
     access = game?.ballotAccess?.['player'];
   }
-  if (!access) return false;
+  if (!access) {
+    const partsFb = String(raceId || '').split(':');
+    if ((partsFb[0] === 'presidential' || partsFb[0] === 'president') && partsFb[1] && partyHoldsAnyOfficeInState(game, partyId, partsFb[1])) {
+      return true;
+    }
+    return false;
+  }
   const parts = raceId.split(':');
   const kind = parts[0];
   const target = parts[1];
@@ -604,6 +641,13 @@ function hasBallotAccess(game, partyId, raceId) {
       return true;
     }
     return Boolean(access.leg?.[target]);
+  }
+  if (kind === 'presidential' || kind === 'president') {
+    // [v0.18.9 STAGE 1 FIX #2] Automatically grant presidential ballot access in any state where the party holds at least one office
+    if (target && partyHoldsAnyOfficeInState(game, partyId, target)) {
+      return true;
+    }
+    return Boolean(access.presidential?.[target] || access[target]);
   }
   if (kind === 'statewide') {
     const stId = String(target || '').split('-')[0];
@@ -18833,6 +18877,13 @@ function takeActionInternal(game, actionId, payload = {}) {
     return endorseCandidate(game, payload);
   }
   if (actionId === 'petition-ballot-access' || actionId === 'launch-petition-drive') {
+    // [v0.18.9 STAGE 1 FIX #3] Presidential ballot access cannot be gained during midterm elections
+    if ((Number(game.year || 2028) % 4) !== 0) {
+      return {
+        ...game,
+        lastNote: `Presidential ballot access petitions are closed during midterm cycles (${game.year}). They reopen in the next presidential election year.`,
+      };
+    }
     const bMod = (typeof window !== 'undefined' && window.BallotAccess)
       ? window.BallotAccess
       : (typeof global !== 'undefined' && global.BallotAccess)
@@ -24026,6 +24077,7 @@ window.PartyChairEngine = {
   canPetitionBallotAccess,
   petitionBallotAccess,
   hasBallotAccess,
+  partyHoldsAnyOfficeInState,
   generateStartingJointCompacts,
   initializeVoterModelBaselines,
   ensureThirdPartyAffiliations,

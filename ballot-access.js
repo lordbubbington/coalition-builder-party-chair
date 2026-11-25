@@ -292,10 +292,12 @@
   function getPresidentialBallotProgress(game, partyId) {
     const allIds = getAllJurisdictionIds();
     const access = game?.ballotAccess?.[partyId] || {};
+    const eng = getEngine();
     const certified = [];
     const remaining = [];
     allIds.forEach((stId) => {
-      if (access.presidential?.[stId] || access[stId]) certified.push(stId);
+      const holdsOffice = eng?.partyHoldsAnyOfficeInState ? eng.partyHoldsAnyOfficeInState(game, partyId, stId) : false;
+      if (access.presidential?.[stId] || access[stId] || holdsOffice) certified.push(stId);
       else remaining.push(stId);
     });
     return { allIds, certified, remaining, certifiedCount: certified.length, totalCount: allIds.length };
@@ -303,6 +305,8 @@
 
   function canLaunchPetitionDrive(game, stateId = null, bufferTier = 'prudent', partyId = 'player') {
     if (!game) return false;
+    // [v0.18.9 STAGE 1 FIX #3] Block presidential ballot access petitions during midterm cycles
+    if ((Number(game.year || 2028) % 4) !== 0) return false;
     const resolvedId = (partyId === 'player' && game.player?.custom) ? 'player' : (partyId && partyId !== 'player' ? partyId : (game.player?.baseTemplateId || 'people'));
     if (['people', 'heritage'].includes(resolvedId) && !game.player?.custom) return false;
 
@@ -332,6 +336,10 @@
    * then 3-5 random remaining states per drive until all 50 states + DC are secured.
    */
   function launchPetitionDrive(game, payload = {}) {
+    // [v0.18.9 STAGE 1 FIX #3] Block presidential ballot access petitions during midterm cycles
+    if (game && (Number(game.year || 2028) % 4) !== 0) {
+      return { ...game, lastNote: `Presidential ballot access petitions are unavailable during midterm elections (${game.year}).` };
+    }
     const p = payload.payload ? payload.payload : payload;
     const requestedStateId = p.stateId || null;
     const bufferTier = p.bufferTier || 'prudent';
