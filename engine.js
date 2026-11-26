@@ -9018,13 +9018,15 @@ function presidentialStateMargin(game, stateId) {
   const baseLean = state.leanPercent !== undefined ? state.leanPercent : (state.lean ? -state.lean * 100 : 0);
   const elasticity = stateDemographicElasticity(game, stateId);
   const swingScale = clamp(1 + (elasticity - 1.0) * 0.25, 0.9, 1.25);
-  const env = (game.nationalEnvironment || 0) * swingScale;
+  // [MC-BALANCE-TUNE] MC-04: Dampen sticky 2028 D+9 overhang in presidential margin & remove static 2032+ regional ghost lift
+  const rawPresEnv = (game.year || 2028) <= 2028 ? (game.nationalEnvironment || 0) * 0.35 : (game.nationalEnvironment || 0);
+  const env = rawPresEnv * swingScale;
   const region = state.region;
   // Regional ticket boost: 2028 baseline has Ossoff (D) +4 in South, Vance (R) +4 in Midwest.
   // 2032+ cycles feature dynamic presidential candidate home-state & VP regional lifts (REQ-197, REQ-202).
   let ticketLift = 0;
   if (!game || (game.year || 2028) <= 2028) {
-    ticketLift = (region === 'South' ? 4.0 : 0) - (region === 'Midwest' ? 4.0 : 0);
+    ticketLift = (region === 'South' ? 2.0 : 0) - (region === 'Midwest' ? 2.0 : 0);
   } else {
     const pp = game.presidentialPrimaries;
     const ppEng = getPresidentialPrimariesEngine();
@@ -9081,7 +9083,7 @@ function presidentialStateMargin(game, stateId) {
       }
       ticketLift = demLift - repLift;
     } else {
-      ticketLift = (region === 'South' ? 4.0 : 0) - (region === 'Midwest' ? 4.0 : 0);
+      ticketLift = 0; // [MC-BALANCE-TUNE] MC-04: Remove static South/Midwest ghost lift in 2032+ cycles
     }
   }
   if (!game?.player || stateId === 'DC') return baseLean + env + ticketLift;
@@ -9106,7 +9108,9 @@ function presidentialStateMargin(game, stateId) {
   const trustEffects = window.PartyChairV07 ? window.PartyChairV07.calculateTrustEffects(game.trust || game.player.trust) : { independentMarginLift: 0 };
   const psePre = getPartySystemsEngine();
   const indElasticityMult = psePre ? psePre.getIndependentElasticityMultiplier(game) : 1.0;
-  const playerDelta = priorityMatches * 0.8 + billLift * 0.65 + keynoteLift + generalCampaignLift * 0.7 + deploymentLift * 0.6 + oppoLift * 0.7 + ballotLift * 0.5 + adModLift + coStateLift + regLift - splinterPenalty + (trustEffects.independentMarginLift || 0) * 0.5 * swingScale * indElasticityMult;
+  const _msPresMod = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem) || null;
+  const _msSwingPersLift = _msPresMod?.getSwingPersuasionMediaLift ? Number(_msPresMod.getSwingPersuasionMediaLift(game, 'player', baseLean) || 0) : 0;
+  const playerDelta = priorityMatches * 0.8 + billLift * 0.65 + keynoteLift + generalCampaignLift * 0.7 + deploymentLift * 0.6 + oppoLift * 0.7 + ballotLift * 0.5 + adModLift + coStateLift + regLift + _msSwingPersLift - splinterPenalty + (trustEffects.independentMarginLift || 0) * 0.5 * swingScale * indElasticityMult;
   const majorShift = ['people', 'heritage'].includes(playerIdentityId) ? playerSign * playerDelta : 0;
 
   // REQ-173: Third-Party Ideological Siphoning Dynamics
@@ -9503,7 +9507,8 @@ function calculateDistrictElection(game, year) {
   const primaryResults = Object.fromEntries((game.primaryResults || []).map((result) => [`${result.raceId}:${result.partyId}`, result]));
   const districts = legislativeDistricts(game);
   const seats = Object.fromEntries(parties.map((party) => [party.id, 0]));
-  const avgDistrictLean = 1.0344827586206897;
+  // [MC-BALANCE-TUNE] MC-04: Replace stale -1.034 House GOP bias with +2.2 parity rebalance (target ~208-227 avg seats)
+  const structuralHouseRebalance = 2.2;
   const allV01Districts = window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
   const distMap = new Map(allV01Districts.map((d) => [d.id, d]));
 
@@ -9597,18 +9602,20 @@ function calculateDistrictElection(game, year) {
     const stateBaseLean = stateObj.leanPercent !== undefined ? Number(stateObj.leanPercent) : (-Number(stateObj.lean || 0) * 100);
     const presOverperf = presMargin - stateBaseLean;
     const isPresYearDist = (Number(year || game.year || 2028) % 4) === 0;
-    // Chunk 2.5: Strengthen presidential coattails in the House when national popular vote margin >= 4.0%
+    // [MC-BALANCE-TUNE] MC-04: Tighten presidential-year coattail pass-through (+1.5%..+2.5%) & add digital/local swing persuasion
     let presCoattailBonus = 0;
     if (isPresYearDist) {
       const natMargin = Math.abs(natEnv);
-      if (natMargin >= 4.0) {
-        presCoattailBonus = Math.sign(natEnv) * (natMargin - 4.0) * 0.35;
+      if (natMargin >= 1.5) {
+        presCoattailBonus = clamp(Math.sign(natEnv) * (1.5 + Math.min(1.0, (natMargin - 1.5) * 0.20)), -2.5, 2.5);
       }
     }
+    const _msDistMod = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem) || null;
+    const _msDistSwingLift = _msDistMod?.getSwingPersuasionMediaLift ? Number(_msDistMod.getSwingPersuasionMediaLift(game, 'player', Math.abs(districtLean)) || 0) * 0.85 * playerSignDist : 0;
     const effectiveWave = isPresYearDist
-      ? (presOverperf * 0.85 + natEnv * 0.25 + presCoattailBonus)
-      : (natEnv * 1.08);
-    const districtMargin = (districtLean - avgDistrictLean) + effectiveWave + candidateLift + fundingLift + incumbentLift + chapterHouseLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
+      ? (presOverperf * 0.50 + natEnv * 0.45 + presCoattailBonus)
+      : (natEnv * 1.05);
+    const districtMargin = (districtLean + structuralHouseRebalance) + effectiveWave + candidateLift + fundingLift + incumbentLift + chapterHouseLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift + _msDistSwingLift;
     const demTwoParty = clamp(50 + districtMargin / 2, 0.5, 99.5);
     const repTwoParty = clamp(50 - districtMargin / 2, 0.5, 99.5);
 
@@ -9877,6 +9884,9 @@ function supportByState(game, state, options = {}) {
     const campaignDeployLift = sameAsPlayer ? (game.campaign?.deploymentBoosts?.[stateId] || 0) * 0.5 : 0;
     const campaignOppoLift = sameAsPlayer ? (game.campaign?.oppoTargets?.[stateId] || 0) * 0.6 : 0;
     const campaignAdLift = sameAsPlayer ? (game.campaign?.campaignAdModifiers?.[stateId] || 0) * 0.5 * mediaProfile.earnedMediaMultiplier : 0;
+    // [MC-BALANCE-TUNE] MC-04: Positive Digital/Podcasts & Local reach boosts swing-state persuasion support
+    const _msSupMod = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem) || null;
+    const swingMediaLift = _msSupMod?.getSwingPersuasionMediaLift ? Number(_msSupMod.getSwingPersuasionMediaLift(game, sameAsPlayer ? 'player' : party.id, (stateObj.leanPercent ?? (-Number(stateObj.lean || 0) * 100))) || 0) * 0.45 * mediaProfile.earnedMediaMultiplier : 0;
     const regBoost = sameAsPlayer ? ((game.stateRegistrationBoosts?.[stateId] || 0) * 0.35 + getStateLegislativeCoattailLift(game, stateId)) : 0;
     const stateBaseCoattail = getMinorStateBaseCoattail(game, sameAsPlayer ? 'player' : party.id, stateId);
     const counterBoost = !sameAsPlayer ? (game.minorPartyCounterGrowth?.[party.id] || 0) * 0.8 : 0;
@@ -9897,7 +9907,7 @@ function supportByState(game, state, options = {}) {
     }
     let rawScore = isOutOfTerritoryRegional
       ? 0.05
-      : Math.max(minFloor, (party.baseShare || 0.2) + regionalLean + affinity + rawCampaign + precisePlayerIdentity + generalCampaignLift + campaignDeployLift + campaignOppoLift + campaignAdLift + regBoost + stateBaseCoattail + counterBoost + regionalEraBonus + regionalCalibration - splinterSpoilerLoss);
+      : Math.max(minFloor, (party.baseShare || 0.2) + regionalLean + affinity + rawCampaign + precisePlayerIdentity + generalCampaignLift + campaignDeployLift + campaignOppoLift + campaignAdLift + swingMediaLift + regBoost + stateBaseCoattail + counterBoost + regionalEraBonus + regionalCalibration - splinterSpoilerLoss);
 
     // MAS-01: Independent Presidential Candidate Dual-Party Siphoning & Active Era Support Modifiers
     if (pseSup && game?.partySystems?.independentPresidency?.activeCampaign) {
@@ -12658,8 +12668,9 @@ function computeWaveMomentum(game) {
 function senateBaselineMargin(game, stateId) {
   const state = STATES.find((s) => s.id === stateId) || { id: stateId, leanPercent: 0 };
   const stateLean = state.leanPercent !== undefined ? state.leanPercent : (-Number(state.lean || 0) * 100);
-  const nationalMargin = Number(game?.nationalEnvironment ?? 9);
-  return round(stateLean + nationalMargin, 2);
+  // [MC-BALANCE-TUNE] MC-04: Center nationalEnvironment fallback near 0.0 & apply +2.4 Senate structural parity offset
+  const nationalMargin = Number(game?.nationalEnvironment ?? 0);
+  return round(stateLean + 2.4 + nationalMargin, 2);
 }
 
 function estimateRaceMarginInternal(game, raceKey, options = {}) {
@@ -12672,7 +12683,8 @@ function estimateRaceMarginInternal(game, raceKey, options = {}) {
   const quality = (((dem?.quality || 5.5) - (rep?.quality || 5.5)) * 0.45);
   const pseRace = getPartySystemsEngine();
   const eraCoattailMult = pseRace ? pseRace.getCoattailMultiplier(game) : 1.0;
-  const baseCoattailWeight = kind === 'presidential' ? 1.0 : kind === 'senate' ? 0.55 : kind === 'governor' ? 0.42 : 0.34;
+  // [MC-BALANCE-TUNE] MC-04: Tighten downballot presidential coattail weights
+  const baseCoattailWeight = kind === 'presidential' ? 1.0 : kind === 'senate' ? 0.28 : kind === 'governor' ? 0.25 : 0.25;
   const coattailWeight = kind === 'presidential' ? 1.0 : round(baseCoattailWeight * eraCoattailMult, 3);
   const funding = game.candidateFunding?.[raceKey];
   const playerIdentityId = game.player?.baseTemplateId || 'people';
@@ -12709,16 +12721,16 @@ function estimateRaceMarginInternal(game, raceKey, options = {}) {
     const distObj = options.districtMap ? options.districtMap.get(distId) : allDistricts.find((d) => d.id === distId || d.label === distId);
     const rawLean = distObj?.leanPercent ?? distObj?.lean ?? 0;
     const districtLean = (typeof rawLean === 'number' && Math.abs(rawLean) <= 1 && rawLean !== 0) ? -rawLean * 100 : rawLean;
-    const nationalMargin = Number(game?.nationalEnvironment ?? 9);
+    const nationalMargin = Number(game?.nationalEnvironment ?? 0);
     if (options.fundamentalsOnly || options.ignoreCandidates) {
       return districtLean + nationalMargin;
     }
-    margin = districtLean + nationalMargin + quality + playerSign * fundLift + raceAdLift + siphonEffect;
+    margin = districtLean + 2.2 + nationalMargin + quality + playerSign * fundLift + raceAdLift + siphonEffect;
   } else if (kind === 'senate') {
     // REQ-262: Full 1:1 National Environment Transmission & State Partisan Lean
     const state = STATES.find((s) => s.id === stateId) || { id: stateId, region: 'South', ev: 10, lean: 0, leanPercent: 0 };
     const stateLean = state.leanPercent !== undefined ? state.leanPercent : (-Number(state.lean || 0) * 100);
-    const nationalMargin = Number(game?.nationalEnvironment ?? 9);
+    const nationalMargin = Number(game?.nationalEnvironment ?? 0);
 
     if (options.fundamentalsOnly || options.ignoreCandidates) {
       return stateLean + nationalMargin;
@@ -12733,7 +12745,9 @@ function estimateRaceMarginInternal(game, raceKey, options = {}) {
     const happinessFactor = ((game.sittingMemberHappiness ?? 70) - 70) * 0.025;
     const incumbentLift = (incumbentParty === 'people' ? 1.5 : incumbentParty === 'heritage' ? -1.5 : 0) + (incumbentParty ? playerSign * happinessFactor : 0);
 
-    margin = stateLean + nationalMargin + quality + incumbentLift + playerSign * fundLift + raceAdLift + siphonEffect;
+    // [MC-BALANCE-TUNE] MC-04: +2.4 Senate structural rebalance & tightened coattail pass-through
+    const senPresCoattail = (Number(game?.year || 2028) % 4 === 0) ? clamp(nationalMargin * 0.25, -2.5, 2.5) : 0;
+    margin = stateLean + 2.4 + nationalMargin + senPresCoattail + quality + incumbentLift + playerSign * fundLift + raceAdLift + siphonEffect;
   } else if (kind === 'stateLeg' || kind === 'state-leg') {
     // REQ-182: State Legislature control margin (state partisan lean, contested slate quality, coattails ~0.30, siphoning, machine investments)
     const state = STATES.find((s) => s.id === stateId) || { id: stateId, region: 'Midwest', ev: 10, lean: 0 };
@@ -13390,7 +13404,8 @@ function computeNationalEnvironment(game) {
   const seedKey = `env:${game.year || 2028}:${game.chairTurn || 0}:${game.campaign?.week || 0}`;
   const randomWind = ((hash(seedKey) - 0.5) * 3.0);
 
-  return round(clamp((game.nationalEnvironment ?? 9) * 0.65 + (approvalComponent + fameComponent + randomWind) * 0.35, -20, 20), 2);
+  // [MC-BALANCE-TUNE] MC-04: Center nationalEnvironment fallback near 0.0
+  return round(clamp((game.nationalEnvironment ?? 0) * 0.65 + (approvalComponent + fameComponent + randomWind) * 0.35, -20, 20), 2);
 }
 
 // Recommended Target States ranked by competitiveness & electoral impact
@@ -16472,39 +16487,38 @@ function computeMacroEnvironmentForCycle(game, nextYear) {
     return { nextEnv, reason };
   }
 
+  const termNumber = Math.max(1, Number(game.incumbentTermNumber ?? 1));
   if (isMidterm) {
-    // Midterm fatigue: 80% chance of -3.0 to -7.0 point headwind against White House party; 20% neutral/pro-incumbent.
+    // [MC-BALANCE-TUNE] MC-04: Strengthen midterm thermostatic backlash (-3.5 to -5.5 scaled by incumbent term number)
     const roll = hash(`${seedKey}:midterm-prob`);
-    if (roll < 0.80) {
-      const rawMag = sampleGaussian(5.0, 1.0, u1, u2);
-      const mag = clamp(rawMag, 3.0, 7.0);
+    if (roll < 0.88) {
+      const termScale = Math.min(1.0, Math.max(0, termNumber - 1) * 0.65);
+      const rawMag = sampleGaussian(4.15 + termScale, 0.70, u1, u2);
+      const mag = clamp(rawMag, 3.5, 5.5);
       const sign = (whParty === 'people' ? -1 : 1);
       nextEnv = round(sign * mag, 1);
       reason = `Midterm governing fatigue against ${whParty === 'people' ? 'Democratic' : 'Republican'} White House (${whParty === 'people' ? 'R' : 'D'}+${mag.toFixed(1)}).`;
     } else {
-      const rawMag = sampleGaussian(-0.5, 0.8, u1, u2);
-      const mag = clamp(rawMag, -2.0, 1.5);
+      const rawMag = sampleGaussian(-0.2, 0.8, u1, u2);
+      const mag = clamp(rawMag, -1.5, 1.0);
       const sign = (whParty === 'people' ? -1 : 1);
       nextEnv = round(sign * mag, 1);
       reason = `Neutral / resilient midterm governing environment (${nextEnv >= 0 ? 'D' : 'R'}+${Math.abs(nextEnv).toFixed(1)}).`;
     }
   } else {
-    // Presidential election
-    const termNumber = game.incumbentTermNumber ?? 1;
+    // [MC-BALANCE-TUNE] MC-04: Center presidential national environment mean near 0.0 for balanced 45%-55% alternation
     if (termNumber === 1) {
-      // First-term re-election: natural +2.5 to +5.0 point incumbency rebound calibrated to achieve ~90% incumbent win benchmark.
-      const rawMag = sampleGaussian(3.75, 0.65, u1, u2);
-      const mag = clamp(rawMag, 2.5, 5.0);
+      const rawMag = sampleGaussian(0.6, 2.2, u1, u2);
+      const mag = clamp(rawMag, -4.5, 5.0);
       const sign = (whParty === 'people' ? 1 : -1);
       nextEnv = round(sign * mag, 1);
-      reason = `First-term presidential re-election incumbency rebound (${whParty === 'people' ? 'D' : 'R'}+${mag.toFixed(1)}).`;
+      reason = `First-term presidential re-election incumbency environment (${nextEnv >= 0 ? 'D' : 'R'}+${Math.abs(nextEnv).toFixed(1)}).`;
     } else {
-      // Successor election: out-party shift calibrated to achieve ~90% successor loss benchmark.
-      const rawMag = sampleGaussian(5.0, 0.8, u1, u2);
-      const mag = clamp(rawMag, 3.5, 6.5);
+      const rawMag = sampleGaussian(0.8, 2.3, u1, u2);
+      const mag = clamp(rawMag, -4.5, 5.5);
       const sign = (whParty === 'people' ? -1 : 1);
       nextEnv = round(sign * mag, 1);
-      reason = `Successor election: out-party fatigue after two-term presidency (${whParty === 'people' ? 'R' : 'D'}+${mag.toFixed(1)}).`;
+      reason = `Successor election: out-party fatigue after two-term presidency (${nextEnv >= 0 ? 'D' : 'R'}+${Math.abs(nextEnv).toFixed(1)}).`;
     }
   }
 
@@ -17560,8 +17574,9 @@ function resolveVersion01GeneralElection(game) {
     const happinessFactor = ((game.sittingMemberHappiness ?? 70) - 70) * 0.025;
     const incumbentLift = (incumbent === 'people' ? 1.5 : incumbent === 'heritage' ? -1.5 : 0) + playerSign * happinessFactor;
     const presMargin = presidentialStateMargin(game, state.id);
-    const coattailWeight = raceId.startsWith('senate:') ? 0.55 : raceId.startsWith('governor:') ? 0.42 : 0.34;
-    const coattail = isPresidential ? (presMargin * coattailWeight) : 0;
+    // [MC-BALANCE-TUNE] MC-04: Tighten presidential-year coattail pass-through (+1.5%..+2.5%) & rebalance Senate/Governor baselines
+    const coattailWeight = raceId.startsWith('senate:') ? 0.28 : raceId.startsWith('governor:') ? 0.25 : 0.25;
+    const coattail = isPresidential ? clamp(presMargin * coattailWeight, -2.5, 2.5) : 0;
 
     // Candidate budget & unhappy unendorsed penalty + Super PAC race ads + Fusion ballot line (REQ-189)
     const funding = game.candidateFunding?.[raceId];
@@ -17575,10 +17590,18 @@ function resolveVersion01GeneralElection(game) {
       : 0;
 
     let baseMargin;
+    const _msCandMod = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem) || null;
     if (raceId.startsWith('senate:')) {
       const stateLean = state.leanPercent !== undefined ? state.leanPercent : (-Number(state.lean || 0) * 100);
       const natEnv = typeof computeNationalEnvironment === 'function' ? computeNationalEnvironment(game) : (game.nationalEnvironment ?? 0);
-      baseMargin = stateLean + natEnv + quality + incumbentLift + playerSign * fundingLift + raceAdLift + fusionLift;
+      const _msSenSwing = _msCandMod?.getSwingPersuasionMediaLift ? Number(_msCandMod.getSwingPersuasionMediaLift(game, 'player', stateLean) || 0) * 0.75 * playerSign : 0;
+      const senCoattail = isPresidential ? clamp(natEnv * 0.25, -2.5, 2.5) : 0;
+      baseMargin = stateLean + 2.4 + natEnv + senCoattail + quality + incumbentLift + playerSign * fundingLift + raceAdLift + fusionLift + _msSenSwing;
+    } else if (raceId.startsWith('governor:')) {
+      const stateLeanGov = state.leanPercent !== undefined ? state.leanPercent : (-Number(state.lean || 0) * 100);
+      const govBaseline = (stateLeanGov * 0.60 + support * 0.40) - 1.8;
+      const _msGovSwing = _msCandMod?.getSwingPersuasionMediaLift ? Number(_msCandMod.getSwingPersuasionMediaLift(game, 'player', stateLeanGov) || 0) * 0.75 * playerSign : 0;
+      baseMargin = govBaseline + quality + incumbentLift + coattail + playerSign * fundingLift + raceAdLift + fusionLift + _msGovSwing;
     } else {
       baseMargin = support + quality + incumbentLift + coattail + playerSign * fundingLift + raceAdLift + fusionLift;
     }

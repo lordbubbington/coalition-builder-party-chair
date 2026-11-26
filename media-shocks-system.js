@@ -204,12 +204,29 @@
     return round(getPartyCompositeReach(game, pKey) - getPartyCompositeReach(game, rKey), 2);
   }
 
-  // Ad persuasion modifier: -15% to +20% (0.85x to 1.20x) based on reach differential
+  // [MC-BALANCE-TUNE] MC-04: Boosted digital/podcasts & local persuasion modifier (-15% to +35%) based on reach differential
   function getAdPersuasionMultiplier(game, partyId = 'player', rivalPartyId = null) {
     if (!game?.mediaEcosystem) return 1.0;
-    const diff = getReachDifferential(game, partyId, rivalPartyId);
-    const adj = clamp((diff / 100) * 0.50, -0.15, 0.20);
+    const pKey = resolveEcoPartyKey(game, partyId);
+    const rKey = rivalPartyId ? resolveEcoPartyKey(game, rivalPartyId) : getPrimaryRivalKey(game);
+    const diff = getReachDifferential(game, pKey, rKey);
+    const digDiff = getEffectiveChannelReach(game, pKey, 'digital') - getEffectiveChannelReach(game, rKey, 'digital');
+    const locDiff = getEffectiveChannelReach(game, pKey, 'local') - getEffectiveChannelReach(game, rKey, 'local');
+    const adj = clamp((diff / 100) * 0.50 + Math.max(0, digDiff) * 0.0025 + Math.max(0, locDiff) * 0.0020, -0.15, 0.35);
     return round(1.0 + adj, 3);
+  }
+
+  // [MC-BALANCE-TUNE] MC-04: Direct swing-state persuasion lift from Digital/Podcasts & Local Press differential
+  function getSwingPersuasionMediaLift(game, partyId = 'player', stateLeanAbs = 5) {
+    if (!game?.mediaEcosystem) return 0;
+    const absLean = Math.abs(Number(stateLeanAbs || 0));
+    if (absLean >= 14) return 0;
+    const pKey = resolveEcoPartyKey(game, partyId);
+    const rKey = getPrimaryRivalKey(game);
+    const digBonus = Math.max(0, getEffectiveChannelReach(game, pKey, 'digital') - Math.max(48, getEffectiveChannelReach(game, rKey, 'digital') * 0.85));
+    const locBonus = Math.max(0, getEffectiveChannelReach(game, pKey, 'local') - Math.max(48, getEffectiveChannelReach(game, rKey, 'local') * 0.85));
+    const swingWeight = clamp(1 - absLean / 14, 0, 1);
+    return round(clamp((digBonus * 0.032 + locBonus * 0.028) * swingWeight, 0, 2.2), 2);
   }
 
   // Positive reach differential slows ad saturation buildup (up to 28% slower)
@@ -258,7 +275,7 @@
     };
   }
 
-  // Local Press buffers down-ballot House/Senate incumbents against national wave drags
+  // [MC-BALANCE-TUNE] MC-04: Local Press buffers down-ballot House/Senate incumbents against national wave drags (up to 32%)
   function getLocalIncumbentWaveBuffer(game, incumbentPartyId, natEnv) {
     if (!game?.mediaEcosystem || !incumbentPartyId) return 0;
     const env = Number(natEnv || 0);
@@ -270,7 +287,7 @@
     const isRep = incumbentPartyId === 'heritage';
     const facingHeadwind = (isDem && env < 0) || (isRep && env > 0);
     if (!facingHeadwind) return 0;
-    const bufferFrac = clamp(((localReach - 40) / 60) * 0.25, 0, 0.25);
+    const bufferFrac = clamp(((localReach - 40) / 60) * 0.32, 0, 0.32);
     const bufferMag = Math.abs(env) * bufferFrac;
     return round(isDem ? bufferMag : -bufferMag, 2);
   }
@@ -820,9 +837,10 @@
 
       let nextTrust = game.trust ? { ...game.trust } : { supporters: 65, independents: 40, opponents: 12 };
       let cableWarn = '';
-      if (channel === 'cable' && after > 75) {
-        nextTrust.independents = clamp(round((nextTrust.independents ?? 40) - 2, 1), 0, 100);
-        cableWarn = ' (Over-indexed Cable >75: -2 Independents Trust)';
+      // [MC-BALANCE-TUNE] MC-04: Raise Cable over-index threshold 75 -> 88 and halve penalty (-2 -> -1 Independents Trust)
+      if (channel === 'cable' && after > 88) {
+        nextTrust.independents = clamp(round((nextTrust.independents ?? 40) - 1, 1), 0, 100);
+        cableWarn = ' (Over-indexed Cable >88: -1 Independents Trust)';
       }
       const chObj = MEDIA_CHANNELS.find((c) => c.id === channel) || { fullName: channel };
       const note = `Invested $${cost}M in ${chObj.fullName}: reach ${before} → ${after} (+8 permanent, upkeep secured).${cableWarn}`;
@@ -1143,6 +1161,7 @@
     getPartyCompositeReach,
     getReachDifferential,
     getAdPersuasionMultiplier,
+    getSwingPersuasionMediaLift,
     getAdSaturationScale,
     getOctoberSurpriseMultiplier,
     applyBlackoutBypass,
