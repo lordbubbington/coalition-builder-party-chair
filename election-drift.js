@@ -248,6 +248,17 @@
             );
           }
         }
+        // [MC-BALANCE-TUNE] MC-02: Concentrated state chapter networks (>= 3 chapters) reinforce durable minor cushion
+        if (chapters >= 3 && partyId !== 'people' && partyId !== 'heritage') {
+          game.statePartyCushions = game.statePartyCushions || {};
+          game.statePartyCushions[stateId] = game.statePartyCushions[stateId] || {};
+          const chBonus = chapters >= 6 ? 0.35 : 0.20;
+          game.statePartyCushions[stateId][partyId] = clamp(
+            round((game.statePartyCushions[stateId][partyId] || 0) + chBonus, 3),
+            0,
+            5.0
+          );
+        }
       });
 
       if (Math.abs(netLeanShift) >= 0.001) {

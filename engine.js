@@ -2092,7 +2092,53 @@ const templateFor = (id, gameRef = null) => {
   }
   return all[0];
 };
-const localChapterLift = (count) => Math.min(12, Math.sqrt(Math.max(0, count)) * 1.15);
+// [MC-BALANCE-TUNE] MC-02 & MC-03: Strengthened local chapters, tier-scaled build multiplier, and conservative inter-cycle conversion
+const localChapterLift = (count) => Math.min(14, Math.sqrt(Math.max(0, count)) * 1.45);
+
+function getTierScaledChapterBuildMult(tier) {
+  const t = clamp(Math.round(Number(tier ?? 0)), 0, 5);
+  if (t <= 1) return 0.45;
+  if (t === 2) return 0.65;
+  if (t === 3) return 0.85;
+  return 1.0;
+}
+
+function getStateChaptersForParty(game, stateId, partyId = 'player') {
+  const playerResolved = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people');
+  const resolved = (!partyId || partyId === 'player') ? playerResolved : partyId;
+  const isPlayerMatch = partyId === 'player' || resolved === playerResolved;
+  if (isPlayerMatch) {
+    return Math.max(
+      0,
+      Number(game?.stateChapters?.[stateId] || 0),
+      Number(game?.stateOrganizations?.[stateId]?.[resolved]?.chapters || 0)
+    );
+  }
+  return Math.max(0, Number(game?.stateOrganizations?.[stateId]?.[resolved]?.chapters || 0));
+}
+
+function getTotalChaptersForParty(game, partyId = 'player') {
+  const playerResolved = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people');
+  const resolved = (!partyId || partyId === 'player') ? playerResolved : partyId;
+  const isPlayerMatch = partyId === 'player' || resolved === playerResolved;
+  if (isPlayerMatch && game?.stateChapters && Object.keys(game.stateChapters).length > 0) {
+    const stSum = Object.values(game.stateChapters).reduce((s, n) => s + Math.max(0, Number(n) || 0), 0);
+    const chSum = Object.values(game?.chapters || {}).reduce((s, n) => s + Math.max(0, Number(n) || 0), 0);
+    return Math.max(stSum, chSum);
+  }
+  if (game?.stateOrganizations) {
+    let orgSum = 0;
+    Object.values(game.stateOrganizations).forEach((stEntry) => {
+      orgSum += Math.max(0, Number(stEntry?.[resolved]?.chapters || 0));
+    });
+    if (orgSum > 0) return orgSum;
+  }
+  const rivalOrg = game?.organizations?.[resolved];
+  if (rivalOrg?.chapters) {
+    return Object.values(rivalOrg.chapters).reduce((s, n) => s + Math.max(0, Number(n) || 0), 0);
+  }
+  return 0;
+}
 
 // REQ-50 / REQ-85: Net Approval = ((2 * Popularity) - Fame)
 function computeLeaderNetApproval(leaderOrPopularity, fameOpt = null) {
@@ -3220,6 +3266,116 @@ function getMajorNomineeUnpopularityMultipliers(game, partyId = 'player') {
     registrationMult = 2.0;
   }
   return { persuasionMult, registrationMult, bothUnpopular, bothVeryUnpopular, demNet: round(demNet, 1), repNet: round(repNet, 1) };
+}
+
+// [MC-BALANCE-TUNE] MC-02 & MC-03: Inter-cycle state voter-registration conversion per chapter + Tier 0-2 concentrated compounding (1.5%-2.5%, 22% soft cap)
+function applyInterCycleChapterRegistrationConversion(game) {
+  if (!game?.voterModel || !Array.isArray(game.voterModel.states)) return { voterModel: game?.voterModel, convertedTotal: 0 };
+  const nextVm = JSON.parse(JSON.stringify(game.voterModel));
+  const candidateParties = ['people', 'heritage', 'liberty', 'green', 'constitution', 'socialist'];
+  if (game.player?.custom) candidateParties.push('player');
+  const is1to1 = (nextVm.voterScale === '1:1' || Number(nextVm.sampleVoters || 0) >= 10_000_000);
+  const scaleMult = is1to1 ? 1 : 100;
+  let convertedTotal = 0;
+
+  nextVm.states.forEach((st) => {
+    const sid = st.stateId || st.id;
+    const aff = st.affiliations || {};
+    const keys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
+    const totalAff = keys.reduce((s, k) => s + Math.max(0, Number(aff[k] || 0)), 0);
+    if (totalAff <= 0) return;
+
+    candidateParties.forEach((pid) => {
+      const ch = getStateChaptersForParty(game, sid, pid);
+      if (ch <= 0) return;
+      const tier = getPartyInstitutionalTier(game, pid);
+      const curSharePct = (Math.max(0, Number(aff[pid] || 0)) / totalAff) * 100;
+      const baseConvPct = Math.min(1.25, Math.min(10, ch) * 0.08 + (ch > 10 ? Math.sqrt(ch - 10) * 0.14 : 0));
+      let gainPct = baseConvPct;
+      if (tier <= 2 && ch >= 3) {
+        const concPct = 1.5 + Math.min(1.0, (ch - 3) * 0.20);
+        const softCapRoom = Math.max(0, 22.0 - curSharePct);
+        gainPct = Math.min(Math.max(baseConvPct, concPct), softCapRoom);
+      }
+      if (gainPct <= 0) return;
+
+      const wanted = Math.round(totalAff * (gainPct / 100));
+      if (wanted <= 0) return;
+
+      const donorOrder = tier <= 2
+        ? ['independent', 'other', 'people', 'heritage']
+        : ['independent', 'other'];
+      const avail = donorOrder.reduce((s, k) => s + (k === pid ? 0 : Math.max(0, Number(aff[k] || 0))), 0);
+      const actual = Math.min(wanted, Math.round(avail * 0.40));
+      if (actual <= 0) return;
+
+      let remaining = actual;
+      const deductedByDonor = {};
+      for (const dk of donorOrder) {
+        if (dk === pid || remaining <= 0) continue;
+        const pool = Math.max(0, Number(aff[dk] || 0));
+        if (pool <= 0) continue;
+        const maxFromDonor = (dk === 'people' || dk === 'heritage') ? Math.round(pool * 0.15) : Math.round(pool * 0.50);
+        const take = Math.min(remaining, maxFromDonor);
+        if (take > 0) {
+          aff[dk] = pool - take;
+          deductedByDonor[dk] = take;
+          remaining -= take;
+        }
+      }
+      const gained = actual - remaining;
+      if (gained <= 0) return;
+      aff[pid] = Math.round(Math.max(0, Number(aff[pid] || 0)) + gained);
+      convertedTotal += gained;
+
+      if (st.factions && typeof st.factions === 'object' && Array.isArray(game.factions)) {
+        const gainedRep = gained * scaleMult;
+        const pFactions = game.factions.filter((f) => f && f.partyId === pid);
+        if (pFactions.length > 0) {
+          const curSum = pFactions.reduce((s, f) => s + Math.max(0, Number(st.factions[f.id] || 0)), 0);
+          let remFac = gainedRep;
+          pFactions.forEach((f, idx) => {
+            const share = idx === pFactions.length - 1
+              ? remFac
+              : Math.round(gainedRep * (curSum > 0 ? (Math.max(0, Number(st.factions[f.id] || 0)) / curSum) : (1 / pFactions.length)));
+            remFac -= share;
+            st.factions[f.id] = Math.round(Math.max(0, Number(st.factions[f.id] || 0)) + share);
+          });
+        }
+        // Conserve state factions proportionally from swing/donor factions
+        let dedRep = gainedRep;
+        const swgKeys = Object.keys(st.factions).filter((fk) => fk.startsWith('swg_') && Number(st.factions[fk] || 0) > 0);
+        const swgSum = swgKeys.reduce((s, fk) => s + Number(st.factions[fk] || 0), 0);
+        if (swgSum > 0) {
+          const takeSwg = Math.min(dedRep, swgSum);
+          let remS = takeSwg;
+          swgKeys.forEach((fk, idx) => {
+            const portion = idx === swgKeys.length - 1 ? remS : Math.min(st.factions[fk], Math.round(takeSwg * (st.factions[fk] / swgSum)));
+            st.factions[fk] = Math.max(0, Number(st.factions[fk] || 0) - portion);
+            remS -= portion;
+          });
+          dedRep -= (takeSwg - remS);
+        }
+        if (dedRep > 0) {
+          const donorFacs = game.factions.filter((f) => f && f.partyId !== pid && Number(st.factions[f.id] || 0) > 0);
+          const dfSum = donorFacs.reduce((s, f) => s + Number(st.factions[f.id] || 0), 0);
+          if (dfSum > 0) {
+            donorFacs.forEach((f) => {
+              if (dedRep <= 0) return;
+              const portion = Math.min(dedRep, st.factions[f.id], Math.round(dedRep * (st.factions[f.id] / dfSum)));
+              st.factions[f.id] = Math.max(0, Number(st.factions[f.id] || 0) - portion);
+              dedRep -= portion;
+            });
+          }
+        }
+      }
+      if (aff.thirdParty !== undefined) {
+        aff.thirdParty = Math.round(Number(aff.liberty || 0) + Number(aff.green || 0) + Number(aff.constitution || 0) + Number(aff.socialist || 0) + Number(aff.other || 0));
+      }
+    });
+  });
+
+  return { voterModel: nextVm, convertedTotal };
 }
 
 // [v0.18.9 STAGE 2] Tier 3+ Regional Chapter Momentum (+2% to bordering states >= 10 pts behind, capped at srcPct - 10%)
@@ -6949,7 +7105,10 @@ function applyAutomaticBallotRetention(game, electionOutcome = null) {
     STATES.forEach((st) => {
       const stRow = presStates[st.id];
       const share = Number(stRow?.shares?.[pKey] ?? 0);
-      if (share >= retentionThreshold || partyHasStateFoothold(game, pKey, st.id)) {
+      // [MC-BALANCE-TUNE] MC-02: State chapters lower effective retention threshold and cement retention at >= 6 chapters
+      const stChapters = getStateChaptersForParty(game, st.id, pKey);
+      const effRetention = Math.max(0.5, retentionThreshold - Math.min(1.8, stChapters * 0.35));
+      if (share >= effRetention || stChapters >= 6 || partyHasStateFoothold(game, pKey, st.id)) {
         nextBallotAccess[pKey].senate[st.id] = true;
         nextBallotAccess[pKey].governor[st.id] = true;
         nextBallotAccess[pKey].leg[st.id] = true;
@@ -9353,11 +9512,39 @@ function calculateDistrictElection(game, year) {
     const stateObj = STATES.find((s) => s.id === stateId) || { id: stateId, region: 'South' };
     const support = supportByState(game, stateObj);
 
+    const rawDist = distMap.get(district.id) || district;
+    // [v0.18.4 MAPS-BALLOT] Prefer redistricted district lean when active
+    const districtLean = district.redistrictedLean !== undefined
+      ? Number(district.redistrictedLean)
+      : (rawDist.leanPercent ?? (typeof rawDist.lean === 'number' && Math.abs(rawDist.lean) <= 1 ? -rawDist.lean * 100 : (rawDist.lean ?? 0)));
+
+    // [MC-BALANCE-TUNE] MC-02 & MC-03: State chapter House downballot lift + Tier 1-2 regional breakthrough (>=5 chapters & dist <= 2.5)
+    const distEcon10 = clamp(5.5 + districtLean / 10, 1, 10);
+    const distSoc10 = clamp(5.5 + districtLean / 22, 1, 10);
+    const breakthroughEligibleParties = new Set();
+
     const firstChoice = {};
     let thirdPartyTotal = 0;
     parties.forEach((party) => {
       if (party.id !== demParty.id && party.id !== repParty.id) {
-        firstChoice[party.id] = Math.max(0, support[party.id] || 0);
+        let score = Math.max(0, support[party.id] || 0);
+        const pCh = getStateChaptersForParty(game, stateId, party.id);
+        if (pCh > 0 && score > 0) {
+          score += pCh >= 3
+            ? Math.min(8.5, 0.65 * Math.min(10, pCh) + Math.max(0, pCh - 10) * 0.20)
+            : pCh * 0.35;
+        }
+        const pTier = getPartyInstitutionalTier(game, party.id);
+        if (pTier >= 1 && pTier <= 2 && pCh >= 5 && score > 0) {
+          const pEcon10 = clamp(5.5 + Number(party.economic ?? 0) * 2.5, 1, 10);
+          const pSoc10 = clamp(5.5 + Number(party.social ?? 0) * 2.5, 1, 10);
+          const euclidDist = Math.hypot(pEcon10 - distEcon10, pSoc10 - distSoc10);
+          if (euclidDist <= 2.5) {
+            breakthroughEligibleParties.add(party.id);
+            score += 14.0 + Math.min(10.0, (pCh - 5) * 1.4) + (2.5 - euclidDist) * 4.5;
+          }
+        }
+        firstChoice[party.id] = score;
         thirdPartyTotal += firstChoice[party.id];
       }
     });
@@ -9366,11 +9553,6 @@ function calculateDistrictElection(game, year) {
 
     // REQ-261: Congressional district baselines center around district.lean + nationalEnvironment
     const natEnv = Number(game?.nationalEnvironment ?? 9);
-    const rawDist = distMap.get(district.id) || district;
-    // [v0.18.4 MAPS-BALLOT] Prefer redistricted district lean when active
-    const districtLean = district.redistrictedLean !== undefined
-      ? Number(district.redistrictedLean)
-      : (rawDist.leanPercent ?? (typeof rawDist.lean === 'number' && Math.abs(rawDist.lean) <= 1 ? -rawDist.lean * 100 : (rawDist.lean ?? 0)));
 
     const demCandidate = primaryResults[`house:${district.id}:people`];
     const repCandidate = primaryResults[`house:${district.id}:heritage`];
@@ -9405,6 +9587,11 @@ function calculateDistrictElection(game, year) {
     // [v0.18.4 MAPS-BALLOT] Ballot initiative & redistricting backlash lift
     const _rbsDist = (typeof window !== 'undefined' && window.RedistrictingBallotSystem) || (typeof global !== 'undefined' && global.RedistrictingBallotSystem) || null;
     const _rbsDistLift = _rbsDist?.getBallotAndRedistrictingStateLift ? Number(_rbsDist.getBallotAndRedistrictingStateLift(game, stateId) || 0) * 0.5 : 0;
+    // [MC-BALANCE-TUNE] MC-02: State chapter downballot House differential for major parties
+    const demStateCh = getStateChaptersForParty(game, stateId, demParty.id);
+    const repStateCh = getStateChaptersForParty(game, stateId, repParty.id);
+    const majorChHouseFn = (c) => (c >= 3 ? Math.min(4.8, 0.48 * Math.min(10, c) + Math.max(0, c - 10) * 0.14) : c * 0.25);
+    const chapterHouseLift = majorChHouseFn(repStateCh) - majorChHouseFn(demStateCh);
     // [v0.18.5] Align House wave with Presidential landslide overperformance (430 EV / D+20 -> ~300+ House seats)
     const presMargin = presidentialStateMargin(game, stateId);
     const stateBaseLean = stateObj.leanPercent !== undefined ? Number(stateObj.leanPercent) : (-Number(stateObj.lean || 0) * 100);
@@ -9421,7 +9608,7 @@ function calculateDistrictElection(game, year) {
     const effectiveWave = isPresYearDist
       ? (presOverperf * 0.85 + natEnv * 0.25 + presCoattailBonus)
       : (natEnv * 1.08);
-    const districtMargin = (districtLean - avgDistrictLean) + effectiveWave + candidateLift + fundingLift + incumbentLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
+    const districtMargin = (districtLean - avgDistrictLean) + effectiveWave + candidateLift + fundingLift + incumbentLift + chapterHouseLift + (coDistLift * 0.55 * playerSignDist) + debateDbDist + pollMissDist + _rbsDistLift;
     const demTwoParty = clamp(50 + districtMargin / 2, 0.5, 99.5);
     const repTwoParty = clamp(50 - districtMargin / 2, 0.5, 99.5);
 
@@ -9453,7 +9640,18 @@ function calculateDistrictElection(game, year) {
     const stSys = getStateElectoralSystem(game, stateId, 'house');
     let finalChoices = { ...firstChoice };
     if (stSys.effectiveSystem === 'plurality') {
+      const preBreakthroughScores = {};
+      breakthroughEligibleParties.forEach((bpId) => { preBreakthroughScores[bpId] = finalChoices[bpId] || 0; });
       finalChoices = applyDuvergerDefectionToShares(game, finalChoices, stateId, 'house').shares;
+      // [MC-BALANCE-TUNE] MC-03: Shield Tier 1-2 Regional House Breakthrough districts from Duverger minor erasure
+      if (breakthroughEligibleParties.size > 0) {
+        breakthroughEligibleParties.forEach((bpId) => {
+          const retained = Math.max(finalChoices[bpId] || 0, preBreakthroughScores[bpId] || 0);
+          finalChoices[bpId] = retained;
+        });
+        const fcSum = Object.values(finalChoices).reduce((s, v) => s + Math.max(0, v), 0) || 1;
+        Object.keys(finalChoices).forEach((k) => { finalChoices[k] = Math.max(0, finalChoices[k]) / fcSum * 100; });
+      }
     }
 
     let result;
@@ -9769,7 +9967,13 @@ function turnout(game, party, state) {
   const stateId = state.stateId || state.id;
   const stateObj = STATES.find((s) => s.id === stateId) || state;
   const stateRegions = stateObj.regions || (window.PartyChairV07 ? window.PartyChairV07.regionsForState(stateId, stateObj.region) : [stateObj.region]);
-  const regionalChapters = (organization.chapters[state.region] || 0) * 0.65;
+  // [MC-BALANCE-TUNE] MC-02: Boost state-chapter turnout (+65% on first 10 chapters/state, smooth diminishing returns > 10)
+  const stateChCount = getStateChaptersForParty(game, stateId, party.id);
+  const regTotalChapters = organization.chapters[state.region] || 0;
+  const regSpillover = Math.max(0, regTotalChapters - stateChCount) * 0.18;
+  const regionalChapters = (Math.min(10, stateChCount) * 1.08)
+    + (stateChCount > 10 ? Math.sqrt(stateChCount - 10) * 0.65 : 0)
+    + regSpillover;
   const partyFactionScores = party.id === 'player' ? (game.factionStandings || {}) : (organization.factionStandings || {});
   const scoreVals = Object.values(partyFactionScores);
   const avgStanding = scoreVals.length ? (scoreVals.reduce((a, b) => a + b, 0) / scoreVals.length) : 50;
@@ -12135,13 +12339,22 @@ function computeStateLegislatureVoteShares(game, stateId, options = {}) {
       const regVoters = Math.max(0, Number(aff[id] || 0));
       const regPct = totalAff > 0 ? (regVoters / totalAff) * 100 : 0;
       const indShare = totalPopWeight > 0 ? indPct * (popWeights[id] / totalPopWeight) : 0;
-      partyVotes[id] = round(Math.max(regPct, regPct + indShare), 3);
+      // [MC-BALANCE-TUNE] MC-02: State chapters lift State Legislature vote share (compounding >= 3 chapters)
+      const chCount = getStateChaptersForParty(game, stateId, id);
+      const legChBoost = chCount >= 3
+        ? Math.min(12.0, 1.15 * Math.min(10, chCount) + Math.max(0, chCount - 10) * 0.30)
+        : chCount * 0.60;
+      partyVotes[id] = round(Math.max(regPct, regPct + indShare) + legChBoost, 3);
     });
   } else {
     for (const [partyId, share] of Object.entries(rawShares)) {
       const id = partyId === 'player' ? playerIdentity : partyId;
       if (!contestingIds.includes(id)) continue;
-      partyVotes[id] = round((partyVotes[id] || 0) + Number(share || 0), 3);
+      const chCount = getStateChaptersForParty(game, stateId, id);
+      const legChBoost = chCount >= 3
+        ? Math.min(12.0, 1.15 * Math.min(10, chCount) + Math.max(0, chCount - 10) * 0.30)
+        : chCount * 0.60;
+      partyVotes[id] = round((partyVotes[id] || 0) + Number(share || 0) + legChBoost, 3);
     }
   }
 
@@ -12217,7 +12430,12 @@ function reallocateStateSenateSeatCounts(currentCounts, oldControls, newControls
       if (id === playerIdentity && !isMajor && playerSenateTier <= 0) return;
       if (id !== playerIdentity && !['people', 'heritage'].includes(id) && !hasBallotAccess(game, id, 'state-leg:' + stateId)) return;
       const slateMult = (id === playerIdentity && !isMajor) ? (0.20 * clamp(playerSenateTier, 1, 5)) : 1.0;
-      partyScores[id] = (partyScores[id] || 0) + Math.max(0, Number(val || 0)) * slateMult;
+      // [MC-BALANCE-TUNE] MC-02: State chapter lift for State Senate races
+      const chSenCount = getStateChaptersForParty(game, stateId, id);
+      const chSenLift = chSenCount >= 3
+        ? Math.min(10.0, 0.95 * Math.min(10, chSenCount) + Math.max(0, chSenCount - 10) * 0.25)
+        : chSenCount * 0.45;
+      partyScores[id] = (partyScores[id] || 0) + (Math.max(0, Number(val || 0)) + chSenLift) * slateMult;
     });
     const scoreSum = Object.values(partyScores).reduce((s, v) => s + v, 0);
     if (scoreSum > 0) {
@@ -12300,13 +12518,22 @@ function reallocateStateHouseSeatCounts(currentCounts, oldControls, newControls,
           const regVoters = Math.max(0, Number(aff[id] || 0));
           const regPct = totalAff > 0 ? (regVoters / totalAff) * 100 : 0;
           const indShare = totalPopWeight > 0 ? indPct * (popWeights[id] / totalPopWeight) : 0;
-          partyVotes[id] = round(Math.max(regPct, regPct + indShare), 3);
+          // [MC-BALANCE-TUNE] MC-02: Concentrated state chapter boost in State House races
+          const chHCount = getStateChaptersForParty(game, stateId, id);
+          const legHChBoost = chHCount >= 3
+            ? Math.min(12.0, 1.15 * Math.min(10, chHCount) + Math.max(0, chHCount - 10) * 0.30)
+            : chHCount * 0.60;
+          partyVotes[id] = round(Math.max(regPct, regPct + indShare) + legHChBoost, 3);
         });
       } else {
         for (const [partyId, share] of Object.entries(shares)) {
           const id = partyId === 'player' ? playerIdentity : partyId;
           if (!contestingIds.includes(id)) continue;
-          partyVotes[id] = (partyVotes[id] || 0) + share;
+          const chHCount = getStateChaptersForParty(game, stateId, id);
+          const legHChBoost = chHCount >= 3
+            ? Math.min(12.0, 1.15 * Math.min(10, chHCount) + Math.max(0, chHCount - 10) * 0.30)
+            : chHCount * 0.60;
+          partyVotes[id] = (partyVotes[id] || 0) + share + legHChBoost;
         }
       }
 
@@ -12318,27 +12545,25 @@ function reallocateStateHouseSeatCounts(currentCounts, oldControls, newControls,
         ? allocateProportionalSeats(partyVotes, total, (stSys.effectiveSystem === 'open_list_proportional' ? 4.0 : 5.0))
         : allocateStateLegislatureSeats(partyVotes, total);
 
-      // Chunk 2.1: Break Tier 2 glass ceiling for minor parties in small-population strongholds (NH, MT, WY, AK, VT, ME)
-      // When a minor party concentrates chapters (>= 6 chapters) and achieves 8%-12% local vote share,
-      // trigger a Regional Breakthrough formula granting 1-4 State House seats.
+      // Chunk 2.1 + [MC-BALANCE-TUNE] MC-02: State House chapter breakthroughs for concentrated minor-party networks
       const SMALL_POP_STATES = ['NH', 'MT', 'WY', 'AK', 'VT', 'ME'];
-      if (SMALL_POP_STATES.includes(stateId)) {
-        for (const [pId, vote] of Object.entries(partyVotes)) {
-          if (['people', 'heritage', 'independent'].includes(pId)) continue;
-          if ((allocated[pId] || 0) > 0) continue;
-          const chCount = Number(
-            game.stateOrganizations?.[stateId]?.[pId]?.chapters ??
-            (pId === playerIdentity || pId === 'player' ? (game.stateChapters?.[stateId] ?? game.stateOrganizations?.[stateId]?.player?.chapters) : 0) ?? 0
-          );
-          if (chCount >= 6 && vote >= 8.0) {
-            // Regional Breakthrough formula granting 1-4 State House seats
-            const breakthroughSeats = Math.max(1, Math.min(4, Math.round(total * (vote / 100))));
-            const majorDonor = (allocated.heritage || 0) >= (allocated.people || 0) ? 'heritage' : 'people';
-            const actualAwarded = Math.min(breakthroughSeats, allocated[majorDonor] || 0);
-            if (actualAwarded > 0) {
-              allocated[majorDonor] -= actualAwarded;
-              allocated[pId] = (allocated[pId] || 0) + actualAwarded;
-            }
+      for (const [pId, vote] of Object.entries(partyVotes)) {
+        if (['people', 'heritage', 'independent'].includes(pId)) continue;
+        if ((allocated[pId] || 0) > 0) continue;
+        const chCount = Number(
+          game.stateOrganizations?.[stateId]?.[pId]?.chapters ??
+          (pId === playerIdentity || pId === 'player' ? (game.stateChapters?.[stateId] ?? game.stateOrganizations?.[stateId]?.player?.chapters) : 0) ?? 0
+        );
+        const qualifiesSmallPop = SMALL_POP_STATES.includes(stateId) && chCount >= 6 && vote >= 8.0;
+        const qualifiesConcentrated = chCount >= 5 && vote >= 6.0;
+        if (qualifiesSmallPop || qualifiesConcentrated) {
+          const cap = qualifiesSmallPop ? 4 : 3;
+          const breakthroughSeats = Math.max(1, Math.min(cap, Math.round(total * (vote / 100))));
+          const majorDonor = (allocated.heritage || 0) >= (allocated.people || 0) ? 'heritage' : 'people';
+          const actualAwarded = Math.min(breakthroughSeats, allocated[majorDonor] || 0);
+          if (actualAwarded > 0) {
+            allocated[majorDonor] -= actualAwarded;
+            allocated[pId] = (allocated[pId] || 0) + actualAwarded;
           }
         }
       }
@@ -16388,7 +16613,8 @@ function startNextCycleInternal(game) {
   // REQ-67: Persistent Warchest Rollover (100% of unspent treasury carried forward)
   const playerTreasury = round(Number(game.treasury || 0), 1);
   const rolledOrgs = { ...(game.organizations || {}) };
-  // [v0.18.5 / SOEE Economy Fix] Credit cycle grant (+$100M for major parties) and rival fundraising directly into game.parties[rival.id].treasury (clamped to max $350M) before syncing back
+  // [v0.18.5 / SOEE Economy Fix] Credit cycle grant (+$100M for major parties), passive chapter income (+$0.01M/chapter/turn), and rival fundraising directly into game.parties[rival.id].treasury (clamped to max $350M)
+  const _remainingTurnTicks = Math.max(1, 20 - Number(game._turnsPassiveCreditedThisCycle || 0));
   (game.rivals || []).forEach((rival) => {
     const existing = rolledOrgs[rival.id] || {};
     const partyObj = game.parties?.[rival.id];
@@ -16396,7 +16622,10 @@ function startNextCycleInternal(game) {
     const cappedPostElection = Math.min(100, Math.max(0, rawUnspent));
     const isRivalMajor = ['people', 'heritage'].includes(rival.id) || (typeof isMajorParty === 'function' && isMajorParty(game, rival.id));
     const rivalCycleGrant = isRivalMajor ? 100 : (window.PartyChairV07 ? window.PartyChairV07.startingBudgetForParty(rival.id, false) : 18);
-    const newTreasury = Math.min(350, round(cappedPostElection + rivalCycleGrant, 1));
+    // [MC-BALANCE-TUNE] MC-02: AI passive chapter dues (+$0.01M per active chapter per turn remaining in cycle)
+    const rivalTotalCh = getTotalChaptersForParty(game, rival.id);
+    const rivalPassiveChIncome = round(rivalTotalCh * 0.01 * _remainingTurnTicks, 2);
+    const newTreasury = Math.min(350, round(cappedPostElection + rivalCycleGrant + rivalPassiveChIncome, 1));
     rolledOrgs[rival.id] = {
       ...existing,
       postElectionLeftover: round(cappedPostElection, 1),
@@ -17173,6 +17402,7 @@ function startNextCycleInternal(game) {
     ...finalCycle,
     // [v0.18.7 QA-FIX] BUG-07: Enforce <= $250M cycle-entry treasury cap after Bellwether donor adjustments
     treasury: Math.min(250, Math.max(0, round(Number(finalCycle.treasury || 0), 1))),
+    _turnsPassiveCreditedThisCycle: 0,
     pendingBellwetherBonus: null,
     offCycle: finalCycle.offCycle ? { ...finalCycle.offCycle, active: false } : (finalCycle.offCycle ?? null),
   };
@@ -17217,6 +17447,11 @@ function startNextCycleInternal(game) {
     fcCycle.pruneExtinctFactions(finalCycle);
   }
   if (finalCycle.voterModel && Array.isArray(finalCycle.voterModel.states)) {
+    // [MC-BALANCE-TUNE] MC-02 & MC-03: Inter-cycle chapter voter-registration conversion before conservation sweep
+    const _chConv = applyInterCycleChapterRegistrationConversion(finalCycle);
+    if (_chConv?.voterModel) {
+      finalCycle.voterModel = _chConv.voterModel;
+    }
     if (window.PartyChairData?.normalizeStateFactionVoters) {
       finalCycle.voterModel.states.forEach((st) => window.PartyChairData.normalizeStateFactionVoters(st));
     }
@@ -18524,7 +18759,9 @@ function applyMachineOperation(game, partyId, operationId, payload = {}) {
 
     case 'open_state_chapter':
     case 'chapter': {
-      const cost = 6.0;
+      // [MC-BALANCE-TUNE] MC-02: Tier-scaled chapter build cost (0.45x / 0.65x / 0.85x / 1.0x)
+      const chTier = curParty.tier ?? getPartyInstitutionalTier(nextGame, partyId);
+      const cost = round(6.0 * getTierScaledChapterBuildMult(chTier), 1);
       const pKey = partyId === 'player' && !nextGame.player?.custom ? (nextGame.player?.baseTemplateId || 'people') : partyId;
       const prevCount = nextGame.stateOrganizations?.[targetState.id]?.[pKey]?.chapters || 0;
       // [v0.18.7 QA-FIX] BUG-06: Enforce MAX_STATE_CHAPTERS = 25 for SOEE machine operations
@@ -22549,7 +22786,9 @@ function takeActionInternal(game, actionId, payload = {}) {
       || STATES[0];
     const pseCh = getPartySystemsEngine();
     const chapterCostMult = pseCh ? pseCh.getChapterCostModifier(game, identityId) : 1.0;
-    const chapterCost = round(6 * chapterCostMult, 1);
+    // [MC-BALANCE-TUNE] MC-02: Tier-scaled chapter build cost (0.45x / 0.65x / 0.85x / 1.0x)
+    const chapterTierMult = getTierScaledChapterBuildMult(getPartyInstitutionalTier(game, 'player'));
+    const chapterCost = round(6 * chapterCostMult * chapterTierMult, 1);
     const analogMult = pseCh ? pseCh.getAnalogCampaignMultiplier(game) : 1.0;
     if (!targetState || game.treasury < chapterCost) return game;
     const stId = targetState.id;
@@ -22705,7 +22944,10 @@ function takeActionInternal(game, actionId, payload = {}) {
     // [v0.18.4 MEDIA-SHOCKS]
     const _msDon = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
     const _msDonorMult = (_msDon && typeof _msDon.getSmallDonorYieldMultiplier === 'function') ? _msDon.getSmallDonorYieldMultiplier(game) : 1.0;
-    const raised = round(Math.max(0.5, B * visitMult * memberMult * factionMult * financeMult * fedMult * mediaFundMult * institutionalDonorMult * eraSmallDollarMult * topLeaderTraits.donorViralityMultiplier * _msDonorMult), 1);
+    // [MC-BALANCE-TUNE] MC-02: +1% fundraise yield per 10 national chapters (capped at +25%)
+    const natChapterTotal = getTotalChaptersForParty(game, 'player');
+    const chapterFundraiseMult = 1 + Math.min(0.25, Math.floor(natChapterTotal / 10) * 0.01);
+    const raised = round(Math.max(0.5, B * visitMult * memberMult * factionMult * financeMult * fedMult * mediaFundMult * institutionalDonorMult * eraSmallDollarMult * topLeaderTraits.donorViralityMultiplier * _msDonorMult * chapterFundraiseMult), 1);
     next.treasury = Math.min(3000, round(game.treasury + raised, 1));
     next.donorDriveVisits = stateVisits;
     bumpFactionStanding(standings, 'funders', 5, identityId);
@@ -22902,13 +23144,16 @@ function advanceChairTurn(game) {
   const nextTurn = (game.chairTurn || 0) + 1;
   const salary = game.roster.reduce((total, id) => total + (memberFor(game, id)?.salary || 0), 0);
   const chapterCount = Object.values(game.chapters).reduce((a, b) => a + b, 0);
+  // [MC-BALANCE-TUNE] MC-02: Passive chapter dues income of +$10,000 (+$0.01M) per active chapter per turn
+  const totalPlayerStateChapters = getTotalChaptersForParty(game, 'player');
+  const passiveChapterIncome = round(totalPlayerStateChapters * 0.01, 2);
   const roles = game.leadershipRoles?.player || game.player?.leadershipRoles || {};
   const speakerBonus = roles.speakerOfHouse ? 0.4 : 0;
   const presidentMultiplier = roles.president ? 1.25 : 1.0;
   const pseTurnRev = getPartySystemsEngine();
   const eraChapterMult = pseTurnRev ? Number(pseTurnRev.dispatchEraHook(game, 'getFundraisingModifier', 'chapter', { partyId: game.player?.baseTemplateId || 'people' }) ?? 1.0) : 1.0;
   const eraDuesMult = pseTurnRev ? Number(pseTurnRev.dispatchEraHook(game, 'getFundraisingModifier', 'grassroots', { partyId: game.player?.baseTemplateId || 'people' }) ?? 1.0) : 1.0;
-  const turnRevenue = (1.2 + (game.memberships * 0.005 * eraDuesMult) + (chapterCount * 0.06 * eraChapterMult) + game.seats * 0.004 + speakerBonus) * presidentMultiplier;
+  const turnRevenue = (1.2 + (game.memberships * 0.005 * eraDuesMult) + (chapterCount * 0.06 * eraChapterMult) + game.seats * 0.004 + speakerBonus) * presidentMultiplier + passiveChapterIncome;
   // Federal Receivership administrative cost: $0.5M/turn per state in receivership (REQ-83)
   const currentFed = game.stateFederalism || computeAllStateFederalism(game);
   const receivershipStates = Object.values(currentFed).filter((p) => p.inReceivership);
@@ -22989,6 +23234,27 @@ function advanceChairTurn(game) {
   }
   const nextPresApproval = clamp(round((game.presidentialApproval ?? 44) + fatigue.presApprovalDelta, 1), 15, 85);
 
+  // [MC-BALANCE-TUNE] MC-02: Credit AI rivals' passive chapter income (+$0.01M per chapter/turn, capped at $350M)
+  const nextTurnParties = game.parties ? { ...game.parties } : null;
+  const nextTurnOrgs = game.organizations ? { ...game.organizations } : null;
+  (game.rivals || []).forEach((r) => {
+    const rCh = getTotalChaptersForParty({ ...game, stateOrganizations: nextStateOrgs }, r.id);
+    if (rCh <= 0) return;
+    const rInc = round(rCh * 0.01, 2);
+    if (nextTurnParties && nextTurnParties[r.id]) {
+      nextTurnParties[r.id] = {
+        ...nextTurnParties[r.id],
+        treasury: Math.min(350, round((nextTurnParties[r.id].treasury || 0) + rInc, 2)),
+      };
+    }
+    if (nextTurnOrgs && nextTurnOrgs[r.id]) {
+      nextTurnOrgs[r.id] = {
+        ...nextTurnOrgs[r.id],
+        treasury: Math.min(350, round((nextTurnOrgs[r.id].treasury ?? 18) + rInc, 2)),
+      };
+    }
+  });
+
   const syncedRoles = syncLeadershipRolesState({ ...game, player: { ...game.player, trust: nextTrust } }, roles);
   const baseWithEnv = {
     ...game,
@@ -22997,7 +23263,10 @@ function advanceChairTurn(game) {
     chairTurn: nextTurn,
     turnsUntilPrimaries: Math.max(0, 20 - nextTurn),
     seed: nextSeed,
-    treasury: Math.min(3000, Math.max(0, round(game.treasury + turnRevenue - turnCosts))),
+    treasury: Math.min(3000, Math.max(0, round(game.treasury + turnRevenue - turnCosts, 2))),
+    _turnsPassiveCreditedThisCycle: (game._turnsPassiveCreditedThisCycle || 0) + 1,
+    ...(nextTurnParties ? { parties: nextTurnParties } : {}),
+    ...(nextTurnOrgs ? { organizations: nextTurnOrgs } : {}),
     actionsLeft: ACTIONS_PER_YEAR,
     endorsementsThisTurn: 0,
     environmentCounterActionsThisTurn: 0,

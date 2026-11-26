@@ -774,6 +774,23 @@
     return { organizingActionsRemaining: nextOrg, actionsLeft: nextAct };
   }
 
+  // [MC-BALANCE-TUNE] MC-03: Tier-scaled media channel investment cost (0.45x / 0.65x / 0.85x / 1.0x)
+  function getMediaChannelInvestCost(game) {
+    const pKey = getPlayerKey(game);
+    const Eng = global.PartyChairEngine;
+    const V07 = global.PartyChairV07;
+    const tier = (Eng && typeof Eng.getPartyInstitutionalTier === 'function')
+      ? Number(Eng.getPartyInstitutionalTier(game, 'player'))
+      : (V07 && typeof V07.getPartyInstitutionalTier === 'function')
+        ? Number(V07.getPartyInstitutionalTier(game, 'player'))
+        : Number(game?.partyTiers?.[pKey] ?? (['people', 'heritage'].includes(pKey) ? 5 : 1));
+    let mult = 1.0;
+    if (tier <= 1) mult = 0.45;
+    else if (tier === 2) mult = 0.65;
+    else if (tier === 3) mult = 0.85;
+    return round(6 * mult, 1);
+  }
+
   function handleAction(game, actionId, payload = {}) {
     if (!game) return null;
     const p = payload?.payload ? payload.payload : (payload || {});
@@ -783,7 +800,7 @@
       if (game.phase && game.phase !== 'organizing') {
         return { ...game, lastNote: 'Media channel investments are only available during the organizing phase.' };
       }
-      const cost = 6;
+      const cost = getMediaChannelInvestCost(game);
       const channel = CHANNEL_IDS.includes(p.channel) ? p.channel : 'digital';
       const acts = consumeOrganizingAction(game);
       if (!acts) return { ...game, lastNote: 'No organizing actions remaining to invest in media channels.' };
@@ -1056,6 +1073,8 @@
       .map((k) => `<option value="${escapeHtml(k)}" ${k === rKey ? 'selected' : ''}>${escapeHtml(k.charAt(0).toUpperCase() + k.slice(1))}</option>`)
       .join('');
 
+    // [MC-BALANCE-TUNE] MC-03: Tier-scaled media channel investment cost
+    const investCost = getMediaChannelInvestCost(game);
     return `
       <!-- v0.18.4 Proposal #4: Media Ecosystem & Counter-Narrative -->
       <div class="action-card ms-media-card">
@@ -1069,7 +1088,7 @@
           <select id="ms-rival-select" style="flex:1;min-width:110px;">
             ${rivalOptions}
           </select>
-          <button type="button" class="button button-small button-gold" data-ms-action="invest-media-channel" ${noAct || cash < 6 ? 'disabled' : ''}>Invest +8 ($6M)</button>
+          <button type="button" class="button button-small button-gold" data-ms-action="invest-media-channel" ${noAct || cash < investCost ? 'disabled' : ''}>Invest +8 ($6M)</button>
           <button type="button" class="button button-small" data-ms-action="launch-counter-narrative" ${noAct || cash < 4 ? 'disabled' : ''}>Counter -7 ($4M)</button>
         </div>
       </div>
@@ -1129,6 +1148,7 @@
     applyBlackoutBypass,
     getLocalIncumbentWaveBuffer,
     getDigitalGaffeVolatilityMultiplier,
+    getMediaChannelInvestCost,
     runRivalMediaInvestments,
     getShockDef,
     pickDeterministicShock,
