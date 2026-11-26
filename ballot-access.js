@@ -297,7 +297,8 @@
     const remaining = [];
     allIds.forEach((stId) => {
       const holdsOffice = eng?.partyHoldsAnyOfficeInState ? eng.partyHoldsAnyOfficeInState(game, partyId, stId) : false;
-      if (access.presidential?.[stId] || access[stId] || holdsOffice) certified.push(stId);
+      const hasFoothold = eng?.partyHasStateFoothold ? eng.partyHasStateFoothold(game, partyId, stId) : false;
+      if (access.presidential?.[stId] || access[stId] || holdsOffice || hasFoothold) certified.push(stId);
       else remaining.push(stId);
     });
     return { allIds, certified, remaining, certifiedCount: certified.length, totalCount: allIds.length };

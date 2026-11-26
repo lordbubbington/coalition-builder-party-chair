@@ -488,14 +488,22 @@ function buildStartingBallotAccess(seed = 2028, startYear = 2028) {
       governor: libertyGov,
       house: libertyHouse,
       leg: {},
-      presidential: { ...libertyGov },
+      presidential: {
+        ...libertyGov,
+        ...libertySenate,
+        ...Object.fromEntries(Object.keys(libertyHouse).map((did) => [String(did).split('-')[0], true])),
+      },
     },
     green: {
       senate: greenSenate,
       governor: greenGov,
       house: greenHouse,
       leg: {},
-      presidential: { ...greenGov },
+      presidential: {
+        ...greenGov,
+        ...greenSenate,
+        ...Object.fromEntries(Object.keys(greenHouse).map((did) => [String(did).split('-')[0], true])),
+      },
     },
     constitution: {
       senate: {},
@@ -611,6 +619,56 @@ function partyHoldsAnyOfficeInState(game, partyId, stateId) {
   return false;
 }
 
+// [v0.18.9.5] Check if party has an established foothold in a state (viability breakthrough, held office, >=5% reg, or >=3 chapters)
+function partyHasStateFoothold(game, partyId, stateId) {
+  if (!game || !partyId || !stateId) return false;
+  const playerBase = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  const resolved = (partyId === 'player') ? playerBase : partyId;
+  const isPlayerParty = partyId === 'player' || resolved === playerBase;
+
+  if (partyHoldsAnyOfficeInState(game, resolved, stateId)) return true;
+  if (typeof hasViabilityBreakthrough === 'function' && hasViabilityBreakthrough(game, resolved, stateId)) return true;
+  if (isPlayerParty && Number(game.stateChapters?.[stateId] || 0) >= 3) return true;
+
+  const vmSt = Array.isArray(game.voterModel?.states)
+    ? game.voterModel.states.find((s) => (s.stateId || s.id) === stateId)
+    : null;
+  if (vmSt?.affiliations) {
+    const aff = vmSt.affiliations;
+    const keys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
+    const tot = keys.reduce((s, k) => s + Math.max(0, Number(aff[k] || 0)), 0);
+    const own = Math.max(0, Number(aff[resolved] || (isPlayerParty ? aff.player : 0) || 0));
+    if (tot > 0 && ((own / tot) * 100) >= 5.0) return true;
+  }
+  return false;
+}
+
+// [v0.18.9.5] Any election where a party has >= 1 candidate in the primary automatically grants ballot access
+function partyHasPrimaryCandidateInRace(game, partyId, raceId) {
+  if (!game || !partyId || !raceId) return false;
+  const playerBase = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
+  const resolved = (partyId === 'player') ? playerBase : partyId;
+  const isPlayerParty = partyId === 'player' || resolved === playerBase;
+  const partyKeys = isPlayerParty ? [resolved, 'player'] : [resolved];
+
+  const parts = String(raceId).split(':');
+  const kind = parts[0];
+  const target = parts[1];
+  const candidateRaceKeys = [raceId];
+  if (kind === 'governor') candidateRaceKeys.push(`governors:${target}`, `gov:${target}`);
+  if (kind === 'presidential' || kind === 'president') candidateRaceKeys.push(`presidential:${target}`, `president:${target}`, 'presidential:US', 'president:US');
+
+  const fields = game.primaryFields || {};
+  for (const rk of candidateRaceKeys) {
+    const fObj = fields[rk];
+    if (!fObj || typeof fObj !== 'object') continue;
+    for (const pk of partyKeys) {
+      if (Array.isArray(fObj[pk]) && fObj[pk].length >= 1) return true;
+    }
+  }
+  return false;
+}
+
 function hasBallotAccess(game, partyId, raceId) {
   if (!partyId || !raceId) return true;
   if (['people', 'heritage'].includes(partyId)) return true;
@@ -620,6 +678,16 @@ function hasBallotAccess(game, partyId, raceId) {
   if (game?.partySystems?.coalitionSystem?.mmpActive && (String(partyId).startsWith('pair_') || String(partyId).startsWith('solo_'))) return true;
   const psrBallot = getPartySystemsRobots();
   if (psrBallot?.isSyntheticSuffrageActive(game) && psrBallot.isRobotParty(partyId)) return true;
+
+  // [v0.18.9.5] Any non-presidential race with >= 1 primary candidate filed automatically has ballot access
+  const parts = String(raceId).split(':');
+  const kind = parts[0];
+  const target = parts[1];
+  const stId = String(target || '').split('-')[0];
+  if (kind !== 'presidential' && kind !== 'president' && partyHasPrimaryCandidateInRace(game, partyId, raceId)) {
+    return true;
+  }
+
   let access = game?.ballotAccess?.[partyId];
   if (!access && partyId === 'player' && game?.player?.baseTemplateId) {
     access = game?.ballotAccess?.[game.player.baseTemplateId];
@@ -628,36 +696,35 @@ function hasBallotAccess(game, partyId, raceId) {
     access = game?.ballotAccess?.['player'];
   }
   if (!access) {
-    const partsFb = String(raceId || '').split(':');
-    if ((partsFb[0] === 'presidential' || partsFb[0] === 'president') && partsFb[1] && partyHoldsAnyOfficeInState(game, partyId, partsFb[1])) {
-      return true;
-    }
+    if (stId && partyHasStateFoothold(game, partyId, stId)) return true;
     return false;
   }
-  const parts = raceId.split(':');
-  const kind = parts[0];
-  const target = parts[1];
-  if (kind === 'senate') return Boolean(access.senate?.[target]);
-  if (kind === 'governor') return Boolean(access.governor?.[target]);
-  if (kind === 'house') return Boolean(access.house?.[target]);
+
+  if (kind === 'senate') {
+    return Boolean(access.senate?.[target] || (stId && partyHasStateFoothold(game, partyId, stId)));
+  }
+  if (kind === 'governor') {
+    return Boolean(access.governor?.[target] || (stId && partyHasStateFoothold(game, partyId, stId)));
+  }
+  if (kind === 'house') {
+    return Boolean(access.house?.[target] || (stId && partyHasStateFoothold(game, partyId, stId)));
+  }
   if (kind === 'state-leg' || kind === 'stateLeg') {
-    if ((partyId === 'player' || partyId === game?.player?.baseTemplateId || partyId === game?.player?.id) && (game?.contestedStateLegSlates?.[target] || game?.contestedStateHouseSlates?.[target])) {
+    if ((partyId === 'player' || partyId === game?.player?.baseTemplateId || partyId === game?.player?.id) && (game?.contestedStateLegSlates?.[target] || game?.contestedStateHouseSlates?.[target] || game?.contestedStateSenateSlates?.[target])) {
       return true;
     }
-    return Boolean(access.leg?.[target]);
+    return Boolean(access.leg?.[target] || (stId && partyHasStateFoothold(game, partyId, stId)));
   }
   if (kind === 'presidential' || kind === 'president') {
-    // [v0.18.9 STAGE 1 FIX #2] Automatically grant presidential ballot access in any state where the party holds at least one office
-    if (target && partyHoldsAnyOfficeInState(game, partyId, target)) {
+    // [v0.18.9 + v0.18.9.5] Automatically grant presidential ballot access in any state where the party holds an office or foothold
+    if (target && partyHasStateFoothold(game, partyId, target)) {
       return true;
     }
     return Boolean(access.presidential?.[target] || access[target]);
   }
   if (kind === 'statewide') {
-    const stId = String(target || '').split('-')[0];
-    return Boolean(game?.contestedStatewideOffices?.[target] || access.governor?.[stId] || access.senate?.[stId] || access.leg?.[stId]);
+    return Boolean(game?.contestedStatewideOffices?.[target] || access.governor?.[stId] || access.senate?.[stId] || access.leg?.[stId] || (stId && partyHasStateFoothold(game, partyId, stId)));
   }
-  if (kind === 'presidential') return Boolean(access[target] || access.presidential?.[target]);
   return false;
 }
 
@@ -6871,16 +6938,19 @@ function applyAutomaticBallotRetention(game, electionOutcome = null) {
   minorKeys.forEach((pKey) => {
     const tier = getPartyInstitutionalTier(game, pKey);
     const retentionThreshold = tier >= 3 ? 2.0 : 5.0;
-    nextBallotAccess[pKey] ||= { senate: {}, governor: {}, house: {}, leg: {} };
+    nextBallotAccess[pKey] ||= { senate: {}, governor: {}, house: {}, leg: {}, presidential: {} };
+    nextBallotAccess[pKey].presidential ||= {};
     retainedByParty[pKey] = [];
 
     STATES.forEach((st) => {
       const stRow = presStates[st.id];
       const share = Number(stRow?.shares?.[pKey] ?? 0);
-      if (share >= retentionThreshold) {
+      if (share >= retentionThreshold || partyHasStateFoothold(game, pKey, st.id)) {
         nextBallotAccess[pKey].senate[st.id] = true;
         nextBallotAccess[pKey].governor[st.id] = true;
         nextBallotAccess[pKey].leg[st.id] = true;
+        nextBallotAccess[pKey].presidential[st.id] = true;
+        nextBallotAccess[pKey][st.id] = true;
         houseDistricts.filter((d) => d.stateId === st.id).forEach((d) => {
           nextBallotAccess[pKey].house[d.id] = true;
         });
@@ -7065,14 +7135,19 @@ function getStateElectoralSystem(game, stateId, raceKind = 'general') {
     effectiveSystem = legislative;
   }
   const isApproval = effectiveSystem === 'approval' || effectiveSystem === 'approval_voting' || allRaces === 'approval' || allRaces === 'approval_voting';
-  const isRcv = effectiveSystem === 'rcv';
-  const isProp = effectiveSystem === 'proportional' || effectiveSystem === 'open_list_proportional' || legislative === 'proportional' || legislative === 'open_list_proportional';
+  const rcvAliases = ['rcv', 'ranked_choice', 'ranked-choice', 'irv'];
+  const propAliases = ['proportional', 'open_list_proportional', 'mmp', 'pr', 'proportional_representation'];
+  const isRcv = rcvAliases.includes(String(effectiveSystem || '').toLowerCase()) || rcvAliases.includes(String(allRaces || '').toLowerCase());
+  const isProp = propAliases.includes(String(effectiveSystem || '').toLowerCase())
+    || propAliases.includes(String(allRaces || '').toLowerCase())
+    || propAliases.includes(String(legislative || '').toLowerCase())
+    || Boolean(game?.partySystems?.coalitionSystem?.mmpActive);
   return {
     stateId,
     allRaces,
     legislative,
-    effectiveSystem: isApproval ? (effectiveSystem === 'approval' ? 'approval' : 'approval_voting') : effectiveSystem,
-    isAntiSpoiler: isRcv || isApproval || isProp,
+    effectiveSystem: isApproval ? (effectiveSystem === 'approval' ? 'approval' : 'approval_voting') : (isRcv ? 'rcv' : (isProp && effectiveSystem === 'plurality' ? 'proportional' : effectiveSystem)),
+    isAntiSpoiler: isRcv || isApproval || isProp || Boolean(rec.isAntiSpoiler),
     isProportional: isProp,
   };
 }
@@ -7240,6 +7315,13 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
 function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'presidential') {
   const adjusted = { ...rawShares };
   const defections = {};
+
+  // [v0.18.9.5] Strictly 0% spoiler effect (forward or reverse) on Proportional, RCV, Approval, or State Legislature elections
+  const earlySys = getStateElectoralSystem(game, stateId, raceKind);
+  const earlyStateLeg = ['state-leg', 'stateLeg', 'leg', 'state_legislature'].includes(String(raceKind || ''));
+  if (earlyStateLeg || earlySys.isAntiSpoiler || earlySys.isProportional || earlySys.effectiveSystem === 'rcv') {
+    return { shares: adjusted, defections };
+  }
 
   // Helper: locate the rawShares key for a baseline major party ('people' or 'heritage')
   const findMajorKey = (majorId) => {
@@ -24576,6 +24658,8 @@ window.PartyChairEngine = {
   petitionBallotAccess,
   hasBallotAccess,
   partyHoldsAnyOfficeInState,
+  partyHasStateFoothold,
+  partyHasPrimaryCandidateInRace,
   getMajorNomineeUnpopularityMultipliers,
   applyRegionalChapterMomentum,
   generateStartingStateLegSlates,
