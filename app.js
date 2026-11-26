@@ -7482,14 +7482,22 @@ const CABINET_AND_OPPOSITION_ROLES = [
   { id: 'opposition_gov', label: 'Gubernatorial Opposition Leader', category: 'institutional', requiredOffice: 'governor', requiresOpposition: true, multiplier: 1.0, passiveDesc: 'High-visibility Governors counterweight to White House (+2.0 national media spotlight, +1.5% turnout mobilization across gubernatorial battlegrounds).' },
 ];
 
-// [v0.18.9 STAGE 3] Step 1 of Recruitment / Organizing Phase: Party Leaders + Rules & Bylaws Committee
+// [v0.18.9 STAGE 3 + v0.18.9.1 HOTFIX] Step 1 of Recruitment / Organizing Phase: Party Leaders + Rules & Bylaws Committee
 function step1LeadershipAndBylawsMarkup() {
   const identity = playerIdentity();
-  const baseRoleDefs = V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || [];
-  const allRoleDefs = [...baseRoleDefs];
+  const isMajor = window.PartyChairEngine.isMajorParty
+    ? window.PartyChairEngine.isMajorParty(game, 'player')
+    : (V07 ? V07.isMajorParty(game, 'player') : ['people', 'heritage'].includes(identity));
+  const baseRoleDefs = (V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || [])
+    .filter((r) => r && r.category !== 'faction');
+  const dynamicCaucusFactionRoles = V07?.getDynamicCaucusAndFactionRoles
+    ? V07.getDynamicCaucusAndFactionRoles(game, identity)
+    : [];
+  const allRoleDefs = [...baseRoleDefs, ...dynamicCaucusFactionRoles];
   CABINET_AND_OPPOSITION_ROLES.forEach((ar) => {
-    if (!allRoleDefs.some((r) => r.id === ar.id)) allRoleDefs.push(ar);
+    if (!allRoleDefs.some((r) => r.id === ar.id || (ar.label && (r.label === ar.label || r.title === ar.label)))) allRoleDefs.push(ar);
   });
+
   const governingParty = game?.governingParty || game?.lastElection?.presidentialWinner || 'people';
   const holdsPresidency = governingParty === identity;
   const partySitting = (game.sittingMembers || []).filter((m) => m.party === identity);
@@ -7499,30 +7507,93 @@ function step1LeadershipAndBylawsMarkup() {
   const senators = partySitting.filter((m) => m.office === 'senate').sort((a, b) => (b.fame || 0) - (a.fame || 0));
   const reps = partySitting.filter((m) => m.office === 'house').sort((a, b) => (b.fame || 0) - (a.fame || 0));
   const govs = partySitting.filter((m) => m.office === 'governor').sort((a, b) => (b.fame || 0) - (a.fame || 0));
-  const allEligible = [...partySitting, ...benchMembers];
-  const seenIds = new Set();
-  const dedupedAll = allEligible.filter((m) => { if (!m || seenIds.has(m.id)) return false; seenIds.add(m.id); return true; });
+  const standoutLegs = (game.stateLegStandouts?.[identity] || []).map((s) => ({
+    ...s,
+    displayTitle: `[State Leg · ${s.state || s.stateId}]`,
+  }));
+  const federalGovernorCount = partySitting.filter((m) => ['senate', 'house', 'governor', 'president'].includes(m.office)).length;
+  const stateLegAdditions = (federalGovernorCount < 3) ? standoutLegs : [];
+  const dedupedAll = [...partySitting, ...benchMembers, ...stateLegAdditions]
+    .filter((v, idx, arr) => v && arr.findIndex((x) => x && x.id === v.id) === idx)
+    .sort((a, b) => (b.fame || 0) - (a.fame || 0) || (b.quality || 0) - (a.quality || 0));
+
   const assignedMap = game.leadershipRoles?.player || game.player?.leadershipRoles || {};
   const accessibleRoles = allRoleDefs.filter((role) => {
-    if (role.requiresPresidency && !holdsPresidency) return false;
-    if (role.requiresOpposition && holdsPresidency) return false;
+    if ((role.category === 'faction' || role.category === 'caucus') && role.partyId && role.partyId !== identity) return false;
+    if (role.requiresPresidency) return holdsPresidency;
+    if (role.requiresOpposition) {
+      if (holdsPresidency) return false;
+      const count = partySitting.filter((m) => m.office === role.requiredOffice).length;
+      const rivalCount = (game.sittingMembers || []).filter((m) => m.office === role.requiredOffice && m.party !== identity && m.party !== governingParty).length;
+      return count > 0 && count >= rivalCount;
+    }
+    if (V07?.isRoleUnlockedForParty) {
+      return V07.isRoleUnlockedForParty(game, identity, role);
+    }
     return true;
   });
+
   const filteredRoles = roleCategoryFilter === 'all'
     ? accessibleRoles
     : accessibleRoles.filter((r) => (roleCategoryFilter === 'institutional' ? r.category === 'institutional' : r.category !== 'institutional'));
+
   const rolesHtml = filteredRoles.map((role) => {
     const currentId = assignedMap[role.id];
-    const holder = currentId ? (dedupedAll.find((m) => m.id === currentId || m.name === currentId) || memberById(currentId)) : null;
-    const pool = role.officeFilter === 'senate' ? senators : role.officeFilter === 'house' ? reps : role.officeFilter === 'governor' ? govs : dedupedAll;
-    return `<article class="v07-role-card">
-      <div class="v07-role-head"><b>${safe(role.label || role.title)}</b><small>${safe(role.category || 'party')}</small></div>
-      <div class="v07-role-assign">
-        <select data-assign-role="${role.id}" aria-label="Assign ${safe(role.label || role.title)}">
-          <option value="">— Vacant —</option>
-          ${pool.map((c) => `<option value="${c.id}" ${holder && (holder.id === c.id || holder.name === c.name) ? 'selected' : ''}>${safe(c.name)} · Fame ${Math.round(c.fame || 40)} · Q${c.quality || 6}</option>`).join('')}
-        </select>
+    let holder = currentId ? (dedupedAll.find((m) => m.id === currentId || m.name === currentId) || memberById(currentId)) : null;
+    if (!holder && role.category === 'caucus' && role.representativeName) {
+      const cleanRep = String(role.representativeName).replace(/^(Rep\.|Sen\.|Gov\.)\s+/i, '').trim().toLowerCase();
+      holder = dedupedAll.find((m) => m.name && m.name.toLowerCase() === cleanRep) || null;
+    }
+
+    let pool = dedupedAll;
+    if (role.requiredOffice === 'senate') pool = senators;
+    else if (role.requiredOffice === 'house') pool = reps;
+    else if (role.requiredOffice === 'governor') pool = govs;
+    else if (role.id === 'stateLegCaucusChair') {
+      pool = [...partySitting.filter((m) => m.office === 'stateLeg'), ...(game.stateLegStandouts?.[identity] || [])];
+    } else if (role.id === 'president' || role.id === 'vicePresident' || role.id?.startsWith('cabinet_')) {
+      pool = [...govs, ...senators, ...dedupedAll];
+    } else if (role.category === 'caucus' && Array.isArray(role.memberFactionIds) && role.memberFactionIds.length) {
+      const fSet = new Set(role.memberFactionIds);
+      const matched = dedupedAll.filter((m) => fSet.has(m.factionId) || fSet.has(m.faction));
+      pool = matched.length ? matched : dedupedAll;
+    } else if (role.category === 'faction' && (role.factionId || role.factionName)) {
+      const fId = role.factionId || role.id.replace(/^faction_/, '');
+      const fName = role.factionName || role.label;
+      const matched = dedupedAll.filter((m) => m.factionId === fId || m.faction === fId || m.faction === fName || m.wing === fName);
+      pool = matched.length ? matched : dedupedAll;
+    }
+
+    const roleCategoryLabel = role.category === 'institutional'
+      ? 'Category A · Institutional'
+      : role.category === 'caucus'
+        ? 'Category B · Caucus Leader'
+        : role.category === 'faction'
+          ? 'Category B · Major Faction (5M+)'
+          : 'Category B · Party Leadership';
+    const roleDisplayTitle = role.getLabel
+      ? role.getLabel(partySitting.filter((m) => m.office === (role.requiredOffice || 'house')).length >= 218 || isMajor)
+      : (role.label || role.title);
+
+    return `<article class="v07-role-card ${holder ? 'filled' : 'vacant'}">
+      <div class="v07-role-top">
+        <div>
+          <span class="eyebrow">${roleCategoryLabel}</span>
+          <b>${safe(roleDisplayTitle)}</b>
+        </div>
+        ${(role.multiplier || 1) >= 5 ? `<span class="v07-five-x-badge">5x IMPACT</span>` : role.isLocked ? `<span class="v07-mini-badge" style="background:var(--border);color:var(--gold)">Locked Office</span>` : role.allowOverlap ? `<span class="v07-mini-badge">Overlap Allowed</span>` : `<span class="v07-mini-badge">Officeholder</span>`}
       </div>
+      ${role.passiveDesc || role.passiveLabel || role.passiveEffect ? `<p style="font-size:12px;color:var(--muted);margin:4px 0 6px">${safe(role.passiveDesc || role.passiveLabel || role.passiveEffect)}</p>` : ''}
+      ${role.id === 'president' || role.id === 'vicePresident' || role.isLocked
+        ? `<div class="v07-role-assign" style="padding:4px 0">
+            <span class="v07-rating-chip" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);font-weight:600">${safe(holder ? holder.name : (role.representativeName || 'Elected Office'))}</span>
+          </div>`
+        : `<div class="v07-role-assign">
+            <select data-assign-role="${role.id}" aria-label="Assign ${safe(roleDisplayTitle)}">
+              <option value="">— ${role.category === 'caucus' && role.representativeName && !holder ? `${safe(role.representativeName)} (Default Rep)` : 'Vacant'} —</option>
+              ${pool.map((c) => `<option value="${c.id}" ${holder && (holder.id === c.id || holder.name === c.name) ? 'selected' : ''}>${safe(c.name)} · Fame ${Math.round(c.fame || 40)} · Q${c.quality || 6}</option>`).join('')}
+            </select>
+          </div>`}
     </article>`;
   }).join('');
 
@@ -7562,7 +7633,7 @@ function partyInfoTabMarkup() {
   const baseRoleDefs = V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || [];
   const allRoleDefs = [...baseRoleDefs];
   CABINET_AND_OPPOSITION_ROLES.forEach((ar) => {
-    if (!allRoleDefs.some((r) => r.id === ar.id)) allRoleDefs.push(ar);
+    if (!allRoleDefs.some((r) => r.id === ar.id || (ar.label && (r.label === ar.label || r.title === ar.label)))) allRoleDefs.push(ar);
   });
 
   const governingParty = game?.governingParty || game?.lastElection?.presidentialWinner || 'people';
@@ -7880,43 +7951,65 @@ function factionsTabMarkup() {
         <p class="v15-faction-flavor">${safe(f.flavor || '')}</p>
 
         ${courtshipGoodwill > 0 ? `<div style="margin-top:6px;font-size:11.5px;color:#75c89a">Coalition Goodwill: <b>${courtshipGoodwill} / 100</b></div>` : ''}
-        ${canConveneSummit ? (() => {
-          const elig = window.PartyChairEngine?.checkSummitEligibility ? window.PartyChairEngine.checkSummitEligibility(game, f.id) : { eligible: true };
-          return `
-          <div style="margin-top:8px;font-size:11.5px;color:${elig.eligible ? '#75c89a' : '#fbbf24'}">
-            ${elig.eligible ? '✔ Ready for Coalition Summit — click below to invite into your party!' : `ℹ ${safe(elig.reason || 'Court this faction first to build Coalition Goodwill (>= 15).')}`}
-          </div>
-          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-            <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" ${elig.eligible ? '' : 'disabled'} title="${safe(elig.eligible ? 'Open Coalition Summit to sign an accord and bring this faction into your party' : (elig.reason || 'Not yet eligible'))}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:${elig.eligible ? 'pointer' : 'not-allowed'};opacity:${elig.eligible ? '1' : '0.45'}">
-              🏛️ Convene Coalition Summit (1 Action)
-            </button>
-            <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" style="padding:8px 10px">
-              🤝 Court Independent ($1.5M · +15 Goodwill)
-            </button>
-          </div>`;
-        })() : isInOtherParty && isOrganizing ? `
-          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-            ${canOpenCourtship ? `
-              <button type="button" class="v15-summit-btn" data-faction-op="open-courtship-dialogue" data-faction-id="${f.id}" style="flex:1;padding:8px 10px;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#7dd3fc;border-radius:4px;font-weight:700;cursor:pointer">
-                🤝 Open Courtship Dialogue (1 Action)
+        ${(() => {
+          const pTier = window.PartyChairEngine?.getPartyInstitutionalTier ? window.PartyChairEngine.getPartyInstitutionalTier(game, 'player') : 5;
+          const recruitLocked = pTier < 2;
+          if (canConveneSummit) {
+            const elig = recruitLocked
+              ? { eligible: false, reason: `Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor). Your party is currently Tier ${pTier}.` }
+              : (window.PartyChairEngine?.checkSummitEligibility ? window.PartyChairEngine.checkSummitEligibility(game, f.id) : { eligible: true });
+            return `
+            <div style="margin-top:8px;font-size:11.5px;color:${elig.eligible ? '#75c89a' : '#fbbf24'}">
+              ${recruitLocked ? `🔒 ${safe(elig.reason)}` : (elig.eligible ? '✔ Ready for Coalition Summit — click below to invite into your party!' : `ℹ ${safe(elig.reason || 'Court this faction first to build Coalition Goodwill (>= 15).')}`)}
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+              <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" ${elig.eligible ? '' : 'disabled'} title="${safe(elig.eligible ? 'Open Coalition Summit to sign an accord and bring this faction into your party' : (elig.reason || 'Not yet eligible'))}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:${elig.eligible ? 'pointer' : 'not-allowed'};opacity:${elig.eligible ? '1' : '0.45'}">
+                🏛️ Convene Coalition Summit (1 Action)
               </button>
-            ` : `
-              <button type="button" class="v15-summit-btn" disabled title="Loyal to parent party (Happiness >= 50). Must be destabilized or alienated first." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
-                🤝 Open Courtship Dialogue (1 Action)
+              <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" ${recruitLocked ? 'disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)."' : ''} style="padding:8px 10px;${recruitLocked ? 'opacity:0.45;cursor:not-allowed' : ''}">
+                ${recruitLocked ? '🔒 Court Independent (Tier 2+)' : '🤝 Court Independent ($1.5M · +15 Goodwill)'}
               </button>
-            `}
-            ${canDriveWedge ? `
-              <button type="button" class="button button-small" data-faction-op="drive-coalition-wedge" data-faction-id="${f.id}" style="padding:8px 10px">
-                🪓 Drive Wedge ($2M)
-              </button>
-            ` : ''}
-            ${canSubsidizeDissidents ? `
-              <button type="button" class="button button-small" data-faction-op="subsidize-dissident-caucus" data-faction-id="${f.id}" style="padding:8px 10px;border-color:#e8887e;color:#e8887e">
-                💰 Subsidize Dissidents ($3M)
-              </button>
-            ` : ''}
-          </div>
-        ` : canExpelFaction ? `
+            </div>`;
+          }
+          if (isInOtherParty && isOrganizing) {
+            if (recruitLocked) {
+              return `
+              <div style="margin-top:8px;font-size:11.5px;color:#fbbf24">🔒 Faction recruitment &amp; poaching unlock at Tier 2 (Ballot-Qualified Minor). Your party is currently Tier ${pTier}.</div>
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                <button type="button" class="v15-summit-btn" disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                  🔒 Open Courtship Dialogue (Tier 2+)
+                </button>
+                <button type="button" class="button button-small" disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)." style="padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                  🔒 Drive Wedge (Tier 2+)
+                </button>
+              </div>`;
+            }
+            return `
+            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+              ${canOpenCourtship ? `
+                <button type="button" class="v15-summit-btn" data-faction-op="open-courtship-dialogue" data-faction-id="${f.id}" style="flex:1;padding:8px 10px;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#7dd3fc;border-radius:4px;font-weight:700;cursor:pointer">
+                  🤝 Open Courtship Dialogue (1 Action)
+                </button>
+              ` : `
+                <button type="button" class="v15-summit-btn" disabled title="Loyal to parent party (Happiness >= 50). Must be destabilized or alienated first." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                  🤝 Open Courtship Dialogue (1 Action)
+                </button>
+              `}
+              ${canDriveWedge ? `
+                <button type="button" class="button button-small" data-faction-op="drive-coalition-wedge" data-faction-id="${f.id}" style="padding:8px 10px">
+                  🪓 Drive Wedge ($2M)
+                </button>
+              ` : ''}
+              ${canSubsidizeDissidents ? `
+                <button type="button" class="button button-small" data-faction-op="subsidize-dissident-caucus" data-faction-id="${f.id}" style="padding:8px 10px;border-color:#e8887e;color:#e8887e">
+                  💰 Subsidize Dissidents ($3M)
+                </button>
+              ` : ''}
+            </div>`;
+          }
+          return '';
+        })()}
+        ${canExpelFaction && !canConveneSummit && !(isInOtherParty && isOrganizing) ? `
           <button type="button" class="button button-small" data-faction-op="expel-faction" data-faction-id="${f.id}" style="margin-top:10px;width:100%;padding:7px 10px;border-color:rgba(232,136,126,0.5);color:#e8887e">
             🚫 Expel Faction to Independent (1 Action)
           </button>

@@ -792,14 +792,103 @@
     };
   }
 
+  function getLiveFactionVoters(game, fId) {
+    if (!fId) return 0;
+    if (Array.isArray(game?.voterModel?.states) && game.voterModel.states.length > 0) {
+      let sum = 0;
+      for (let i = 0; i < game.voterModel.states.length; i += 1) {
+        const v = Number(game.voterModel.states[i]?.factions?.[fId] || 0);
+        if (v > 0) sum += v;
+      }
+      if (sum > 0) return sum;
+    }
+    const liveF = (game?.factions || []).find((f) => f && f.id === fId);
+    return Number(
+      game?.voterModel?.factions?.[fId]
+      ?? liveF?.nationalVoters
+      ?? liveF?.voters
+      ?? window.PartyChairData?.FACTION_NATIONAL_TOTALS?.[fId]
+      ?? liveF?.targetVoters
+      ?? 0
+    );
+  }
+
+  function isFactionInMultiFactionCaucus(game, fId) {
+    if (!fId || !Array.isArray(game?.caucuses)) return false;
+    return game.caucuses.some((c) => (
+      c && c.status !== 'solo'
+      && Array.isArray(c.memberFactionIds) && c.memberFactionIds.length >= 2
+      && c.memberFactionIds.includes(fId)
+    ));
+  }
+
+  // [v0.18.9.1 HOTFIX] Dynamic Caucus & 5M+ Unaffiliated Faction Leadership Roles:
+  // - Every multi-faction caucus ALWAYS gets a Party Leadership slot (regardless of membership level).
+  // - Individual factions ONLY get a Party Leadership slot if >= 5,000,000 members AND NOT in a multi-faction caucus.
+  function getDynamicCaucusAndFactionRoles(game, partyIdentityId) {
+    if (!game || !partyIdentityId) return [];
+    const roles = [];
+    const caucuses = Array.isArray(game.caucuses) ? game.caucuses : [];
+    const multiCaucuses = caucuses.filter((c) => (
+      c && c.partyId === partyIdentityId
+      && c.status !== 'solo'
+      && Array.isArray(c.memberFactionIds) && c.memberFactionIds.length >= 2
+    ));
+    multiCaucuses.forEach((c) => {
+      roles.push({
+        id: `caucus_${c.id}`,
+        label: `${c.name} Leader`,
+        title: `${c.name} Leader`,
+        category: 'caucus',
+        caucusId: c.id,
+        caucusName: c.name,
+        partyId: partyIdentityId,
+        memberFactionIds: [...c.memberFactionIds],
+        representativeName: c.representativeName || null,
+        allowOverlap: true,
+        multiplier: 1.0,
+        passiveDesc: `Leads ${c.name}, coordinates primary solidarity across its ${c.memberFactionIds.length} member factions, and strengthens caucus cohesion.`,
+      });
+    });
+
+    const partyFactions = (Array.isArray(game.factions) ? game.factions : []).filter((f) => f && f.partyId === partyIdentityId);
+    partyFactions.forEach((f) => {
+      if (isFactionInMultiFactionCaucus(game, f.id)) return;
+      const voters = getLiveFactionVoters(game, f.id);
+      if (voters < 5000000) return;
+      roles.push({
+        id: `faction_${f.id}`,
+        label: `${f.name} Leader`,
+        title: `${f.name} Leader`,
+        category: 'faction',
+        factionId: f.id,
+        factionName: f.name,
+        partyId: partyIdentityId,
+        allowOverlap: true,
+        multiplier: 1.0,
+        passiveDesc: `Voice of ${f.name} (${(voters / 1e6).toFixed(1)}M voters outside any multi-faction caucus).`,
+      });
+    });
+
+    return roles;
+  }
+
   function isRoleUnlockedForParty(game, partyIdentityId, roleDef) {
+    if (roleDef.category === 'caucus' || roleDef.caucusId) {
+      if (roleDef.partyId && roleDef.partyId !== partyIdentityId) return false;
+      const cId = roleDef.caucusId || String(roleDef.id || '').replace(/^caucus_/, '');
+      const liveC = (game?.caucuses || []).find((c) => c && c.id === cId);
+      if (!liveC) return false;
+      return liveC.partyId === partyIdentityId && liveC.status !== 'solo' && Array.isArray(liveC.memberFactionIds) && liveC.memberFactionIds.length >= 2;
+    }
     if (roleDef.category === 'faction') {
       if (roleDef.partyId && roleDef.partyId !== partyIdentityId) return false;
-      const fId = roleDef.factionId;
+      const fId = roleDef.factionId || String(roleDef.id || '').replace(/^faction_/, '');
       if (fId) {
         const liveF = (game?.factions || []).find((f) => f && f.id === fId);
-        if (liveF && liveF.partyId !== partyIdentityId) return false;
-        const voters = Number(game?.voterModel?.factions?.[fId] ?? window.PartyChairData?.FACTION_NATIONAL_TOTALS?.[fId] ?? liveF?.targetVoters ?? 0);
+        if (!liveF || liveF.partyId !== partyIdentityId) return false;
+        if (isFactionInMultiFactionCaucus(game, fId)) return false;
+        const voters = getLiveFactionVoters(game, fId);
         if (voters < 5000000) return false;
       }
     }
@@ -1218,6 +1307,9 @@
     calculateTrustEffects,
     partySeatCounts,
     isRoleUnlockedForParty,
+    getDynamicCaucusAndFactionRoles,
+    getLiveFactionVoters,
+    isFactionInMultiFactionCaucus,
     getLeadershipRolesSchemaForParty,
     initializeLeadershipRolesForParty,
     evaluateEndorsementBacklash,

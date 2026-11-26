@@ -20233,6 +20233,9 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
   // REC-02, REC-03, REC-06: Opposition Subversion, Courtship Dialogue, Independent Courting & Voluntary Expulsion
   if (actionId === 'open-courtship-dialogue') {
+    if (getPartyInstitutionalTier(game, 'player') < 2) {
+      return { ...game, lastNote: 'Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor).' };
+    }
     const fid = payload?.factionId || payload?.id;
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
@@ -20268,6 +20271,9 @@ function takeActionInternal(game, actionId, payload = {}) {
   }
 
   if (actionId === 'drive-coalition-wedge') {
+    if (getPartyInstitutionalTier(game, 'player') < 2) {
+      return { ...game, lastNote: 'Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor).' };
+    }
     const fid = payload?.factionId || payload?.id;
     const playerPid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
     const f = (game.factions || []).find((x) => x && x.id === fid);
@@ -21841,9 +21847,13 @@ function takeActionInternal(game, actionId, payload = {}) {
     const p = payload?.payload ? payload.payload : payload;
     const { roleId, memberId } = p;
     const playerIdentityId = game.player?.custom ? 'player' : (game.player?.baseTemplateId || game.player?.id || 'people');
-    const schema = window.PartyChairV07?.getLeadershipRolesSchemaForParty
+    const baseSchema = window.PartyChairV07?.getLeadershipRolesSchemaForParty
       ? window.PartyChairV07.getLeadershipRolesSchemaForParty(playerIdentityId)
       : (window.PartyChairV07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData?.LEADERSHIP_ROLES || []);
+    const dynRoles = window.PartyChairV07?.getDynamicCaucusAndFactionRoles
+      ? window.PartyChairV07.getDynamicCaucusAndFactionRoles(game, playerIdentityId)
+      : [];
+    const schema = [...baseSchema.filter((r) => r.category !== 'faction'), ...dynRoles];
     const roleDef = schema.find((r) => r.id === roleId);
     if (!roleDef) return game;
     // President and Vice President cannot be changed by the party chair (locked elected executive offices)
@@ -21880,9 +21890,13 @@ function takeActionInternal(game, actionId, payload = {}) {
         strikeNote = ' DONOR CAPITAL STRIKE: Super PAC withdrew reserves and triggered donor boycott (-$8M Treasury, -0.4 Supporter Trust).';
       }
 
+      const nextCaucusesVacate = (roleDef.category === 'caucus' && roleDef.caucusId && Array.isArray(game.caucuses))
+        ? game.caucuses.map((c) => (c && c.id === roleDef.caucusId ? { ...c, representativeName: null } : c))
+        : game.caucuses;
       return {
         ...game,
         ...synced,
+        caucuses: nextCaucusesVacate,
         treasury: treasuryAfter,
         trust: nextTrust,
         player: { ...game.player, trust: nextTrust },
@@ -21939,18 +21953,24 @@ function takeActionInternal(game, actionId, payload = {}) {
       }
     }
 
-    // REQ-157: Appointing a politician to any leadership position awards +3 Confidence to their aligned faction
+    // REQ-157 & [v0.18.9.1 HOTFIX]: Appointing a politician awards +3 Confidence to their aligned faction (or all member factions of a Caucus)
     const candFactionId = member.factionId || roleDef.factionId;
     const nextFactionConfidence = { ...(game.factionConfidence || {}) };
-    if (candFactionId) {
-      const curConf = Number(nextFactionConfidence[candFactionId] ?? 50);
+    const boostFactionIds = (roleDef.category === 'caucus' && Array.isArray(roleDef.memberFactionIds))
+      ? roleDef.memberFactionIds
+      : (candFactionId ? [candFactionId] : []);
+    boostFactionIds.forEach((bfid) => {
+      const curConf = Number(nextFactionConfidence[bfid] ?? 50);
       const newConf = Math.min(100, curConf + 3);
-      nextFactionConfidence[candFactionId] = newConf;
+      nextFactionConfidence[bfid] = newConf;
       if (Array.isArray(game.factions)) {
-        const targetF = game.factions.find((f) => f.id === candFactionId);
+        const targetF = game.factions.find((f) => f.id === bfid);
         if (targetF) targetF.confidence = newConf;
       }
-    }
+    });
+    const nextCaucusesAssign = (roleDef.category === 'caucus' && roleDef.caucusId && Array.isArray(game.caucuses))
+      ? game.caucuses.map((c) => (c && c.id === roleDef.caucusId ? { ...c, representativeName: member.name } : c))
+      : game.caucuses;
 
     currentRoles[roleId] = member.id;
     const trust = game.trust || game.player?.trust || { supporters: 65, independents: 50, opponents: 25 };
@@ -21972,6 +21992,7 @@ function takeActionInternal(game, actionId, payload = {}) {
     return {
       ...game,
       ...synced,
+      caucuses: nextCaucusesAssign,
       trust: nextTrust,
       player: { ...game.player, trust: nextTrust },
       politicians: nextPoliticians,
