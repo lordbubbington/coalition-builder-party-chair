@@ -6200,13 +6200,19 @@ function actionsTabMarkup() {
 /* ==========================================================================
    TAB 2: MAP — FULLSCREEN NATIONAL MAP & SENATE CLASS I/II/III FIX (BUG-01)
    ========================================================================== */
+// [PERF-STRESS-FIX] PERF-03: memoize decoded SVG path strings across renders & map-mode toggles
+const _decodePathCache = new Map();
 function decodePath(encoded) {
+  if (!encoded) return '';
+  const cached = _decodePathCache.get(encoded);
+  if (cached !== undefined) return cached;
   let x = 0, y = 0, position = 0;
   const number = () => { let result = 0, shift = 0, chunk; do { chunk = encoded.charCodeAt(position++) - 63; result |= (chunk & 0x1f) << shift; shift += 5; } while (chunk >= 0x20); return result & 1 ? ~(result >> 1) : result >> 1; };
   const coordinates = [];
   while (position < encoded.length) { x += number(); y += number(); coordinates.push([x / 10, y / 10]); }
-  if (!coordinates.length) return '';
-  return `M${coordinates.map(([px, py]) => `${px},${py}`).join('L')}Z`;
+  const out = coordinates.length ? `M${coordinates.map(([px, py]) => `${px},${py}`).join('L')}Z` : '';
+  _decodePathCache.set(encoded, out);
+  return out;
 }
 const svgPath = (row, cls, title) => `<path class="${cls}" d="${row.q.split('!').map(decodePath).join('')}" data-map-state="${row.stateId || row.id}" tabindex="0"><title>${safe(title)}</title></path>`;
 // [v0.18.8 PLAYTEST-FIX #10] Full 3rd-party & custom-party control color/label resolution for House, State Leg, Senate & Governor maps
@@ -10826,8 +10832,8 @@ function render() {
     bind();
     return;
   }
-  // [OFF-CYCLE] Render dedicated Off-Cycle Interlude screen & Decision Desk
-  if (game && game.phase === 'off-cycle-interlude' && window.OffCycleInterludeSystem) {
+  // [PERF-STRESS-FIX] B3-02: never suppress Game Over overlay with off-cycle-interlude early return
+  if (game && game.phase === 'off-cycle-interlude' && !game.gameOver && window.OffCycleInterludeSystem) {
     app.innerHTML = window.OffCycleInterludeSystem.renderScreen(game) + renderSaveSlotsModalMarkup();
     if (game) saveGame(game);
     bind();

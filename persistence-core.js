@@ -84,9 +84,20 @@
     if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
       copy.electionNight = null;
     }
-    // Drop primaryResults outside Organizing (or in ultra mode)
-    if ((copy.phase !== 'organizing' || ultra) && copy.primaryResults) {
+    // [PERF-STRESS-FIX] PERF-01: prune heavy lifecycle digest snapshots from saves
+    if (copy.lastLifecycleDigest && typeof copy.lastLifecycleDigest === 'object') {
+      copy.lastLifecycleDigest = {
+        year: copy.lastLifecycleDigest.year,
+        threePartyChaosActive: Boolean(copy.lastLifecycleDigest.threePartyChaosActive),
+        events: Array.isArray(copy.lastLifecycleDigest.events) ? copy.lastLifecycleDigest.events.slice(0, 15) : [],
+      };
+    }
+    // [PERF-STRESS-FIX] PERF-02: compact primaryFields & primaryResults once primaries are resolved (or in ultra mode)
+    if ((copy.primariesResolved || copy.phase !== 'organizing' || ultra) && copy.primaryResults) {
       copy.primaryResults = [];
+    }
+    if ((copy.primariesResolved || ultra) && copy.primaryFields && typeof copy.primaryFields === 'object') {
+      copy.primaryFields = {};
     }
     // Drop top-level presidentialResults outside active results/election-night views
     if (copy.phase !== 'complete' && copy.phase !== 'election-night' && copy.presidentialResults) {

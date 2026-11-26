@@ -8163,6 +8163,11 @@ function resolveContingentElection(game, payload = {}) {
   const { endorseParty = 'people', concession = 'cabinet', cabinetRole = 'cabinet_state', targetStates = [], reformType = 'rcv' } = p;
   const playerKey = game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people');
   const pending = game?.pendingContingentElection;
+  // [PERF-STRESS-FIX] B3-03: no-op if no contingent election is pending or endorseParty is invalid
+  if (!pending) return game;
+  const _validEndorseTargets = new Set(['people', 'heritage', playerKey, ...(Array.isArray(pending.topThree) ? pending.topThree : [])]);
+  if (p.endorseParty && !_validEndorseTargets.has(p.endorseParty)) return game;
+  if (p.presidentChoice && !_validEndorseTargets.has(p.presidentChoice)) return game;
 
   let working = { ...game };
   const nextGoverning = ['people', 'heritage', playerKey].includes(endorseParty) ? endorseParty : 'people';
@@ -17253,13 +17258,19 @@ function startNextCycleInternal(game) {
   if (Array.isArray(identityDigest?.events)) combinedEvents.push(...identityDigest.events);
   if (Array.isArray(caucusDigest?.events)) combinedEvents.push(...caucusDigest.events);
 
+  // [PERF-STRESS-FIX] PERF-01: strip nested .game/.nextGame/.state references to prevent 236MB recursive save/heap leak
+  const _stripDigestGame = (d) => {
+    if (!d || typeof d !== 'object') return d || null;
+    const { game: _g, nextGame: _ng, state: _s, ...rest } = d;
+    return rest;
+  };
   finalCycle.lastLifecycleDigest = {
     year: nextYear,
     threePartyChaosActive: Boolean(finalCycle.threePartyChaosActive),
-    events: combinedEvents,
-    dynamicLifecycle: lifecycleDigest,
-    identityBlocs: identityDigest,
-    caucuses: caucusDigest,
+    events: combinedEvents.slice(0, 30),
+    dynamicLifecycle: _stripDigestGame(lifecycleDigest),
+    identityBlocs: _stripDigestGame(identityDigest),
+    caucuses: _stripDigestGame(caucusDigest),
   };
 
   // Push headlines to the news feed / yearLog
@@ -20572,8 +20583,8 @@ function takeActionInternal(game, actionId, payload = {}) {
       },
       activeAutopsyModal: !hasCoalitionModal,
     };
-    // [OFF-CYCLE] Enter off-cycle-interlude directly when requested or enabled
-    if ((payload?.enterOffCycle || game.offCycleEnabled) && getOffCycleSystem()?.initializeOffCycleInterlude) {
+    // [PERF-STRESS-FIX] B3-01: land on phase='complete' so Post-Election Results, Autopsy modal, and Decennial War Room are reachable; only auto-enter off-cycle when explicitly requested
+    if (payload?.enterOffCycle === true && !completed.gameOver && !completed.redistrictingWarRoom?.active && getOffCycleSystem()?.initializeOffCycleInterlude) {
       return getOffCycleSystem().initializeOffCycleInterlude(completed, (completed.year || 2028) + 1);
     }
     return completed;

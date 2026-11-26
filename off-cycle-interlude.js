@@ -586,7 +586,8 @@
   // --------------------------------------------------------------------------
 
   function initializeOffCycleInterlude(game, oddYear = null) {
-    if (!game || typeof game !== 'object') return game;
+    // [PERF-STRESS-FIX] B3-02: do not enter off-cycle interlude if party has already collapsed
+    if (!game || typeof game !== 'object' || game.gameOver) return game;
     const fromYear = Number(game.year || 2028);
     const resolvedOddYear = Number.isFinite(Number(oddYear)) ? Number(oddYear) : (fromYear + 1);
     const nextFederalYear = fromYear + 2;
