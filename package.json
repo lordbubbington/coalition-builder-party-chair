@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.18.8",
-  "description": "Coalition Builder: Party Chair — Version 0.18.8 (Intra-Party Faction Caucuses, Non-Geographic Procedural Faction Naming, Dynamic Faction Lifecycle, Mergers, Vanguard Pull & Identity Blocs)",
+  "version": "0.18.9.1",
+  "description": "Coalition Builder: Party Chair — Version 0.18.9.1 (Party Tiers 0-5, Regional Chapter Momentum, Confidence & Supply, Off-Cycle Recruitment & Caucus/5M+ Faction Leadership Slots)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

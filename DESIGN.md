@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.8 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.8 Architectural Release implementing REQ-335 through REQ-341; featuring Intra-Party Faction Caucuses, Dynamic Procedural Faction Lifecycles & 3-Party Realignment Chaos, Procedural Faction Naming & Ideological Temperaments, Identity & Religious Voting Blocs, Faction Kicker Mechanics, and Save Schema v9. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.18.9.1 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.18.9.1 building on v0.18.8/v0.18.9; featuring reworked Party Tiers 0–5 & Regional Chapter Momentum, Confidence & Supply bargaining, Off-Cycle unhappy caucus courting & faction recruitment, Step 1 Party Leaders + Rules & Bylaws, Caucus & 5M+ solo-faction leadership slots, and Tier 0–1 faction recruiting locks. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 

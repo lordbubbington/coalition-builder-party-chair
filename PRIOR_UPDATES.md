@@ -2382,3 +2382,15 @@ Categorized primarily by **Size** per workspace rules:
 - **Electorate Invariant:** Strictly verified 155,000,000 represented voters with 0 variance across all 51 jurisdictions.
 - **UI Vibe Invariant:** Zero `REQ-XX` technical identifiers rendered in customer-facing UI markup.
 - **CRLF & Executable Compilation:** Windows CRLF verified for `BUILD_EXE.bat` and `build.ps1`; release executable packaged via `build.ps1`.
+
+---
+
+## VERSION 0.18.9 / 0.18.9.1
+
+# Coalition Builder: Party Chair — Version 0.18.9.1
+
+Version 0.18.9.1 updates the build labeling and packages the v0.18.9 Stages 1–5 feature and stability release together with the v0.18.9.1 leadership & faction recruiting hotfix:
+
+- **v0.18.9 Stages 1–5 (`03dc063`, `97fb700`, `652714c`, `a7b78fd`):** Fixed 2028+ history maps (`MAPS.states`, `byState`, DC 3 EVs), automatic Presidential ballot access from held offices, midterm petition lock, Election Night House real district margins and full-state delegation coloring, reworked Party Tiers 0–5 thresholds/perks/focus slots, Regional Chapter Momentum (+2%/neighbor >=10 pts behind with 155M conservation), Tier-Up popup, starting & seat-control bonus statehouse slates, largest-party Confidence & Supply bargaining UI/tax, Off-Cycle Interlude caucus courting & faction recruitment, Step 1 Party Leaders + Rules & Bylaws swap (Party Platform moved to Party Info), and State Senate slate/`voterModel` fixes.
+- **v0.18.9.1 Hotfix (`c4a79e8`):** Enforced Caucus Leader slots + solo >=5M Faction leadership slots, hid locked Step 1 leader roles, and visually/engine-locked Tier 0–1 faction recruitment actions.
+- **Version Relabel & Save Compatibility:** Updated version labels across `package.json`, `index.html`, `app.js`, `ui-setup-views.js`, `engine.js`, `persistence-core.js`, and `BUILD_EXE.bat` to `0.18.9.1` (`SAVE_KEY = 'partyChairGame.save.v18.9.1'`, preserving backward compatibility with `v18.8`, `v18.7`, `v18.6`, and earlier saves).

@@ -6,8 +6,10 @@
 (function (root) {
   'use strict';
 
-  const SAVE_KEY = 'partyChairGame.save.v18.7';
-  const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.6';
+  const SAVE_KEY = 'partyChairGame.save.v18.9.1';
+  const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.8';
+  const PREVIOUS_SAVE_KEY_V187 = 'partyChairGame.save.v18.7';
+  const PREVIOUS_SAVE_KEY_V186 = 'partyChairGame.save.v18.6';
   const PREVIOUS_SAVE_KEY_V185 = 'partyChairGame.save.v18.5';
   const PREVIOUS_SAVE_KEY_V184 = 'partyChairGame.save.v18.4';
   const PREVIOUS_SAVE_KEY_V183 = 'partyChairGame.save.v18.3';
@@ -409,6 +411,8 @@
     try {
       const value = localStorage.getItem(SAVE_KEY)
         || localStorage.getItem(PREVIOUS_SAVE_KEY)
+        || localStorage.getItem(PREVIOUS_SAVE_KEY_V187)
+        || localStorage.getItem(PREVIOUS_SAVE_KEY_V186)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V185)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V184)
         || localStorage.getItem(PREVIOUS_SAVE_KEY_V183)
