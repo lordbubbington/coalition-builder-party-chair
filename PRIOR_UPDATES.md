@@ -2394,3 +2394,16 @@ Version 0.18.9.1 updates the build labeling and packages the v0.18.9 Stages 1–
 - **v0.18.9 Stages 1–5 (`03dc063`, `97fb700`, `652714c`, `a7b78fd`):** Fixed 2028+ history maps (`MAPS.states`, `byState`, DC 3 EVs), automatic Presidential ballot access from held offices, midterm petition lock, Election Night House real district margins and full-state delegation coloring, reworked Party Tiers 0–5 thresholds/perks/focus slots, Regional Chapter Momentum (+2%/neighbor >=10 pts behind with 155M conservation), Tier-Up popup, starting & seat-control bonus statehouse slates, largest-party Confidence & Supply bargaining UI/tax, Off-Cycle Interlude caucus courting & faction recruitment, Step 1 Party Leaders + Rules & Bylaws swap (Party Platform moved to Party Info), and State Senate slate/`voterModel` fixes.
 - **v0.18.9.1 Hotfix (`c4a79e8`):** Enforced Caucus Leader slots + solo >=5M Faction leadership slots, hid locked Step 1 leader roles, and visually/engine-locked Tier 0–1 faction recruitment actions.
 - **Version Relabel & Save Compatibility:** Updated version labels across `package.json`, `index.html`, `app.js`, `ui-setup-views.js`, `engine.js`, `persistence-core.js`, and `BUILD_EXE.bat` to `0.18.9.1` (`SAVE_KEY = 'partyChairGame.save.v18.9.1'`, preserving backward compatibility with `v18.8`, `v18.7`, `v18.6`, and earlier saves).
+
+---
+
+## VERSION 0.18.9.2 / 0.18.9.3 / 0.18.9.4
+
+# Coalition Builder: Party Chair — Version 0.18.9.4
+
+Version 0.18.9.4 integrates the spoiler-reversal voter deadband update on top of the v0.18.9.2 and v0.18.9.3 fixes and features:
+
+- **v0.18.9.2 Spoiler Reversal (`e285662`):** Granted 0% spoiler defection when a third party outpolls the nearest major party and applied reverse-Duverger strategic defection onto the trailing major party (`tests/test-v0189-2-spoiler-reversal.cjs`).
+- **v0.18.9.3 Error Log Fixes & State Senate Tracking (`232d2b4`, `0c82296`):** Rendered holdover Senate seats on Election Night and Prior-Cycle maps, suppressed Coalition Builder / Hung Chamber modals when the player wins an outright chamber majority, and added bicameral State Senate seat tracking (`1,923` / `1,924` seats) plus State Senates & Minor Statewide Offices KPI cards (`scripts/test-v0189-3-error-log.cjs`).
+- **v0.18.9.4 Registered-Voter Spoiler Deadband (`81286b2`):** Switched spoiler comparison in `engine.js` to state registered voters with a 5-point deadband (`0%` spoiler for both parties within 5 points; reverse-Duverger when leading by `> 5` points; normal Duverger when trailing by `> 5` points).
+- **Version Relabel & Save Compatibility:** Updated version labels across `package.json`, `index.html`, `app.js`, `ui-setup-views.js`, `engine.js`, `persistence-core.js`, and `BUILD_EXE.bat` to `0.18.9.4` (`SAVE_KEY = 'partyChairGame.save.v18.9.4'`, preserving backward compatibility with `v18.9.1`, `v18.8`, `v18.7`, `v18.6`, and earlier saves).

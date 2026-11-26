@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.18.9.1",
-  "description": "Coalition Builder: Party Chair — Version 0.18.9.1 (Party Tiers 0-5, Regional Chapter Momentum, Confidence & Supply, Off-Cycle Recruitment & Caucus/5M+ Faction Leadership Slots)",
+  "version": "0.18.9.4",
+  "description": "Coalition Builder: Party Chair — Version 0.18.9.4 (Spoiler Reversal & 5-Point Voter Deadband, State Senate Bicameral Seat Tracking & Holdover Maps, Party Tiers 0-5 & Leadership Hotfix)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

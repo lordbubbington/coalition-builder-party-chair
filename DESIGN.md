@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.9.1 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.9.1 building on v0.18.8/v0.18.9; featuring reworked Party Tiers 0–5 & Regional Chapter Momentum, Confidence & Supply bargaining, Off-Cycle unhappy caucus courting & faction recruitment, Step 1 Party Leaders + Rules & Bylaws, Caucus & 5M+ solo-faction leadership slots, and Tier 0–1 faction recruiting locks. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.18.9.4 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.18.9.4 building on v0.18.9.1; adding registered-voter spoiler comparison with a 5-point deadband and reverse-Duverger defection, State Senate 1,923/1,924 bicameral seat tracking and KPI cards, holdover seat rendering on Senate results maps, and outright-majority Coalition Builder suppression. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 
