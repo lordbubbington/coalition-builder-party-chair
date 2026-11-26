@@ -7619,7 +7619,7 @@ function detectHungChambers(game, houseSeats = {}, senateSeats = {}, stateLegSea
   const repHouse = Number(houseSeats.heritage || 0);
   const playerHouse = Number(houseSeats[playerKey] ?? houseSeats.player ?? 0);
   const maxSingleHouse = Math.max(0, ...Object.values(houseSeats).map((v) => Number(v) || 0));
-  const houseHung = sixPartyCoalitionMode ? (maxSingleHouse < 218) : (demHouse < 218 && repHouse < 218);
+  const houseHung = maxSingleHouse < 218 && demHouse < 218 && repHouse < 218 && playerHouse < 218;
   const playerTierBargain = getPartyInstitutionalTier(game, 'player');
   const isPlayerLargestHouse = playerHouse > 0 && playerHouse >= demHouse && playerHouse >= repHouse && playerHouse >= maxSingleHouse;
   const playerKingmakerHouse = houseHung && playerHouse > 0 && (
@@ -7653,7 +7653,7 @@ function detectHungChambers(game, houseSeats = {}, senateSeats = {}, stateLegSea
   const repSenate = Number(senateSeats.heritage || 0);
   const playerSenate = Number(senateSeats[playerKey] ?? senateSeats.player ?? 0);
   const maxSingleSenate = Math.max(0, ...Object.values(senateSeats).map((v) => Number(v) || 0));
-  const senateHung = sixPartyCoalitionMode ? (maxSingleSenate < 51) : (demSenate < 51 && repSenate < 51);
+  const senateHung = maxSingleSenate < 51 && demSenate < 51 && repSenate < 51 && playerSenate < 51;
   const playerKingmakerSenate = isPlayerThirdParty && senateHung && playerSenate > 0 && (
     sixPartyCoalitionMode || (demSenate + playerSenate >= 51) || (repSenate + playerSenate >= 51)
   );
@@ -7684,8 +7684,14 @@ function detectHungChambers(game, houseSeats = {}, senateSeats = {}, stateLegSea
       const majority = Math.floor(total / 2) + 1;
       const dS = Number(sc.people || 0);
       const rS = Number(sc.heritage || 0);
-      const pS = Number(sc[playerKey] || 0);
-      if (dS < majority && rS < majority && pS > 0 && ((dS + pS >= majority) || (rS + pS >= majority))) {
+      const pS = Number(sc[playerKey] ?? sc.player ?? 0);
+      const maxSingleStateLeg = Math.max(
+        dS, rS, pS,
+        ...Object.entries(sc)
+          .filter(([k]) => !['total', 'slateShares', 'winner', 'control'].includes(k))
+          .map(([, v]) => Number(v) || 0)
+      );
+      if (maxSingleStateLeg < majority && dS < majority && rS < majority && pS < majority && pS > 0 && ((dS + pS >= majority) || (rS + pS >= majority))) {
         const entry = {
           id: `kingmaker-stateLeg-${st.id}-${game?.year || 2028}`,
           chamber: 'stateLeg',

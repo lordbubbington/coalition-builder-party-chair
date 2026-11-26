@@ -4403,14 +4403,31 @@ function renderPriorCycleMapSvg(cycle, mode = 'presidential') {
   const labelFor = (p) => resolveControlPartyLabel(p, game);
   const shapes = stateRows.filter((st) => st.id !== 'DC').map((st) => {
     let winner = null;
+    let holdoverLabel = null;
+    let isHoldoverSplit = false;
     if (mode === 'senate') {
       winner = senByState[st.id] || null;
+      if (!winner) {
+        const holdovers = (typeof allUniversalSenateSeats === 'function' ? allUniversalSenateSeats() : (game?.sittingMembers || []).filter((m) => m && m.office === 'senate'))
+          .filter((s) => (s.stateId || s.state) === st.id);
+        if (holdovers.length > 0) {
+          const uniq = [...new Set(holdovers.map((s) => s.party || s.partyId || 'people'))];
+          if (uniq.length === 1) {
+            winner = uniq[0];
+            holdoverLabel = `${labelFor(winner)} (Holdover · Not up)`;
+          } else {
+            isHoldoverSplit = true;
+            holdoverLabel = `Split Holdover (${uniq.map((p) => labelFor(p)).join(' / ')})`;
+          }
+        }
+      }
     } else {
       const row = Array.isArray(presStates) ? presStates.find((x) => (x.stateId || x.id) === st.id) : presStates[st.id];
       winner = (typeof row === 'string' ? row : row?.winner) || cycle?.governorships?.[st.id] || null;
     }
-    const fill = winner ? colorFor(winner) : '#334155';
-    return `<path d="${st.q.split('!').map(decodePath).join('')}" style="fill:${fill};stroke:#0f172a;stroke-width:0.8"><title>${safe(st.id)}: ${safe(winner ? labelFor(winner) : 'No race')}</title></path>`;
+    const fill = isHoldoverSplit ? '#8654a4' : (winner ? colorFor(winner) : '#334155');
+    const op = holdoverLabel ? '0.48' : '1';
+    return `<path d="${st.q.split('!').map(decodePath).join('')}" style="fill:${fill};fill-opacity:${op};stroke:#0f172a;stroke-width:0.8"><title>${safe(st.id)}: ${safe(holdoverLabel || (winner ? labelFor(winner) : 'No race'))}</title></path>`;
   }).join('');
   let dcDot = '';
   if (mode !== 'senate') {
@@ -10057,6 +10074,29 @@ function renderElectionNightScreen() {
           }
           title = `${_enStName} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}Leading: ${getElectionPartyShort(leader)} +${lead.toFixed(1)}% · ${Math.round(pct)}% counted`;
         }
+      }
+    } else if (activeTab === 'senate') {
+      // [v0.18.9.3] Show existing (holdover) Senate seats for states without a Senate race this cycle
+      const holdoverSens = (typeof allUniversalSenateSeats === 'function' ? allUniversalSenateSeats() : (game.sittingMembers || []).filter((m) => m && m.office === 'senate'))
+        .filter((s) => (s.stateId || s.state) === state.id);
+      if (holdoverSens.length > 0) {
+        const parties = holdoverSens.map((s) => s.party || s.partyId || s.caucus || 'people');
+        const uniqueParties = [...new Set(parties)];
+        if (uniqueParties.length === 1) {
+          fillColor = getElectionPartyColor(uniqueParties[0]);
+          fillOpacity = 0.48;
+          const names = holdoverSens.map((s) => s.incumbent || s.name).filter(Boolean).join(' & ');
+          title = `${_enStName} (${state.id}) · Holdover Senate Seats (Not up): ${holdoverSens.length} ${getElectionPartyShort(uniqueParties[0])}${names ? ` (${names})` : ''}`;
+        } else {
+          fillColor = '#8654a4';
+          fillOpacity = 0.48;
+          const desc = holdoverSens.map((s) => `${s.incumbent || s.name || 'Senator'} (${getElectionPartyShort(s.party || s.partyId || 'people')})`).join(' · ');
+          title = `${_enStName} (${state.id}) · Split Holdover Senate Delegation (Not up): ${desc}`;
+        }
+      } else {
+        fillColor = '#1a2432';
+        fillOpacity = 0.35;
+        title = `${_enStName} (${state.id}) · No contest in this chamber`;
       }
     } else {
       fillColor = '#1a2432';
