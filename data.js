@@ -3605,6 +3605,18 @@ const CUSTOM_PARTY_EMBLEMS = [
 // ============================================================================
 // VERSION 0.16.6: STATEWIDE ELECTED EXECUTIVE OFFICES REGISTRY & ROSTER
 // ============================================================================
+// [v0.18.9.3] Real U.S. State Senate chamber seat counts (49 bicameral = 1,923; NE = 49 unicameral)
+const STATE_SENATE_SEAT_TOTALS = {
+  AL: 35, AK: 20, AZ: 30, AR: 35, CA: 40, CO: 35, CT: 36, DE: 21, FL: 40, GA: 56,
+  HI: 25, ID: 35, IL: 59, IN: 50, IA: 50, KS: 40, KY: 38, LA: 39, ME: 35, MD: 47,
+  MA: 40, MI: 38, MN: 67, MS: 52, MO: 34, MT: 50, NE: 49, NV: 21, NH: 24, NJ: 40,
+  NM: 42, NY: 63, NC: 50, ND: 47, OH: 33, OK: 48, OR: 30, PA: 50, RI: 38, SC: 46,
+  SD: 35, TN: 33, TX: 31, UT: 29, VT: 30, VA: 40, WA: 49, WV: 34, WI: 33, WY: 31,
+};
+const STATE_SENATE_TOTAL_SEATS = Object.entries(STATE_SENATE_SEAT_TOTALS)
+  .filter(([st]) => st !== 'NE')
+  .reduce((s, [, n]) => s + n, 0);
+
 const STATEWIDE_OFFICES_REGISTRY = [
   {
     "id": "AL-lieutenant_governor",
@@ -15135,6 +15147,8 @@ window.PartyChairData = Object.assign(window.PartyChairData || {}, {
   SLATE_TIER_MATRIX,
   SLATE_COATTAIL_BY_PARTY_TIER,
   MIDTERM_CONSOLIDATED_HOUSE_STATES,
+  STATE_SENATE_SEAT_TOTALS,
+  STATE_SENATE_TOTAL_SEATS,
   BICAMERAL_STATE_SENATE_CALENDAR,
   getBicameralChambersForYear,
   STATEWIDE_OFFICES_REGISTRY,

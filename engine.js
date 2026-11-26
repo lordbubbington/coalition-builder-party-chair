@@ -597,6 +597,8 @@ function partyHoldsAnyOfficeInState(game, partyId, stateId) {
   if (Array.isArray(legs) && legs.some((c) => matchesParty(c))) return true;
   const shRow = game.stateHouseSeatCounts?.[stateId];
   if (shRow && Object.entries(shRow).some(([k, v]) => k !== 'total' && k !== 'slateShares' && matchesParty(k) && Number(v || 0) > 0)) return true;
+  const ssRow = game.stateSenateSeatCounts?.[stateId];
+  if (ssRow && Object.entries(ssRow).some(([k, v]) => k !== 'total' && k !== 'slateShares' && matchesParty(k) && Number(v || 0) > 0)) return true;
   // 3. U.S. House representatives
   if (Array.isArray(game.representatives) && game.representatives.some((r) => r && !r.vacant && (r.stateId === stateId || r.state === stateId || String(r.districtId || '').startsWith(`${stateId}-`)) && matchesParty(r.partyId || r.party))) {
     return true;
@@ -5171,6 +5173,7 @@ function createGame(options = {}) {
     stateChapters: isCustom ? Object.fromEntries(STATES.map((s) => [s.id, 0])) : buildStateChaptersMap(stateOrganizations, base.id),
     localChapters,
     stateHouseSeatCounts: JSON.parse(JSON.stringify(window.PartyChairData.VERSION_05_STATE_HOUSE_SEATS.states)),
+    stateSenateSeatCounts: buildStartingStateSenateSeatCounts(window.PartyChairData.VERSION_05_STATE_HOUSE_SEATS.states, window.PartyChairData.VERSION_03_MAPS?.legislatures || window.PartyChairData.VERSION_01_STATE_LEGISLATURES),
     governorships: { ...(window.PartyChairData.VERSION_03_MAPS?.governors || window.PartyChairData.VERSION_01_GOVERNORS || {}) },
     stateLegislatures: Object.fromEntries(Object.entries(window.PartyChairData.VERSION_03_MAPS?.legislatures || window.PartyChairData.VERSION_01_STATE_LEGISLATURES || {}).map(([state, chambers]) => [state, [...chambers]])),
     contestedStateLegSlates,
@@ -12037,6 +12040,91 @@ function computeStateLegislatureVoteShares(game, stateId, options = {}) {
   return partyVotes;
 }
 
+// [v0.18.9.3] Build initial State Senate seat counts across all 49 bicameral states (total 1,923 seats)
+function buildStartingStateSenateSeatCounts(houseCounts = null, stateLegislatures = null) {
+  const totals = window.PartyChairData?.STATE_SENATE_SEAT_TOTALS || {};
+  const hCounts = houseCounts || window.PartyChairData?.VERSION_05_STATE_HOUSE_SEATS?.states || {};
+  const legs = stateLegislatures || window.PartyChairData?.VERSION_03_MAPS?.legislatures || window.PartyChairData?.VERSION_01_STATE_LEGISLATURES || {};
+  const result = {};
+  STATES.forEach((st) => {
+    const sid = st.id;
+    if (sid === 'DC') return;
+    const total = Number(totals[sid] || 35);
+    if (sid === 'NE') {
+      result[sid] = { people: 0, heritage: 0, independent: 0, other: total, total, chamber: 'unicameral' };
+      return;
+    }
+    const upperCtrl = Array.isArray(legs[sid]) ? legs[sid][1] : null;
+    const hRow = hCounts[sid] || {};
+    const hDem = Number(hRow.people || 0);
+    const hRep = Number(hRow.heritage || 0);
+    const hMajSum = hDem + hRep;
+    const demShare = hMajSum > 0 ? (hDem / hMajSum) : 0.5;
+    let demSeats = Math.round(total * demShare);
+    let repSeats = total - demSeats;
+    const maj = Math.floor(total / 2) + 1;
+    if (upperCtrl === 'people' && demSeats < maj) {
+      demSeats = Math.min(total, maj + Math.max(1, Math.round(total * 0.04)));
+      repSeats = Math.max(0, total - demSeats);
+    } else if (upperCtrl === 'heritage' && repSeats < maj) {
+      repSeats = Math.min(total, maj + Math.max(1, Math.round(total * 0.04)));
+      demSeats = Math.max(0, total - repSeats);
+    }
+    result[sid] = { people: demSeats, heritage: repSeats, independent: 0, other: 0, total, chamber: 'upper' };
+  });
+  return result;
+}
+
+function reallocateStateSenateSeatCounts(currentCounts, oldControls, newControls, game) {
+  const counts = JSON.parse(JSON.stringify(currentCounts || buildStartingStateSenateSeatCounts(game?.stateHouseSeatCounts, oldControls)));
+  for (const state of STATES) {
+    const stateId = state.id;
+    if (stateId === 'DC' || stateId === 'NE') continue;
+    const seats = counts[stateId];
+    if (!seats) continue;
+    const total = Number(seats.total) || Number(window.PartyChairData?.STATE_SENATE_SEAT_TOTALS?.[stateId] || 35);
+    const hRow = game?.stateHouseSeatCounts?.[stateId];
+    if (!game) continue;
+
+    const playerIdentity = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
+    const isMajor = isMajorParty(game, 'player');
+    const playerSenateTier = isMajor
+      ? 5
+      : Number(game.contestedStateSenateSlates?.[stateId] ?? (game.contestedStateLegSlates?.[stateId] ? 5 : 0));
+    const shares = supportByState(game, state, { raceId: 'state-leg:' + stateId });
+    const partyScores = {};
+    Object.entries(shares).forEach(([pk, val]) => {
+      const id = pk === 'player' ? playerIdentity : pk;
+      if (id === playerIdentity && !isMajor && playerSenateTier <= 0) return;
+      if (id !== playerIdentity && !['people', 'heritage'].includes(id) && !hasBallotAccess(game, id, 'state-leg:' + stateId)) return;
+      const slateMult = (id === playerIdentity && !isMajor) ? (0.20 * clamp(playerSenateTier, 1, 5)) : 1.0;
+      partyScores[id] = (partyScores[id] || 0) + Math.max(0, Number(val || 0)) * slateMult;
+    });
+    const scoreSum = Object.values(partyScores).reduce((s, v) => s + v, 0);
+    if (scoreSum > 0) {
+      const nextRow = { total, chamber: 'upper', people: 0, heritage: 0, independent: 0, other: 0 };
+      let allocated = 0;
+      const sorted = Object.entries(partyScores).sort((a, b) => b[1] - a[1]);
+      sorted.forEach(([pid, sc]) => {
+        const sCount = Math.floor((sc / scoreSum) * total);
+        nextRow[pid] = sCount;
+        allocated += sCount;
+      });
+      if (sorted.length > 0 && allocated < total) {
+        nextRow[sorted[0][0]] = (nextRow[sorted[0][0]] || 0) + (total - allocated);
+      }
+      counts[stateId] = nextRow;
+    } else if (hRow && hRow.total > 0) {
+      const nextRow = { total, chamber: 'upper', people: 0, heritage: 0, independent: 0, other: 0 };
+      const demRatio = Number(hRow.people || 0) / hRow.total;
+      nextRow.people = Math.round(total * demRatio);
+      nextRow.heritage = Math.max(0, total - nextRow.people);
+      counts[stateId] = nextRow;
+    }
+  }
+  return counts;
+}
+
 function reallocateStateHouseSeatCounts(currentCounts, oldControls, newControls, game) {
   const counts = JSON.parse(JSON.stringify(currentCounts || window.PartyChairData.VERSION_05_STATE_HOUSE_SEATS.states));
   const majorParties = ['people', 'heritage'];
@@ -17439,6 +17527,7 @@ function resolveVersion01GeneralElection(game) {
   });
 
   const nextStateHouseSeatCounts = reallocateStateHouseSeatCounts(game.stateHouseSeatCounts, game.stateLegislatures, nextStateLegislatures, game);
+  const nextStateSenateSeatCounts = reallocateStateSenateSeatCounts(game.stateSenateSeatCounts, game.stateLegislatures, nextStateLegislatures, { ...game, stateHouseSeatCounts: nextStateHouseSeatCounts });
   let finalSittingMembers = nextSittingMembersWithSeniority;
   let finalGeneratedMembers = questRewardedResult.generatedMembers || game.generatedMembers || [];
   let genCounter = game.generationCounter || 0;
@@ -17547,6 +17636,7 @@ function resolveVersion01GeneralElection(game) {
     elections: (questRewardedResult.elections || []).map((entry) => entry.year === game.year ? election : entry),
     stateLegislatures: nextStateLegislatures,
     stateHouseSeatCounts: nextStateHouseSeatCounts,
+    stateSenateSeatCounts: nextStateSenateSeatCounts,
     governorships: electedGovernors,
     senateResults,
     governorResults,
@@ -24554,6 +24644,8 @@ window.PartyChairEngine = {
   resolveDebateStageEvent,
   buildDefaultStateElectoralSystems,
   getStateHouseSeatCount,
+  buildStartingStateSenateSeatCounts,
+  reallocateStateSenateSeatCounts,
   getStateElectoralSystem,
   hasViabilityBreakthrough,
   hasRegionalSpillover,

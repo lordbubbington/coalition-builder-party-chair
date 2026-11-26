@@ -927,6 +927,36 @@ function playerStateHouseSeats() {
   return Object.values(counts).reduce((sum, row) => sum + (row[playerIdentity()] || 0), 0);
 }
 
+function playerStateSenateSeats() {
+  const counts = game.stateSenateSeatCounts
+    || (window.PartyChairEngine?.buildStartingStateSenateSeatCounts
+      ? window.PartyChairEngine.buildStartingStateSenateSeatCounts(game.stateHouseSeatCounts, game.stateLegislatures)
+      : {});
+  const pid = playerIdentity();
+  return Object.entries(counts)
+    .filter(([st]) => st !== 'NE' && st !== 'DC')
+    .reduce((sum, [, row]) => sum + Number(row?.[pid] || 0), 0);
+}
+
+function playerMinorStatewideOfficesCount() {
+  const pid = playerIdentity();
+  const registry = window.PartyChairData?.STATEWIDE_OFFICES_REGISTRY || [];
+  if (game?.statewideOffices && Object.keys(game.statewideOffices).length > 0) {
+    return Object.values(game.statewideOffices).filter((holder) => holder === pid || (pid === 'player' && holder === 'player')).length;
+  }
+  const sitting = (game?.sittingMembers || []).filter((m) => m && (m.office === 'statewide_executive' || m.office === 'minorStatewide'));
+  if (sitting.length > 0) {
+    return sitting.filter((m) => m.party === pid || m.partyId === pid || m.caucus === pid).length;
+  }
+  return registry.filter((o) => o.party === pid).length;
+}
+
+function totalMinorStatewideOfficesCount() {
+  const regLen = (window.PartyChairData?.STATEWIDE_OFFICES_REGISTRY || []).length;
+  if (regLen > 0) return regLen;
+  return Object.keys(game?.statewideOffices || {}).length || 223;
+}
+
 function playerSenateSeats() {
   if (typeof allUniversalSenateSeats === 'function' && MAPS?.senators) {
     const pid = playerIdentity();
@@ -4607,7 +4637,7 @@ function leaderDeploymentModalMarkup() {
                 <small style="color:var(--muted)">${safe(leader.title || 'National Party Leader')} · ${safe(leader.office || 'Senior Member')} · Charisma ${leader.ratings?.charisma || 6}</small>
                 <div style="margin-top:6px">
                   <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:3px">Deploy to State:</label>
-                  <select data-deploy-leader="${leader.id}" style="width:100%;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px">
+                  <select data-deploy-leader="${leader.id}" style="width:100%;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px">
                     <option value="">— Unassigned (No State Boost) —</option>
                     <optgroup label="★ Recommended Target Battlegrounds">
                       ${recommended.map((rec) => `<option value="${rec.stateId}" ${assignedStateId === rec.stateId ? 'selected' : ''}>★ ${rec.name} (${rec.stateId}) — ${rec.reason}</option>`).join('')}
@@ -4999,7 +5029,7 @@ function superPacsPanelMarkup() {
                   : `<small style="color:${demandStatus === 'accepted' ? '#8ce4be' : 'var(--muted)'};font-size:12px">${safe(pac.lastStatusNote || (demandStatus === 'accepted' ? '✓ Platform accommodation secured; full ad pipeline unlocked.' : (demandStatus === 'declined' || demandStatus === 'defied') ? 'PAC operating independently after demand refusal.' : 'No pending policy demands.'))}</small>`}
               </div>
               <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
-                <select id="pac-race-${safe(pac.id)}" style="flex:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+                <select id="pac-race-${safe(pac.id)}" style="flex:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                   ${targetRaces.map((rk) => `<option value="${safe(rk)}" ${rk === selectedRace ? 'selected' : ''}>${safe(rk.toUpperCase())}</option>`).join('')}
                 </select>
                 <button type="button" class="button button-small button-gold" data-pac-ad="${safe(pac.id)}" ${poolAmt < 2 || !isAccessible ? 'disabled' : ''}>Deploy Independent Airtime</button>
@@ -5095,7 +5125,7 @@ function commissionPollModalMarkup() {
           <label style="font-size:13px;font-weight:600;color:var(--text)">
             Select Battleground Contest:
           </label>
-          <select id="commission-race-select" style="width:100%;padding:8px 10px;background:#101923;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13.5px">
+          <select id="commission-race-select" style="width:100%;padding:8px 10px;background:#101924;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13.5px">
             <optgroup label="U.S. Senate (Class ${activeClass === 1 ? 'I' : activeClass === 2 ? 'II' : 'III'})">
               ${senateRaces.map((r) => {
                 const st = STATES.find((s) => s.id === r.state);
@@ -5436,7 +5466,7 @@ function campaignDashboardMarkup() {
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button type="button" class="button button-small button-gold" id="btn-batch-fund-view" data-batch-race-keys="${safe(filteredCandidates.map((c) => c.raceKey).join(','))}" ${!filteredCandidates.length || game.treasury < 1 ? 'disabled' : ''}>Fund All in View +$1M Each (${filteredCandidates.length} races · $${filteredCandidates.length}M)</button>
-            <input type="text" id="triage-search" placeholder="Search candidate or race..." value="${safe(campaignTriageSearch)}" style="padding:6px 12px;background:#101923;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px" />
+            <input type="text" id="triage-search" placeholder="Search candidate or race..." value="${safe(campaignTriageSearch)}" style="padding:6px 12px;background:#101924;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px" />
           </div>
         </div>
 
@@ -5509,7 +5539,7 @@ function campaignDashboardMarkup() {
               <p>Thoroughly vet a nominated candidate and establish a rapid-response quarantine to neutralize corruption vulnerability before rival super PACs attack.</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
-              <select id="self-vet-select" style="flex-grow:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+              <select id="self-vet-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${fundingEntries.map((f) => `<option value="${f.raceKey}">${safe(f.kind || 'Contest')} · ${safe(f.raceKey)}</option>`).join('')}
               </select>
               <button type="button" class="button button-small button-gold" id="btn-self-vet" ${actionsLeft <= 0 || game.treasury < 2 ? 'disabled' : ''}>Vet</button>
@@ -5523,7 +5553,7 @@ function campaignDashboardMarkup() {
               <p>Release an opposition research dossier in a battleground state to erode rival standing with undecided swing voters. Impact scales with your party's institutional rank.</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
-              <select id="oppo-select" style="flex-grow:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+              <select id="oppo-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('oppo-select', STATES[0]?.id) ? 'selected' : ''}>${s.name} (${s.id})</option>`).join('')}
               </select>
               <button type="button" class="button button-small button-gold" id="btn-oppo" ${actionsLeft <= 0 || game.treasury < 3 ? 'disabled' : ''}>Release</button>
@@ -5537,7 +5567,7 @@ function campaignDashboardMarkup() {
               <p>Mobilize grassroots volunteers and neighborhood precinct teams to register voters for your party in a target state. Voter gains scale with your party's institutional rank.</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
-              <select id="volunteer-state-select" class="v08-volunteer-state-select" style="flex-grow:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+              <select id="volunteer-state-select" class="v08-volunteer-state-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('volunteer-state-select', STATES[0]?.id) ? 'selected' : ''}>${s.name} (${s.id})</option>`).join('')}
               </select>
               <button type="button" class="button button-gold" id="action-volunteer-drive" ${actionsLeft <= 0 ? 'disabled' : ''}>
@@ -5564,7 +5594,7 @@ function campaignDashboardMarkup() {
               <p>Coordinate with state party chapters to execute an emergency joint victory fundraiser directly into your treasury. Yield scales with your party's institutional rank.</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
-              <select id="joint-state-select" style="flex-grow:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+              <select id="joint-state-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('joint-state-select', STATES[0]?.id) ? 'selected' : ''}>${s.name} (${s.id})</option>`).join('')}
               </select>
               <button type="button" class="button button-small button-gold" id="btn-joint-victory" ${actionsLeft <= 0 ? 'disabled' : ''}>Fundraise</button>
@@ -5578,7 +5608,7 @@ function campaignDashboardMarkup() {
               <p>Where your party lacks legislative control, qualify citizen ballot initiatives (voting rights, minimum wage, reproductive freedom) to boost core turnout. Impact scales with your party's institutional rank.</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
-              <select id="ballot-state-select" style="flex-grow:1;padding:6px;background:#101923;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
+              <select id="ballot-state-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${eligibleBallotStates.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('ballot-state-select', eligibleBallotStates[0]?.id) ? 'selected' : ''}>${s.name} (${s.id})</option>`).join('')}
               </select>
               <button type="button" class="button button-small button-gold" id="btn-ballot-measure" ${actionsLeft <= 0 || game.treasury < 4 || !eligibleBallotStates.length ? 'disabled' : ''}>Qualify</button>
@@ -5943,7 +5973,7 @@ function autopsyModalMarkup() {
             <p style="font-size:13px;color:#d1d5db;margin:4px 0 8px">Under state election statutes, races decided by within statutory recount margins (≤ 0.50%) triggered mandatory automatic recounts before final certification.</p>
             <div style="display:flex;flex-direction:column;gap:6px">
               ${election.recounts.map((r) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111923;border-radius:6px;font-size:13px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111924;border-radius:6px;font-size:13px">
                   <span><b>${r.stateId} (${r.ev} EV)</b>: Initial margin ${r.initialMargin > 0 ? '+' : ''}${r.initialMargin.toFixed(2)}% → Recount adjustment ${r.recountAdjustment > 0 ? '+' : ''}${r.recountAdjustment.toFixed(3)}% (${r.finalMargin > 0 ? '+' : ''}${r.finalMargin.toFixed(2)}%)</span>
                   <span style="font-weight:bold;color:${r.flipped ? '#f87171' : '#34d399'}">${r.flipped ? `FLIPPED to ${r.newWinner === 'people' ? 'Democratic' : r.newWinner === 'heritage' ? 'Republican' : r.newWinner}` : 'Margin Upheld ✓'}</span>
                 </div>
@@ -9459,6 +9489,8 @@ function campaignMarkup() {
   const customEmblemSvg = player.custom && player.customEmblem ? renderCustomEmblemSvg(player.customEmblem) : '';
   const stateControlCount = Object.values(game.stateLegislatures || {}).filter((chambers) => chambers?.[0] === identity).length;
   const stateSeatTotal = window.PartyChairData.VERSION_05_STATE_HOUSE_SEATS.totalSeats;
+  const stateSenateControlCount = Object.entries(game.stateLegislatures || {}).filter(([st, chambers]) => st !== 'NE' && chambers?.[1] === identity).length;
+  const stateSenateSeatTotal = window.PartyChairData?.STATE_SENATE_TOTAL_SEATS || 1924;
   const tab = currentTab();
   const tabs = [
     { id: 'actions', label: 'Actions', eyebrow: 'The Recruitment Phase' },
@@ -9531,6 +9563,8 @@ function campaignMarkup() {
         <div class="resource-main"><small>Represented Voters</small><b>${formatMillions(modeledVotersForParty(identity))}M</b><span>of ${formatMillions(totalModeledElectorate())}M represented voters${game?.partySystems?.robotCitizenship?.active ? ' (Human + Synthetic)' : ''}</span></div>
         <div class="resource-main"><small>50-State Chapters</small><b>${totalPlayerStateChapters().toLocaleString()}</b><span>Incl. Youth Chapters</span></div>
         <div class="resource-main"><small>State Houses Controlled</small><b>${stateControlCount}</b><span>${playerStateHouseSeats().toLocaleString()} of ${stateSeatTotal.toLocaleString()} seats</span></div>
+        <div class="resource-main"><small>State Senates Controlled</small><b>${stateSenateControlCount}</b><span>${playerStateSenateSeats().toLocaleString()} of ${stateSenateSeatTotal.toLocaleString()} seats</span></div>
+        <div class="resource-main"><small>Minor Statewide Offices Controlled</small><b>${playerMinorStatewideOfficesCount()}</b><span>of ${totalMinorStatewideOfficesCount()} statewide offices</span></div>
         <div class="resource-main"><small>Governorships Controlled</small><b>${playerGovernorshipsCount()}</b><span>of 50 state executives</span></div>
         <div class="resource-main"><small>U.S. Senate Seats</small><b>${playerSenateSeats()}</b><span>of 100 Senate seats</span></div>
         <div class="resource-main"><small>U.S. House Seats</small><b>${playerHouseSeats()}</b><span>of 435 House seats</span></div>

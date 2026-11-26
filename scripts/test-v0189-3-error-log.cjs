@@ -55,3 +55,16 @@ test('Error Log #2: Election Night & Prior-Cycle Senate maps include holdover Se
 });
 
 console.log(`\nALL ${passed}/2 ERROR LOG FIX TESTS PASSED!`);
+
+test('Error Log #3: State Senate seat tracking initializes 1,924 bicameral seats and updates on reallocation', () => {
+  const g = E.createGame({ baseTemplateId: 'people', seed: 2028 });
+  assert(g.stateSenateSeatCounts && g.stateSenateSeatCounts.CA, 'createGame initializes stateSenateSeatCounts');
+  const totalBicameral = Object.entries(g.stateSenateSeatCounts)
+    .filter(([st]) => st !== 'NE' && st !== 'DC')
+    .reduce((s, [, r]) => s + Number(r.total || 0), 0);
+  assert.strictEqual(totalBicameral, 1924, `Expected 1,924 bicameral State Senate seats, got ${totalBicameral}`);
+  const demSeats = Object.entries(g.stateSenateSeatCounts)
+    .filter(([st]) => st !== 'NE' && st !== 'DC')
+    .reduce((s, [, r]) => s + Number(r.people || 0), 0);
+  assert(demSeats > 500 && demSeats < 1400, `Expected realistic starting Dem State Senate seats, got ${demSeats}`);
+});
