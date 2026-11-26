@@ -68,6 +68,11 @@ try {
         (Join-Path $projectDir 'dynamic-faction-lifecycle.js'),
         (Join-Path $projectDir 'identity-bloc-system.js'),
         (Join-Path $projectDir 'faction-caucus-ui.js'),
+        # [v0.19.0 POST-CYCLE AUTOPSY]
+        (Join-Path $projectDir 'autopsy-catalog-minor-low.js'),
+        (Join-Path $projectDir 'autopsy-catalog-minor-high.js'),
+        (Join-Path $projectDir 'autopsy-catalog-major.js'),
+        (Join-Path $projectDir 'autopsy-system.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

@@ -6074,6 +6074,9 @@ function autopsyModalMarkup() {
             <h3 class="autopsy-section-title">Executive Autopsy Disposition</h3>
             <p class="autopsy-subtitle-quiet">The National Chair must establish the official committee posture before advancing into the next cycle:</p>
 
+            ${(window.AutopsySystem?.renderAutopsyOptionsMarkup && Array.isArray(game.pendingAutopsyOptions) && game.pendingAutopsyOptions.length > 0 && !isDispositionChosen) ? `
+              ${window.AutopsySystem.renderAutopsyOptionsMarkup(game, safe)}
+            ` : `
             <div class="disposition-cards-grid">
               <div class="disposition-card ${game.autopsyDisposition === 'endorse' ? 'selected' : ''}">
                 <div class="disp-title">1. Endorse Reform Recommendations</div>
@@ -6117,6 +6120,7 @@ function autopsyModalMarkup() {
                 </button>
               </div>
             </div>
+            `}
             ${isDispositionChosen ? `
               <div class="disp-confirmed-notice">
                 <span>Official Inquest Disposition Recorded: <b>${safe(game.lastNote || '')}</b></span>
@@ -12302,6 +12306,11 @@ function bind() {
   document.querySelectorAll('[data-autopsy-action]').forEach((btn) => btn.addEventListener('click', () => {
     const disposition = btn.dataset.autopsyAction;
     dispatchAction('resolve-autopsy-disposition', { disposition });
+    render();
+  }));
+  document.querySelectorAll('[data-autopsy-option-id]').forEach((btn) => btn.addEventListener('click', () => {
+    const optionId = btn.dataset.autopsyOptionId;
+    dispatchAction('resolve-autopsy-option', { optionId });
     render();
   }));
 

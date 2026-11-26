@@ -5181,6 +5181,7 @@ function createGame(options = {}) {
       additional: Array.from({ length: initialFocusSlots }, () => ({ type: 'issue', targetId: '' })),
     },
     partyTiers: initialPartyTiers,
+    enteringPartyTiers: { ...initialPartyTiers },
     ascensionGauntletCompleted: {},
     pendingAscensionGauntletModal: null,
     leadingFactionByParty: {
@@ -5317,6 +5318,8 @@ function createGame(options = {}) {
     incumbentTermNumber: 1,
     activeAutopsyModal: false,
     autopsyDisposition: null,
+    autopsyMilestonesEarned: {},
+    pendingAutopsyOptions: null,
     stateFederalism: {},
     activeStateCrisis: null,
     stateCrisisHistory: [],
@@ -16867,6 +16870,8 @@ function startNextCycleInternal(game) {
     candidateVetting: game.candidateVetting || {},
     pendingScandalCrisis: null,
     partyTiers: nextPartyTiers,
+    enteringPartyTiers: { ...nextPartyTiers },
+    pendingAutopsyOptions: null,
     mediaBlackoutBroken: Boolean(game.mediaBlackoutBroken) || nextPlayerTier >= 4,
     // [QA-BATCH2-FIX] B2-13: Record partyId and sync FEC matching grant into organizations/parties treasury ledgers
     lastFecMatchingGrant: fecGrant.eligible ? { ...fecGrant, partyId: playerPartyId, year: nextYear } : game.lastFecMatchingGrant,
@@ -17876,6 +17881,33 @@ function resolveVersion01GeneralElection(game) {
           triggeredByRecount: true,
         };
       }
+    }
+  }
+
+  // [v0.19.0 POST-CYCLE AUTOPSY] Build 3-option Post-Cycle Autopsy draw with hidden Autopsy Points & milestones
+  const autopsySys = (typeof window !== 'undefined' && window.AutopsySystem)
+    || (typeof global !== 'undefined' && global.AutopsySystem)
+    || (typeof require !== 'undefined' ? (() => { try { return require('./autopsy-system.js'); } catch { return null; } })() : null);
+  if (autopsySys && typeof autopsySys.buildPendingAutopsy === 'function') {
+    const enteringTiers = resolved.enteringPartyTiers || game.enteringPartyTiers || resolved.partyTiers || {};
+    const enteringTier = enteringTiers[playerKeyFinal] ?? enteringTiers[playerIdentityId] ?? getPartyInstitutionalTier(resolved, 'player');
+    const enteringMajorCount = Object.values(enteringTiers).filter((t) => Number(t) >= 5).length || 2;
+    const achievedPriorities = Array.isArray(questEval?.completedQuests)
+      ? questEval.completedQuests.length
+      : (resolved.activeOverallQuestCompleted ? 1 : 0);
+    const pendingAutopsyRes = autopsySys.buildPendingAutopsy(finalElectionState, finalElectionState.lastElection || election, {
+      partyId: playerKeyFinal,
+      enteringTier,
+      enteringMajorCount,
+      achievedPriorities,
+    });
+    if (pendingAutopsyRes) {
+      finalElectionState = {
+        ...finalElectionState,
+        autopsyMilestonesEarned: pendingAutopsyRes.updatedMilestonesEarned || finalElectionState.autopsyMilestonesEarned || {},
+        pendingAutopsyOptions: Array.isArray(pendingAutopsyRes.options) ? pendingAutopsyRes.options : [],
+        pendingAutopsy: pendingAutopsyRes,
+      };
     }
   }
 
@@ -20235,6 +20267,23 @@ function takeActionInternal(game, actionId, payload = {}) {
     return { ...game, activeAutopsyModal: true };
   }
   if (actionId === 'close-autopsy-modal') {
+    return { ...game, activeAutopsyModal: false };
+  }
+  if (actionId === 'resolve-autopsy-option') {
+    const autopsySys = (typeof window !== 'undefined' && window.AutopsySystem)
+      || (typeof global !== 'undefined' && global.AutopsySystem)
+      || (typeof require !== 'undefined' ? (() => { try { return require('./autopsy-system.js'); } catch { return null; } })() : null);
+    if (autopsySys && typeof autopsySys.applyAutopsyOption === 'function') {
+      const applied = autopsySys.applyAutopsyOption(game, payload?.optionId);
+      const updated = {
+        ...applied,
+        activeAutopsyModal: false,
+      };
+      return {
+        ...updated,
+        partyApprovals: computeUnifiedPartyApproval(updated),
+      };
+    }
     return { ...game, activeAutopsyModal: false };
   }
   if (actionId === 'resolve-autopsy-disposition') {
