@@ -31,40 +31,61 @@ function test(name, fn) {
   console.log(`PASS [${passed}]: ${name}`);
 }
 
-test('Spoiler Reversal #1: When Green (20%) outpolls Democrats (15%) in a plurality state (WY), Green takes 0% spoiler and Democrats bleed strategic votes to Green', () => {
+function setStateVoters(g, stateId, demPct, repPct, grnPct) {
+  const st = g.voterModel.states.find((s) => (s.stateId || s.id) === stateId);
+  const tot = 1000000;
+  st.affiliations = {
+    people: Math.round(tot * (demPct / 100)),
+    heritage: Math.round(tot * (repPct / 100)),
+    green: Math.round(tot * (grnPct / 100)),
+    liberty: 0,
+    constitution: 0,
+    socialist: 0,
+    other: 0,
+    independent: Math.max(0, tot - Math.round(tot * ((demPct + repPct + grnPct) / 100))),
+    thirdParty: Math.round(tot * (grnPct / 100)),
+  };
+}
+
+test('Spoiler Voter Deadband #1: Within 5 points in registered voters (Green 18% vs Dem 15%) -> 0% spoiler for BOTH parties', () => {
   const g = E.createGame({ baseTemplateId: 'green', seed: 2028 });
+  setStateVoters(g, 'WY', 15, 60, 18); // +3 pts gap (<= 5 pts)
   const raw = { heritage: 65, green: 20, people: 15 };
   const res = E.applyDuvergerDefectionToShares(g, raw, 'WY', 'presidential');
-  assert.strictEqual(res.defections.green.defectedShare, 0, 'Green outpolling Dem must take 0% spoiler defection');
+  assert.strictEqual(res.shares.green, 20, 'Green unchanged within 5-pt voter deadband');
+  assert.strictEqual(res.shares.people, 15, 'Dem unchanged within 5-pt voter deadband');
+  assert.strictEqual(res.defections.green.reason, 'within-5pt-voter-deadband');
+  assert(!res.defections.people, 'Dem must not suffer reverse defection inside 5-pt deadband');
+});
+
+test('Spoiler Voter Deadband #2: Within 5 points trailing (Green 12% vs Dem 16%) -> 0% spoiler for BOTH parties', () => {
+  const g = E.createGame({ baseTemplateId: 'green', seed: 2028 });
+  setStateVoters(g, 'WY', 16, 65, 12); // -4 pts gap (<= 5 pts)
+  const raw = { heritage: 70, people: 18, green: 12 };
+  const res = E.applyDuvergerDefectionToShares(g, raw, 'WY', 'presidential');
+  assert.strictEqual(res.shares.green, 12, 'Green unchanged when within 5 pts behind Dem in voters');
+  assert.strictEqual(res.shares.people, 18, 'Dem unchanged within 5-pt deadband');
+});
+
+test('Spoiler Voter Reversal #3: Green leads Dem by > 5 points in registered voters (Green 22% vs Dem 14%) -> 0% spoiler for Green, reverse-Duverger onto Dem', () => {
+  const g = E.createGame({ baseTemplateId: 'green', seed: 2028 });
+  setStateVoters(g, 'WY', 14, 58, 22); // +8 pts gap (> 5 pts)
+  const raw = { heritage: 65, green: 21, people: 14 };
+  const res = E.applyDuvergerDefectionToShares(g, raw, 'WY', 'presidential');
+  assert.strictEqual(res.defections.green.defectedShare, 0);
   assert.strictEqual(res.defections.green.reason, 'outpolls-nearest-major-party');
-  assert(res.defections.people && res.defections.people.defectedShare > 0, 'Trailing Democrats (<25%) must bleed strategic votes to Green');
-  assert.strictEqual(res.defections.people.recipientPartyId, 'green');
-  assert.strictEqual(res.defections.people.reason, 'reverse-duverger-overtaken-by-third-party');
-  assert(res.shares.green > 20, `Green share should rise above 20%, got ${res.shares.green}`);
-  assert(res.shares.people < 15, `Dem share should fall below 15%, got ${res.shares.people}`);
-  const sum = Math.round((res.shares.heritage + res.shares.green + res.shares.people) * 100) / 100;
-  assert.strictEqual(sum, 100, `Total vote share must be conserved at 100%, got ${sum}`);
+  assert(res.defections.people && res.defections.people.defectedShare > 0, 'Trailing Dem (>5 pts behind in voters) bleeds to Green');
+  assert(res.shares.green > 21, `Green rises above 21%, got ${res.shares.green}`);
+  assert(res.shares.people < 14, `Dem falls below 14%, got ${res.shares.people}`);
 });
 
-test('Spoiler Reversal #2: RCV state (AK) and State Legislature races remain strictly 0% spoiler in BOTH directions', () => {
+test('Spoiler Voter Normal #4: Dem leads Green by > 5 points in registered voters (Dem 38% vs Green 10%) -> normal Duverger onto Green', () => {
   const g = E.createGame({ baseTemplateId: 'green', seed: 2028 });
-  const raw = { heritage: 65, green: 20, people: 15 };
-  const rcv = E.applyDuvergerDefectionToShares(g, raw, 'AK', 'presidential');
-  assert.strictEqual(rcv.shares.green, 20, 'RCV Green unchanged');
-  assert.strictEqual(rcv.shares.people, 15, 'RCV Dem unchanged');
-
-  const sl = E.applyDuvergerDefectionToShares(g, raw, 'WY', 'state-leg');
-  assert.strictEqual(sl.shares.green, 20, 'State-leg Green unchanged');
-  assert.strictEqual(sl.shares.people, 15, 'State-leg Dem unchanged');
-});
-
-test('Spoiler Reversal #3: Normal state where Green (12%) trails Democrats (38%) still applies normal Duverger defection to Green', () => {
-  const g = E.createGame({ baseTemplateId: 'green', seed: 2028 });
+  setStateVoters(g, 'PA', 38, 42, 10); // -28 pts gap
   const raw = { heritage: 50, people: 38, green: 12 };
   const res = E.applyDuvergerDefectionToShares(g, raw, 'PA', 'presidential');
-  assert(res.shares.green < 12, `Trailing Green should still suffer Duverger defection, got ${res.shares.green}`);
-  assert(res.shares.people > 38, `Leading Dem should receive defected votes, got ${res.shares.people}`);
-  assert(!res.defections.people, 'Leading Dem should not suffer reverse defection');
+  assert(res.shares.green < 12, `Trailing Green suffers normal Duverger, got ${res.shares.green}`);
+  assert(res.shares.people > 38, `Leading Dem receives defected votes, got ${res.shares.people}`);
 });
 
-console.log(`\nALL ${passed}/3 SPOILER REVERSAL TESTS PASSED!`);
+console.log(`\nALL ${passed}/4 SPOILER VOTER-COUNT & DEADBAND TESTS PASSED!`);

@@ -7268,9 +7268,41 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
     const majorKey = findMajorKey(nearestMajorId);
     const majorShare = Number(rawShares[majorKey] || 0);
 
-    // [v0.18.9.2] If this 3rd party outpolls its nearest major party in this state,
-    // the 3rd party suffers 0% spoiler defection — and the trailing major party becomes the spoiler candidate.
-    if (majorShare > 0 && share > majorShare) {
+    // [v0.18.9.4] Compare registered voter counts in this state (instead of projected vote %):
+    // - Within 5 points of each other (|thirdVoterPct - majorVoterPct| <= 5.0): NO spoiler effect for either party.
+    // - 3rd party ahead by > 5 points: 0% spoiler for 3rd party, reverse-Duverger onto trailing major party.
+    // - Major party ahead by > 5 points: standard Duverger defection on 3rd party.
+    const vmSt = Array.isArray(game?.voterModel?.states)
+      ? game.voterModel.states.find((s) => (s.stateId || s.id) === stateId)
+      : null;
+    const aff = vmSt?.affiliations || null;
+    let thirdVoterPct = share;
+    let majorVoterPct = majorShare;
+    if (aff) {
+      const voterKeys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
+      const totVoters = voterKeys.reduce((sum, k) => sum + Math.max(0, Number(aff[k] || 0)), 0);
+      if (totVoters > 0) {
+        thirdVoterPct = (Math.max(0, Number(aff[resolved] || 0)) / totVoters) * 100;
+        majorVoterPct = (Math.max(0, Number(aff[nearestMajorId] || 0)) / totVoters) * 100;
+      }
+    }
+    const voterGapPts = thirdVoterPct - majorVoterPct;
+
+    if (Math.abs(voterGapPts) <= 5.0) {
+      defections[partyKey] = {
+        defectionRate: 0,
+        defectedShare: 0,
+        retainedShare: round(share, 2),
+        recipientPartyId: null,
+        threshold: 0,
+        regionalRelief: false,
+        bypassed: true,
+        reason: 'within-5pt-voter-deadband',
+      };
+      return;
+    }
+
+    if (voterGapPts > 5.0) {
       defections[partyKey] = {
         defectionRate: 0,
         defectedShare: 0,
@@ -7281,8 +7313,8 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
         bypassed: true,
         reason: 'outpolls-nearest-major-party',
       };
-      if (!overtakenByThird[majorKey] || share > overtakenByThird[majorKey].thirdShare) {
-        overtakenByThird[majorKey] = { thirdKey: partyKey, thirdShare: share, majorShare };
+      if (!overtakenByThird[majorKey] || thirdVoterPct > overtakenByThird[majorKey].thirdVoterPct) {
+        overtakenByThird[majorKey] = { thirdKey: partyKey, thirdShare: share, thirdVoterPct, majorShare };
       }
       return;
     }
