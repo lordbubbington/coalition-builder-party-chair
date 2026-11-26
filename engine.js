@@ -7236,6 +7236,19 @@ function computeStrategicVotingDefection(game, partyId, stateId, raceKind = 'pre
 function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'presidential') {
   const adjusted = { ...rawShares };
   const defections = {};
+
+  // Helper: locate the rawShares key for a baseline major party ('people' or 'heritage')
+  const findMajorKey = (majorId) => {
+    if (rawShares[majorId] !== undefined) return majorId;
+    if (game?.player && !game.player.custom && game.player.baseTemplateId === majorId && rawShares.player !== undefined) {
+      return 'player';
+    }
+    return majorId;
+  };
+
+  // Track strongest 3rd party overtaking each major party (for reverse-Duverger defection)
+  const overtakenByThird = {}; // { majorKey: { thirdKey, thirdShare, majorShare } }
+
   Object.keys(rawShares).forEach((partyKey) => {
     if (['people', 'heritage'].includes(partyKey)) return;
     if (partyKey === 'player' && !game?.player?.custom) {
@@ -7244,18 +7257,90 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
     }
     const share = Number(rawShares[partyKey] || 0);
     if (share <= 0) return;
+
+    const resolved = (!partyKey || partyKey === 'player')
+      ? (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people'))
+      : partyKey;
+    const nearestMajorId = getNearestMajorParty(game, resolved);
+    const majorKey = findMajorKey(nearestMajorId);
+    const majorShare = Number(rawShares[majorKey] || 0);
+
+    // [v0.18.9.2] If this 3rd party outpolls its nearest major party in this state,
+    // the 3rd party suffers 0% spoiler defection — and the trailing major party becomes the spoiler candidate.
+    if (majorShare > 0 && share > majorShare) {
+      defections[partyKey] = {
+        defectionRate: 0,
+        defectedShare: 0,
+        retainedShare: round(share, 2),
+        recipientPartyId: null,
+        threshold: 0,
+        regionalRelief: false,
+        bypassed: true,
+        reason: 'outpolls-nearest-major-party',
+      };
+      if (!overtakenByThird[majorKey] || share > overtakenByThird[majorKey].thirdShare) {
+        overtakenByThird[majorKey] = { thirdKey: partyKey, thirdShare: share, majorShare };
+      }
+      return;
+    }
+
     const res = computeStrategicVotingDefection(game, partyKey, stateId, raceKind, share);
     if (res.defectedShare > 0 && res.recipientPartyId) {
       adjusted[partyKey] = Math.max(0, round((adjusted[partyKey] || 0) - res.defectedShare, 2));
-      // Route to major party key present in rawShares (supporting 'player' if player IS that major party)
-      let targetKey = res.recipientPartyId;
-      if (adjusted[targetKey] === undefined && game?.player && !game.player.custom && game.player.baseTemplateId === res.recipientPartyId && adjusted.player !== undefined) {
-        targetKey = 'player';
-      }
+      const targetKey = findMajorKey(res.recipientPartyId);
       adjusted[targetKey] = round((adjusted[targetKey] || 0) + res.defectedShare, 2);
       defections[partyKey] = res;
     }
   });
+
+  // [v0.18.9.2] Reverse-Duverger: trailing major party overtaken by an aligned 3rd party bleeds strategic votes to that 3rd party
+  const isStateLeg = ['state-leg', 'stateLeg', 'leg', 'state_legislature'].includes(String(raceKind || ''));
+  const sys = getStateElectoralSystem(game, stateId, raceKind);
+  const isAntiSpoiler = isStateLeg || sys.isAntiSpoiler || sys.effectiveSystem === 'rcv';
+  const isGovVentura = ['governor', 'governors', 'gov'].includes(String(raceKind || '').toLowerCase())
+    && ((Math.abs(version01Hash(`gov-ventura:${game?.seed || 2028}:${game?.year || 2028}:${stateId}`)) % 10000) / 10000) < 0.10;
+  const pseRev = getPartySystemsEngine();
+  const edModRev = (typeof window !== 'undefined' && window.ElectionDrift) || (typeof global !== 'undefined' && global.ElectionDrift);
+  const surgeRev = edModRev?.evaluateThirdPartyElasticitySurge ? edModRev.evaluateThirdPartyElasticitySurge(game) : null;
+  const revImmunity = (surgeRev && surgeRev.surgeActive) ? 18.0 : 25.0;
+
+  if (!isAntiSpoiler && !isGovVentura) {
+    Object.entries(overtakenByThird).forEach(([majorKey, info]) => {
+      const { thirdKey, majorShare } = info;
+      if (majorShare <= 0 || majorShare >= revImmunity) return;
+      const majorResolved = (majorKey === 'player' && !game?.player?.custom) ? (game?.player?.baseTemplateId || 'people') : majorKey;
+      const eraDefMult = pseRev ? Number(pseRev.dispatchEraHook(game, 'getStrategicDefectionModifier', majorResolved, stateId, raceKind) ?? 1.0) : 1.0;
+      if (eraDefMult <= 0) return;
+
+      const MAX_DEFECTION_RATE = 2 / 3;
+      const distRatio = clamp((revImmunity - majorShare) / Math.max(1, revImmunity), 0, 1);
+      // Major parties retain some institutional brand floor (0.5x taper if still Tier 5)
+      const majorTier = getPartyInstitutionalTier(game, majorResolved);
+      let defectionRate = MAX_DEFECTION_RATE * Math.pow(distRatio, 1.35) * (majorTier >= 5 ? 0.5 : 1.0);
+      defectionRate = round(clamp(defectionRate * eraDefMult, 0, MAX_DEFECTION_RATE), 4);
+
+      const minRetained = round(majorShare / 3, 2);
+      const rawDefected = round(majorShare * defectionRate, 2);
+      const retainedShare = round(Math.max(minRetained, majorShare - rawDefected), 2);
+      const defectedShare = round(Math.max(0, majorShare - retainedShare), 2);
+
+      if (defectedShare > 0) {
+        adjusted[majorKey] = Math.max(0, round((adjusted[majorKey] || 0) - defectedShare, 2));
+        adjusted[thirdKey] = round((adjusted[thirdKey] || 0) + defectedShare, 2);
+        defections[majorKey] = {
+          defectionRate,
+          defectedShare,
+          retainedShare,
+          recipientPartyId: thirdKey,
+          threshold: revImmunity,
+          regionalRelief: false,
+          bypassed: false,
+          reason: 'reverse-duverger-overtaken-by-third-party',
+        };
+      }
+    });
+  }
+
   return { shares: adjusted, defections };
 }
 
