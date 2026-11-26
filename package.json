@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.18.9.4",
-  "description": "Coalition Builder: Party Chair — Version 0.18.9.4 (Spoiler Reversal & 5-Point Voter Deadband, State Senate Bicameral Seat Tracking & Holdover Maps, Party Tiers 0-5 & Leadership Hotfix)",
+  "version": "0.19.0",
+  "description": "Coalition Builder: Party Chair — Version 0.19.0 (Post-Cycle Autopsy System: 217 Dynamic Options, Hidden Autopsy Points & 10 Major Party Infighting Scenarios)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",
