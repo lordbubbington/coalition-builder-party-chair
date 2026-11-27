@@ -252,6 +252,14 @@
         : filtered;
       copy._politiciansCompacted = true;
     }
+    // [PERF-STRESS-FIX] PERF-01: prune heavy lifecycle digest snapshots from saves
+    if (copy.lastLifecycleDigest && typeof copy.lastLifecycleDigest === 'object') {
+      copy.lastLifecycleDigest = {
+        year: copy.lastLifecycleDigest.year,
+        threePartyChaosActive: Boolean(copy.lastLifecycleDigest.threePartyChaosActive),
+        events: Array.isArray(copy.lastLifecycleDigest.events) ? copy.lastLifecycleDigest.events.slice(0, 15) : [],
+      };
+    }
     if ((copy.phase !== 'organizing' || ultra) && copy.primaryResults) {
       copy.primaryResults = [];
     }
