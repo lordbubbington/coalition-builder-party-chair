@@ -2741,6 +2741,8 @@ function evaluateSuperPacDemands(game, turnOrWeek = 1) {
     const targetVal = currentPos < minIdeal ? minIdeal : currentPos > maxIdeal ? maxIdeal : Math.round((minIdeal + maxIdeal) / 2);
 
     // Passive pool growth scaled by alignment & active era PAC funding ratio (e.g., Era #13 2:1 clean-tech)
+    // [QA-BATCH4-FIX] B4-04: declare pse via getPartySystemsEngine() to prevent ReferenceError on #advance-year
+    const pse = getPartySystemsEngine();
     const alignmentScore = inRange ? (isPriority ? 1.2 : 0.85) : 0.3;
     const eraPacMult = pse ? pse.getSuperPacFundingMultiplier(game, pac) : 1.0;
     const poolGain = round((pac.weeklyIncome || 1.2) * alignmentScore * (pac.standing >= 50 ? 1.0 : 0.4) * eraPacMult, 1);
@@ -20287,7 +20289,11 @@ function takeActionInternal(game, actionId, payload = {}) {
     const stateId = payload?.stateId;
     const scope = payload?.scope || 'legislative';
     const val = payload?.value || 'plurality';
-    if (!stateId) return game;
+    // [QA-BATCH4-FIX] B4-02: validate stateId against STATES and scope against valid scopes
+    const _validVrScopes = ['legislative', 'presidentialEvRule', 'singleWinner', 'allRaces'];
+    if (!stateId || !STATES.some((s) => s.id === stateId) || !_validVrScopes.includes(scope)) {
+      return game;
+    }
     const vrCore = getVotingReformsCore();
     const curMap = { ...(game?.stateElectoralSystems || {}) };
     const prevRec = curMap[stateId] || { allRaces: stateId === 'AK' ? 'rcv' : 'plurality', legislative: 'plurality' };

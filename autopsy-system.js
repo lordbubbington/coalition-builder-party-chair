@@ -672,23 +672,37 @@
       next.trust.opponents = clamp(Number(next.trust.opponents ?? 20) + Number(fx.oppTrustDelta || 0), 0, 100);
     }
 
-    const happinessDelta = Number(fx.happinessDelta ?? fx.factionHappinessDelta ?? 0);
+    const happinessDelta = Number(fx.happinessDelta ?? fx.factionHappinessDelta ?? fx.factionHappiness ?? 0);
     if (happinessDelta !== 0) {
       if (next.factionStandings && typeof next.factionStandings === 'object') {
         for (const fid of Object.keys(next.factionStandings)) {
           next.factionStandings[fid] = clamp(Number(next.factionStandings[fid] || 50) + happinessDelta, 0, 100);
         }
       }
+      // [QA-BATCH4-FIX] B4-06: sync happinessDelta to player-party entries in factionHappiness and factions[]
+      const _autPid = next.player?.custom ? 'player' : (next.player?.baseTemplateId || next.player?.id || 'people');
+      const _playerFids = new Set((next.factions || []).filter((f) => f && f.partyId === _autPid).map((f) => f.id));
+      if (next.factionHappiness && typeof next.factionHappiness === 'object') {
+        next.factionHappiness = { ...next.factionHappiness };
+        for (const fid of _playerFids) {
+          next.factionHappiness[fid] = clamp(Number(next.factionHappiness[fid] ?? 50) + happinessDelta, 0, 100);
+        }
+      }
+      if (Array.isArray(next.factions)) {
+        next.factions = next.factions.map((f) => (f && _playerFids.has(f.id)
+          ? { ...f, happiness: clamp(Number(f.happiness ?? next.factionHappiness?.[f.id] ?? 50) + happinessDelta, 0, 100) }
+          : f));
+      }
       if (next.sittingMemberHappiness !== undefined) {
         next.sittingMemberHappiness = clamp(Number(next.sittingMemberHappiness || 50) + happinessDelta, 0, 100);
       }
     }
 
-    if (fx.confidenceDelta !== undefined) {
-      next.chairConfidence = clamp(Number(next.chairConfidence ?? 50) + Number(fx.confidenceDelta || 0), 0, 100);
+    if (fx.confidenceDelta !== undefined || fx.factionConfidence !== undefined) {
+      next.chairConfidence = clamp(Number(next.chairConfidence ?? 50) + Number(fx.confidenceDelta ?? fx.factionConfidence ?? 0), 0, 100);
     }
-    if (fx.frictionDelta !== undefined) {
-      next.caucusFriction = clamp(Number(next.caucusFriction ?? 0) + Number(fx.frictionDelta || 0), 0, 100);
+    if (fx.frictionDelta !== undefined || fx.factionFriction !== undefined) {
+      next.caucusFriction = clamp(Number(next.caucusFriction ?? 0) + Number(fx.frictionDelta ?? fx.factionFriction ?? 0), 0, 100);
     }
     if (fx.approvalDelta !== undefined) {
       if (next.leaderApproval !== undefined) {

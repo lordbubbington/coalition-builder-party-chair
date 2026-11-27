@@ -1508,8 +1508,8 @@
         continue;
       }
 
-      // [MC-BALANCE-TUNE] MC-01: Exempt custom_founding_faction (year <= startYear + 10) and a party's last remaining founding/anchor faction from low-voter extinction unless sustained happiness < 15
-      const isCustomProtected = (f.id === 'custom_founding_faction' || f.isCustomFounding === true) && curYear <= startYear + 10;
+      // [QA-BATCH4-FIX] B4-08: Exempt custom_founding_faction and any party's last remaining faction indefinitely from low-voter extinction unless sustained happiness < 15
+      const isCustomProtected = (f.id === 'custom_founding_faction' || f.isCustomFounding === true);
       const isLastPartyFaction = Boolean(f.partyId && !isUnaffiliatedOrIndependentFaction(f) && (remainingCountByParty[f.partyId] || 0) <= 1);
       if ((isCustomProtected || isLastPartyFaction) && !sustainedCollapse) {
         f.lowVoterCycles = 0;

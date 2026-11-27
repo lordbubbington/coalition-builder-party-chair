@@ -305,9 +305,24 @@
     if (copy.lastElection && typeof copy.lastElection === 'object') {
       copy.lastElection = slimElectionEntry(copy.lastElection, copy.phase === 'complete' && !ultra);
     }
+    // [QA-BATCH4-FIX] B4-01: strip heavy per-state/per-district subtrees from archived elections[] to prevent >10MB save bloat
     if (Array.isArray(copy.elections) && copy.elections.length > 0) {
       const srcElections = ultra && copy.elections.length > 3 ? copy.elections.slice(-3) : copy.elections;
-      copy.elections = srcElections.map((el) => slimElectionEntry(el, false));
+      copy.elections = srcElections.map((el) => {
+        const s = slimElectionEntry(el, false);
+        if (!s || typeof s !== 'object') return s;
+        delete s.states;
+        delete s.presidentialResults;
+        delete s.statewideByState;
+        delete s.statewideResults;
+        if (s.presidential && typeof s.presidential === 'object') {
+          s.presidential = { winner: s.presidential.winner, evByParty: s.presidential.evByParty || s.evByParty };
+        }
+        if (s.legislature && typeof s.legislature === 'object') {
+          s.legislature = { seats: s.legislature.seats, winner: s.legislature.winner, totalSeats: s.legislature.totalSeats, flips: s.legislature.flips };
+        }
+        return s;
+      });
     }
     const maxLog = ultra ? 20 : 60;
     if (Array.isArray(copy.yearLog) && copy.yearLog.length > maxLog) {
@@ -426,6 +441,30 @@
     // Clear completed or inactive electionNight frame timelines
     if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
       copy.electionNight = null;
+    }
+
+    // [QA-BATCH4-FIX] B4-01: prune stale prior-cycle primary blobs & slim archived elections older than 3 cycles to keep saves lean
+    if ((copy.primariesResolved || copy.phase === 'organizing' || copy.phase === 'complete') && copy.primaryFields && typeof copy.primaryFields === 'object') {
+      copy.primaryFields = {};
+    }
+    if ((copy.primariesResolved || copy.phase === 'organizing' || copy.phase === 'complete') && copy.primaryResults) {
+      copy.primaryResults = [];
+    }
+    if (Array.isArray(copy.elections) && copy.elections.length > 3) {
+      const cutoff = copy.elections.length - 3;
+      copy.elections = copy.elections.map((el, idx) => {
+        if (idx >= cutoff || !el || typeof el !== 'object') return el;
+        const s = { ...el };
+        delete s.districts; delete s.districtResults; delete s.houseResults; delete s.timeline; delete s.races;
+        delete s.states; delete s.presidentialResults; delete s.statewideByState; delete s.statewideResults;
+        if (s.presidential && typeof s.presidential === 'object') {
+          s.presidential = { winner: s.presidential.winner, evByParty: s.presidential.evByParty || s.evByParty };
+        }
+        if (s.legislature && typeof s.legislature === 'object') {
+          s.legislature = { seats: s.legislature.seats, winner: s.legislature.winner, totalSeats: s.legislature.totalSeats, flips: s.legislature.flips };
+        }
+        return s;
+      });
     }
 
     if (emergency || ultra) {
