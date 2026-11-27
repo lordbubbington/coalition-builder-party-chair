@@ -119,21 +119,55 @@
     } = deps;
 
     if (customOrigin === 'not_major_movement') {
+      // [MC-BALANCE-TUNE] MC-01: Seed >=350k represented voters across focus/aligned states when no explicit 100k UI allocation is provided
       const cfId = 'custom_founding_faction';
       const cfName = (opts.customFactionName || `${player.name} Movement`).trim().slice(0, 36);
       const cfSliders = opts.customFactionSliders || { economic: player.economic, social: player.social, governance: 5.0 };
       const cfIssues = Array.isArray(opts.customFactionKeyIssues) && opts.customFactionKeyIssues.length === 2
         ? opts.customFactionKeyIssues
         : ['healthcare-model', 'campaign-finance'];
-      let stateAllocs = opts.customFactionStateAllocations || { [player.foundingStateId || 'PA']: 100000 };
-      let allocSum = Object.values(stateAllocs).reduce((sum, v) => sum + (Number(v) || 0), 0);
-      if (allocSum !== 100000) {
-        throw new Error(`State voter allocations sum to ${allocSum} / 100,000. Exactly 100,000 voters required.`);
+      const hasExplicit100kAlloc = Boolean(opts.customFactionStateAllocations);
+      let stateAllocs;
+      let allocSum;
+      if (hasExplicit100kAlloc) {
+        stateAllocs = opts.customFactionStateAllocations;
+        allocSum = Object.values(stateAllocs).reduce((sum, v) => sum + (Number(v) || 0), 0);
+        if (allocSum !== 100000) {
+          throw new Error(`State voter allocations sum to ${allocSum} / 100,000. Exactly 100,000 voters required.`);
+        }
+      } else if (opts.stateAllocations && Object.keys(opts.stateAllocations).length > 0) {
+        stateAllocs = opts.stateAllocations;
+        allocSum = Object.values(stateAllocs).reduce((sum, v) => sum + (Number(v) || 0), 0);
+      } else {
+        const seedTargetVoters = Math.max(350000, Number(opts.customStartVoters || 350000));
+        const homeId = player.foundingStateId || 'PA';
+        const homeShare = Math.round(seedTargetVoters * 0.40);
+        const alignedPool = (STATES || [])
+          .filter((s) => s && s.id && s.id !== 'DC' && s.id !== homeId)
+          .map((s) => {
+            const leanEconDiff = Math.abs((s.lean || 0) - (player.economic || 0));
+            const regBonus = s.region === player.region ? 1.5 : 1.0;
+            const score = regBonus * (1 / (0.25 + leanEconDiff)) * Math.sqrt(Math.max(3, s.ev || 3));
+            return { id: s.id, score };
+          })
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 6);
+        const wSum = alignedPool.reduce((acc, x) => acc + x.score, 0) || 1;
+        stateAllocs = { [homeId]: homeShare };
+        let remSeed = seedTargetVoters - homeShare;
+        alignedPool.forEach((entry, idx) => {
+          const share = idx === alignedPool.length - 1 ? remSeed : Math.round((seedTargetVoters - homeShare) * (entry.score / wSum));
+          remSeed -= share;
+          stateAllocs[entry.id] = Math.max(0, share);
+        });
+        allocSum = Object.values(stateAllocs).reduce((sum, v) => sum + (Number(v) || 0), 0);
       }
 
-      // REQ-249: Hare-Niemeyer largest-remainder apportionment with exact 1,000 sample-unit conservation
-      const sampleUnitsMap = apportionSampleUnitsHareNiemeyer(stateAllocs, 1000);
+      // REQ-249: Hare-Niemeyer largest-remainder apportionment with exact sample-unit conservation
+      const totalSampleAlloc = Math.max(1000, Math.round(allocSum / 100));
+      const sampleUnitsMap = apportionSampleUnitsHareNiemeyer(stateAllocs, hasExplicit100kAlloc ? 1000 : totalSampleAlloc);
 
+      game.startYear = game.startYear || game.year || 2028;
       game.customFaction100k = {
         id: cfId,
         name: cfName,
@@ -141,7 +175,8 @@
         type: 'ideological',
         status: 'leading',
         isCustomFounding: true,
-        targetVoters: 100000,
+        isFoundingAnchor: true,
+        targetVoters: allocSum,
         sliders: cfSliders,
         keyIssues: cfIssues,
         stateAllocations: stateAllocs,
@@ -153,6 +188,9 @@
         partyId: 'player',
         status: 'leading',
         isCustomFounding: true,
+        isFoundingAnchor: true,
+        voters: allocSum,
+        targetVoters: allocSum,
         sliders: cfSliders,
         economic: cfSliders.economic,
         social: cfSliders.social,
@@ -167,15 +205,22 @@
       game.factionConfidence[cfId] = 65;
       game.factionStandings[cfId] = 75;
       game.factionDesignations[cfId] = 'leading';
+      if (game.voterModel) {
+        game.voterModel.factions = game.voterModel.factions || {};
+        game.voterModel.factions[cfId] = allocSum;
+      }
 
       // REQ-248: 155M Zero-Variance Electorate Injection: Two-Ledger Rule
       if (game.voterModel && Array.isArray(game.voterModel.states)) {
+        const is1to1Scale = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
         game.voterModel.states.forEach((st) => {
           st.affiliations = st.affiliations || {};
           st.factions = st.factions || {};
           const stKey = st.stateId || st.id;
           const alloc = Number(stateAllocs[stKey] || 0);
-          const allocSample = Number(sampleUnitsMap[stKey] || 0);
+          const allocSample = hasExplicit100kAlloc
+            ? Number(sampleUnitsMap[stKey] || 0)
+            : (is1to1Scale ? alloc : Number(sampleUnitsMap[stKey] || 0));
 
           if (alloc > 0 || allocSample > 0) {
             // Ledger 1: Sample units transfer
@@ -218,12 +263,13 @@
           }
         });
       }
-      player.baseShare = (100000 / 155000000) * 100;
+      player.baseShare = (allocSum / 155000000) * 100;
       if (!game.voterModel.affiliations) game.voterModel.affiliations = {};
+      const _cf1to1Nat = (game.voterModel?.voterScale === '1:1' || Number(game.voterModel?.sampleVoters || 0) >= 10_000_000);
       game.voterModel.affiliations.player = {
         name: player.name,
-        sampleVoters: 1000,
-        representedVoters: 100000,
+        sampleVoters: hasExplicit100kAlloc ? 1000 : (_cf1to1Nat ? allocSum : totalSampleAlloc),
+        representedVoters: allocSum,
       };
     } else {
       // Catalog Factions Chosen
@@ -430,7 +476,8 @@
     }
 
     // Dynamic Starting Ascent Tier, Focus Slots, Ballot Access, Treasury & Approval Calibration (v0.16.9)
-    const actualStartingVoters = customOrigin === 'not_major_movement' ? 100000 : Math.round((player.baseShare / 100) * 155000000);
+    // [MC-BALANCE-TUNE] MC-01: Derive custom starting voters dynamically from seeded voters when no 100k UI override was forced
+    const actualStartingVoters = Math.round((player.baseShare / 100) * 155000000) || (customOrigin === 'not_major_movement' ? 350000 : 100000);
     let voterStartTier = 0;
     if (actualStartingVoters >= 25000000) voterStartTier = 5;
     else if (actualStartingVoters >= 12000000) voterStartTier = 4;

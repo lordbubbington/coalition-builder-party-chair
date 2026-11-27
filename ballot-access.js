@@ -186,7 +186,15 @@
           // Tier 2+: Check prior cycle statewide returns for retention qualification
           const priorVotePct = Number(game?.lastElection?.presidential?.[stId]?.shares?.[partyId] || 0);
           const stRule = getStatutoryBallotRule(stId);
-          if (priorVotePct >= (stRule.retentionThresholdPct || 2.0)) {
+          // [MC-BALANCE-TUNE] MC-02: State chapters strengthen automatic ballot-retention stability
+          const pMatch = partyId === 'player' || partyId === (game?.player?.custom ? 'player' : game?.player?.baseTemplateId);
+          const stChCount = Number(
+            game?.stateOrganizations?.[stId]?.[partyId]?.chapters ??
+            (pMatch ? game?.stateChapters?.[stId] : 0) ??
+            0
+          );
+          const retentionThreshold = Math.max(0.5, (stRule.retentionThresholdPct || 2.0) - Math.min(1.5, stChCount * 0.35));
+          if (priorVotePct >= retentionThreshold || stChCount >= 6) {
             table[partyId][stId] = {
               qualified: true,
               method: 'retention',
@@ -251,13 +259,20 @@
     const clampedBaseCost = Math.max(1.5 * tierScale, Math.min(6.0 * tierScale, rawCostMillions));
     let finalCost = clampedBaseCost * bufferMultiplier;
 
-    // Chapter Multiplier: Active State Chapter presence grants -35% discount (cost * 0.65)
-    const hasChapter = Boolean(
-      (game?.stateChapters && game.stateChapters[stateId] > 0) ||
-      (game?.voterModel?.states?.find((s) => s.stateId === stateId)?.chapters > 0)
+    // [MC-BALANCE-TUNE] MC-02: Active State Chapter -35% base discount + -5% per additional chapter (extra discount capped at -40%)
+    const isPlayerMatch = partyId === 'player' || partyId === (game?.player?.custom ? 'player' : game?.player?.baseTemplateId);
+    const orgChCount = Number(game?.stateOrganizations?.[stateId]?.[partyId]?.chapters || 0);
+    const playerChCount = Number(game?.stateChapters?.[stateId] || 0);
+    const vmChCount = Number(game?.voterModel?.states?.find((s) => s.stateId === stateId)?.chapters || 0);
+    const stateChapterCount = Math.max(
+      0,
+      orgChCount,
+      isPlayerMatch ? Math.max(playerChCount, vmChCount) : 0
     );
+    const hasChapter = stateChapterCount > 0;
+    const extraChapterDiscount = hasChapter ? Math.min(0.40, Math.max(0, stateChapterCount - 1) * 0.05) : 0;
     if (hasChapter) {
-      finalCost *= 0.65;
+      finalCost *= 0.65 * (1 - extraChapterDiscount);
     }
 
     // REQ-211: Universal Vote-by-Mail voting law halves minor-party petition costs (-50%)

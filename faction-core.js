@@ -850,12 +850,13 @@
     return game;
   }
 
-  // [QA-BATCH2-FIX] B2-03: Dissolve non-protected <25k / 0-voter ghost factions after 2 consecutive low cycles
+  // [QA-BATCH2-FIX] B2-03 + [MC-BALANCE-TUNE] MC-01/MC-05: Dissolve non-protected extinct factions (10k/3-cycle for Tier 0-2, custom/last-faction guard)
   function pruneExtinctFactions(game) {
     if (!game || !Array.isArray(game.factions)) return { game, dissolved: [] };
     const protectedTypes = new Set(['racial', 'identity', 'religious']);
     const dissolved = [];
     const curYear = Number(game.year || 2028);
+    const startYear = Number(game.startYear || game.yearStart || 2028);
     if (!Array.isArray(game.dissolvedFactions)) game.dissolvedFactions = [];
 
     const vmStates = Array.isArray(game.voterModel?.states) ? game.voterModel.states : null;
@@ -869,6 +870,21 @@
       });
     }
 
+    const partyRemainingCounts = {};
+    game.factions.forEach((f) => {
+      if (!f || !f.partyId || isUnaffiliatedPartyId(f.partyId)) return;
+      partyRemainingCounts[f.partyId] = (partyRemainingCounts[f.partyId] || 0) + 1;
+    });
+
+    const getTierSafe = (pid) => {
+      if (!pid || isUnaffiliatedPartyId(pid)) return 0;
+      if (Number.isFinite(Number(game?.partyTiers?.[pid]))) return Number(game.partyTiers[pid]);
+      if (['people', 'heritage'].includes(pid) && !game?.player?.custom) return 5;
+      if (['liberty', 'green'].includes(pid)) return 1;
+      if (['constitution', 'socialist'].includes(pid)) return 0;
+      return 1;
+    };
+
     const remaining = [];
     const toRemoveIds = new Set();
     game.factions.forEach((f) => {
@@ -876,23 +892,36 @@
       const voters = vmStates
         ? Number(stateTotals[f.id] || 0)
         : Number(game.voterModel?.factions?.[f.id] ?? f.voters ?? f.targetVoters ?? 0);
+      const hap = Number(game.factionHappiness?.[f.id] ?? game.factionStandings?.[f.id] ?? f.happiness ?? 65);
+      f.extremeCollapseCycles = hap < 15 ? (Number(f.extremeCollapseCycles || 0) + 1) : 0;
+      const sustainedCollapse = f.extremeCollapseCycles >= 2;
+      const isCustomProtected = (f.id === 'custom_founding_faction' || f.isCustomFounding === true) && curYear <= startYear + 10;
+      const isLastPartyFaction = Boolean(f.partyId && !isUnaffiliatedPartyId(f.partyId) && (partyRemainingCounts[f.partyId] || 0) <= 1);
       const isProtected = Boolean(
         f.isExtremist
         || f.extremist
         || f.isIdentityBloc
         || f.protectedIdentityBloc
         || protectedTypes.has(String(f.type || '').toLowerCase())
+        || ((isCustomProtected || isLastPartyFaction) && !sustainedCollapse)
       );
       if (isProtected) {
         f.lowVoterCycles = 0;
         remaining.push(f);
         return;
       }
-      if (voters < 25000) {
+      const pTier = getTierSafe(f.partyId);
+      const isMinorLowTier = pTier <= 2 && f.partyId && !isUnaffiliatedPartyId(f.partyId);
+      const minFloor = isMinorLowTier ? 10000 : 25000;
+      const reqCycles = isMinorLowTier ? 3 : 2;
+      if (voters < minFloor) {
         f.lowVoterCycles = Number(f.lowVoterCycles || 0) + 1;
-        if (f.lowVoterCycles >= 2) {
+        if (f.lowVoterCycles >= reqCycles) {
           toRemoveIds.add(f.id);
-          dissolved.push({ id: f.id, name: f.name, partyId: f.partyId, voters, year: curYear, reason: 'below_25k_extinct' });
+          if (f.partyId && partyRemainingCounts[f.partyId] !== undefined) {
+            partyRemainingCounts[f.partyId] = Math.max(0, partyRemainingCounts[f.partyId] - 1);
+          }
+          dissolved.push({ id: f.id, name: f.name, partyId: f.partyId, voters, year: curYear, reason: isMinorLowTier ? 'below_10k_extinct' : 'below_25k_extinct' });
           return;
         }
       } else {

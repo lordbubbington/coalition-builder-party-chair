@@ -1461,10 +1461,29 @@
     return false;
   }
 
+  // [MC-BALANCE-TUNE] MC-01 & MC-05: Tier-aware extinction floor (10k / 3 cycles for Tier 0-2) + custom/last-faction guard
+  function getPartyTierForLifecycle(game, partyId) {
+    if (!partyId || partyId === 'none' || partyId === 'independent' || partyId === 'unaffiliated') return 0;
+    const gTiers = game?.partyTiers || {};
+    if (Number.isFinite(Number(gTiers[partyId]))) return Number(gTiers[partyId]);
+    if (['people', 'heritage'].includes(partyId) && !game?.player?.custom) return 5;
+    if (['liberty', 'green'].includes(partyId)) return 1;
+    if (['constitution', 'socialist'].includes(partyId)) return 0;
+    return 1;
+  }
+
   function evaluateCycleDissolutions(game) {
     if (!game || !Array.isArray(game.factions)) return [];
     const dissolutions = [];
     const dissolvedList = [];
+    const curYear = Number(game.year || 2028);
+    const startYear = Number(game.startYear || game.yearStart || 2028);
+
+    const remainingCountByParty = {};
+    for (const f of game.factions) {
+      if (!f || !f.partyId || isUnaffiliatedOrIndependentFaction(f)) continue;
+      remainingCountByParty[f.partyId] = (remainingCountByParty[f.partyId] || 0) + 1;
+    }
 
     for (const f of game.factions) {
       if (!f) continue;
@@ -1472,8 +1491,14 @@
 
       const anchorEnded = Boolean(f.anchorPoliticianId) && (Boolean(f.anchorRetired || f.anchorDeceased) || isAnchorPoliticianEnded(game, f.anchorPoliticianId));
       const voters = getFactionVoters(game, f);
+      const hap = Number(game.factionHappiness?.[f.id] ?? game.factionStandings?.[f.id] ?? f.happiness ?? 65);
+      f.extremeCollapseCycles = hap < 15 ? (Number(f.extremeCollapseCycles || 0) + 1) : 0;
+      const sustainedCollapse = f.extremeCollapseCycles >= 2;
 
       if (anchorEnded) {
+        if (f.partyId && remainingCountByParty[f.partyId] !== undefined) {
+          remainingCountByParty[f.partyId] = Math.max(0, remainingCountByParty[f.partyId] - 1);
+        }
         dissolvedList.push({ faction: f, reason: 'anchor_politician_ended', voters });
         continue;
       }
@@ -1483,8 +1508,35 @@
         continue;
       }
 
-      if (voters < THRESHOLDS.DISSOLUTION_MIN_VOTERS) {
+      // [MC-BALANCE-TUNE] MC-01: Exempt custom_founding_faction (year <= startYear + 10) and a party's last remaining founding/anchor faction from low-voter extinction unless sustained happiness < 15
+      const isCustomProtected = (f.id === 'custom_founding_faction' || f.isCustomFounding === true) && curYear <= startYear + 10;
+      const isLastPartyFaction = Boolean(f.partyId && !isUnaffiliatedOrIndependentFaction(f) && (remainingCountByParty[f.partyId] || 0) <= 1);
+      if ((isCustomProtected || isLastPartyFaction) && !sustainedCollapse) {
+        f.lowVoterCycles = 0;
+        continue;
+      }
+
+      // [MC-BALANCE-TUNE] MC-05: Lower extinction floor for Tier 0-2 minor/extremist/custom parties to 10,000 voters over 3 consecutive cycles
+      const pTier = getPartyTierForLifecycle(game, f.partyId);
+      if (pTier <= 2 && f.partyId && !isUnaffiliatedOrIndependentFaction(f)) {
+        if (voters < 10000) {
+          f.lowVoterCycles = Number(f.lowVoterCycles || 0) + 1;
+          if (f.lowVoterCycles >= 3) {
+            if (remainingCountByParty[f.partyId] !== undefined) {
+              remainingCountByParty[f.partyId] = Math.max(0, remainingCountByParty[f.partyId] - 1);
+            }
+            dissolvedList.push({ faction: f, reason: 'below_10k_3cycle_threshold', voters });
+          }
+        } else {
+          f.lowVoterCycles = 0;
+        }
+      } else if (voters < THRESHOLDS.DISSOLUTION_MIN_VOTERS) {
+        if (f.partyId && remainingCountByParty[f.partyId] !== undefined) {
+          remainingCountByParty[f.partyId] = Math.max(0, remainingCountByParty[f.partyId] - 1);
+        }
         dissolvedList.push({ faction: f, reason: 'below_100k_threshold', voters });
+      } else {
+        f.lowVoterCycles = 0;
       }
     }
 

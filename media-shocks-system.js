@@ -204,12 +204,29 @@
     return round(getPartyCompositeReach(game, pKey) - getPartyCompositeReach(game, rKey), 2);
   }
 
-  // Ad persuasion modifier: -15% to +20% (0.85x to 1.20x) based on reach differential
+  // [MC-BALANCE-TUNE] MC-04: Boosted digital/podcasts & local persuasion modifier (-15% to +35%) based on reach differential
   function getAdPersuasionMultiplier(game, partyId = 'player', rivalPartyId = null) {
     if (!game?.mediaEcosystem) return 1.0;
-    const diff = getReachDifferential(game, partyId, rivalPartyId);
-    const adj = clamp((diff / 100) * 0.50, -0.15, 0.20);
+    const pKey = resolveEcoPartyKey(game, partyId);
+    const rKey = rivalPartyId ? resolveEcoPartyKey(game, rivalPartyId) : getPrimaryRivalKey(game);
+    const diff = getReachDifferential(game, pKey, rKey);
+    const digDiff = getEffectiveChannelReach(game, pKey, 'digital') - getEffectiveChannelReach(game, rKey, 'digital');
+    const locDiff = getEffectiveChannelReach(game, pKey, 'local') - getEffectiveChannelReach(game, rKey, 'local');
+    const adj = clamp((diff / 100) * 0.50 + Math.max(0, digDiff) * 0.0025 + Math.max(0, locDiff) * 0.0020, -0.15, 0.35);
     return round(1.0 + adj, 3);
+  }
+
+  // [MC-BALANCE-TUNE] MC-04: Direct swing-state persuasion lift from Digital/Podcasts & Local Press differential
+  function getSwingPersuasionMediaLift(game, partyId = 'player', stateLeanAbs = 5) {
+    if (!game?.mediaEcosystem) return 0;
+    const absLean = Math.abs(Number(stateLeanAbs || 0));
+    if (absLean >= 14) return 0;
+    const pKey = resolveEcoPartyKey(game, partyId);
+    const rKey = getPrimaryRivalKey(game);
+    const digBonus = Math.max(0, getEffectiveChannelReach(game, pKey, 'digital') - Math.max(48, getEffectiveChannelReach(game, rKey, 'digital') * 0.85));
+    const locBonus = Math.max(0, getEffectiveChannelReach(game, pKey, 'local') - Math.max(48, getEffectiveChannelReach(game, rKey, 'local') * 0.85));
+    const swingWeight = clamp(1 - absLean / 14, 0, 1);
+    return round(clamp((digBonus * 0.032 + locBonus * 0.028) * swingWeight, 0, 2.2), 2);
   }
 
   // Positive reach differential slows ad saturation buildup (up to 28% slower)
@@ -258,7 +275,7 @@
     };
   }
 
-  // Local Press buffers down-ballot House/Senate incumbents against national wave drags
+  // [MC-BALANCE-TUNE] MC-04: Local Press buffers down-ballot House/Senate incumbents against national wave drags (up to 32%)
   function getLocalIncumbentWaveBuffer(game, incumbentPartyId, natEnv) {
     if (!game?.mediaEcosystem || !incumbentPartyId) return 0;
     const env = Number(natEnv || 0);
@@ -270,7 +287,7 @@
     const isRep = incumbentPartyId === 'heritage';
     const facingHeadwind = (isDem && env < 0) || (isRep && env > 0);
     if (!facingHeadwind) return 0;
-    const bufferFrac = clamp(((localReach - 40) / 60) * 0.25, 0, 0.25);
+    const bufferFrac = clamp(((localReach - 40) / 60) * 0.32, 0, 0.32);
     const bufferMag = Math.abs(env) * bufferFrac;
     return round(isDem ? bufferMag : -bufferMag, 2);
   }
@@ -774,6 +791,23 @@
     return { organizingActionsRemaining: nextOrg, actionsLeft: nextAct };
   }
 
+  // [MC-BALANCE-TUNE] MC-03: Tier-scaled media channel investment cost (0.45x / 0.65x / 0.85x / 1.0x)
+  function getMediaChannelInvestCost(game) {
+    const pKey = getPlayerKey(game);
+    const Eng = global.PartyChairEngine;
+    const V07 = global.PartyChairV07;
+    const tier = (Eng && typeof Eng.getPartyInstitutionalTier === 'function')
+      ? Number(Eng.getPartyInstitutionalTier(game, 'player'))
+      : (V07 && typeof V07.getPartyInstitutionalTier === 'function')
+        ? Number(V07.getPartyInstitutionalTier(game, 'player'))
+        : Number(game?.partyTiers?.[pKey] ?? (['people', 'heritage'].includes(pKey) ? 5 : 1));
+    let mult = 1.0;
+    if (tier <= 1) mult = 0.45;
+    else if (tier === 2) mult = 0.65;
+    else if (tier === 3) mult = 0.85;
+    return round(6 * mult, 1);
+  }
+
   function handleAction(game, actionId, payload = {}) {
     if (!game) return null;
     const p = payload?.payload ? payload.payload : (payload || {});
@@ -783,7 +817,7 @@
       if (game.phase && game.phase !== 'organizing') {
         return { ...game, lastNote: 'Media channel investments are only available during the organizing phase.' };
       }
-      const cost = 6;
+      const cost = getMediaChannelInvestCost(game);
       const channel = CHANNEL_IDS.includes(p.channel) ? p.channel : 'digital';
       const acts = consumeOrganizingAction(game);
       if (!acts) return { ...game, lastNote: 'No organizing actions remaining to invest in media channels.' };
@@ -803,9 +837,10 @@
 
       let nextTrust = game.trust ? { ...game.trust } : { supporters: 65, independents: 40, opponents: 12 };
       let cableWarn = '';
-      if (channel === 'cable' && after > 75) {
-        nextTrust.independents = clamp(round((nextTrust.independents ?? 40) - 2, 1), 0, 100);
-        cableWarn = ' (Over-indexed Cable >75: -2 Independents Trust)';
+      // [MC-BALANCE-TUNE] MC-04: Raise Cable over-index threshold 75 -> 88 and halve penalty (-2 -> -1 Independents Trust)
+      if (channel === 'cable' && after > 88) {
+        nextTrust.independents = clamp(round((nextTrust.independents ?? 40) - 1, 1), 0, 100);
+        cableWarn = ' (Over-indexed Cable >88: -1 Independents Trust)';
       }
       const chObj = MEDIA_CHANNELS.find((c) => c.id === channel) || { fullName: channel };
       const note = `Invested $${cost}M in ${chObj.fullName}: reach ${before} → ${after} (+8 permanent, upkeep secured).${cableWarn}`;
@@ -1056,6 +1091,8 @@
       .map((k) => `<option value="${escapeHtml(k)}" ${k === rKey ? 'selected' : ''}>${escapeHtml(k.charAt(0).toUpperCase() + k.slice(1))}</option>`)
       .join('');
 
+    // [MC-BALANCE-TUNE] MC-03: Tier-scaled media channel investment cost
+    const investCost = getMediaChannelInvestCost(game);
     return `
       <!-- v0.18.4 Proposal #4: Media Ecosystem & Counter-Narrative -->
       <div class="action-card ms-media-card">
@@ -1069,7 +1106,7 @@
           <select id="ms-rival-select" style="flex:1;min-width:110px;">
             ${rivalOptions}
           </select>
-          <button type="button" class="button button-small button-gold" data-ms-action="invest-media-channel" ${noAct || cash < 6 ? 'disabled' : ''}>Invest +8 ($6M)</button>
+          <button type="button" class="button button-small button-gold" data-ms-action="invest-media-channel" ${noAct || cash < investCost ? 'disabled' : ''}>Invest +8 ($6M)</button>
           <button type="button" class="button button-small" data-ms-action="launch-counter-narrative" ${noAct || cash < 4 ? 'disabled' : ''}>Counter -7 ($4M)</button>
         </div>
       </div>
@@ -1124,11 +1161,13 @@
     getPartyCompositeReach,
     getReachDifferential,
     getAdPersuasionMultiplier,
+    getSwingPersuasionMediaLift,
     getAdSaturationScale,
     getOctoberSurpriseMultiplier,
     applyBlackoutBypass,
     getLocalIncumbentWaveBuffer,
     getDigitalGaffeVolatilityMultiplier,
+    getMediaChannelInvestCost,
     runRivalMediaInvestments,
     getShockDef,
     pickDeterministicShock,

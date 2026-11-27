@@ -1174,10 +1174,10 @@
     const thermostaticShift = whSignOnDemScale * whBacklashMag;
 
     // 2. Off-cycle ground game & base enthusiasm counts 1.35x (Section 3.2)
-    // [v0.18.7 QA-FIX] BUG-04: Clamp chapterDiff to [-3.0, +3.0] and trustDiff to [-2.5, +2.5]
+    // [v0.18.7 QA-FIX] BUG-04 + [MC-BALANCE-TUNE] MC-02: Boosted chapter contribution within [-3.0, +3.0] guardrail
     const pChapters = getStateChaptersCount(game, race.stateId, playerPid);
     const rChapters = getStateChaptersCount(game, race.stateId, rivalPid);
-    const chapterDiff = clamp((pChapters - rChapters) * 0.35 * 1.35, -3.0, 3.0);
+    const chapterDiff = clamp((pChapters - rChapters) * 0.55 * 1.35, -3.0, 3.0);
 
     const pSupTrust = Number(game?.trust?.supporters ?? game?.player?.trust?.supporters ?? (getPartyTier(game, playerPid) >= 5 ? 80 : 65));
     const rSupTrust = Number(game?.rivalTrust?.[rivalPid]?.supporters ?? (getPartyTier(game, rivalPid) >= 5 ? 80 : 65));
