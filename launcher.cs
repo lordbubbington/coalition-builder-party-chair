@@ -70,13 +70,25 @@ internal static class Launcher
             Process browser = Process.Start(new ProcessStartInfo
             {
                 FileName = edge,
-                Arguments = "--app=\"" + launchUrl + "\" --user-data-dir=\"" + profile + "\" --no-first-run",
+                Arguments = "--app=\"" + launchUrl + "\" --user-data-dir=\"" + profile + "\" --no-first-run --disable-background-mode",
                 WindowStyle = ProcessWindowStyle.Maximized,
                 UseShellExecute = false
             });
 
             if (browser != null)
+            {
+                DateTime launchedAt = DateTime.UtcNow;
                 browser.WaitForExit();
+                // If Edge already had a process open for BrowserProfile, the new msedge.exe
+                // hands off the URL and exits immediately; keep the local HTTP server alive
+                // so the opened game window does not hit ERR_CONNECTION_REFUSED.
+                if (listener != null && (DateTime.UtcNow - launchedAt).TotalSeconds < 10)
+                {
+                    DateTime deadline = DateTime.UtcNow.AddHours(12);
+                    while (DateTime.UtcNow < deadline && Process.GetProcessesByName("msedge").Length > 0)
+                        Thread.Sleep(2000);
+                }
+            }
         }
         catch (Exception ex)
         {
