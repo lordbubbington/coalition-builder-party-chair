@@ -1,12 +1,14 @@
 /**
- * Coalition Builder: Party Chair — v0.18.5 Core Module
- * PersistenceCore: Save compaction, localStorage autosave, and IndexedDB 5-slot storage.
- * Zero-behavior-change extraction from engine.js.
+ * Coalition Builder: Party Chair — Core Persistence Module
+ * PersistenceCore: 100 MB IndexedDB v2 + Transparent Gzip Compression + Lazy Compaction
+ * Stores Autosave (slot 0) and 5 Manual Slots (slots 1..5) in IndexedDB, keeping localStorage < 1 KB.
  */
 (function (root) {
   'use strict';
 
-  const SAVE_KEY = 'partyChairGame.save.v18.9.4';
+  const SAVE_KEY = 'partyChairGame.save.v19.0';
+  const PREVIOUS_SAVE_KEY_V1911 = 'partyChairGame.save.v19.1.1';
+  const PREVIOUS_SAVE_KEY_V1894 = 'partyChairGame.save.v18.9.4';
   const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.9.1';
   const PREVIOUS_SAVE_KEY_V188 = 'partyChairGame.save.v18.8';
   const PREVIOUS_SAVE_KEY_V187 = 'partyChairGame.save.v18.7';
@@ -30,14 +32,181 @@
   const PREVIOUS_SAVE_KEY_V150 = 'partyChairGame.save.v15.0';
   const LEGACY_SAVE_KEY = 'partyChairGame.save.v1';
 
+  const ALL_AUTOSAVE_KEYS = [
+    SAVE_KEY,
+    PREVIOUS_SAVE_KEY_V1911,
+    'partyChairGame.save.v19.0',
+    PREVIOUS_SAVE_KEY_V1894,
+    PREVIOUS_SAVE_KEY,
+    PREVIOUS_SAVE_KEY_V188,
+    PREVIOUS_SAVE_KEY_V187,
+    PREVIOUS_SAVE_KEY_V186,
+    PREVIOUS_SAVE_KEY_V185,
+    PREVIOUS_SAVE_KEY_V184,
+    PREVIOUS_SAVE_KEY_V183,
+    PREVIOUS_SAVE_KEY_V182,
+    PREVIOUS_SAVE_KEY_V162,
+    PREVIOUS_SAVE_KEY_V161,
+    PREVIOUS_SAVE_KEY_V160,
+    PREVIOUS_SAVE_KEY_V159,
+    PREVIOUS_SAVE_KEY_V158,
+    PREVIOUS_SAVE_KEY_V157,
+    PREVIOUS_SAVE_KEY_V156,
+    PREVIOUS_SAVE_KEY_V155,
+    PREVIOUS_SAVE_KEY_V154,
+    PREVIOUS_SAVE_KEY_V153,
+    PREVIOUS_SAVE_KEY_V152,
+    PREVIOUS_SAVE_KEY_V151,
+    PREVIOUS_SAVE_KEY_V150,
+    'partyChairGame.save.v14.6',
+    'partyChairGame.save.v14.5',
+    'partyChairGame.save.v14.4',
+    'partyChairGame.save.v14.3',
+    'partyChairGame.save.v14.2',
+    'partyChairGame.save.v14.1',
+    'partyChairGame.save.v14',
+    'partyChairGame.save.v13',
+    'partyChairGame.save.v12',
+    'partyChairGame.save.v11',
+    'partyChairGame.save.v10',
+    'partyChairGame.save.v9',
+    'partyChairGame.save.v8',
+    'partyChairGame.save.v7',
+    'partyChairGame.save.v6',
+    'partyChairGame.save.v5',
+    'partyChairGame.save.v4',
+    'partyChairGame.save.v3',
+    'partyChairGame.save.v2',
+    LEGACY_SAVE_KEY,
+  ].filter((k, idx, arr) => arr.indexOf(k) === idx);
+
   const SAVE_IDB_NAME = 'CoalitionBuilderSavesDB';
-  const SAVE_IDB_VERSION = 1;
+  const SAVE_IDB_VERSION = 2;
   const SAVE_IDB_STORE = 'saveSlots';
   const SAVE_SLOT_COUNT = 5;
   const SAVE_SLOT_PREFIX = 'partyChairGame.save.slot.';
 
+  const MAX_SAVE_RAW_BYTES = 100 * 1024 * 1024; // 100 MB uncompressed ceiling
+  const WARN_SAVE_RAW_BYTES = 80 * 1024 * 1024; // 80 MB warning threshold
+  const AUTOSAVE_DEBOUNCE_MS = 250;
+
   let _storagePersistRequested = false;
   let _idbSaveQueue = Promise.resolve();
+  let _pendingAutosave = null;
+  let _autosaveDebounceTimer = null;
+  let _lastAutosaveFlushAt = 0;
+  let _pendingWaiters = [];
+  let _lastSaveStatus = {
+    ok: true,
+    backend: 'idb-v2',
+    encoding: null,
+    rawBytes: 0,
+    compressedBytes: 0,
+    sizeWarning: false,
+    limitExceeded: false,
+    error: null,
+    savedAt: null,
+  };
+
+  function getGlobalScope() {
+    if (typeof window !== 'undefined') return window;
+    if (typeof globalThis !== 'undefined') return globalThis;
+    return root || {};
+  }
+
+  function encodeUtf8(str) {
+    if (typeof TextEncoder !== 'undefined') {
+      return new TextEncoder().encode(str);
+    }
+    if (typeof Buffer !== 'undefined') {
+      return new Uint8Array(Buffer.from(str, 'utf8'));
+    }
+    const arr = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i) & 0xff;
+    return arr;
+  }
+
+  function decodeUtf8(bytes) {
+    const u8 = toUint8Array(bytes);
+    if (!u8) return '';
+    if (typeof TextDecoder !== 'undefined') {
+      return new TextDecoder().decode(u8);
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(u8.buffer, u8.byteOffset, u8.byteLength).toString('utf8');
+    }
+    let out = '';
+    for (let i = 0; i < u8.length; i++) out += String.fromCharCode(u8[i]);
+    return out;
+  }
+
+  function toUint8Array(input) {
+    if (!input) return null;
+    if (input instanceof Uint8Array) return input;
+    if (input instanceof ArrayBuffer) return new Uint8Array(input);
+    if (ArrayBuffer.isView(input)) return new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+    if (Array.isArray(input)) return new Uint8Array(input);
+    return null;
+  }
+
+  function isCompressionStreamAvailable() {
+    const g = getGlobalScope();
+    const CS = typeof CompressionStream !== 'undefined' ? CompressionStream : g.CompressionStream;
+    const DS = typeof DecompressionStream !== 'undefined' ? DecompressionStream : g.DecompressionStream;
+    return typeof CS === 'function' && typeof DS === 'function';
+  }
+
+  async function runStreamTransform(transformStream, inputBytes) {
+    const u8 = toUint8Array(inputBytes);
+    const readPromise = (async () => {
+      const reader = transformStream.readable.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const step = await reader.read();
+        if (step.done) break;
+        const part = toUint8Array(step.value);
+        if (part && part.byteLength > 0) {
+          chunks.push(part);
+          total += part.byteLength;
+        }
+      }
+      const out = new Uint8Array(total);
+      let offset = 0;
+      for (let i = 0; i < chunks.length; i++) {
+        out.set(chunks[i], offset);
+        offset += chunks[i].byteLength;
+      }
+      return out;
+    })();
+    const writePromise = (async () => {
+      const writer = transformStream.writable.getWriter();
+      if (u8 && u8.byteLength > 0) {
+        await writer.write(u8);
+      }
+      await writer.close();
+    })();
+    const [out] = await Promise.all([readPromise, writePromise]);
+    return out;
+  }
+
+  async function gzipCompressBytes(inputBytes) {
+    const g = getGlobalScope();
+    const CS = typeof CompressionStream !== 'undefined' ? CompressionStream : g.CompressionStream;
+    if (typeof CS !== 'function') {
+      throw new Error('CompressionStream is unavailable');
+    }
+    return runStreamTransform(new CS('gzip'), inputBytes);
+  }
+
+  async function gzipDecompressBytes(inputBytes) {
+    const g = getGlobalScope();
+    const DS = typeof DecompressionStream !== 'undefined' ? DecompressionStream : g.DecompressionStream;
+    if (typeof DS !== 'function') {
+      throw new Error('DecompressionStream is unavailable');
+    }
+    return runStreamTransform(new DS('gzip'), inputBytes);
+  }
 
   function requestPersistentStorageOnce() {
     if (_storagePersistRequested) return;
@@ -49,11 +218,21 @@
     } catch (_) {}
   }
 
-  function compactGameForSave(game, options = {}) {
-    if (!game || typeof game !== 'object') return game;
-    const ultra = Boolean(options && options.ultra);
-    const copy = { ...game };
-    // Bug #3: Prune defeated/retired non-sitting politicians to prevent unbounded multi-MB bloat
+  async function getStorageEstimateAsync() {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.storage && typeof navigator.storage.estimate === 'function') {
+        const est = await navigator.storage.estimate();
+        return {
+          supported: true,
+          usage: Number.isFinite(Number(est?.usage)) ? Number(est.usage) : 0,
+          quota: Number.isFinite(Number(est?.quota)) ? Number(est.quota) : null,
+        };
+      }
+    } catch (_) {}
+    return { supported: false, usage: null, quota: null };
+  }
+
+  function emergencyPruneGameForSave(copy, ultra = false) {
     if (Array.isArray(copy.politicians)) {
       const sitIds = new Set((copy.sittingMembers || []).map((m) => m && m.id).filter(Boolean));
       const activeIds = new Set([
@@ -73,22 +252,9 @@
         : filtered;
       copy._politiciansCompacted = true;
     }
-    if (copy.forecasters) {
-      delete copy.forecasters;
-    }
-    delete copy._forecastCache;
-    delete copy._deferredDistricts;
-    delete copy._forecastOptions;
-    delete copy._forecastCacheHits;
-    // Clear completed or inactive electionNight timelines (~2.5-3 MB savings)
-    if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
-      copy.electionNight = null;
-    }
-    // Drop primaryResults outside Organizing (or in ultra mode)
     if ((copy.phase !== 'organizing' || ultra) && copy.primaryResults) {
       copy.primaryResults = [];
     }
-    // Drop top-level presidentialResults outside active results/election-night views
     if (copy.phase !== 'complete' && copy.phase !== 'election-night' && copy.presidentialResults) {
       delete copy.presidentialResults;
     }
@@ -139,50 +305,6 @@
     if (Array.isArray(copy.yearLog) && copy.yearLog.length > maxLog) {
       copy.yearLog = copy.yearLog.slice(-maxLog);
     }
-    // v0.16.9 (Fix #11): Compact older simulatedPrimaries (>2 cycles old) while preserving Archive UI & map colors
-    if (copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
-      const years = Object.keys(copy.simulatedPrimaries).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
-      const keepFullYears = new Set(years.slice(-2).map(String));
-      const compactedPrimaries = {};
-      Object.entries(copy.simulatedPrimaries).forEach(([yr, byParty]) => {
-        if (keepFullYears.has(String(yr)) || !byParty || typeof byParty !== 'object') {
-          compactedPrimaries[yr] = byParty;
-          return;
-        }
-        const slimPartyMap = {};
-        Object.entries(byParty).forEach(([pid, rec]) => {
-          if (!rec || typeof rec !== 'object') return;
-          const slimStateResults = {};
-          Object.entries(rec.stateResults || {}).forEach(([stId, sr]) => {
-            slimStateResults[stId] = {
-              stateId: stId,
-              date: sr?.date,
-              winnerId: sr?.winnerId,
-              winnerName: sr?.winnerName,
-              winnerColor: sr?.winnerColor,
-              totalDelegates: sr?.totalDelegates,
-            };
-          });
-          slimPartyMap[pid] = {
-            partyId: rec.partyId || pid,
-            year: rec.year || Number(yr),
-            nomineeId: rec.nomineeId,
-            nomineeName: rec.nomineeName,
-            nomineeFactionId: rec.nomineeFactionId,
-            clinchTarget: rec.clinchTarget,
-            neutralityBonusAwarded: Boolean(rec.neutralityBonusAwarded),
-            candidates: (rec.candidates || []).map((c) => ({
-              id: c.id, name: c.name, factionId: c.factionId, factionName: c.factionName,
-              color: c.color, delegates: c.delegates || 0, nationalPoll: c.nationalPoll || 0, droppedOut: Boolean(c.droppedOut),
-            })),
-            stateResults: slimStateResults,
-          };
-        });
-        compactedPrimaries[yr] = slimPartyMap;
-      });
-      copy.simulatedPrimaries = compactedPrimaries;
-    }
-    // Cap statewideOfficesHistory to recent 6 cycles, keeping full detail for last 2 (1 in ultra) and summarizing older cycles
     const maxSwHist = ultra ? 2 : 6;
     const fullSwCycles = ultra ? 1 : 2;
     const slimSwEntry = (entry) => {
@@ -223,17 +345,12 @@
         copy.statewideOfficesHistory = trimmed;
       }
     }
-    // Prune superseded decennial House maps ('2030 map', '2040 map', etc.) while preserving activeHouseMapKey & currentHouseMap
     const activeMapKey = copy.activeHouseMapKey || '';
     Object.keys(copy).forEach((k) => {
       if (/^\d{4} map$/.test(k) && k !== activeMapKey) {
         delete copy[k];
       }
     });
-    // Prune retired politicians from serialized save (elders & pastPresidents are preserved separately)
-    if (Array.isArray(copy.politicians)) {
-      copy.politicians = copy.politicians.filter((p) => p && !p.retired);
-    }
     if (ultra && copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
       const yrs = Object.keys(copy.simulatedPrimaries).sort((a, b) => Number(a) - Number(b));
       if (yrs.length > 1) {
@@ -241,84 +358,26 @@
         copy.simulatedPrimaries = { [latestYr]: copy.simulatedPrimaries[latestYr] };
       }
     }
-    // Drop stale completed activePresidentialPrimary once outside primary phase
     if (copy.activePresidentialPrimary && copy.phase !== 'presidential-primary' && copy.activePresidentialPrimary.stage === 'complete') {
       copy.activePresidentialPrimary = null;
     }
-    // #86: Trim verbose resolved campaign crises & stale mapPins
-    if (copy.campaign && typeof copy.campaign === 'object') {
-      const slimCamp = { ...copy.campaign };
-      if (Array.isArray(slimCamp.activeCrises)) {
-        slimCamp.activeCrises = slimCamp.activeCrises.filter((cr) => cr && !cr.resolved);
-      }
-      if (!slimCamp.active && slimCamp.rivalActivity && Array.isArray(slimCamp.rivalActivity.mapPins)) {
-        slimCamp.rivalActivity = { ...slimCamp.rivalActivity, mapPins: [] };
-      }
-      copy.campaign = slimCamp;
-    }
-    // [v0.18.4 ATLAS-HOTSEAT] Preserve compact atlasHistory (capped at 40 cycles)
-    const amsComp = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
-    if (amsComp && typeof amsComp.compactAtlasForSave === 'function') {
-      amsComp.compactAtlasForSave(copy);
-    }
-    // [v0.18.5 CAMPAIGN-EVENTS]
-    const _cesComp = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
-    if (_cesComp && typeof _cesComp.compactCampaignEventsForSave === 'function') {
-      _cesComp.compactCampaignEventsForSave(copy);
-    }
-
-    // Developer 1 (Chunk 1.4): Prune actionLog, partyActionLog, machineAllocations, and SOEE telemetry past last 3 cycles
     const curSaveCycle = Number(copy.year || 2028);
-    const minKeptCycle = curSaveCycle - 4; // Keep current cycle + prior 2 cycles (3 cycles total)
+    const minKeptCycle = curSaveCycle - 4;
     if (Array.isArray(copy.actionLog)) {
       copy.actionLog = copy.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
     }
     if (Array.isArray(copy.partyActionLog)) {
       copy.partyActionLog = copy.partyActionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
     }
-    if (copy.parties && typeof copy.parties === 'object') {
-      Object.values(copy.parties).forEach((p) => {
-        if (!p || typeof p !== 'object') return;
-        if (Array.isArray(p.actionLog)) {
-          p.actionLog = p.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-        }
-        if (Array.isArray(p.machineAllocations)) {
-          p.machineAllocations = p.machineAllocations.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-        }
-        if (Array.isArray(p.soeeTelemetry)) {
-          p.soeeTelemetry = p.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-        }
-      });
-    }
-    if (Array.isArray(copy.soeeTelemetry)) {
-      copy.soeeTelemetry = copy.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-    }
-
-    // Developer 1 (Chunk 1.4): Delete stale primaryFields outside primary phase & representatives outside complete phase
     if (copy.phase !== 'primary' && copy.phase !== 'presidential-primary' && copy.primaryFields) {
       delete copy.primaryFields;
     }
     if (copy.phase !== 'complete' && copy.representatives) {
       delete copy.representatives;
     }
-
-    // Developer 1 (Chunk 1.4): Deduplicate currentHouseMap and decennial map duplicate
     if (activeMapKey && copy[activeMapKey] && copy.currentHouseMap) {
       delete copy[activeMapKey];
     }
-
-    // Developer 1 (Chunk 1.4): Limit older simulatedPrimaries to last 4 presidential cycles
-    if (copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
-      const yrs = Object.keys(copy.simulatedPrimaries).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
-      if (yrs.length > 4) {
-        const keepYrs = new Set(yrs.slice(-4).map(String));
-        Object.keys(copy.simulatedPrimaries).forEach((y) => {
-          if (!keepYrs.has(String(y))) delete copy.simulatedPrimaries[y];
-        });
-      }
-    }
-
-    // Developer 1 (Chunk 1.4): Compact sittingMembers historical rosters (careerMilestones to max 5, remove historical/event logs and ratings)
     if (Array.isArray(copy.sittingMembers)) {
       copy.sittingMembers = copy.sittingMembers.map((m) => {
         if (!m || typeof m !== 'object') return m;
@@ -332,18 +391,259 @@
         return sm;
       });
     }
-
     return copy;
+  }
+
+  /**
+   * Normal saves ONLY strip ephemeral runtime caches so 7,500+ state legislative
+   * politicians, full election archives, and multi-decade logs persist intact.
+   * Emergency pruning activates only if options.emergency / options.ultra is requested
+   * (or when raw JSON exceeds MAX_SAVE_RAW_BYTES = 100 MB).
+   */
+  function compactGameForSave(game, options = {}) {
+    if (!game || typeof game !== 'object') return game;
+    const ultra = Boolean(options && options.ultra);
+    const emergency = Boolean(options && options.emergency);
+    const copy = { ...game };
+
+    // Always strip ephemeral runtime caches
+    if (copy.forecasters) {
+      delete copy.forecasters;
+    }
+    delete copy._forecastCache;
+    delete copy._deferredDistricts;
+    delete copy._forecastOptions;
+    delete copy._forecastCacheHits;
+
+    // Clear completed or inactive electionNight frame timelines
+    if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
+      copy.electionNight = null;
+    }
+
+    if (emergency || ultra) {
+      return emergencyPruneGameForSave(copy, ultra);
+    }
+    return copy;
+  }
+
+  function updateGlobalSaveStatus(nextStatus) {
+    _lastSaveStatus = { ..._lastSaveStatus, ...nextStatus };
+    const g = getGlobalScope();
+    if (g && typeof g === 'object') {
+      g.__saveQuotaError = Boolean(!_lastSaveStatus.ok && _lastSaveStatus.error === 'SAVE_SIZE_LIMIT_EXCEEDED');
+      g.__saveSizeWarning = _lastSaveStatus.sizeWarning
+        ? {
+            rawBytes: _lastSaveStatus.rawBytes,
+            warnBytes: WARN_SAVE_RAW_BYTES,
+            maxBytes: MAX_SAVE_RAW_BYTES,
+          }
+        : null;
+      g.__saveSizeLimitExceeded = Boolean(_lastSaveStatus.limitExceeded);
+    }
+    return _lastSaveStatus;
+  }
+
+  function getLastSaveStatus() {
+    return { ..._lastSaveStatus };
+  }
+
+  async function encodeGameRecordPayload(game, options = {}) {
+    if (!game || typeof game !== 'object') {
+      return { ok: false, error: 'INVALID_GAME', rawBytes: 0, compressedBytes: 0, sizeWarning: false };
+    }
+    let compacted = compactGameForSave(game, options);
+    let jsonStr = JSON.stringify(compacted);
+    let utf8Bytes = encodeUtf8(jsonStr);
+    let rawBytes = utf8Bytes.byteLength;
+
+    if (rawBytes > MAX_SAVE_RAW_BYTES && !options.emergency && !options.ultra) {
+      compacted = compactGameForSave(game, { ...options, emergency: true });
+      jsonStr = JSON.stringify(compacted);
+      utf8Bytes = encodeUtf8(jsonStr);
+      rawBytes = utf8Bytes.byteLength;
+    }
+
+    const sizeWarning = rawBytes >= WARN_SAVE_RAW_BYTES;
+    if (rawBytes > MAX_SAVE_RAW_BYTES) {
+      updateGlobalSaveStatus({
+        ok: false,
+        rawBytes,
+        compressedBytes: 0,
+        sizeWarning: true,
+        limitExceeded: true,
+        error: 'SAVE_SIZE_LIMIT_EXCEEDED',
+      });
+      return {
+        ok: false,
+        error: 'SAVE_SIZE_LIMIT_EXCEEDED',
+        rawBytes,
+        compressedBytes: 0,
+        maxBytes: MAX_SAVE_RAW_BYTES,
+        warnBytes: WARN_SAVE_RAW_BYTES,
+        sizeWarning: true,
+      };
+    }
+
+    let encoding = 'json';
+    let payload = null;
+    let data = jsonStr;
+    let compressedBytes = rawBytes;
+
+    if (!options.forceUncompressed && isCompressionStreamAvailable()) {
+      try {
+        const gzBytes = await gzipCompressBytes(utf8Bytes);
+        encoding = 'gzip-json';
+        payload = gzBytes;
+        data = null;
+        compressedBytes = gzBytes.byteLength;
+      } catch (_) {
+        encoding = 'json';
+        payload = null;
+        data = jsonStr;
+        compressedBytes = rawBytes;
+      }
+    }
+
+    const savedAt = new Date().toISOString();
+    updateGlobalSaveStatus({
+      ok: true,
+      backend: 'idb-v2',
+      encoding,
+      rawBytes,
+      compressedBytes,
+      sizeWarning,
+      limitExceeded: false,
+      error: null,
+      savedAt,
+    });
+
+    return {
+      ok: true,
+      compacted,
+      encoding,
+      payload,
+      data,
+      rawBytes,
+      compressedBytes,
+      sizeWarning,
+      savedAt,
+    };
+  }
+
+  async function buildIndexedDBSlotRecord(slotNum, game, label = '', options = {}) {
+    const encoded = await encodeGameRecordPayload(game, options);
+    if (!encoded.ok) return encoded;
+    const g = encoded.compacted;
+    const rec = {
+      slot: slotNum,
+      label: slotNum === 0 ? 'Autosave' : (label || g.player?.name || `Slot ${slotNum}`).trim(),
+      savedAt: encoded.savedAt,
+      timestamp: Number(g._savedAt || Date.now()),
+      version: g.version || '0.19.0',
+      year: g.year || 2028,
+      phase: g.phase || 'organizing',
+      partyName: g.player?.name || 'Party',
+      partyColor: g.player?.color || '#3478c8',
+      encoding: encoded.encoding,
+      rawBytes: encoded.rawBytes,
+      compressedBytes: encoded.compressedBytes,
+    };
+    if (encoded.encoding === 'gzip-json') {
+      rec.payload = encoded.payload;
+    } else {
+      rec.data = encoded.data;
+    }
+    return { ok: true, record: rec, compacted: g, sizeWarning: encoded.sizeWarning };
+  }
+
+  async function decodeSlotRecord(rec) {
+    if (!rec || typeof rec !== 'object') return null;
+    try {
+      if (rec.encoding === 'gzip-json') {
+        const rawInput = rec.payload || rec.data;
+        const u8 = toUint8Array(rawInput);
+        if (!u8 || u8.byteLength === 0) return null;
+        const decompressed = await gzipDecompressBytes(u8);
+        return JSON.parse(decodeUtf8(decompressed));
+      }
+      if (rec.encoding === 'json') {
+        if (typeof rec.data === 'string') return JSON.parse(rec.data);
+        const u8 = toUint8Array(rec.payload || rec.data);
+        if (u8) return JSON.parse(decodeUtf8(u8));
+      }
+      if (rec.game) {
+        if (typeof rec.game === 'string') return JSON.parse(rec.game);
+        if (typeof rec.game === 'object') return rec.game;
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  function writeLocalMetaPointer(game, slotNum = 0) {
+    if (typeof localStorage === 'undefined' || !game || typeof game !== 'object') return;
+    try {
+      const pointer = {
+        _metaPointer: true,
+        backend: 'idb-v2',
+        activeSlot: Number.isFinite(Number(game._activeSaveSlot)) ? Number(game._activeSaveSlot) : slotNum,
+        slot: slotNum,
+        version: game.version || '0.19.0',
+        year: game.year || 2028,
+        partyName: game.player?.name || 'Party',
+        savedAt: Number(game._savedAt || Date.now()),
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(pointer));
+    } catch (_) {}
+  }
+
+  function isMetaPointerObject(parsed) {
+    return Boolean(parsed && typeof parsed === 'object' && parsed._metaPointer === true && parsed.backend === 'idb-v2');
+  }
+
+  function readLegacyAutosaveDetailsFromLocalStorage(deps = {}) {
+    if (typeof localStorage === 'undefined') return { game: null, keysFound: [] };
+    const keysFound = [];
+    let bestGame = null;
+    for (let i = 0; i < ALL_AUTOSAVE_KEYS.length; i++) {
+      const key = ALL_AUTOSAVE_KEYS[i];
+      let raw = null;
+      try { raw = localStorage.getItem(key); } catch (_) { raw = null; }
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (isMetaPointerObject(parsed)) continue;
+        keysFound.push(key);
+        if (!bestGame) {
+          if (typeof deps.migrateSave === 'function') bestGame = deps.migrateSave(parsed);
+          else if (typeof deps.normalizeGame === 'function') bestGame = deps.normalizeGame(parsed);
+          else bestGame = parsed;
+        }
+      } catch (_) {
+        keysFound.push(key);
+      }
+    }
+    return { game: bestGame, keysFound };
+  }
+
+  function clearLocalStorageKeys(keys) {
+    if (typeof localStorage === 'undefined' || !Array.isArray(keys)) return;
+    for (let i = 0; i < keys.length; i++) {
+      try { localStorage.removeItem(keys[i]); } catch (_) {}
+    }
   }
 
   function openSavesIndexedDB() {
     return new Promise((resolve) => {
-      if (typeof indexedDB === 'undefined') {
+      const g = getGlobalScope();
+      const idb = typeof indexedDB !== 'undefined' ? indexedDB : g.indexedDB;
+      if (!idb) {
         resolve(null);
         return;
       }
       try {
-        const req = indexedDB.open(SAVE_IDB_NAME, SAVE_IDB_VERSION);
+        const req = idb.open(SAVE_IDB_NAME, SAVE_IDB_VERSION);
         req.onupgradeneeded = () => {
           const db = req.result;
           if (!db.objectStoreNames.contains(SAVE_IDB_STORE)) {
@@ -358,20 +658,12 @@
     });
   }
 
-  async function saveAutosaveToIndexedDB(compactedGame) {
-    if (!compactedGame) return false;
-    requestPersistentStorageOnce();
-    const db = await openSavesIndexedDB();
-    if (!db) return false;
+  function putRecordInIndexedDB(db, record) {
+    if (!db || !record) return Promise.resolve(false);
     return new Promise((resolve) => {
       try {
         const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
-        tx.objectStore(SAVE_IDB_STORE).put({
-          slot: 0,
-          label: 'Autosave',
-          savedAt: new Date().toISOString(),
-          game: compactedGame,
-        });
+        tx.objectStore(SAVE_IDB_STORE).put(record);
         tx.oncomplete = () => resolve(true);
         tx.onerror = () => resolve(false);
       } catch (_) {
@@ -380,119 +672,181 @@
     });
   }
 
-  function saveGame(game) {
-    try {
-      const stamped = { ...game, _savedAt: Date.now() };
-      const compacted = compactGameForSave(stamped);
-      // Bug #1: Serialize IndexedDB writes via queue so rapid saves never race
-      _idbSaveQueue = _idbSaveQueue
-        .then(() => saveAutosaveToIndexedDB(compacted))
-        .catch(() => {});
-      const jsonStr = JSON.stringify(compacted);
-      if (jsonStr.length <= 4_300_000) {
-        try {
-          localStorage.setItem(SAVE_KEY, jsonStr);
-          if (typeof window !== 'undefined') window.__saveQuotaError = false;
-        } catch (_) {
-          try { localStorage.removeItem(SAVE_KEY); } catch (__) {}
-          if (typeof window !== 'undefined') window.__saveQuotaError = true;
+  function getRecordFromIndexedDB(db, slotNum) {
+    if (!db) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
+        const req = tx.objectStore(SAVE_IDB_STORE).get(slotNum);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      } catch (_) {
+        resolve(null);
+      }
+    });
+  }
+
+  async function saveAutosaveToIndexedDB(compactedOrGame) {
+    if (!compactedOrGame) return false;
+    requestPersistentStorageOnce();
+    const db = await openSavesIndexedDB();
+    if (!db) return false;
+    const built = await buildIndexedDBSlotRecord(0, compactedOrGame, 'Autosave');
+    if (!built.ok) return false;
+    const ok = await putRecordInIndexedDB(db, built.record);
+    if (ok) {
+      writeLocalMetaPointer(built.compacted, 0);
+    }
+    return ok;
+  }
+
+  function flushPendingAutosaveNow() {
+    if (_autosaveDebounceTimer) {
+      clearTimeout(_autosaveDebounceTimer);
+      _autosaveDebounceTimer = null;
+    }
+    const pending = _pendingAutosave;
+    _pendingAutosave = null;
+    if (!pending) return _idbSaveQueue;
+    _lastAutosaveFlushAt = Date.now();
+
+    const task = async () => {
+      const ok = await saveAutosaveToIndexedDB(pending.game);
+      if (pending.activeSlot !== null && Number.isFinite(pending.activeSlot)) {
+        const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(pending.activeSlot)));
+        const db = await openSavesIndexedDB();
+        if (db) {
+          const built = await buildIndexedDBSlotRecord(n, pending.game);
+          if (built.ok) await putRecordInIndexedDB(db, built.record);
         }
-      } else {
-        // Clear stale localStorage snapshot so loadGameAsync never reverts to an older year
-        try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
-        if (typeof window !== 'undefined') window.__saveQuotaError = false;
       }
-      if (game && Number.isFinite(Number(game._activeSaveSlot)) && typeof saveToSlotAsync === 'function') {
-        saveToSlotAsync(Number(game._activeSaveSlot), stamped).catch(() => {});
+      return ok;
+    };
+
+    _idbSaveQueue = _idbSaveQueue.then(task).catch(() => false);
+    const waiters = _pendingWaiters;
+    _pendingWaiters = [];
+    _idbSaveQueue.then((res) => {
+      waiters.forEach((fn) => { try { fn(res); } catch (_) {} });
+    });
+    return _idbSaveQueue;
+  }
+
+  async function flushPendingSaves() {
+    await flushPendingAutosaveNow();
+    try { await _idbSaveQueue; } catch (_) {}
+    return getLastSaveStatus();
+  }
+
+  function hasIndexedDBSupport() {
+    const g = getGlobalScope();
+    const idb = typeof indexedDB !== 'undefined' ? indexedDB : g.indexedDB;
+    return Boolean(idb && typeof idb.open === 'function');
+  }
+
+  function saveGame(game, options = {}) {
+    if (!game || typeof game !== 'object') return;
+    try {
+      const stamped = { ...game, _savedAt: Number(game._savedAt || Date.now()) };
+      const activeSlot = Number.isFinite(Number(stamped._activeSaveSlot))
+        ? Number(stamped._activeSaveSlot)
+        : null;
+
+      if (!hasIndexedDBSupport()) {
+        // Environment without IndexedDB (e.g. headless Node localStorage-only harnesses):
+        // keep synchronous localStorage fallback so loadGame() continues to work.
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const compacted = compactGameForSave(stamped);
+            const rawJson = JSON.stringify(compacted);
+            if (encodeUtf8(rawJson).byteLength <= 4_300_000) {
+              localStorage.setItem(SAVE_KEY, rawJson);
+            }
+          }
+        } catch (_) {}
+        return;
       }
-    } catch { /* storage may be unavailable */ }
+
+      // IndexedDB-first mode: never write full game JSON into localStorage; only store a tiny <1 KB pointer
+      writeLocalMetaPointer(stamped, activeSlot || 0);
+
+      _pendingAutosave = { game: stamped, activeSlot };
+      const now = Date.now();
+      if (options.immediate || (!_autosaveDebounceTimer && (now - _lastAutosaveFlushAt) >= AUTOSAVE_DEBOUNCE_MS)) {
+        flushPendingAutosaveNow();
+        return;
+      }
+      if (_autosaveDebounceTimer) {
+        clearTimeout(_autosaveDebounceTimer);
+      }
+      _autosaveDebounceTimer = setTimeout(() => {
+        flushPendingAutosaveNow();
+      }, AUTOSAVE_DEBOUNCE_MS);
+      if (_autosaveDebounceTimer && typeof _autosaveDebounceTimer.unref === 'function') {
+        _autosaveDebounceTimer.unref();
+      }
+    } catch (_) { /* storage may be unavailable */ }
   }
 
   function loadGame(deps = {}) {
     try {
-      const value = localStorage.getItem(SAVE_KEY)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V188)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V187)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V186)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V185)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V184)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V183)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V182)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V162)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V161)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V160)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V159)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V158)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V157)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V156)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V155)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V154)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V153)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V152)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V151)
-        || localStorage.getItem(PREVIOUS_SAVE_KEY_V150)
-        || localStorage.getItem('partyChairGame.save.v14.6')
-        || localStorage.getItem('partyChairGame.save.v14.5')
-        || localStorage.getItem('partyChairGame.save.v14.4')
-        || localStorage.getItem('partyChairGame.save.v14.3')
-        || localStorage.getItem('partyChairGame.save.v14.2')
-        || localStorage.getItem('partyChairGame.save.v14.1')
-        || localStorage.getItem('partyChairGame.save.v14')
-        || localStorage.getItem('partyChairGame.save.v13')
-        || localStorage.getItem('partyChairGame.save.v12')
-        || localStorage.getItem('partyChairGame.save.v11')
-        || localStorage.getItem('partyChairGame.save.v10')
-        || localStorage.getItem('partyChairGame.save.v9')
-        || localStorage.getItem('partyChairGame.save.v8')
-        || localStorage.getItem('partyChairGame.save.v7')
-        || localStorage.getItem('partyChairGame.save.v6')
-        || localStorage.getItem('partyChairGame.save.v5')
-        || localStorage.getItem('partyChairGame.save.v4')
-        || localStorage.getItem('partyChairGame.save.v3')
-        || localStorage.getItem('partyChairGame.save.v2')
-        || localStorage.getItem(LEGACY_SAVE_KEY);
-      if (!value) return null;
-      const parsed = JSON.parse(value);
-      if (typeof deps.migrateSave === 'function') return deps.migrateSave(parsed);
-      if (typeof deps.normalizeGame === 'function') return deps.normalizeGame(parsed);
-      return parsed;
-    } catch { return null; }
+      const { game } = readLegacyAutosaveDetailsFromLocalStorage(deps);
+      return game || null;
+    } catch (_) {
+      return null;
+    }
   }
 
   async function loadGameAsync(deps = {}) {
-    try { await _idbSaveQueue; } catch (_) {}
-    const lsGame = loadGame(deps);
+    await flushPendingSaves();
+    const { game: lsGame, keysFound } = readLegacyAutosaveDetailsFromLocalStorage(deps);
     const db = await openSavesIndexedDB();
     if (!db) return lsGame;
+
     const normalizeFn = deps.normalizeGame || ((x) => x);
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
-        const req = tx.objectStore(SAVE_IDB_STORE).get(0);
-        req.onsuccess = () => {
-          const rec = req.result;
-          if (rec && rec.game) {
-            const idbGame = normalizeFn(rec.game);
-            if (idbGame) {
-              const idbYr = Number(idbGame.year || 0);
-              const lsYr = Number(lsGame?.year || 0);
-              const idbTs = Number(idbGame._savedAt || rec.savedAt || 0);
-              const lsTs = Number(lsGame?._savedAt || 0);
-              // Bug #1: Prefer IndexedDB whenever newer year OR equal year with newer/equal timestamp
-              if (!lsGame || idbYr > lsYr || (idbYr === lsYr && idbTs >= lsTs)) {
-                resolve(idbGame);
-                return;
-              }
-            }
-          }
-          resolve(lsGame);
-        };
-        req.onerror = () => resolve(lsGame);
-      } catch (_) {
-        resolve(lsGame);
+    const migrateFn = deps.migrateSave || normalizeFn;
+
+    const rec = await getRecordFromIndexedDB(db, 0);
+    let idbGame = null;
+    let idbRaw = null;
+    if (rec) {
+      idbRaw = await decodeSlotRecord(rec);
+      if (idbRaw) {
+        idbGame = migrateFn(idbRaw);
       }
-    });
+    }
+
+    const idbYr = Number(idbGame?.year || 0);
+    const lsYr = Number(lsGame?.year || 0);
+    const idbTs = Number(idbGame?._savedAt || rec?.timestamp || (rec?.savedAt ? Date.parse(rec.savedAt) : 0) || 0);
+    const lsTs = Number(lsGame?._savedAt || 0);
+
+    const idbIsNewerOrEqual = Boolean(idbGame && (!lsGame || idbYr > lsYr || (idbYr === lsYr && idbTs >= lsTs)));
+    const chosen = idbIsNewerOrEqual ? idbGame : lsGame;
+
+    if (!chosen) return null;
+
+    // One-time migration: commit legacy localStorage save (or uncompressed IDB v1 record) into IDB v2,
+    // and clear bloated legacy localStorage keys ONLY after IndexedDB commits.
+    const needsIdbCommit = !idbIsNewerOrEqual
+      || !rec
+      || (rec.encoding !== 'gzip-json' && isCompressionStreamAvailable());
+
+    if (needsIdbCommit) {
+      const built = await buildIndexedDBSlotRecord(0, chosen, 'Autosave');
+      if (built.ok) {
+        const committed = await putRecordInIndexedDB(db, built.record);
+        if (committed) {
+          clearLocalStorageKeys(keysFound);
+          writeLocalMetaPointer(chosen, 0);
+        }
+      }
+    } else if (keysFound.length > 0) {
+      clearLocalStorageKeys(keysFound);
+      writeLocalMetaPointer(chosen, 0);
+    }
+
+    return chosen;
   }
 
   function saveSlotKey(slotNum) {
@@ -504,7 +858,7 @@
     const slots = [];
     for (let i = 1; i <= SAVE_SLOT_COUNT; i++) {
       let raw = null;
-      try { raw = localStorage.getItem(saveSlotKey(i)); } catch (_) {}
+      try { raw = typeof localStorage !== 'undefined' ? localStorage.getItem(saveSlotKey(i)) : null; } catch (_) {}
       if (!raw) {
         slots.push({ slot: i, empty: true });
         continue;
@@ -513,6 +867,7 @@
         const parsed = JSON.parse(raw);
         const meta = parsed._slotMeta || {};
         const g = parsed.game || parsed;
+        const rawBytes = encodeUtf8(raw).byteLength;
         slots.push({
           slot: i,
           empty: false,
@@ -522,7 +877,11 @@
           year: g.year || 2028,
           phase: g.phase || 'organizing',
           savedAt: meta.savedAt || null,
-          version: g.version || '0.17.0',
+          version: g.version || '0.19.0',
+          encoding: 'legacy-localStorage',
+          rawBytes,
+          compressedBytes: rawBytes,
+          storage: 'localStorage (legacy)',
         });
       } catch (_) {
         slots.push({ slot: i, empty: true, corrupted: true });
@@ -532,6 +891,7 @@
   }
 
   async function listSaveSlotsAsync() {
+    await flushPendingSaves();
     const db = await openSavesIndexedDB();
     if (!db) return listSaveSlots();
     return new Promise((resolve) => {
@@ -544,19 +904,24 @@
           const out = [];
           for (let i = 1; i <= SAVE_SLOT_COUNT; i++) {
             const rec = bySlot.get(i);
-            if (rec && rec.game) {
-              const g = rec.game;
+            if (rec && (rec.payload || rec.data || rec.game)) {
+              const g = rec.game || {};
+              const estRawBytes = Number(rec.rawBytes) || (typeof rec.data === 'string' ? encodeUtf8(rec.data).byteLength : 0) || (rec.game ? encodeUtf8(JSON.stringify(rec.game)).byteLength : 0);
+              const estCompBytes = Number(rec.compressedBytes) || (rec.payload ? rec.payload.byteLength : estRawBytes);
               out.push({
                 slot: i,
                 empty: false,
                 label: rec.label || g.player?.name || `Slot ${i}`,
-                partyName: g.player?.name || 'Party',
-                partyColor: g.player?.color || '#3478c8',
-                year: g.year || 2028,
-                phase: g.phase || 'organizing',
+                partyName: rec.partyName || g.player?.name || 'Party',
+                partyColor: rec.partyColor || g.player?.color || '#3478c8',
+                year: rec.year || g.year || 2028,
+                phase: rec.phase || g.phase || 'organizing',
                 savedAt: rec.savedAt || null,
-                version: g.version || '0.17.0',
-                storage: 'IndexedDB',
+                version: rec.version || g.version || '0.19.0',
+                encoding: rec.encoding || 'raw-object',
+                rawBytes: estRawBytes,
+                compressedBytes: estCompBytes,
+                storage: rec.encoding === 'gzip-json' ? 'IndexedDB (gzip)' : 'IndexedDB',
               });
             } else {
               out.push(fallback[i - 1] || { slot: i, empty: true });
@@ -574,68 +939,42 @@
   function saveToSlot(slotNum, game, label = '') {
     if (!game) return false;
     const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-    const payload = {
-      _slotMeta: {
-        slot: n,
-        label: (label || game.player?.name || `Slot ${n}`).trim(),
-        savedAt: new Date().toISOString(),
-      },
-      game: compactGameForSave(game),
-    };
-    try {
-      localStorage.setItem(saveSlotKey(n), JSON.stringify(payload));
-      saveGame(game);
-      return true;
-    } catch (_) {
-      try {
-        const ultraPayload = { ...payload, game: compactGameForSave(game, { ultra: true }) };
-        localStorage.setItem(saveSlotKey(n), JSON.stringify(ultraPayload));
-        saveGame(game);
-        return true;
-      } catch (__) {
-        return false;
-      }
-    }
+    saveGame({ ...game, _activeSaveSlot: n }, { immediate: true });
+    return true;
   }
 
-  async function saveToSlotAsync(slotNum, game, label = '') {
+  async function saveToSlotAsync(slotNum, game, label = '', options = {}) {
     if (!game) return false;
+    requestPersistentStorageOnce();
+    await flushPendingSaves();
     const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-    const compact = compactGameForSave(game);
-    game._activeSaveSlot = n;
-    compact._activeSaveSlot = n;
-    const record = {
-      slot: n,
-      label: (label || game.player?.name || `Slot ${n}`).trim(),
-      savedAt: new Date().toISOString(),
-      game: compact,
-    };
+    const stamped = { ...game, _activeSaveSlot: n, _savedAt: Number(game._savedAt || Date.now()) };
+    const built = await buildIndexedDBSlotRecord(n, stamped, label, options);
+    if (!built.ok) return false;
+
     const db = await openSavesIndexedDB();
-    if (!db) return saveToSlot(n, compact, label);
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(SAVE_IDB_STORE, 'readwrite');
-        tx.objectStore(SAVE_IDB_STORE).put(record);
-        tx.oncomplete = () => {
-          try { saveGame(compact); } catch (_) {}
-          resolve(true);
-        };
-        tx.onerror = () => resolve(saveToSlot(n, compact, label));
-      } catch (_) {
-        resolve(saveToSlot(n, compact, label));
-      }
-    });
+    if (!db) return false;
+
+    const committed = await putRecordInIndexedDB(db, built.record);
+    if (committed) {
+      game._activeSaveSlot = n;
+      // Clear any old bloated legacy slot entry in localStorage once IDB commit succeeds
+      try { if (typeof localStorage !== 'undefined') localStorage.removeItem(saveSlotKey(n)); } catch (_) {}
+      writeLocalMetaPointer(built.compacted, n);
+      await saveAutosaveToIndexedDB(built.compacted);
+    }
+    return committed;
   }
 
   function loadFromSlot(slotNum, deps = {}) {
     const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
-    const normalizeFn = deps.normalizeGame || ((x) => x);
+    const normalizeFn = deps.migrateSave || deps.normalizeGame || ((x) => x);
     try {
-      const raw = localStorage.getItem(saveSlotKey(n));
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(saveSlotKey(n)) : null;
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       const loaded = normalizeFn(parsed.game || parsed);
-      if (loaded) saveGame(loaded);
+      if (loaded) loaded._activeSaveSlot = n;
       return loaded;
     } catch (_) {
       return null;
@@ -643,35 +982,46 @@
   }
 
   async function loadFromSlotAsync(slotNum, deps = {}) {
+    await flushPendingSaves();
     const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
+    const normalizeFn = deps.migrateSave || deps.normalizeGame || ((x) => x);
     const db = await openSavesIndexedDB();
     if (!db) return loadFromSlot(n, deps);
-    const normalizeFn = deps.normalizeGame || ((x) => x);
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(SAVE_IDB_STORE, 'readonly');
-        const req = tx.objectStore(SAVE_IDB_STORE).get(n);
-        req.onsuccess = () => {
-          const rec = req.result;
-          if (rec && rec.game) {
-            const loaded = normalizeFn(rec.game);
-            if (loaded) loaded._activeSaveSlot = n;
-            resolve(loaded);
-          } else {
-            resolve(loadFromSlot(n, deps));
+
+    const rec = await getRecordFromIndexedDB(db, n);
+    if (rec) {
+      const decoded = await decodeSlotRecord(rec);
+      if (decoded) {
+        const loaded = normalizeFn(decoded);
+        if (loaded) {
+          loaded._activeSaveSlot = n;
+          // Upgrade uncompressed IDB v1 slot to compressed IDB v2 transparently
+          if (rec.encoding !== 'gzip-json' && isCompressionStreamAvailable()) {
+            const built = await buildIndexedDBSlotRecord(n, loaded, rec.label || '');
+            if (built.ok) await putRecordInIndexedDB(db, built.record);
           }
-        };
-        req.onerror = () => resolve(loadFromSlot(n, deps));
-      } catch (_) {
-        resolve(loadFromSlot(n, deps));
+          try { if (typeof localStorage !== 'undefined') localStorage.removeItem(saveSlotKey(n)); } catch (_) {}
+          return loaded;
+        }
       }
-    });
+    }
+
+    // Fallback one-time migration from legacy localStorage manual slot
+    const legacy = loadFromSlot(n, deps);
+    if (legacy) {
+      const migratedOk = await saveToSlotAsync(n, legacy);
+      if (migratedOk) {
+        try { if (typeof localStorage !== 'undefined') localStorage.removeItem(saveSlotKey(n)); } catch (_) {}
+      }
+      return legacy;
+    }
+    return null;
   }
 
   function deleteSaveSlot(slotNum) {
     const n = Math.max(1, Math.min(SAVE_SLOT_COUNT, Math.round(Number(slotNum) || 1)));
     try {
-      localStorage.removeItem(saveSlotKey(n));
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(saveSlotKey(n));
       return true;
     } catch (_) {
       return false;
@@ -695,17 +1045,114 @@
     });
   }
 
+  async function exportSaveToGzipAsync(game, options = {}) {
+    if (!game || typeof game !== 'object') return null;
+    const encoded = await encodeGameRecordPayload(game, options);
+    if (!encoded.ok) return encoded;
+    const g = encoded.compacted;
+    const partySlug = String(g.player?.name || 'campaign')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'campaign';
+    const year = g.year || 2028;
+    const isGz = encoded.encoding === 'gzip-json' && encoded.payload;
+    const filename = `party-chair-${partySlug}-${year}${isGz ? '.cbsave.gz' : '.json'}`;
+    const bytes = isGz ? encoded.payload : encodeUtf8(encoded.data);
+    return {
+      ok: true,
+      filename,
+      mimeType: isGz ? 'application/gzip' : 'application/json',
+      bytes,
+      byteLength: bytes.byteLength,
+      rawBytes: encoded.rawBytes,
+      compressedBytes: bytes.byteLength,
+      encoding: encoded.encoding,
+    };
+  }
+
+  async function importSaveFromFileAsync(input, deps = {}) {
+    try {
+      let jsonStr = '';
+      let format = 'json';
+      let u8 = toUint8Array(input);
+      if (typeof input === 'string') {
+        jsonStr = input;
+      } else if (input && typeof input.arrayBuffer === 'function') {
+        const buf = await input.arrayBuffer();
+        u8 = new Uint8Array(buf);
+      }
+
+      if (u8) {
+        const hasGzipMagic = u8.byteLength >= 2 && u8[0] === 0x1f && u8[1] === 0x8b;
+        if (hasGzipMagic) {
+          format = 'cbsave.gz';
+          const rawBytes = await gzipDecompressBytes(u8);
+          jsonStr = decodeUtf8(rawBytes);
+        } else {
+          jsonStr = decodeUtf8(u8);
+        }
+      }
+
+      if (!jsonStr || !jsonStr.trim()) {
+        return { ok: false, error: 'Empty save file.' };
+      }
+
+      const parsed = JSON.parse(jsonStr);
+      const candidate = (parsed && typeof parsed === 'object' && parsed._exportFormat === 'coalition-builder-save-backup' && parsed.game)
+        ? parsed.game
+        : parsed;
+
+      if (!candidate || typeof candidate !== 'object' || (!candidate.player && !candidate.playerParty)) {
+        return { ok: false, error: 'File does not contain a valid Party Chair campaign save.' };
+      }
+
+      const g = getGlobalScope();
+      const sm = g.SaveMigrations || (typeof require === 'function' ? (() => { try { return require('./save-migrations.js'); } catch (_) { return null; } })() : null);
+      let migrated = (sm && typeof sm.migrateSaveObject === 'function') ? sm.migrateSaveObject(candidate) : candidate;
+      const normFn = deps.migrateSave || deps.normalizeGame;
+      if (typeof normFn === 'function') {
+        const normed = normFn(migrated);
+        if (normed && typeof normed === 'object') migrated = normed;
+      }
+
+      return {
+        ok: true,
+        game: migrated,
+        format,
+        rawBytes: encodeUtf8(jsonStr).byteLength,
+      };
+    } catch (err) {
+      return { ok: false, error: `Import failed: ${err?.message || 'Invalid save archive'}` };
+    }
+  }
+
+  // Flush debounced IndexedDB saves on pagehide if supported
+  try {
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('pagehide', () => { flushPendingAutosaveNow(); });
+    }
+  } catch (_) {}
+
   const PersistenceCore = {
     SAVE_KEY,
+    ALL_AUTOSAVE_KEYS,
     SAVE_IDB_NAME,
     SAVE_IDB_VERSION,
     SAVE_IDB_STORE,
     SAVE_SLOT_COUNT,
     SAVE_SLOT_PREFIX,
+    MAX_SAVE_RAW_BYTES,
+    WARN_SAVE_RAW_BYTES,
+    AUTOSAVE_DEBOUNCE_MS,
     requestPersistentStorageOnce,
+    getStorageEstimateAsync,
+    getLastSaveStatus,
     compactGameForSave,
+    encodeGameRecordPayload,
+    decodeSlotRecord,
     openSavesIndexedDB,
     saveAutosaveToIndexedDB,
+    flushPendingSaves,
     saveGame,
     loadGame,
     loadGameAsync,
@@ -718,6 +1165,8 @@
     loadFromSlotAsync,
     deleteSaveSlot,
     deleteSaveSlotAsync,
+    exportSaveToGzipAsync,
+    importSaveFromFileAsync,
   };
 
   if (typeof window !== 'undefined') window.PersistenceCore = PersistenceCore;

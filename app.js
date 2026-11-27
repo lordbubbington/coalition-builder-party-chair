@@ -51,6 +51,8 @@ let primaryFilter = 'senate';
 let primaryStatewideState = null;
 let saveSlotsModalOpen = false;
 let cachedSaveSlots = null;
+let cachedStorageEstimate = null;
+let saveSlotStatusMsg = null;
 let primaryArchiveOpen = false;
 let primaryArchiveParty = 'people';
 let primaryArchiveYear = null;
@@ -10764,34 +10766,67 @@ function renderPrimaryArchiveModalMarkup() {
   `;
 }
 
+function formatSaveSizeMb(bytes) {
+  const mb = Number(bytes || 0) / (1024 * 1024);
+  return `${mb.toFixed(2)} MB`;
+}
+
 function renderSaveSlotsModalMarkup() {
   if (!saveSlotsModalOpen) return '';
   const slots = cachedSaveSlots || (window.PartyChairEngine?.listSaveSlots ? window.PartyChairEngine.listSaveSlots() : []);
+  const saveStatus = window.PartyChairEngine?.getLastSaveStatus ? window.PartyChairEngine.getLastSaveStatus() : null;
+  const est = cachedStorageEstimate;
+  let quotaSummary = 'IndexedDB + Gzip Active (100 MB per-slot cap)';
+  if (est && est.supported && Number.isFinite(est.usage)) {
+    const usedMb = (est.usage / (1024 * 1024)).toFixed(2);
+    const quotaText = est.quota ? `${(est.quota / (1024 * 1024 * 1024)).toFixed(2)} GB` : 'Unknown';
+    quotaSummary = `Storage Quota: ${usedMb} MB used of ${quotaText}`;
+  }
+  const hasWarnSlot = Boolean(saveStatus?.sizeWarning) || slots.some((s) => !s.empty && Number(s.rawBytes || 0) >= 80 * 1024 * 1024);
+  const hasLimitError = Boolean(saveStatus?.limitExceeded || (typeof window !== 'undefined' && window.__saveSizeLimitExceeded));
   return `
     <div class="v167-save-slots-modal" id="save-slots-backdrop">
       <div class="v167-save-slots-card" role="dialog" aria-label="Local Save Slots">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div>
-            <div class="eyebrow">Local IndexedDB · 5 Slots (100MB+ Ready)</div>
+            <div class="eyebrow">Local IndexedDB v2 · Gzip · 5 Slots (100 MB Ready)</div>
             <h2 style="margin:2px 0 0">Campaign Save Slots</h2>
           </div>
           <button type="button" class="button button-small" id="close-save-slots">Close</button>
         </div>
-        <p class="map-summary" style="margin-bottom:10px">Save and load up to 5 local campaigns right in your browser or desktop app.</p>
-        ${/* [v0.18.5 SAVE-MIGRATIONS] */ window.SaveMigrations?.renderBackupButtonsMarkup ? window.SaveMigrations.renderBackupButtonsMarkup(Boolean(game)) : ''}
+        <p class="map-summary" style="margin-bottom:8px">Save and load up to 5 compressed local campaigns in IndexedDB.</p>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:rgba(15,23,42,0.45);border:1px solid var(--line);border-radius:6px;">
+          ${safe(quotaSummary)}
+        </div>
+        ${hasLimitError ? `<div style="font-size:12px;color:#fecaca;background:rgba(127,29,29,0.5);border:1px solid #ef4444;border-radius:6px;padding:6px 10px;margin-bottom:8px;">Save exceeds the 100.00 MB uncompressed save ceiling and could not be written.</div>` : ''}
+        ${hasWarnSlot && !hasLimitError ? `<div style="font-size:12px;color:#fde68a;background:rgba(120,53,15,0.45);border:1px solid #f59e0b;border-radius:6px;padding:6px 10px;margin-bottom:8px;">Warning: A save is approaching the 100.00 MB uncompressed ceiling (>= 80.00 MB raw).</div>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px;padding:10px 12px;background:rgba(15,23,42,0.55);border:1px solid rgba(148,163,184,0.25);border-radius:8px;">
+          <div style="flex:1;min-width:160px;font-size:12px;color:#cbd5e1;">
+            <b>Compressed Backup &amp; Transfer</b><br/>
+            <span style="opacity:0.8;">Export as .cbsave.gz or import .cbsave.gz / .json files.</span>
+          </div>
+          ${game ? `<button type="button" class="button button-small button-gold" id="idb-export-save-btn">Export (.cbsave.gz)</button>` : ''}
+          <button type="button" class="button button-small" id="idb-import-save-btn">Import (.cbsave.gz / .json)</button>
+          <input type="file" id="idb-import-save-input" accept=".cbsave.gz,.gz,.json,application/gzip,application/json" style="display:none;" />
+          <div id="idb-import-status" style="width:100%;font-size:11.5px;color:${saveSlotStatusMsg?.error ? '#fca5a5' : '#86efac'};display:${saveSlotStatusMsg ? 'block' : 'none'};">${saveSlotStatusMsg ? safe(saveSlotStatusMsg.text) : ''}</div>
+        </div>
         ${slots.map((s) => {
           const ts = s.savedAt ? new Date(s.savedAt).toLocaleString() : '';
+          const sizeLabel = (!s.empty && Number.isFinite(Number(s.rawBytes)))
+            ? ` · Raw: ${formatSaveSizeMb(s.rawBytes)} · Stored: ${formatSaveSizeMb(s.compressedBytes ?? s.rawBytes)} (${safe(s.encoding === 'gzip-json' ? 'gzip' : (s.encoding || 'json'))})`
+            : '';
           return `
             <div class="v167-save-slot-row">
               <div>
                 <b>Slot ${s.slot}: ${s.empty ? 'Empty Slot' : safe(s.partyName)}</b>
                 <div style="font-size:12px;color:var(--muted)">
-                  ${s.empty ? 'No campaign saved yet.' : `${s.year} · ${safe(s.phase)} · Saved ${safe(ts)}`}
+                  ${s.empty ? 'No campaign saved yet.' : `${s.year} · ${safe(s.phase)} · Saved ${safe(ts)}${sizeLabel}`}
                 </div>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 ${game ? `<button type="button" class="button button-small button-gold" data-save-slot="${s.slot}">${s.empty ? 'Save' : 'Overwrite'}</button>` : ''}
                 ${!s.empty ? `<button type="button" class="button button-small" data-load-slot="${s.slot}">Load</button>` : ''}
+                ${!s.empty ? `<button type="button" class="button button-small" data-export-slot="${s.slot}">Export (.cbsave.gz)</button>` : ''}
                 ${!s.empty ? `<button type="button" class="button button-small" data-delete-slot="${s.slot}">Delete</button>` : ''}
               </div>
             </div>
@@ -12532,11 +12567,43 @@ function bind() {
     else if (act === 'finish') dispatchAction('finish-presidential-primary', {});
     render();
   }));
-  document.querySelector('[data-dup-id="open-save-slots"]')?.addEventListener('click', async () => {
-    saveSlotsModalOpen = true;
+  const refreshSaveSlotsState = async () => {
     if (window.PartyChairEngine?.listSaveSlotsAsync) {
       cachedSaveSlots = await window.PartyChairEngine.listSaveSlotsAsync();
     }
+    if (window.PartyChairEngine?.getStorageEstimateAsync) {
+      cachedStorageEstimate = await window.PartyChairEngine.getStorageEstimateAsync();
+    }
+  };
+  const triggerGzipSaveDownload = async (targetGame) => {
+    if (!targetGame || !window.PartyChairEngine?.exportSaveToGzipAsync) return;
+    const pkg = await window.PartyChairEngine.exportSaveToGzipAsync(targetGame);
+    if (!pkg || !pkg.ok) {
+      saveSlotStatusMsg = { error: true, text: pkg?.error || 'Export failed.' };
+      render();
+      return;
+    }
+    if (typeof document !== 'undefined' && typeof Blob !== 'undefined' && typeof URL !== 'undefined') {
+      const blob = new Blob([pkg.bytes], { type: pkg.mimeType || 'application/gzip' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = pkg.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 1000);
+    }
+    saveSlotStatusMsg = {
+      error: false,
+      text: `Exported ${pkg.filename} (Raw: ${formatSaveSizeMb(pkg.rawBytes)}, Stored: ${formatSaveSizeMb(pkg.compressedBytes)}).`,
+    };
+    render();
+  };
+  document.querySelector('[data-dup-id="open-save-slots"]')?.addEventListener('click', async () => {
+    saveSlotsModalOpen = true;
+    saveSlotStatusMsg = null;
+    await refreshSaveSlotsState();
     render();
   });
   document.querySelector('#close-save-slots')?.addEventListener('click', () => {
@@ -12552,8 +12619,14 @@ function bind() {
   document.querySelectorAll('[data-save-slot]').forEach((btn) => btn.addEventListener('click', async () => {
     const slot = Number(btn.dataset.saveSlot);
     if (game && window.PartyChairEngine?.saveToSlotAsync) {
-      await window.PartyChairEngine.saveToSlotAsync(slot, game);
-      cachedSaveSlots = await window.PartyChairEngine.listSaveSlotsAsync();
+      const ok = await window.PartyChairEngine.saveToSlotAsync(slot, game);
+      if (!ok) {
+        const st = window.PartyChairEngine?.getLastSaveStatus ? window.PartyChairEngine.getLastSaveStatus() : null;
+        saveSlotStatusMsg = { error: true, text: st?.error === 'SAVE_SIZE_LIMIT_EXCEEDED' ? 'Save exceeds 100 MB ceiling.' : 'Failed to save slot.' };
+      } else {
+        saveSlotStatusMsg = { error: false, text: `Saved to Slot ${slot}.` };
+      }
+      await refreshSaveSlotsState();
       render();
     }
   }));
@@ -12564,21 +12637,51 @@ function bind() {
       if (loaded) {
         game = loaded;
         saveSlotsModalOpen = false;
+        saveSlotStatusMsg = null;
         render();
       }
+    }
+  }));
+  document.querySelectorAll('[data-export-slot]').forEach((btn) => btn.addEventListener('click', async () => {
+    const slot = Number(btn.dataset.exportSlot);
+    if (window.PartyChairEngine?.loadFromSlotAsync) {
+      const loaded = await window.PartyChairEngine.loadFromSlotAsync(slot);
+      if (loaded) await triggerGzipSaveDownload(loaded);
     }
   }));
   document.querySelectorAll('[data-delete-slot]').forEach((btn) => btn.addEventListener('click', async () => {
     const slot = Number(btn.dataset.deleteSlot);
     if (window.PartyChairEngine?.deleteSaveSlotAsync) {
       await window.PartyChairEngine.deleteSaveSlotAsync(slot);
-      cachedSaveSlots = await window.PartyChairEngine.listSaveSlotsAsync();
+      await refreshSaveSlotsState();
       render();
     }
   }));
-  // [v0.18.5 SAVE-MIGRATIONS] Bind Save Backup Export/Import buttons
-  if (window.SaveMigrations?.bindBackupUiEvents) {
-    window.SaveMigrations.bindBackupUiEvents(() => game, (g) => { game = g; }, window.PartyChairEngine?.saveGame || null, render, () => { saveSlotsModalOpen = false; });
+  document.querySelector('#idb-export-save-btn')?.addEventListener('click', async () => {
+    if (game) await triggerGzipSaveDownload(game);
+  });
+  const idbImportBtn = document.querySelector('#idb-import-save-btn');
+  const idbImportInput = document.querySelector('#idb-import-save-input');
+  if (idbImportBtn && idbImportInput) {
+    idbImportBtn.addEventListener('click', () => idbImportInput.click());
+    idbImportInput.addEventListener('change', async (ev) => {
+      const file = ev.target?.files?.[0];
+      if (!file || !window.PartyChairEngine?.importSaveFromFileAsync) return;
+      const buf = await file.arrayBuffer();
+      const res = await window.PartyChairEngine.importSaveFromFileAsync(new Uint8Array(buf));
+      if (!res?.ok) {
+        saveSlotStatusMsg = { error: true, text: res?.error || 'Import failed.' };
+        render();
+        return;
+      }
+      game = res.game;
+      if (window.PartyChairEngine?.saveGame) window.PartyChairEngine.saveGame(game, { immediate: true });
+      if (window.PartyChairEngine?.flushPendingSaves) await window.PartyChairEngine.flushPendingSaves();
+      saveSlotsModalOpen = false;
+      saveSlotStatusMsg = null;
+      await refreshSaveSlotsState();
+      render();
+    });
   }
   // [v0.18.4 COALITION-POLITICS] Bind Proposals #5, #6, #9 UI listeners
   if (window.CoalitionPoliticsSystem?.bindEvents) {

@@ -11,6 +11,7 @@ function seededUnit(seedStr) {
 const { BILLS, CONVENTIONS, EVENTS, FACTIONS, MEMBERS, PARTY_ARCHETYPES, REGIONS, STATES, FACTIONS_CATALOG, FACTION_NAME_TO_ID, FACTION_STATE_MATRIX, FACTION_NATIONAL_TOTALS, getFactionCohesion, getFactionCohesionLabel, getFactionGrowthProfile, calculateFactionRegistrationLift } = (window.PartyChairData || {});
 
 const SAVE_KEY = 'partyChairGame.save.v19.0';
+const PREVIOUS_SAVE_KEY_V1911 = 'partyChairGame.save.v19.1.1';
 const PREVIOUS_SAVE_KEY_V1894 = 'partyChairGame.save.v18.9.4';
 const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.9.1';
 const PREVIOUS_SAVE_KEY_V188 = 'partyChairGame.save.v18.8';
@@ -23338,10 +23339,32 @@ async function loadGameAsync() {
   const pc = getPersistenceCore();
   return pc ? pc.loadGameAsync({ normalizeGame, migrateSave }) : loadGame();
 }
-function saveGame(game) {
+function saveGame(game, options = {}) {
   const pc = getPersistenceCore();
-  if (pc) { pc.saveGame(game); return; }
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch {}
+  if (pc) { pc.saveGame(game, options); return; }
+  if (typeof indexedDB === 'undefined') {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(compactGameForSave(game))); } catch {}
+  }
+}
+async function flushPendingSaves() {
+  const pc = getPersistenceCore();
+  return pc ? pc.flushPendingSaves() : null;
+}
+async function getStorageEstimateAsync() {
+  const pc = getPersistenceCore();
+  return pc ? pc.getStorageEstimateAsync() : { supported: false, usage: null, quota: null };
+}
+function getLastSaveStatus() {
+  const pc = getPersistenceCore();
+  return pc ? pc.getLastSaveStatus() : null;
+}
+async function exportSaveToGzipAsync(game, options = {}) {
+  const pc = getPersistenceCore();
+  return pc ? pc.exportSaveToGzipAsync(game, options) : null;
+}
+async function importSaveFromFileAsync(input) {
+  const pc = getPersistenceCore();
+  return pc ? pc.importSaveFromFileAsync(input, { normalizeGame, migrateSave }) : { ok: false, error: 'PersistenceCore unavailable.' };
 }
 
 function normalizeGame(parsed) {
@@ -24174,296 +24197,37 @@ function migrateVoterModelToOneToOne(vm) {
 // [v0.18.5 CORE-MODULARIZATION] Thin delegating wrappers to window.PersistenceCore
 function getPersistenceCore() { return _tryLoadCoreModule("PersistenceCore", "persistence-core.js"); }
 function loadGame() {
+  const pc = getPersistenceCore();
+  if (pc && typeof pc.loadGame === 'function') {
+    return pc.loadGame({ normalizeGame, migrateSave });
+  }
   try {
-    const value = localStorage.getItem(SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V1894) || localStorage.getItem(PREVIOUS_SAVE_KEY) || localStorage.getItem(PREVIOUS_SAVE_KEY_V188) || localStorage.getItem(PREVIOUS_SAVE_KEY_V187) || localStorage.getItem(PREVIOUS_SAVE_KEY_V186) || localStorage.getItem(PREVIOUS_SAVE_KEY_V185) || localStorage.getItem(PREVIOUS_SAVE_KEY_V184) || localStorage.getItem(PREVIOUS_SAVE_KEY_V183) || localStorage.getItem(PREVIOUS_SAVE_KEY_V182) || localStorage.getItem(PREVIOUS_SAVE_KEY_V162) || localStorage.getItem(PREVIOUS_SAVE_KEY_V161) || localStorage.getItem(PREVIOUS_SAVE_KEY_V160) || localStorage.getItem(PREVIOUS_SAVE_KEY_V159) || localStorage.getItem(PREVIOUS_SAVE_KEY_V158) || localStorage.getItem(PREVIOUS_SAVE_KEY_V157) || localStorage.getItem(PREVIOUS_SAVE_KEY_V156) || localStorage.getItem(PREVIOUS_SAVE_KEY_V155) || localStorage.getItem(PREVIOUS_SAVE_KEY_V154) || localStorage.getItem(PREVIOUS_SAVE_KEY_V153) || localStorage.getItem(PREVIOUS_SAVE_KEY_V152) || localStorage.getItem(PREVIOUS_SAVE_KEY_V151) || localStorage.getItem(PREVIOUS_SAVE_KEY_V150) || localStorage.getItem('partyChairGame.save.v14.6') || localStorage.getItem('partyChairGame.save.v14.5') || localStorage.getItem('partyChairGame.save.v14.4') || localStorage.getItem('partyChairGame.save.v14.3') || localStorage.getItem('partyChairGame.save.v14.2') || localStorage.getItem('partyChairGame.save.v14.1') || localStorage.getItem('partyChairGame.save.v14') || localStorage.getItem('partyChairGame.save.v13') || localStorage.getItem('partyChairGame.save.v12') || localStorage.getItem('partyChairGame.save.v11') || localStorage.getItem('partyChairGame.save.v10') || localStorage.getItem('partyChairGame.save.v9') || localStorage.getItem('partyChairGame.save.v8') || localStorage.getItem('partyChairGame.save.v7') || localStorage.getItem('partyChairGame.save.v6') || localStorage.getItem('partyChairGame.save.v5') || localStorage.getItem('partyChairGame.save.v4') || localStorage.getItem('partyChairGame.save.v3') || localStorage.getItem('partyChairGame.save.v2') || localStorage.getItem(LEGACY_SAVE_KEY);
-    if (!value) return null;
-    return migrateSave(JSON.parse(value));
+    const keys = [SAVE_KEY, PREVIOUS_SAVE_KEY_V1911, PREVIOUS_SAVE_KEY_V1894, PREVIOUS_SAVE_KEY, PREVIOUS_SAVE_KEY_V188, PREVIOUS_SAVE_KEY_V187, PREVIOUS_SAVE_KEY_V186, PREVIOUS_SAVE_KEY_V185, PREVIOUS_SAVE_KEY_V184, PREVIOUS_SAVE_KEY_V183, PREVIOUS_SAVE_KEY_V182, PREVIOUS_SAVE_KEY_V162, PREVIOUS_SAVE_KEY_V161, PREVIOUS_SAVE_KEY_V160, PREVIOUS_SAVE_KEY_V159, PREVIOUS_SAVE_KEY_V158, PREVIOUS_SAVE_KEY_V157, PREVIOUS_SAVE_KEY_V156, PREVIOUS_SAVE_KEY_V155, PREVIOUS_SAVE_KEY_V154, PREVIOUS_SAVE_KEY_V153, PREVIOUS_SAVE_KEY_V152, PREVIOUS_SAVE_KEY_V151, PREVIOUS_SAVE_KEY_V150, 'partyChairGame.save.v14.6', 'partyChairGame.save.v14.5', 'partyChairGame.save.v14.4', 'partyChairGame.save.v14.3', 'partyChairGame.save.v14.2', 'partyChairGame.save.v14.1', 'partyChairGame.save.v14', 'partyChairGame.save.v13', 'partyChairGame.save.v12', 'partyChairGame.save.v11', 'partyChairGame.save.v10', 'partyChairGame.save.v9', 'partyChairGame.save.v8', 'partyChairGame.save.v7', 'partyChairGame.save.v6', 'partyChairGame.save.v5', 'partyChairGame.save.v4', 'partyChairGame.save.v3', 'partyChairGame.save.v2', LEGACY_SAVE_KEY];
+    for (let i = 0; i < keys.length; i++) {
+      const value = localStorage.getItem(keys[i]);
+      if (!value) continue;
+      const parsed = JSON.parse(value);
+      if (parsed && parsed._metaPointer && parsed.backend === 'idb-v2') continue;
+      return migrateSave(parsed);
+    }
+    return null;
   } catch { return null; }
 }
 function compactGameForSave(game, options = {}) {
+  const pc = getPersistenceCore();
+  if (pc && typeof pc.compactGameForSave === 'function') {
+    return pc.compactGameForSave(game, options);
+  }
   if (!game || typeof game !== 'object') return game;
-  const ultra = Boolean(options && options.ultra);
   const copy = { ...game };
-  // Bug #3: Prune defeated/retired non-sitting politicians to prevent unbounded multi-MB bloat
-  if (Array.isArray(copy.politicians)) {
-    const sitIds = new Set((copy.sittingMembers || []).map((m) => m && m.id).filter(Boolean));
-    const activeIds = new Set([
-      ...(copy.candidates || []).map((c) => c && c.id),
-      ...(copy.offers || []).map((o) => o && o.id),
-      ...(copy.recruitedCandidates || []),
-    ].filter(Boolean));
-    const filtered = copy.politicians.filter((p) => {
-      if (!p || sitIds.has(p.id)) return false;
-      if (activeIds.has(p.id) || p.isFormerPresident) return true;
-      if (p.retired || p.isRetired || p.defeated || Number(p.age || 50) >= 82) return false;
-      return true;
-    });
-    const maxNonSitting = ultra ? 80 : 160;
-    copy.politicians = filtered.length > maxNonSitting
-      ? filtered.slice().sort((a, b) => Number(b.fame || 0) - Number(a.fame || 0)).slice(0, maxNonSitting)
-      : filtered;
-    copy._politiciansCompacted = true;
-  }
-  if (copy.forecasters) {
-    delete copy.forecasters;
-  }
+  delete copy.forecasters;
   delete copy._forecastCache;
   delete copy._deferredDistricts;
   delete copy._forecastOptions;
   delete copy._forecastCacheHits;
-  // Clear completed or inactive electionNight timelines (~2.5-3 MB savings)
   if (copy.electionNight && (copy.phase !== 'election-night' || copy.electionNight.completed || !copy.electionNight.active)) {
     copy.electionNight = null;
   }
-  // Drop primaryResults outside Organizing (or in ultra mode)
-  if ((copy.phase !== 'organizing' || ultra) && copy.primaryResults) {
-    copy.primaryResults = [];
-  }
-  // Drop top-level presidentialResults outside active results/election-night views
-  if (copy.phase !== 'complete' && copy.phase !== 'election-night' && copy.presidentialResults) {
-    delete copy.presidentialResults;
-  }
-  const slimElectionEntry = (el, keepSummaryDetails = false) => {
-    if (!el || typeof el !== 'object') return el;
-    const slim = { ...el };
-    delete slim.districts;
-    delete slim.districtResults;
-    delete slim.houseResults;
-    delete slim.timeline;
-    delete slim.races;
-    delete slim.statewideByState;
-    if (!keepSummaryDetails || ultra) {
-      delete slim.states;
-      delete slim.presidentialResults;
-      delete slim.statewideResults;
-    }
-    if (slim.legislature && typeof slim.legislature === 'object') {
-      slim.legislature = {
-        seats: slim.legislature.seats,
-        winner: slim.legislature.winner,
-        totalSeats: slim.legislature.totalSeats,
-        flips: slim.legislature.flips,
-      };
-    }
-    if (slim.presidential && typeof slim.presidential === 'object' && (!keepSummaryDetails || ultra)) {
-      slim.presidential = {
-        winner: slim.presidential.winner,
-        winnerName: slim.presidential.winnerName,
-        ev: slim.presidential.ev,
-        demEv: slim.presidential.demEv,
-        repEv: slim.presidential.repEv,
-        electoralVotes: slim.presidential.electoralVotes,
-        popularVote: slim.presidential.popularVote,
-        shares: slim.presidential.shares,
-      };
-    }
-    return slim;
-  };
-  if (copy.lastElection && typeof copy.lastElection === 'object') {
-    copy.lastElection = slimElectionEntry(copy.lastElection, copy.phase === 'complete' && !ultra);
-  }
-  if (Array.isArray(copy.elections) && copy.elections.length > 0) {
-    const srcElections = ultra && copy.elections.length > 3 ? copy.elections.slice(-3) : copy.elections;
-    copy.elections = srcElections.map((el) => slimElectionEntry(el, false));
-  }
-  const maxLog = ultra ? 20 : 60;
-  if (Array.isArray(copy.yearLog) && copy.yearLog.length > maxLog) {
-    copy.yearLog = copy.yearLog.slice(-maxLog);
-  }
-  // v0.16.9 (Fix #11): Compact older simulatedPrimaries (>2 cycles old) while preserving Archive UI & map colors
-  if (copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
-    const years = Object.keys(copy.simulatedPrimaries).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
-    const keepFullYears = new Set(years.slice(-2).map(String));
-    const compactedPrimaries = {};
-    Object.entries(copy.simulatedPrimaries).forEach(([yr, byParty]) => {
-      if (keepFullYears.has(String(yr)) || !byParty || typeof byParty !== 'object') {
-        compactedPrimaries[yr] = byParty;
-        return;
-      }
-      const slimPartyMap = {};
-      Object.entries(byParty).forEach(([pid, rec]) => {
-        if (!rec || typeof rec !== 'object') return;
-        const slimStateResults = {};
-        Object.entries(rec.stateResults || {}).forEach(([stId, sr]) => {
-          slimStateResults[stId] = {
-            stateId: stId,
-            date: sr?.date,
-            winnerId: sr?.winnerId,
-            winnerName: sr?.winnerName,
-            winnerColor: sr?.winnerColor,
-            totalDelegates: sr?.totalDelegates,
-          };
-        });
-        slimPartyMap[pid] = {
-          partyId: rec.partyId || pid,
-          year: rec.year || Number(yr),
-          nomineeId: rec.nomineeId,
-          nomineeName: rec.nomineeName,
-          nomineeFactionId: rec.nomineeFactionId,
-          clinchTarget: rec.clinchTarget,
-          neutralityBonusAwarded: Boolean(rec.neutralityBonusAwarded),
-          candidates: (rec.candidates || []).map((c) => ({
-            id: c.id, name: c.name, factionId: c.factionId, factionName: c.factionName,
-            color: c.color, delegates: c.delegates || 0, nationalPoll: c.nationalPoll || 0, droppedOut: Boolean(c.droppedOut),
-          })),
-          stateResults: slimStateResults,
-        };
-      });
-      compactedPrimaries[yr] = slimPartyMap;
-    });
-    copy.simulatedPrimaries = compactedPrimaries;
-  }
-  // Cap statewideOfficesHistory to recent 6 cycles, keeping full detail for last 2 (1 in ultra) and summarizing older cycles
-  const maxSwHist = ultra ? 2 : 6;
-  const fullSwCycles = ultra ? 1 : 2;
-  const slimSwEntry = (entry) => {
-    if (!entry || typeof entry !== 'object') return entry;
-    if (entry._slimmed) return entry;
-    const partyTotals = {};
-    const countRecord = (rec) => {
-      if (!rec || typeof rec !== 'object') return;
-      const p = rec.party || rec.partyId || rec.winner;
-      if (p) partyTotals[p] = (partyTotals[p] || 0) + 1;
-    };
-    if (Array.isArray(entry)) {
-      entry.forEach(countRecord);
-      return { _slimmed: true, partyTotals };
-    }
-    Object.values(entry).forEach((val) => {
-      if (Array.isArray(val)) val.forEach(countRecord);
-      else if (val && typeof val === 'object') {
-        if (val.party || val.partyId || val.winner) countRecord(val);
-        else Object.values(val).forEach(countRecord);
-      }
-    });
-    return { _slimmed: true, year: entry.year, partyTotals };
-  };
-  if (copy.statewideOfficesHistory && typeof copy.statewideOfficesHistory === 'object') {
-    if (Array.isArray(copy.statewideOfficesHistory)) {
-      const kept = copy.statewideOfficesHistory.slice(-maxSwHist);
-      const splitIdx = Math.max(0, kept.length - fullSwCycles);
-      copy.statewideOfficesHistory = kept.map((entry, idx) => (idx < splitIdx ? slimSwEntry(entry) : entry));
-    } else {
-      const hKeys = Object.keys(copy.statewideOfficesHistory).sort((a, b) => Number(a) - Number(b));
-      const keptKeys = hKeys.slice(-maxSwHist);
-      const splitIdx = Math.max(0, keptKeys.length - fullSwCycles);
-      const trimmed = {};
-      keptKeys.forEach((k, idx) => {
-        trimmed[k] = idx < splitIdx ? slimSwEntry(copy.statewideOfficesHistory[k]) : copy.statewideOfficesHistory[k];
-      });
-      copy.statewideOfficesHistory = trimmed;
-    }
-  }
-  // Prune superseded decennial House maps ('2030 map', '2040 map', etc.) while preserving activeHouseMapKey & currentHouseMap
-  const activeMapKey = copy.activeHouseMapKey || '';
-  Object.keys(copy).forEach((k) => {
-    if (/^\d{4} map$/.test(k) && k !== activeMapKey) {
-      delete copy[k];
-    }
-  });
-  // Prune retired politicians from serialized save (elders & pastPresidents are preserved separately)
-  if (Array.isArray(copy.politicians)) {
-    copy.politicians = copy.politicians.filter((p) => p && !p.retired);
-  }
-  if (ultra && copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
-    const yrs = Object.keys(copy.simulatedPrimaries).sort((a, b) => Number(a) - Number(b));
-    if (yrs.length > 1) {
-      const latestYr = yrs[yrs.length - 1];
-      copy.simulatedPrimaries = { [latestYr]: copy.simulatedPrimaries[latestYr] };
-    }
-  }
-  // Drop stale completed activePresidentialPrimary once outside primary phase
-  if (copy.activePresidentialPrimary && copy.phase !== 'presidential-primary' && copy.activePresidentialPrimary.stage === 'complete') {
-    copy.activePresidentialPrimary = null;
-  }
-  // #86: Trim verbose resolved campaign crises & stale mapPins
-  if (copy.campaign && typeof copy.campaign === 'object') {
-    const slimCamp = { ...copy.campaign };
-    if (Array.isArray(slimCamp.activeCrises)) {
-      slimCamp.activeCrises = slimCamp.activeCrises.filter((cr) => cr && !cr.resolved);
-    }
-    if (!slimCamp.active && slimCamp.rivalActivity && Array.isArray(slimCamp.rivalActivity.mapPins)) {
-      slimCamp.rivalActivity = { ...slimCamp.rivalActivity, mapPins: [] };
-    }
-    copy.campaign = slimCamp;
-  }
-  // [v0.18.4 ATLAS-HOTSEAT] Preserve compact atlasHistory (capped at 40 cycles)
-  const amsComp = (typeof window !== 'undefined' && window.AtlasMultiplayerSystem) || (typeof global !== 'undefined' && global.AtlasMultiplayerSystem);
-  if (amsComp && typeof amsComp.compactAtlasForSave === 'function') {
-    amsComp.compactAtlasForSave(copy);
-  }
-  // [v0.18.5 CAMPAIGN-EVENTS]
-  const _cesComp = (typeof window !== 'undefined' && window.CampaignEventsSystem) || (typeof global !== 'undefined' && global.CampaignEventsSystem);
-  if (_cesComp && typeof _cesComp.compactCampaignEventsForSave === 'function') {
-    _cesComp.compactCampaignEventsForSave(copy);
-  }
-
-  // Developer 1 (Chunk 1.4): Prune actionLog, partyActionLog, machineAllocations, and SOEE telemetry past last 3 cycles
-  const curSaveCycle = Number(copy.year || 2028);
-  const minKeptCycle = curSaveCycle - 4; // Keep current cycle + prior 2 cycles (3 cycles total)
-  if (Array.isArray(copy.actionLog)) {
-    copy.actionLog = copy.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-  }
-  if (Array.isArray(copy.partyActionLog)) {
-    copy.partyActionLog = copy.partyActionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-  }
-  if (copy.parties && typeof copy.parties === 'object') {
-    Object.values(copy.parties).forEach((p) => {
-      if (!p || typeof p !== 'object') return;
-      if (Array.isArray(p.actionLog)) {
-        p.actionLog = p.actionLog.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-      }
-      if (Array.isArray(p.machineAllocations)) {
-        p.machineAllocations = p.machineAllocations.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-      }
-      if (Array.isArray(p.soeeTelemetry)) {
-        p.soeeTelemetry = p.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-      }
-    });
-  }
-  if (Array.isArray(copy.soeeTelemetry)) {
-    copy.soeeTelemetry = copy.soeeTelemetry.filter((entry) => !entry || entry.cycle === undefined || Number(entry.cycle || entry.year || 0) >= minKeptCycle);
-  }
-
-  // Developer 1 (Chunk 1.4): Delete stale primaryFields outside primary phase & representatives outside complete phase
-  if (copy.phase !== 'organizing' && copy.phase !== 'primary' && copy.phase !== 'presidential-primary' && copy.primaryFields) {
-    delete copy.primaryFields;
-  }
-  if (copy.phase !== 'complete' && copy.representatives) {
-    delete copy.representatives;
-  }
-
-  // Developer 1 (Chunk 1.4): Deduplicate currentHouseMap and decennial map duplicate
-  if (activeMapKey && copy[activeMapKey] && copy.currentHouseMap) {
-    delete copy[activeMapKey];
-  }
-
-  // Developer 1 (Chunk 1.4): Limit older simulatedPrimaries to last 4 presidential cycles
-  if (copy.simulatedPrimaries && typeof copy.simulatedPrimaries === 'object') {
-    const yrs = Object.keys(copy.simulatedPrimaries).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
-    if (yrs.length > 4) {
-      const keepYrs = new Set(yrs.slice(-4).map(String));
-      Object.keys(copy.simulatedPrimaries).forEach((y) => {
-        if (!keepYrs.has(String(y))) delete copy.simulatedPrimaries[y];
-      });
-    }
-  }
-
-  // Developer 1 (Chunk 1.4): Compact sittingMembers historical rosters (careerMilestones to max 5, remove historical/event logs and ratings)
-  if (Array.isArray(copy.sittingMembers)) {
-    copy.sittingMembers = copy.sittingMembers.map((m) => {
-      if (!m || typeof m !== 'object') return m;
-      const sm = { ...m };
-      if (Array.isArray(sm.careerMilestones) && sm.careerMilestones.length > 5) {
-        sm.careerMilestones = sm.careerMilestones.slice(-5);
-      }
-      delete sm.historicalLog;
-      delete sm.eventLog;
-      delete sm.ratings;
-      return sm;
-    });
-  }
-
   return copy;
 }
 function openSavesIndexedDB() {
@@ -24480,7 +24244,7 @@ async function saveToSlotAsync(slotNum, game, label = '') {
 }
 async function loadFromSlotAsync(slotNum) {
   const pc = getPersistenceCore();
-  return pc ? pc.loadFromSlotAsync(slotNum, { normalizeGame }) : null;
+  return pc ? pc.loadFromSlotAsync(slotNum, { normalizeGame, migrateSave }) : null;
 }
 async function deleteSaveSlotAsync(slotNum) {
   const pc = getPersistenceCore();
@@ -24502,7 +24266,7 @@ function saveToSlot(slotNum, game, label = '') {
 }
 function loadFromSlot(slotNum) {
   const pc = getPersistenceCore();
-  return pc ? pc.loadFromSlot(slotNum, { normalizeGame }) : null;
+  return pc ? pc.loadFromSlot(slotNum, { normalizeGame, migrateSave }) : null;
 }
 function deleteSaveSlot(slotNum) {
   const pc = getPersistenceCore();
@@ -24654,6 +24418,13 @@ window.PartyChairEngine = {
   saveToSlotAsync,
   loadFromSlotAsync,
   deleteSaveSlotAsync,
+  flushPendingSaves,
+  getStorageEstimateAsync,
+  getLastSaveStatus,
+  exportSaveToGzipAsync,
+  importSaveFromFileAsync,
+  MAX_SAVE_RAW_BYTES: 100 * 1024 * 1024,
+  WARN_SAVE_RAW_BYTES: 80 * 1024 * 1024,
   generateFreshPoliticianForSeat,
   replenishVacantSittingMembers,
   applyScaledFactionHappinessDelta,
