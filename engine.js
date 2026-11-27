@@ -5634,28 +5634,53 @@ function createGame(options = {}) {
     }
   }
   Object.assign(game, syncLeadershipRolesState(game, game.leadershipRoles?.player));
-  const foundingLegislature = calculateDistrictElection(game, 2024);
+  // Build Turn 1 House roster directly from canonical 2026 election results (no simulated founding election)
+  const foundingHouseDistricts = legislativeDistricts(game);
+  const sittingHouseByDist = new Map(
+    (game.sittingMembers || [])
+      .filter((m) => m && m.office === 'house')
+      .map((m) => [m.districtId || m.district, m])
+  );
+  const houseIncumbentsMap = window.PartyChairData?.VERSION_07_HOUSE_INCUMBENTS || {};
+  const playerCanonId = !game.player?.custom ? (game.player?.baseTemplateId || 'people') : null;
+  const mapCanonicalToEngineParty = (rawParty) => {
+    const canon = rawParty || 'heritage';
+    if (canon === 'player') return 'player';
+    if (playerCanonId && canon === playerCanonId) return 'player';
+    return canon;
+  };
+  const foundingSeats = Object.fromEntries(partyList(game).map((p) => [p.id, 0]));
+  const foundingRepresentatives = foundingHouseDistricts.map((district, index) => {
+    const sitting = sittingHouseByDist.get(district.id);
+    const canonicalInc = houseIncumbentsMap[district.id];
+    const rawParty = sitting?.partyId || sitting?.party || canonicalInc?.party || (Number(district.lean || 0) >= 0 ? 'people' : 'heritage');
+    const partyId = mapCanonicalToEngineParty(rawParty);
+    foundingSeats[partyId] = (foundingSeats[partyId] || 0) + 1;
+    const lean = Number(district.leanPercent ?? (typeof district.lean === 'number' && Math.abs(district.lean) <= 1 ? -district.lean * 100 : (district.lean ?? 0)));
+    const estShare = round(clamp(50 + Math.abs(lean) / 2, 50.5, 88), 1);
+    return {
+      districtId: district.id,
+      stateId: district.stateId,
+      partyId,
+      representativeId: sitting?.id || `house:${district.id}`,
+      name: sitting?.name || canonicalInc?.name || generatedMember(partyId, game.seed, 500000 + 2026 * 100 + index).name,
+      faction: sitting?.factionId || sitting?.faction || null,
+      age: sitting?.age || 50,
+      firstChoice: estShare,
+      finalShare: estShare,
+      allShares: { [partyId]: estShare },
+      coattailLift: 0,
+      presidentialMargin: round(lean, 1),
+      electedYear: 2026,
+      serviceSince: 2026,
+    };
+  });
   game = {
     ...game,
-    representatives: foundingLegislature.representatives,
-    seats: foundingLegislature.seats.player,
-    organizations: Object.fromEntries(game.rivals.map((party) => [party.id, { ...game.organizations[party.id], seats: foundingLegislature.seats[party.id] ?? 0 }])),
+    representatives: foundingRepresentatives,
+    seats: foundingSeats.player ?? 0,
+    organizations: Object.fromEntries(game.rivals.map((party) => [party.id, { ...game.organizations[party.id], seats: foundingSeats[party.id] ?? 0 }])),
   };
-  // Bug #4: Align Turn 1 sittingMembers House seats with foundingLegislature.representatives
-  if (Array.isArray(game.representatives) && game.representatives.length === 435 && Array.isArray(game.sittingMembers)) {
-    const canonCreateParty = (pid) => (pid === 'player' && !game.player?.custom ? (game.player?.baseTemplateId || 'people') : (pid || 'people'));
-    const createRepsByDist = new Map(game.representatives.map((r) => [r.districtId || r.id, r]));
-    game.sittingMembers = game.sittingMembers.map((m) => {
-      if (m && m.office === 'house') {
-        const rep = createRepsByDist.get(m.districtId || m.district);
-        if (rep) {
-          const party = canonCreateParty(rep.partyId || rep.party);
-          return { ...m, party, partyId: party, caucus: party, rawParty: party === 'people' ? 'D' : party === 'heritage' ? 'R' : 'I' };
-        }
-      }
-      return m;
-    });
-  }
   game.partyApprovals = computeUnifiedPartyApproval(game);
   game.forecasters = buildForecasters(game);
   game.stateFederalism = computeAllStateFederalism(game);
@@ -9794,8 +9819,8 @@ function calculateDistrictElection(game, year) {
       : (rawDist.leanPercent ?? (typeof rawDist.lean === 'number' && Math.abs(rawDist.lean) <= 1 ? -rawDist.lean * 100 : (rawDist.lean ?? 0)));
 
     // [MC-BALANCE-TUNE] MC-02 & MC-03: State chapter House downballot lift + Tier 1-2 regional breakthrough (>=5 chapters & dist <= 2.5)
-    const distEcon10 = clamp(5.5 + districtLean / 10, 1, 10);
-    const distSoc10 = clamp(5.5 + districtLean / 22, 1, 10);
+    const distEcon10 = clamp(5.5 - districtLean / 10, 1, 10);
+    const distSoc10 = clamp(5.5 - districtLean / 22, 1, 10);
     const breakthroughEligibleParties = new Set();
 
     const firstChoice = {};

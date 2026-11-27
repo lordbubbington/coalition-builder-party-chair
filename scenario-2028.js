@@ -5573,16 +5573,16 @@ const VERSION_07_HOUSE_INCUMBENTS = {
     "party": "people"
   },
   "NC-3": {
-    "name": "Greg Murphy",
-    "party": "heritage"
+    "name": "Raymond Smith Jr.",
+    "party": "people"
   },
   "NC-4": {
     "name": "Valerie Foushee",
     "party": "people"
   },
   "NC-5": {
-    "name": "Virginia Foxx",
-    "party": "heritage"
+    "name": "Chuck Hubbard",
+    "party": "people"
   },
   "NC-6": {
     "name": "Cyril Jefferson",
