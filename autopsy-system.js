@@ -213,8 +213,17 @@
   function extractPoolFromCatalog(catalog, key) {
     if (!catalog) return [];
     if (Array.isArray(catalog)) return catalog;
-    if (key && Array.isArray(catalog[key])) return catalog[key];
-    if (key && catalog.scenarios && Array.isArray(catalog.scenarios[key])) return catalog.scenarios[key];
+    const hasKey = key !== undefined && key !== null && key !== '';
+    const inner = catalog.AUTOPSY_MINOR_LOW
+      || catalog.AUTOPSY_MINOR_HIGH
+      || catalog.AUTOPSY_MAJOR
+      || catalog.buckets
+      || catalog.scenarios
+      || catalog;
+    if (hasKey && inner && Array.isArray(inner[key])) return inner[key];
+    if (hasKey && inner && Array.isArray(inner[String(key)])) return inner[String(key)];
+    if (hasKey && Array.isArray(catalog[key])) return catalog[key];
+    if (hasKey && catalog.scenarios && Array.isArray(catalog.scenarios[key])) return catalog.scenarios[key];
     if (Array.isArray(catalog.options)) return catalog.options;
     if (Array.isArray(catalog.pool)) return catalog.pool;
     return [];
@@ -470,12 +479,16 @@
 
     const catalogs = getCatalogGlobals(context);
     let scenarioId = null;
-    let bucket = track === 'minor' ? (autopsyPoints < 6 ? 'low' : 'high') : 'major';
+    let bucket = track === 'minor' ? Math.max(0, Math.min(20, Math.round(autopsyPoints))) : 'major';
     let pool = [];
 
     if (track === 'minor') {
-      const cat = bucket === 'low' ? catalogs.minorLow : catalogs.minorHigh;
+      const cat = bucket <= 10 ? catalogs.minorLow : catalogs.minorHigh;
       pool = extractPoolFromCatalog(cat, bucket);
+      if (!pool.length) {
+        // Fallback for isolated mock tests that pass a flat array or 'low'/'high' object
+        pool = extractPoolFromCatalog(cat, bucket <= 10 ? 'low' : 'high');
+      }
     } else {
       scenarioId = determineMajorPartyScenario(game, election, { ...context, partyId: pid });
       bucket = scenarioId;
@@ -850,7 +863,7 @@
         <article class="autopsy-option-card" data-autopsy-card="${esc(resolved.id)}">
           <div class="autopsy-option-header">
             <span class="autopsy-option-theme">${esc(resolved.theme || 'Strategic Pivot')}</span>
-            <h4 class="autopsy-option-title">${esc(resolved.title || resolved.id)}</h4>
+            <h4 class="autopsy-option-title">${esc(resolved.name || resolved.title || resolved.id)}</h4>
           </div>
           ${stateBadge}
           <p class="autopsy-option-summary">${esc(resolved.summaryText || resolved.description || '')}</p>

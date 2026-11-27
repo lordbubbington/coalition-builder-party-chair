@@ -20562,7 +20562,7 @@ function takeActionInternal(game, actionId, payload = {}) {
   if (actionId === 'election-night-complete') {
     if (!game.electionNight) return game;
     const hasCoalitionModal = game.partySystems?.pendingModal === 'coalition';
-    const completed = {
+    let completed = {
       ...game,
       phase: 'complete',
       electionNight: {
@@ -20572,6 +20572,34 @@ function takeActionInternal(game, actionId, payload = {}) {
       },
       activeAutopsyModal: !hasCoalitionModal,
     };
+    if (!Array.isArray(completed.pendingAutopsyOptions) || completed.pendingAutopsyOptions.length === 0) {
+      const autopsySysEnc = (typeof window !== 'undefined' && window.AutopsySystem)
+        || (typeof global !== 'undefined' && global.AutopsySystem)
+        || null;
+      if (autopsySysEnc && typeof autopsySysEnc.buildPendingAutopsy === 'function') {
+        const pKeyEnc = completed.player?.custom ? 'player' : (completed.player?.baseTemplateId || completed.player?.id || 'people');
+        const enteringTiersEnc = completed.enteringPartyTiers || completed.partyTiers || {};
+        const enteringTierEnc = enteringTiersEnc[pKeyEnc] ?? getPartyInstitutionalTier(completed, 'player');
+        const enteringMajorCountEnc = Object.values(enteringTiersEnc).filter((t) => Number(t) >= 5).length || 2;
+        const achievedPrioritiesEnc = Array.isArray(completed.lastElection?.completedQuests)
+          ? completed.lastElection.completedQuests.length
+          : (completed.activeOverallQuestCompleted ? 1 : 0);
+        const builtEnc = autopsySysEnc.buildPendingAutopsy(completed, completed.lastElection || {}, {
+          partyId: pKeyEnc,
+          enteringTier: enteringTierEnc,
+          enteringMajorCount: enteringMajorCountEnc,
+          achievedPriorities: achievedPrioritiesEnc,
+        });
+        if (builtEnc && Array.isArray(builtEnc.options) && builtEnc.options.length > 0) {
+          completed = {
+            ...completed,
+            autopsyMilestonesEarned: builtEnc.updatedMilestonesEarned || completed.autopsyMilestonesEarned || {},
+            pendingAutopsyOptions: builtEnc.options,
+            pendingAutopsy: builtEnc,
+          };
+        }
+      }
+    }
     // [OFF-CYCLE] Enter off-cycle-interlude directly when requested or enabled
     if ((payload?.enterOffCycle || game.offCycleEnabled) && getOffCycleSystem()?.initializeOffCycleInterlude) {
       return getOffCycleSystem().initializeOffCycleInterlude(completed, (completed.year || 2028) + 1);
