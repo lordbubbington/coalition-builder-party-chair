@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.19.0",
-  "description": "Coalition Builder: Party Chair — Version 0.19.0 (Post-Cycle Autopsy System: 217 Dynamic Options, Hidden Autopsy Points & 10 Major Party Infighting Scenarios)",
+  "version": "0.19.2",
+  "description": "Coalition Builder: Party Chair — Version 0.19.2 (50-State Voting Reform Engine, Nationwide Trifecta Reforms & Electoral Map Visualizations)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

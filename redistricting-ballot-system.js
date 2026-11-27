@@ -397,6 +397,7 @@
   // =========================================================================
 
   function isIndependentCommissionState(game, stateId) {
+    if (game?.federalReforms?.mandatoryNonpartisanRedistricting) return true;
     if (DEFAULT_COMMISSION_STATES.includes(stateId)) return true;
     return Boolean(game?.redistrictingCommissions?.[stateId]);
   }

@@ -21,6 +21,7 @@ try {
     $packageItems = @(
         (Join-Path $projectDir 'index.html'),
         (Join-Path $projectDir 'styles.css'),
+        (Join-Path $projectDir 'voting-reforms.css'),
         (Join-Path $projectDir 'data.js'),
         (Join-Path $projectDir 'factions-0.15.js'),
         (Join-Path $projectDir 'scenario-2028.js'),
@@ -73,6 +74,11 @@ try {
         (Join-Path $projectDir 'autopsy-catalog-minor-high.js'),
         (Join-Path $projectDir 'autopsy-catalog-major.js'),
         (Join-Path $projectDir 'autopsy-system.js'),
+        # [v0.19.2 VOTING & TRIFECTA REFORMS]
+        (Join-Path $projectDir 'voting-reforms-core.js'),
+        (Join-Path $projectDir 'trifecta-reforms-core.js'),
+        (Join-Path $projectDir 'voting-reform-map-adapter.js'),
+        (Join-Path $projectDir 'voting-reforms-ui.js'),
         (Join-Path $projectDir 'engine.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')

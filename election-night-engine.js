@@ -410,7 +410,8 @@
             drawWinner = p;
           }
         });
-        if (maxEv >= 270) {
+        const reqPresEvThresh = Number(timeline.evMajorityThreshold || 270);
+        if (maxEv >= reqPresEvThresh) {
           winsByParty[drawWinner] = (winsByParty[drawWinner] || 0) + 1;
         } else {
           winsByParty['deadlock'] = (winsByParty['deadlock'] || 0) + 1;
@@ -959,11 +960,21 @@
       races.push(raceDef);
     });
 
+    const fedRef = safeGame?.federalReforms || {};
+    const totalEvCount = Number(safeElection?.presidential?.totalEv || fedRef.totalEv || safeGame.totalEv || 538);
+    const evMajorityThreshold = Number(safeElection?.evMajorityThreshold || safeElection?.presidential?.evMajorityThreshold || fedRef.evMajorityThreshold || safeGame.evMajorityThreshold || (Math.floor(totalEvCount / 2) + 1));
+    const totalSenateCount = Number(fedRef.totalSenateSeats || safeGame.totalSenateSeats || 100);
+    const totalHouseCount = Number(safeElection?.house?.totalSeats || safeElection?.legislature?.totalSeats || fedRef.totalHouseSeats || safeGame.totalHouseSeats || representatives.length || 435);
+
     return {
       year,
       seed: game.seed || 'pc',
       isPresidential,
       cycleType,
+      totalEv: totalEvCount,
+      evMajorityThreshold,
+      totalSenateSeats: totalSenateCount,
+      totalHouseSeats: totalHouseCount,
       startMinute: 0,
       end: TIMELINE_END,
       races,
@@ -984,11 +995,18 @@
     const callsByRaceId = {};
     const callsByKind = { president: [], senate: [], house: [], governors: [], state_leg: [], statewide_executive: [] };
 
+    const totalEvCap = Number(timeline.totalEv || 538);
+    const evMajThresh = Number(timeline.evMajorityThreshold || (Math.floor(totalEvCap / 2) + 1));
+    const totalSenCap = Number(timeline.totalSenateSeats || 100);
+    const senMajThresh = Math.floor(totalSenCap / 2) + 1;
+    const totalHouseCap = Number(timeline.totalHouseSeats || 435);
+    const houseMajThresh = Math.floor(totalHouseCap / 2) + 1;
+
     // Scoreboard seat/EV accumulators by tab and party
     const scoreboard = {
-      president: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalEv: 538 },
-      senate: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 100 },
-      house: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 435 },
+      president: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalEv: totalEvCap, majorityThreshold: evMajThresh },
+      senate: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: totalSenCap, majorityThreshold: senMajThresh },
+      house: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: totalHouseCap, majorityThreshold: houseMajThresh },
       governors: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 0 },
       state_leg: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalChambers: 0 },
       statewide_executive: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 0 },
@@ -1048,26 +1066,26 @@
     let phaseIndex = 1;
     if (t >= 60) phaseIndex = 2;
     if (t >= 180) phaseIndex = 3;
-    if (isFinished || (timeline.isPresidential && (scoreboard.president.people >= 270 || scoreboard.president.heritage >= 270))) {
+    if (isFinished || (timeline.isPresidential && (scoreboard.president.people >= evMajThresh || scoreboard.president.heritage >= evMajThresh))) {
       phaseIndex = 4;
     }
 
-    // Detect National Breaking Call (270 EV or Midterm chamber clinches)
+    // Detect National Breaking Call (EV threshold or Midterm chamber clinches)
     let breakingCall = null;
     if (timeline.isPresidential) {
-      if (scoreboard.president.people >= 270) {
+      if (scoreboard.president.people >= evMajThresh) {
         breakingCall = { partyId: 'people', headline: 'Democrats Win the White House', stamp: 'THE PRESIDENCY IS CALLED' };
-      } else if (scoreboard.president.heritage >= 270) {
+      } else if (scoreboard.president.heritage >= evMajThresh) {
         breakingCall = { partyId: 'heritage', headline: 'Republicans Win the White House', stamp: 'THE PRESIDENCY IS CALLED' };
       }
     } else {
-      if (scoreboard.senate.people >= 51) {
+      if (scoreboard.senate.people >= senMajThresh) {
         breakingCall = { partyId: 'people', headline: 'Democrats Clinch Senate Majority', stamp: 'SENATE MAJORITY CLINCHED' };
-      } else if (scoreboard.senate.heritage >= 51) {
+      } else if (scoreboard.senate.heritage >= senMajThresh) {
         breakingCall = { partyId: 'heritage', headline: 'Republicans Clinch Senate Majority', stamp: 'SENATE MAJORITY CLINCHED' };
-      } else if (scoreboard.house.people >= 218) {
+      } else if (scoreboard.house.people >= houseMajThresh) {
         breakingCall = { partyId: 'people', headline: 'Democrats Clinch House Majority', stamp: 'HOUSE MAJORITY CLINCHED' };
-      } else if (scoreboard.house.heritage >= 218) {
+      } else if (scoreboard.house.heritage >= houseMajThresh) {
         breakingCall = { partyId: 'heritage', headline: 'Republicans Clinch House Majority', stamp: 'HOUSE MAJORITY CLINCHED' };
       }
     }

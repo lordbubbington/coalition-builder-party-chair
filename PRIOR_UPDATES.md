@@ -2407,3 +2407,22 @@ Version 0.18.9.4 integrates the spoiler-reversal voter deadband update on top of
 - **v0.18.9.3 Error Log Fixes & State Senate Tracking (`232d2b4`, `0c82296`):** Rendered holdover Senate seats on Election Night and Prior-Cycle maps, suppressed Coalition Builder / Hung Chamber modals when the player wins an outright chamber majority, and added bicameral State Senate seat tracking (`1,923` / `1,924` seats) plus State Senates & Minor Statewide Offices KPI cards (`scripts/test-v0189-3-error-log.cjs`).
 - **v0.18.9.4 Registered-Voter Spoiler Deadband (`81286b2`):** Switched spoiler comparison in `engine.js` to state registered voters with a 5-point deadband (`0%` spoiler for both parties within 5 points; reverse-Duverger when leading by `> 5` points; normal Duverger when trailing by `> 5` points).
 - **Version Relabel & Save Compatibility:** Updated version labels across `package.json`, `index.html`, `app.js`, `ui-setup-views.js`, `engine.js`, `persistence-core.js`, and `BUILD_EXE.bat` to `0.18.9.4` (`SAVE_KEY = 'partyChairGame.save.v18.9.4'`, preserving backward compatibility with `v18.9.1`, `v18.8`, `v18.7`, `v18.6`, and earlier saves).
+
+---
+
+## VERSION 0.19.2
+
+# Coalition Builder: Party Chair — Version 0.19.2
+
+Version 0.19.2 integrates the 50-State Voting Reforms Engine, Nationwide Trifecta Constitutional & Statutory Reforms, Voting Reform Map Visualizations, and Interactive Constitutional Reform UI:
+
+### Large
+- **Nationwide Trifecta Constitutional & Federal Reforms (`trifecta-reforms-core.js`, `engine.js`, `redistricting-ballot-system.js`):** Implemented strict nationwide trifecta gating and enactment/repeal actions (`enact-trifecta-reform`), Huntington-Hill House apportionment (`435` / `573` Wyoming Rule / `692` Cube Root / `1,000` Sabato Expanded House), all 5 Larry Sabato proposals (136-seat Senate + Honorary National Senators, 1,000-seat House + mandatory nationwide nonpartisan redistricting, Mended Electoral College population bonus electors, Rotating 4-month Regional Lottery Primaries, 6-year Presidency + synced Senate cycles + 4H/2S term limits + `-25%` campaign burn), Compulsory Voting (`88%–92%` floor with `65%` swing compression), and reversible Federal Super-PAC Ban (`ban_super_pacs` / `repeal_super_pac_ban` / `reenable_super_pacs`).
+- **50-State Voting Reforms & Presidential EV Allocation (`voting-reforms-core.js`, `engine.js`):** Normalized per-state electoral architectures across single-winner (`plurality`, `rcv`, `approval`), legislative (`plurality`, `proportional`, `open_list_proportional`, `stv` 3–5 seat clusters, `mmp`), and presidential EV allocation (`winner_take_all`, `district_split`, `proportional_ev`, `npvic` overrides with dynamic EV majority thresholds).
+
+### Medium
+- **Geospatial Map Pattern & Overlay Adapter (`voting-reform-map-adapter.js`, `app.js`, `election-night-engine.js`):** Wired proportional stripe & STV SVG `<pattern>` fills, NPVIC striped override patterns, MMP double borders + stacked local/list seat breakdowns, whole-state bypass for expanded/reformed House delegations, Sabato bonus EV badges, and the toggleable **"Show Voting Systems"** SVG overlay across Political Landscape and Election Night maps.
+- **Interactive Voting Systems Map & Trifecta Controls (`voting-reforms-ui.js`, `voting-reforms.css`, `app.js`):** Upgraded the Electoral Systems & NPVIC Sandbox tab with interactive multi-lens map selection, per-state legislative/EV/single-winner editors, live Nationwide Trifecta status pills, federal reform action cards, and the Federal Super-PAC Ban notice banner.
+
+### Small
+- **Build Labeling, Packaging & Save Compatibility (`index.html`, `build.ps1`, `BUILD_EXE.bat`, `package.json`, `engine.js`, `app.js`):** Registered all five new CSS/JS modules, bumped build labeling to `0.19.2` (`SAVE_KEY = 'partyChairGame.save.v19.2'` with backward-compatible `v19.0` and earlier migration), verified strict CRLF on `BUILD_EXE.bat` and `build.ps1`, ran all syntax/unit/E2E integration suites, and rebuilt the Windows executable (`dist/release/Coalition Builder - Party Chair.exe`).

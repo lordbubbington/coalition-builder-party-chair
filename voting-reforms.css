@@ -1,0 +1,335 @@
+/* ============================================================================
+   COALITION BUILDER: PARTY CHAIR — VOTING REFORMS & TRIFECTA UI STYLES
+   ============================================================================ */
+
+.vr-shell {
+  display: grid;
+  gap: 16px;
+  color: var(--text, #edf3f7);
+}
+
+.vr-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line, #ffffff17);
+  border-radius: var(--radius, 14px);
+  background: linear-gradient(155deg, #1a2634f5, #111923f8);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.vr-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.vr-header h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.vr-sub {
+  margin: 2px 0 0;
+  color: var(--muted, #a0afbd);
+  font-size: 13px;
+}
+
+/* --- Lens Tabs --- */
+.vr-lens-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vr-lens-tab {
+  padding: 6px 12px;
+  border: 1px solid var(--line, #ffffff17);
+  border-radius: 999px;
+  background: #141f2b;
+  color: var(--muted, #a0afbd);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vr-lens-tab:hover {
+  border-color: #e2bd7066;
+  color: var(--text, #edf3f7);
+}
+
+.vr-lens-tab.active {
+  border-color: var(--gold, #e2bd70);
+  background: #2b271c;
+  color: #f4d68c;
+}
+
+/* --- 50-State SVG Map --- */
+.vr-map-wrap {
+  border: 1px solid var(--line, #ffffff17);
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 45%, #182636, #101823 75%);
+  padding: 10px;
+}
+
+.vr-svg-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 460px;
+}
+
+.vr-state-shape {
+  stroke: #0e1620;
+  stroke-width: 1;
+  cursor: pointer;
+  transition: filter 0.12s ease, stroke 0.12s ease;
+}
+
+.vr-state-shape:hover {
+  filter: brightness(1.22);
+  stroke: #f3d17f;
+  stroke-width: 1.8;
+}
+
+.vr-state-shape.selected {
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  filter: brightness(1.18);
+}
+
+.vr-tile-label {
+  fill: #f4f7fa;
+  font: 800 11px Consolas, monospace;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.vr-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-top: 8px;
+  font-size: 12px;
+  color: var(--muted, #a0afbd);
+}
+
+.vr-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vr-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid #ffffff30;
+}
+
+/* --- Inline Quick-Editor Card --- */
+.vr-quick-editor {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid #e2bd7044;
+  border-radius: 10px;
+  background: #0f1822;
+}
+
+.vr-quick-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.vr-quick-head h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--gold, #e2bd70);
+}
+
+.vr-quick-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.vr-field {
+  display: grid;
+  gap: 4px;
+}
+
+.vr-field label {
+  font: 700 11px Consolas, monospace;
+  color: var(--muted, #a0afbd);
+  text-transform: uppercase;
+}
+
+.vr-field select {
+  padding: 7px 9px;
+  border: 1px solid #ffffff22;
+  border-radius: 7px;
+  background: #141f2c;
+  color: var(--text, #edf3f7);
+  font-size: 13px;
+}
+
+/* --- Trifecta Status Bar --- */
+.vr-trifecta-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line, #ffffff17);
+  background: #101923;
+  font: 700 12.5px Consolas, monospace;
+}
+
+.vr-trifecta-status.active {
+  border-color: #75c89a66;
+  background: #132820;
+}
+
+.vr-branch-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #ffffff1c;
+  background: #182330;
+}
+
+.vr-branch-pill.held {
+  border-color: #75c89a66;
+  color: #8ee0b2;
+  background: #163026;
+}
+
+.vr-branch-pill.lost {
+  border-color: #e8887e55;
+  color: #f09c94;
+  background: #301c20;
+}
+
+/* --- 3 Trifecta Cards Grid --- */
+.vr-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 12px;
+}
+
+.vr-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid var(--line, #ffffff17);
+  border-radius: 10px;
+  background: #101923;
+}
+
+.vr-card h4 {
+  margin: 0;
+  font-size: 15.5px;
+  color: var(--gold, #e2bd70);
+}
+
+.vr-proposal-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vr-proposal-item {
+  display: grid;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid #ffffff12;
+  border-radius: 8px;
+  background: #141f2c;
+}
+
+.vr-proposal-item.enacted {
+  border-color: #75c89a55;
+  background: #142620;
+}
+
+.vr-proposal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.vr-proposal-top b {
+  font-size: 13.5px;
+}
+
+.vr-proposal-desc {
+  font-size: 12px;
+  color: var(--muted, #a0afbd);
+  line-height: 1.4;
+}
+
+.vr-preview-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #1b2a3b;
+  color: #9dc2eb;
+  font: 700 11px Consolas, monospace;
+}
+
+.vr-action-btn {
+  justify-self: start;
+  padding: 6px 11px;
+  border: 1px solid #e2bd7066;
+  border-radius: 7px;
+  background: #27241a;
+  color: #f2d58a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vr-action-btn:hover:not(:disabled) {
+  background: #36301f;
+}
+
+.vr-action-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  border-color: #ffffff1f;
+  color: var(--muted, #a0afbd);
+}
+
+/* --- Super-PAC Banned Banner --- */
+.vr-superpac-banned-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid #75c89a55;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #162922, #111923 70%);
+}
+
+.vr-superpac-banned-card b {
+  color: #8ee0b2;
+  font-size: 14.5px;
+}
+
+.vr-superpac-banned-card p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--muted, #a0afbd);
+}
