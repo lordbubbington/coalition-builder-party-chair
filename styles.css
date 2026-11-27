@@ -94,8 +94,13 @@ h1,h2,h3,.hero h1,.dashboard-head h1{font-family:"Iowan Old Style",Palatino,Geor
 .map-state-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .map-district-grid,.map-seat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .action-grid,.event-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.issue-panel{border-color:hsl(32 48% 48% / .5);background:linear-gradient(145deg,hsl(226 21% 14%),var(--panel))}
-.issue-categories{display:flex;gap:10px;overflow-x:auto;padding:5px 2px 12px;scrollbar-color:var(--gold) var(--panel2)}
+/* [LAYOUT-GEO-FIX] GEO-02 & GEO-03: Constrain Tab-party grid/panels, wrap topbar-actions, prevent sticky primary overlap */
+html { scroll-padding-top: 136px; }
+.topbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; min-width: 0; max-width: 100%; }
+.topbar.primary-topbar { position: relative; top: auto; }
+.campaign-screen, .v07-tabbar { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.issue-panel{border-color:hsl(32 48% 48% / .5);background:linear-gradient(145deg,hsl(226 21% 14%),var(--panel));min-width:0;max-width:100%;box-sizing:border-box}
+.issue-categories{display:flex;gap:10px;overflow-x:auto;padding:5px 2px 12px;scrollbar-color:var(--gold) var(--panel2);min-width:0;max-width:100%;box-sizing:border-box}
 .issue-categories [role=tab]{flex:none;padding:12px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);cursor:pointer}
 .issue-categories [role=tab].selected{border-color:var(--gold);background:hsl(32 48% 48% / .18)}
 .issue-categories [role=tab] small{margin-left:8px;color:var(--green);font-family:Consolas,monospace}
@@ -138,17 +143,20 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
 .dashboard-head{margin:0 0 20px;padding:6px 2px}
 .resource-strip{grid-template-columns:repeat(4,minmax(0,1fr));border-radius:16px;margin-bottom:18px}
 .resource-main{padding:clamp(14px,1.5vw,24px)}
+/* [LAYOUT-GEO-FIX] GEO-02: Enforce min-width/max-width/box-sizing across main-grid and panels */
+.event-panel,.action-panel,.section-panel,.panel{min-width:0;max-width:100%;box-sizing:border-box}
 .event-panel,.action-panel,.section-panel{margin-bottom:18px;padding:clamp(16px,1.5vw,24px);border-radius:16px}
 .action-panel,.issue-panel,.map-panel{box-shadow:0 14px 36px #0003}
-.action-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.action-card{padding:16px;border-radius:12px}
-.main-grid{grid-template-columns:minmax(0,1.2fr) minmax(360px,.8fr);gap:18px}
-.right-column{display:grid;grid-template-columns:1fr;gap:0;align-content:start}
+.action-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.action-card{padding:16px;border-radius:12px;min-width:0;max-width:100%;box-sizing:border-box}
+.main-grid{grid-template-columns:minmax(0,1.2fr) minmax(min(100%,360px),.8fr);gap:18px;min-width:0;max-width:100%;box-sizing:border-box}
+.main-grid > *,.left-column,.right-column{min-width:0;max-width:100%;box-sizing:border-box}
+.right-column{display:grid;grid-template-columns:minmax(0,1fr);gap:0;align-content:start}
 .right-column .section-panel:last-child{grid-column:auto}
 .map-state-grid{grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}
 .map-district-grid,.map-seat-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .map-state,.district-chip,.map-seat{border-radius:10px}
-.issue-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.issue-row{padding:clamp(14px,1.25vw,20px);border-radius:14px;background:linear-gradient(145deg,hsl(226 21% 15%),hsl(226 24% 9%))}
+.issue-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;min-width:0;max-width:100%;box-sizing:border-box}
+.issue-row{min-width:0;max-width:100%;box-sizing:border-box;padding:clamp(14px,1.25vw,20px);border-radius:14px;background:linear-gradient(145deg,hsl(226 21% 15%),hsl(226 24% 9%))}
 .issue-categories [role=tab]{border-radius:12px;transition:background .15s,border-color .15s,transform .15s}
 .issue-categories [role=tab]:hover{transform:translateY(-2px);border-color:hsl(174 36% 56% / .7)}
 .issue-range input{accent-color:var(--gold);height:24px}
@@ -387,8 +395,12 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   border-color: hsl(174 36% 56%);
   box-shadow: 0 0 0 1px hsl(174 36% 56% / 0.45);
 }
+/* [LAYOUT-GEO-FIX] GEO-02: Constrain v07 tab viewport */
 .v07-tab-viewport {
   min-height: 55vh;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .v07-step-wizard {
@@ -445,18 +457,25 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   font-size: 16px;
 }
 
+/* [LAYOUT-GEO-FIX] GEO-02: Responsive platform grid and summary box containment */
 .v07-platform-summary-box {
   margin: 14px 0 18px;
   padding: 14px 16px;
   border: 1px solid hsl(220 14% 26%);
   border-radius: 12px;
   background: hsl(226 24% 8% / 0.7);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .v07-platform-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 12px 22px;
   margin-top: 10px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .v07-priority-highlight {
   border-color: hsl(32 48% 48% / 0.85) !important;
@@ -753,6 +772,18 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   color: hsl(42 25% 92%);
   font-size: 16px;
 }
+/* [LAYOUT-GEO-FIX] GEO-04: Enforce >= 18x18px checkbox hit targets */
+.v07-inline-check input[type="checkbox"],
+#state-bill-eligible,
+input[data-pri-asset] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  cursor: pointer;
+  accent-color: var(--gold);
+}
 .v07-inline-check {
   display: flex;
   align-items: center;
@@ -874,7 +905,8 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
 .v07-recruit-preview small { display: block; color: hsl(220 12% 70%); font-size: 13px; margin-top: 3px; }
 
 /* Forecast Tab: Trust & 14 Leadership Roles */
-.v07-forecast-layout { display: grid; gap: 16px; }
+/* [LAYOUT-GEO-FIX] GEO-02: Lock .v07-forecast-layout single track to prevent horizontal blowout */
+.v07-forecast-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; max-width: 100%; box-sizing: border-box; }
 .v07-trust-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -936,9 +968,10 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   .v07-states-list { max-height: 260px; }
   .v07-state-kpis { grid-template-columns: 1fr; }
 }
+/* [LAYOUT-GEO-FIX] GEO-02: Stack platform grid cleanly under 700px */
 @media (max-width: 700px) {
   .v07-step-bar { grid-template-columns: 1fr 1fr; }
-  .v07-platform-grid { grid-template-columns: 1fr; }
+  .v07-platform-grid { grid-template-columns: minmax(0, 1fr); }
   .v07-candidate-grid { grid-template-columns: 1fr; }
   .v07-step-nav { flex-direction: column; align-items: stretch; }
   .v07-turn-note { text-align: left; }
@@ -1682,11 +1715,21 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
 }
 
 /* Platform Pillar Summary Stance Badges */
+/* [LAYOUT-GEO-FIX] GEO-02: Contain .v09-pillar-row inside responsive grids */
 .v09-pillar-row {
   padding: 10px 12px;
   border-radius: 8px;
   background: hsl(226 21% 11%);
   border: 1px solid hsl(220 14% 20%);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+.v09-pillar-row .v07-mini-badge,
+.v09-pillar-row .v09-pillar-stance-badge {
+  max-width: 100%;
+  white-space: normal;
 }
 
 .v09-pillar-stance-badge {
@@ -5931,24 +5974,41 @@ body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50
   color: var(--danger, #f87171);
   border: 1px solid color-mix(in srgb, var(--danger, #dc2626) 45%, var(--line, transparent));
 }
+/* [LAYOUT-GEO-FIX] GEO-01: Safe viewport-height bounded scrollable modal card & GEO-03/GEO-04 controls */
 .v167-save-slots-modal {
   position: fixed;
   inset: 0;
   z-index: 950;
   background: rgba(8, 12, 22, 0.72);
   display: flex;
-  align-items: center;
+  align-items: safe center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 .v167-save-slots-card {
   width: min(620px, 96vw);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  box-sizing: border-box;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 18px 20px;
   color: var(--text);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+#atlas-year-slider {
+  height: 24px;
+  min-height: 24px;
+  cursor: pointer;
+}
+.v165-chamber-card button,
+[data-pri-filter-cand] {
+  scroll-margin-top: 140px;
 }
 .v167-save-slot-row {
   display: flex;

@@ -1291,7 +1291,8 @@
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;max-width:420px">
             <span style="font-size:12px;color:#94a3b8">${displayHistory[0].year}</span>
-            <input type="range" id="atlas-year-slider" min="0" max="${Math.max(0, displayHistory.length - 1)}" value="${safeIdx}" style="flex:1;accent-color:#e2bd70">
+            <!-- [LAYOUT-GEO-FIX] GEO-04: Ensure >= 24px slider height -->
+            <input type="range" id="atlas-year-slider" min="0" max="${Math.max(0, displayHistory.length - 1)}" value="${safeIdx}" style="flex:1;height:24px;min-height:24px;accent-color:#e2bd70">
             <span style="font-size:12px;color:#94a3b8">${displayHistory[displayHistory.length - 1].year}</span>
           </div>
         </div>

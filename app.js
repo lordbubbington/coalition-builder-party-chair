@@ -1832,12 +1832,13 @@ function platformMarkup() {
       ? `<span class="v07-mini-badge" style="background:#2b3342;color:#94a3b8;font-size:10px;margin-left:6px;border:1px solid #475569" title="Internal party discipline & organization; does not shift public voter preference">Internal Party Machinery (Does Not Impact Voters)</span>`
       : '';
     const proseStance = getPillarProseStance(pillar, avg);
-    return `<div class="platform-row v09-pillar-row" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px">
-        <b>${pillar.number}. ${safe(pillar.shortName || pillar.name)}${internalBadge}</b>
+    // [LAYOUT-GEO-FIX] GEO-02: Enforce min-width/max-width/box-sizing on pillar rows and wrapping flex children
+    return `<div class="platform-row v09-pillar-row" style="margin-bottom:12px;min-width:0;max-width:100%;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px;min-width:0;max-width:100%">
+        <b style="min-width:0;max-width:100%">${pillar.number}. ${safe(pillar.shortName || pillar.name)}${internalBadge}</b>
         <span class="v09-pillar-stance-badge">${safe(proseStance)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin:3px 0 5px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--muted);margin:3px 0 5px;min-width:0;max-width:100%">
         <span>${safe(pillar.lowLabel)}</span>
         <span>${safe(pillar.highLabel)}</span>
       </div>
@@ -1991,8 +1992,9 @@ function step1IssuesMarkup() {
     </article>`;
   }).join('');
 
+  // [LAYOUT-GEO-FIX] GEO-02: Enforce containment on issue-panel and platform-grid
   return `
-    <section class="panel section-panel issue-panel">
+    <section class="panel section-panel issue-panel" style="min-width:0;max-width:100%;box-sizing:border-box">
       <div class="section-heading">
         <div>
           <div class="eyebrow">Step 1 of 4 · Unified Party Platform (Text-First Stances)</div>
@@ -2004,7 +2006,7 @@ function step1IssuesMarkup() {
 
       <div class="v07-platform-summary-box">
         <div class="eyebrow">Dynamic Platform Summary (10 Platform Pillars)</div>
-        <div class="platform-list v07-platform-grid">${platformMarkup()}</div>
+        <div class="platform-list v07-platform-grid" style="min-width:0;max-width:100%;box-sizing:border-box">${platformMarkup()}</div>
       </div>
 
       <div class="issue-categories" role="tablist" aria-label="Issue categories">
@@ -7457,7 +7459,7 @@ ${Object.values(game?.chapters || {}).reduce((a, b) => a + (Number(b) || 0), 0) 
 
       <div class="v07-state-toolbar">
         <input type="search" id="state-search" placeholder="Search state name or code (e.g. Ohio, AK, PA)..." value="${safe(stateSearch)}">
-        <label class="v07-inline-check"><input type="checkbox" id="state-bill-eligible" ${stateBillEligibleOnly ? 'checked' : ''}> Bill-Eligible States Only (Control ≥1 chamber)</label>
+        <label class="v07-inline-check"><input type="checkbox" id="state-bill-eligible" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${stateBillEligibleOnly ? 'checked' : ''}> Bill-Eligible States Only (Control ≥1 chamber)</label>
       </div>
 
       <div class="v07-states-layout">
@@ -10830,15 +10832,15 @@ function renderPresidentialPrimaryScreen() {
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px">
           <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Deployable Intervention Assets:</span>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="politicalCapital" ${primaryFilterAssets.politicalCapital ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="politicalCapital" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.politicalCapital ? 'checked' : ''}>
             <span>Political Capital <span style="color:var(--muted)">(Debate &amp; Polling Stature)</span></span>
           </label>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="staffSupport" ${primaryFilterAssets.staffSupport ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="staffSupport" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.staffSupport ? 'checked' : ''}>
             <span>Field Staff <span style="color:var(--muted)">(Early State Operations)</span></span>
           </label>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="donorConduits" ${primaryFilterAssets.donorConduits ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="donorConduits" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.donorConduits ? 'checked' : ''}>
             <span>Donor Conduits <span style="color:var(--muted)">(Fundraising Coffers)</span></span>
           </label>
         </div>
@@ -10869,15 +10871,15 @@ function renderPresidentialPrimaryScreen() {
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px">
           <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Deployable Intervention Assets:</span>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="politicalCapital" ${primaryFilterAssets.politicalCapital ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="politicalCapital" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.politicalCapital ? 'checked' : ''}>
             <span>Political Capital</span>
           </label>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="staffSupport" ${primaryFilterAssets.staffSupport ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="staffSupport" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.staffSupport ? 'checked' : ''}>
             <span>Field Staff</span>
           </label>
           <label style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-            <input type="checkbox" data-pri-asset="donorConduits" ${primaryFilterAssets.donorConduits ? 'checked' : ''}>
+            <input type="checkbox" data-pri-asset="donorConduits" style="width:18px;height:18px;min-width:18px;min-height:18px;accent-color:var(--gold)" ${primaryFilterAssets.donorConduits ? 'checked' : ''}>
             <span>Donor Conduits</span>
           </label>
         </div>
@@ -10906,8 +10908,9 @@ function renderPresidentialPrimaryScreen() {
     `;
   }
 
+  // [LAYOUT-GEO-FIX] GEO-03: Use non-sticky primary-topbar so Presidential Primary header never overlaps scrolled primary controls
   return `
-    <header class="topbar">
+    <header class="topbar primary-topbar">
       <div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div>
       <div class="topbar-actions">
         <span style="--party:${game.player.color}" class="status-party">${safe(game.player.name)}</span>
@@ -10943,9 +10946,10 @@ function renderPrimaryArchiveModalMarkup() {
   const partyIds = Array.from(new Set([...Object.keys(byParty || {}), ...Object.keys(game.presidentialTicket || {})].filter((pid) => byParty?.[pid])));
   if (partyIds.length && !byParty[primaryArchiveParty]) primaryArchiveParty = partyIds[0];
   const rec = byParty[primaryArchiveParty] || null;
+  // [LAYOUT-GEO-FIX] GEO-01: Bounded scrollable modal height within viewport (100vh - 32px)
   return `
     <div class="v167-save-slots-modal" id="primary-archive-backdrop">
-      <div class="v167-save-slots-card" style="width:min(860px,96vw);max-height:88vh;overflow:auto" role="dialog" aria-label="Simulated Primaries Archive">
+      <div class="v167-save-slots-card" style="width:min(860px,96vw);max-height:calc(100vh - 32px);overflow-y:auto;margin:auto;box-sizing:border-box" role="dialog" aria-label="Simulated Primaries Archive">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div>
             <div class="eyebrow">Simulated Primaries Archive${latestYr ? ` · ${latestYr}` : ''}</div>
