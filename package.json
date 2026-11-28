@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.19.3.3",
-  "description": "Coalition Builder: Party Chair — Version 0.19.3.3 (Gameplay Mechanics Overhaul: Candidate Recruitment, Multi-Race Drift, Slate Funding, States Officials Tables & Step 1 Operations)",
+  "version": "0.19.3.4",
+  "description": "Coalition Builder: Party Chair — Version 0.19.3.4 (Gameplay Mechanics Overhaul: Candidate Recruitment, Multi-Race Drift, Slate Funding, States Officials Tables & Step 1 Operations)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

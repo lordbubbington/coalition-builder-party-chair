@@ -383,7 +383,7 @@
 
     const isCustomMode = custom || selectedTemplate === 'custom';
     return `
-      <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3.3</span></div></header>
+      <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3.4</span></div></header>
       <main class="screen setup-screen">
         <section class="hero panel">
           <div class="eyebrow">Build a party that lasts</div>
@@ -411,7 +411,7 @@
             <!-- [v0.18.4 ATLAS-HOTSEAT] -->
             ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatSetupToggle(isCustomMode ? 'player' : selectedTemplate) : ''}
             <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-            <p class="setup-foot">Version 0.19.3.3 · Gameplay Mechanics Overhaul · Local autosave</p>
+            <p class="setup-foot">Version 0.19.3.4 · Gameplay Mechanics Overhaul · Local autosave</p>
           </section>
           <aside class="panel setup-aside">
             <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
