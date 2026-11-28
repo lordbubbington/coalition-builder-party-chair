@@ -3932,14 +3932,20 @@ function applyQuestAcceptanceBonus(game, questId, targetState = null) {
     ? String(questId).slice('growing-in-state-'.length)
     : stateId;
   switch (normalizedQuestId) {
-    case 'fundraising':
-      // Fundraising increases current budget by 25% and completes immediately
-      updated.treasury = round((updated.treasury || 0) * 1.25);
+    case 'fundraising': {
+      // Fundraising gives party-tier flat grant OR 25% treasury increase, whichever is higher
+      const FUNDRAISING_PRIORITY_TIER_M = { 0: 1, 1: 5, 2: 10, 3: 25, 4: 50, 5: 250 };
+      const pTier = clamp(getPartyInstitutionalTier(updated, 'player'), 0, 5);
+      const flatGrant = FUNDRAISING_PRIORITY_TIER_M[pTier] ?? 1;
+      const pctGrant = Number(updated.treasury || 0) * 0.25;
+      const grant = Math.max(flatGrant, pctGrant);
+      updated.treasury = round(Number(updated.treasury || 0) + grant, 2);
       updated.completedQuests = Array.isArray(updated.completedQuests) ? [...updated.completedQuests] : [];
       if (!updated.completedQuests.includes('fundraising')) {
         updated.completedQuests.push('fundraising');
       }
       break;
+    }
 
     case 'growing-vote-nationally':
       // Gain 10,000 voters across the country (conserving 155M scale)
@@ -4085,28 +4091,101 @@ function applyQuestAcceptanceBonus(game, questId, targetState = null) {
       break;
 
     case 'build-statehouse-farm-team': {
-      const stateIdSpawn = targetState || 'PA';
-      // [v0.18.7 QA-FIX] BUG-03: Guarantee unique stateLeg standout ID even inside same millisecond
-      _uniqueMemberSeq += 1;
-      const newStandout = {
-        id: `stateLeg_${stateIdSpawn}_${pid}_${updated.year || 2028}_${_uniqueMemberSeq}`,
-        name: 'Morgan Brooks',
-        office: 'stateLeg',
-        officeLabel: 'State Leg',
-        stateId: stateIdSpawn,
-        state: stateIdSpawn,
-        party: pid,
-        quality: 7,
-        fame: 35,
-        title: `State Representative (${stateIdSpawn})`,
-        isStateLegStandout: true,
-        termsServed: { house: 0, senate: 0, governor: 0, stateLeg: 1 },
-        careerMilestones: [{ year: updated.year || 2028, office: 'stateLeg', description: `Elected to State Legislature (${stateIdSpawn})` }],
-      };
-      if (!updated.stateLegStandouts) updated.stateLegStandouts = {};
-      if (!updated.stateLegStandouts[pid]) updated.stateLegStandouts[pid] = [];
-      updated.stateLegStandouts[pid].push(newStandout);
-      updated.sittingMembers = [...(updated.sittingMembers || []), newStandout];
+      const effPid = updated.player?.custom ? 'player' : pid;
+      // 1) +1,000 voters in 10 random states
+      const eligibleStates = (STATES || []).filter((s) => s && s.id && s.id !== 'DC').map((s) => s.id);
+      const shuffledStates = [...eligibleStates].sort((a, b) => hash(`farmSt:${updated.seed || 2028}:${updated.year || 2028}:${effPid}:${a}`) - hash(`farmSt:${updated.seed || 2028}:${updated.year || 2028}:${effPid}:${b}`));
+      const chosen10 = shuffledStates.slice(0, Math.min(10, shuffledStates.length));
+      if (updated.voterModel) {
+        chosen10.forEach((stId) => {
+          addVotersToModel(updated.voterModel, stId, 1000, effPid);
+        });
+      }
+
+      // 2) Make 1-3 state legislators standouts and increase their quality by +1 (max 8)
+      const standoutCount = 1 + Math.floor(hash(`farmCnt:${updated.seed || 2028}:${updated.year || 2028}:${effPid}`) * 3); // 1..3
+      const nextStandoutsMap = { ...(updated.stateLegStandouts || {}) };
+      const existingPartyStandouts = Array.isArray(nextStandoutsMap[effPid]) ? nextStandoutsMap[effPid].map((s) => ({ ...s })) : [];
+      const isStateLegOffice = (m) => m && ['stateleg', 'state_leg', 'state-leg', 'statehouse', 'statesenate'].includes(String(m.office || '').toLowerCase());
+      const partyStateLegs = (updated.sittingMembers || []).filter((m) => m && !m.vacant && (m.party === effPid || m.party === pid) && isStateLegOffice(m));
+
+      const upgradedIds = new Set();
+      let upgradedCount = 0;
+
+      // First promote existing sitting state legislators (preferring non-standouts first, then existing standouts)
+      const orderedCandidates = [
+        ...partyStateLegs.filter((m) => !m.isStateLegStandout),
+        ...partyStateLegs.filter((m) => m.isStateLegStandout),
+      ];
+      const nextSitting = (updated.sittingMembers || []).map((m) => ({ ...m }));
+      for (const cand of orderedCandidates) {
+        if (upgradedCount >= standoutCount) break;
+        const idx = nextSitting.findIndex((m) => m.id === cand.id);
+        if (idx >= 0) {
+          const curQ = Number(nextSitting[idx].quality || 5);
+          nextSitting[idx] = {
+            ...nextSitting[idx],
+            isStateLegStandout: true,
+            quality: Math.min(8, curQ + 1),
+            happiness: clamp(Number(nextSitting[idx].happiness ?? 65) + 10, 0, 100),
+          };
+          upgradedIds.add(nextSitting[idx].id);
+          if (!existingPartyStandouts.some((s) => s.id === nextSitting[idx].id)) {
+            existingPartyStandouts.push({ ...nextSitting[idx] });
+          } else {
+            const sIdx = existingPartyStandouts.findIndex((s) => s.id === nextSitting[idx].id);
+            existingPartyStandouts[sIdx] = { ...existingPartyStandouts[sIdx], isStateLegStandout: true, quality: nextSitting[idx].quality, happiness: nextSitting[idx].happiness };
+          }
+          upgradedCount += 1;
+        }
+      }
+
+      // If fewer than standoutCount sitting state legislators exist, upgrade existing standouts or spawn new ones up to standoutCount
+      for (let i = 0; i < existingPartyStandouts.length && upgradedCount < standoutCount; i++) {
+        if (upgradedIds.has(existingPartyStandouts[i].id)) continue;
+        const curQ = Number(existingPartyStandouts[i].quality || 5);
+        existingPartyStandouts[i] = {
+          ...existingPartyStandouts[i],
+          isStateLegStandout: true,
+          quality: Math.min(8, curQ + 1),
+          happiness: clamp(Number(existingPartyStandouts[i].happiness ?? 65) + 10, 0, 100),
+        };
+        upgradedIds.add(existingPartyStandouts[i].id);
+        upgradedCount += 1;
+      }
+
+      const fallbackNames = ['Morgan Brooks', 'Taylor Reid', 'Jordan Ellis'];
+      while (upgradedCount < standoutCount) {
+        const stSpawn = chosen10[upgradedCount] || targetState || 'PA';
+        _uniqueMemberSeq += 1;
+        const baseQ = 5;
+        const spawned = {
+          id: `stateLeg_${stSpawn}_${effPid}_${updated.year || 2028}_${_uniqueMemberSeq}`,
+          name: fallbackNames[upgradedCount % fallbackNames.length],
+          office: 'stateLeg',
+          officeLabel: 'State Leg',
+          stateId: stSpawn,
+          state: stSpawn,
+          party: effPid,
+          quality: Math.min(8, baseQ + 1),
+          fame: 35,
+          happiness: 75,
+          title: `State Representative (${stSpawn})`,
+          isStateLegStandout: true,
+          termsServed: { house: 0, senate: 0, governor: 0, stateLeg: 1 },
+          careerMilestones: [{ year: updated.year || 2028, office: 'stateLeg', description: `Elected to State Legislature (${stSpawn})` }],
+        };
+        existingPartyStandouts.push(spawned);
+        nextSitting.push(spawned);
+        upgradedCount += 1;
+      }
+
+      nextStandoutsMap[effPid] = existingPartyStandouts;
+      updated.stateLegStandouts = nextStandoutsMap;
+      updated.sittingMembers = nextSitting;
+
+      // 3) +10 member happiness
+      updated.sittingMemberHappiness = clamp(Number(updated.sittingMemberHappiness ?? 70) + 10, 0, 100);
       break;
     }
 
@@ -4553,9 +4632,65 @@ function generateOfferedPrioritiesHand(game, redrawCount = 0) {
 
   const lastOffered = new Set(game?.priorities?.lastCycleOffered || []);
 
-  // v0.16.9: Separate the 50 state-specific 'Grow our vote in <State>' priorities so EXACTLY 1 slot in every hand is a state-growth priority
-  const stateGrowthPool = eligible.filter((q) => q.isStateGrowthPriority || String(q.id).startsWith('growing-in-state-'));
+  // Separate the 50 state-specific 'Grow our vote in <State>' priorities and bound by party type:
+  // - Major parties: only states where trailing by <=10 pts (or closest leading state if none trailing by <=10)
+  // - Minor/Custom parties: random state from the top 10 states by party voter percentage
+  const rawStateGrowthPool = eligible.filter((q) => q.isStateGrowthPriority || String(q.id).startsWith('growing-in-state-'));
   const nonStateEligible = eligible.filter((q) => !q.isStateGrowthPriority && !String(q.id).startsWith('growing-in-state-'));
+  const isMajorForGrowth = !isCustom && ['people', 'heritage'].includes(pid);
+  let stateGrowthPool = rawStateGrowthPool;
+  if (rawStateGrowthPool.length > 0) {
+    if (isMajorForGrowth) {
+      const playerSign = pid === 'heritage' ? -1 : 1;
+      const scored = rawStateGrowthPool.map((q) => {
+        const stId = String(q.id || '').startsWith('growing-in-state-') ? String(q.id).slice('growing-in-state-'.length) : null;
+        let signedMargin = 0;
+        if (stId) {
+          try {
+            signedMargin = Number(presidentialStateMargin(game, stId)) * playerSign;
+          } catch (_) {
+            const stObj = (STATES || []).find((s) => s.id === stId);
+            signedMargin = Number(stObj?.lean || 0) * playerSign;
+          }
+        }
+        return { q, stId, signedMargin };
+      });
+      const trailingWithin10 = scored.filter((item) => item.signedMargin < 0 && item.signedMargin >= -10);
+      if (trailingWithin10.length > 0) {
+        stateGrowthPool = trailingWithin10.map((item) => item.q);
+      } else {
+        const leading = scored.filter((item) => item.signedMargin >= 0).sort((a, b) => a.signedMargin - b.signedMargin);
+        if (leading.length > 0) {
+          stateGrowthPool = [leading[0].q];
+        } else {
+          // Fallback: closest trailing state if trailing everywhere by >10
+          const closestTrail = scored.slice().sort((a, b) => b.signedMargin - a.signedMargin);
+          stateGrowthPool = closestTrail.length > 0 ? [closestTrail[0].q] : rawStateGrowthPool;
+        }
+      }
+    } else {
+      // Minor / Custom party: top 10 states by party's percentage of voters in voterModel
+      const vmStates = Array.isArray(game?.voterModel?.states) ? game.voterModel.states : [];
+      const pctByState = new Map();
+      vmStates.forEach((st) => {
+        const sid = st.stateId || st.id;
+        if (!sid || sid === 'DC') return;
+        const aff = st.affiliations || {};
+        const partyVoters = Number(aff[pid] ?? (pid === 'player' ? aff.player : 0) ?? 0);
+        const tot = Number(st.representedVoters || st.sampleVoters || 0)
+          || Object.values(aff).reduce((s, v) => s + (Number(v) || 0), 0)
+          || 1;
+        pctByState.set(sid, partyVoters / tot);
+      });
+      const ranked = rawStateGrowthPool
+        .map((q) => {
+          const stId = String(q.id || '').startsWith('growing-in-state-') ? String(q.id).slice('growing-in-state-'.length) : '';
+          return { q, stId, pct: pctByState.get(stId) || 0 };
+        })
+        .sort((a, b) => b.pct - a.pct);
+      stateGrowthPool = ranked.slice(0, 10).map((item) => item.q);
+    }
+  }
 
   // Partition remaining eligible quests into Contextual / Milestone slots vs Generic slots
   const contextual = nonStateEligible.filter((q) => q.isContextual || q.customOnly || q.isTargetable);
@@ -17550,8 +17685,11 @@ function startNextCycleInternal(game) {
       if (typeof demoEngine.selectDeterministicMigrationPatterns === 'function') {
         activeMigrationPatterns = demoEngine.selectDeterministicMigrationPatterns(game.seed || 2028, nextYear, nextEnv, null);
       }
-      // ~3% per-cycle electorate population growth (parties register during cycle; independents grow to match remaining demand)
-      if (typeof demoEngine.applyCyclePopulationGrowth === 'function') {
+      // Annual between-cycle state voting population growth (1%–10% per state per year; 50% independent factions, 50% state makeup)
+      const yearsBetween = Math.max(1, Number(nextYear || ((game.year || 2028) + 2)) - Number(game.year || 2028));
+      if (typeof demoEngine.applyAnnualStatePopulationGrowth === 'function') {
+        demoEngine.applyAnnualStatePopulationGrowth(voterModel, game.factions, game.seed || 2028, game.year || 2028, yearsBetween);
+      } else if (typeof demoEngine.applyCyclePopulationGrowth === 'function') {
         demoEngine.applyCyclePopulationGrowth(voterModel, 0.03, game.factions);
       }
       if (typeof demoEngine.applyInterstateMigration === 'function' && activeMigrationPatterns.length > 0) {
@@ -17564,10 +17702,11 @@ function startNextCycleInternal(game) {
       }
     }
 
-    // Post-cycle Hare-Niemeyer renormalization pass across all 51 jurisdictions to lock total represented voters strictly to 155,000,000 with 0 variance
+    // Post-cycle Hare-Niemeyer renormalization pass preserving actual grown electorate total
     const renormFn = demoEngine?.renormalizeElectorateHareNiemeyer || renormalizeVoterModelHareNiemeyer;
+    const targetElectorateTotal = Number(voterModel.cycleBaselineVoters || voterModel.states.reduce((acc, s) => acc + Number(s.representedVoters || 0), 0) || 155000000);
     if (typeof renormFn === 'function') {
-      renormFn(voterModel, 155000000);
+      renormFn(voterModel, targetElectorateTotal);
     }
 
     let totRep = 0;

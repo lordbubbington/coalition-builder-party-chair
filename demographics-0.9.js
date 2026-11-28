@@ -542,6 +542,139 @@
    * Parties register new voters during the cycle; any remaining demand up to +3%
    * flows into state independents & independent/swing factions during post-election realignment.
    */
+
+  function popGrowthSeededUnit(key) {
+    let h = 2166136261 >>> 0;
+    const str = String(key || 'pop');
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return (h >>> 0) / 4294967296;
+  }
+
+  /**
+   * Annual between-cycle state voting population growth:
+   * Each year, each state grows by a random 1%..10%.
+   * Half (50%) of new voters are split equally across independent/unaffiliated factions;
+   * the other half (50%) are distributed across all factions proportionally to the state's current makeup.
+   */
+  function applyAnnualStatePopulationGrowth(voterModel, gameFactions = null, seed = 2028, startYear = 2028, years = 1) {
+    if (!voterModel || !Array.isArray(voterModel.states) || voterModel.states.length === 0) return voterModel;
+    const is1to1 = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10000000);
+    const mult = is1to1 ? 1 : 100;
+    const liveFacs = Array.isArray(gameFactions) && gameFactions.length
+      ? gameFactions
+      : ((typeof window !== 'undefined' && window.PartyChairData?.FACTIONS_CATALOG) || []);
+    const isIndFaction = (f) => {
+      if (!f) return false;
+      const pid = String(f.partyId || '').toLowerCase();
+      const id = String(f.id || '');
+      return ['independent', 'none', 'unaffiliated'].includes(pid) || id.startsWith('swg_') || id.startsWith('unaff_');
+    };
+    const globalIndIds = liveFacs.filter(isIndFaction).map((f) => f.id);
+    const partyByFactionId = new Map(liveFacs.map((f) => [f.id, f.partyId]));
+    const numYears = Math.max(1, Math.round(Number(years) || 1));
+
+    const annualRecords = [];
+    for (let yIdx = 0; yIdx < numYears; yIdx++) {
+      const growthYear = Number(startYear || 2028) + yIdx + 1;
+      voterModel.states.forEach((st) => {
+        const sid = st.stateId || st.id || 'US';
+        const basePop = Math.max(0, Math.round(Number(st.representedVoters || st.sampleVoters || 0)));
+        if (basePop <= 0) return;
+
+        // Random 1%..10% annual growth per state
+        const u = popGrowthSeededUnit(`annualPopGrowth:${seed}:${growthYear}:${sid}`);
+        const rate = 0.01 + u * 0.09; // [0.01, 0.10]
+        const newVoters = Math.round(basePop * rate);
+        if (newVoters <= 0) return;
+
+        const indHalf = Math.floor(newVoters / 2);
+        const propHalf = newVoters - indHalf;
+
+        if (st.factions && typeof st.factions === 'object' && Object.keys(st.factions).length > 0) {
+          const allFacEntries = Object.entries(st.factions).filter(([, v]) => Number.isFinite(Number(v)) && Number(v) > 0);
+          const facSum = allFacEntries.reduce((s, [, v]) => s + Number(v), 0);
+
+          // 1) Proportional 50% based on current state faction makeup
+          let propAssigned = 0;
+          if (facSum > 0 && allFacEntries.length > 0) {
+            allFacEntries.forEach(([fid, v], i) => {
+              const add = (i === allFacEntries.length - 1)
+                ? Math.max(0, propHalf - propAssigned)
+                : Math.round(propHalf * (Number(v) / facSum));
+              propAssigned += add;
+              st.factions[fid] = Math.round(Number(st.factions[fid] || 0) + add);
+            });
+          }
+
+          // 2) Independent 50% split equally across independent/unaffiliated factions
+          const stateIndKeys = globalIndIds.length
+            ? globalIndIds.filter((fid) => st.factions[fid] !== undefined)
+            : Object.keys(st.factions).filter((fid) => String(fid).startsWith('swg_') || String(fid).startsWith('unaff_'));
+          const indTargets = stateIndKeys.length > 0 ? stateIndKeys : globalIndIds;
+          if (indTargets.length > 0) {
+            const baseInd = Math.floor(indHalf / indTargets.length);
+            const remInd = indHalf - baseInd * indTargets.length;
+            indTargets.forEach((fid, i) => {
+              const add = baseInd + (i < remInd ? 1 : 0);
+              st.factions[fid] = Math.round(Number(st.factions[fid] || 0) + add);
+            });
+          }
+
+          // Recompute state affiliations from updated st.factions
+          const partySums = { people: 0, heritage: 0, independent: 0, liberty: 0, green: 0, constitution: 0, socialist: 0, other: 0, player: 0 };
+          Object.entries(st.factions).forEach(([fid, v]) => {
+            const cnt = Math.max(0, Number(v || 0));
+            const pid = partyByFactionId.get(fid)
+              || (fid.startsWith('dem_') ? 'people'
+                : fid.startsWith('gop_') ? 'heritage'
+                : (fid.startsWith('swg_') || fid.startsWith('unaff_')) ? 'independent'
+                : 'other');
+            if (['independent', 'none', 'unaffiliated'].includes(pid)) partySums.independent += cnt;
+            else if (partySums[pid] !== undefined) partySums[pid] += cnt;
+            else partySums.other += cnt;
+          });
+          st.affiliations = st.affiliations || {};
+          Object.keys(partySums).forEach((pk) => {
+            if (pk === 'player' && partySums.player === 0 && st.affiliations.player === undefined) return;
+            st.affiliations[pk] = is1to1 ? Math.round(partySums[pk]) : Math.round(partySums[pk] / mult);
+          });
+          st.affiliations.thirdParty = Math.round(
+            Number(st.affiliations.liberty || 0) +
+            Number(st.affiliations.green || 0) +
+            Number(st.affiliations.constitution || 0) +
+            Number(st.affiliations.socialist || 0) +
+            Number(st.affiliations.other || 0)
+          );
+        } else {
+          // Fallback if state lacks faction breakdown: 50% independent, 50% proportional across affiliations
+          st.affiliations = st.affiliations || {};
+          const keys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other'].filter((k) => Number(st.affiliations[k] || 0) > 0);
+          const affSum = keys.reduce((s, k) => s + Number(st.affiliations[k] || 0), 0) || 1;
+          const addSampleInd = is1to1 ? indHalf : Math.round(indHalf / mult);
+          const addSampleProp = is1to1 ? propHalf : Math.round(propHalf / mult);
+          st.affiliations.independent = Math.round(Number(st.affiliations.independent || 0) + addSampleInd);
+          keys.forEach((k) => {
+            st.affiliations[k] = Math.round(Number(st.affiliations[k] || 0) + Math.round(addSampleProp * (Number(st.affiliations[k] || 0) / affSum)));
+          });
+        }
+
+        st.representedVoters = basePop + newVoters;
+        st.sampleVoters = is1to1 ? st.representedVoters : Math.round(st.representedVoters / mult);
+        annualRecords.push({ year: growthYear, stateId: sid, rate: Math.round(rate * 10000) / 100, added: newVoters });
+      });
+    }
+
+    const totalGrownRep = voterModel.states.reduce((acc, st) => acc + Number(st.representedVoters || 0), 0);
+    voterModel.representedVoters = totalGrownRep;
+    voterModel.sampleVoters = is1to1 ? totalGrownRep : Math.round(totalGrownRep / mult);
+    voterModel.cycleBaselineVoters = totalGrownRep;
+    voterModel.lastAnnualGrowthRecords = annualRecords;
+    return voterModel;
+  }
+
   function applyCyclePopulationGrowth(voterModel, growthRate = 0.03, gameFactions = null) {
     if (!voterModel || !Array.isArray(voterModel.states) || voterModel.states.length === 0) return voterModel;
     const is1to1 = (voterModel.voterScale === '1:1' || Number(voterModel.sampleVoters || 0) >= 10000000);
@@ -643,6 +776,7 @@
     applyGenerationalTurnover,
     normalizeStateFactionVoters,
     renormalizeElectorateHareNiemeyer,
+    applyAnnualStatePopulationGrowth,
     applyCyclePopulationGrowth,
   };
 
