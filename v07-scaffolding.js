@@ -747,7 +747,7 @@
     // Category A — Institutional, Legislative & Executive Leaders
     { id: 'senateLeader', label: 'Senate Leader', getLabel: (isMajority) => isMajority ? 'Senate Majority Leader' : 'Senate Minority Leader', category: 'institutional', requiredOffice: 'senate', minSeats: 1, multiplier: 1.0, passiveDesc: '+2.0 Senate race support & legislative cohesion' },
     { id: 'houseLeader', label: 'House Leader', getLabel: (isMajority) => isMajority ? 'House Majority Leader' : 'House Minority Leader', category: 'institutional', requiredOffice: 'house', minSeats: 1, multiplier: 1.0, passiveDesc: '+1.5 House district support & caucus discipline' },
-    { id: 'senateWhip', label: 'Senate Whip', category: 'institutional', requiredOffice: 'senate', minSeats: 10, multiplier: 1.0, passiveDesc: '+4 Sitting Member Happiness & bill endorsement speed' },
+    { id: 'senateWhip', label: 'Senate Whip', category: 'institutional', requiredOffice: 'senate', minSeats: 5, multiplier: 1.0, passiveDesc: '+4 Sitting Member Happiness & bill endorsement speed' },
     { id: 'houseWhip', label: 'House Whip', category: 'institutional', requiredOffice: 'house', minSeats: 10, multiplier: 1.0, passiveDesc: '+4 Sitting Member Happiness & House turnout lift' },
     { id: 'speakerOfHouse', label: 'House Speaker', category: 'institutional', requiredOffice: 'house', requiresMajority: true, multiplier: 1.5, passiveDesc: '+$8M annual fundraising & +3.0 national environment' },
     { id: 'govAssocChair', label: 'Chair of the Governors Assoc.', category: 'institutional', requiredOffice: 'governor', minSeats: 1, multiplier: 1.0, passiveDesc: '+2.0 Gubernatorial & State Legislature support' },

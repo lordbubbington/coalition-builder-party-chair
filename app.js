@@ -873,6 +873,34 @@ const roundTo = (value, places = 1) => { const factor = 10 ** places; return Mat
 let forecastMapChamber = 'presidential';
 
 // REQ-167: Universal Politician Faction Name Resolver
+
+function formatPoliticianRoleTag(m, g = game) {
+  if (!m) return '';
+  const parts = [];
+  const rolesObj = g?.leadershipRoles?.player || g?.player?.leadershipRoles || {};
+  const schema = window.PartyChairV07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData?.LEADERSHIP_ROLES || [];
+  Object.entries(rolesObj).forEach(([rId, holderId]) => {
+    if (holderId && (holderId === m.id || holderId === m.sittingId || holderId === m.name)) {
+      const def = schema.find((r) => r.id === rId);
+      if (def) parts.push(def.label || def.title || rId);
+    }
+  });
+  const off = String(m.office || '').toLowerCase();
+  let offLabel = '';
+  if (off === 'senate') offLabel = 'U.S. Senator';
+  else if (off === 'house') offLabel = m.districtId ? `U.S. Rep. (${m.districtId})` : 'U.S. Rep.';
+  else if (off === 'governor') offLabel = 'Governor';
+  else if (off === 'president') offLabel = 'President';
+  else if (off === 'vicepresident') offLabel = 'Vice President';
+  else if (off === 'statesenate' || off === 'state_senate' || off === 'state-senate') offLabel = 'State Senator';
+  else if (off === 'statehouse' || off === 'state_house' || off === 'state-house') offLabel = 'State Rep.';
+  else if (off === 'stateleg' || off === 'state_leg' || off === 'state-leg' || m.isStateLegStandout) offLabel = 'State Legislator';
+  else if (m.officeLabel && !['leader', 'candidate'].includes(String(m.officeLabel).toLowerCase())) offLabel = m.officeLabel;
+  else if (m.title && !String(m.title).toLowerCase().includes('candidate')) offLabel = m.title;
+  if (offLabel && !parts.some((p) => p.toLowerCase() === offLabel.toLowerCase())) parts.push(offLabel);
+  return parts.length ? ` [${parts.join(' · ')}]` : '';
+}
+
 function resolveMemberFactionName(member) {
   if (!member) return 'Coalition';
   const fId = member.factionId || (window.PartyChairData?.resolvePoliticianFactionId ? window.PartyChairData.resolvePoliticianFactionId(member) : null);
@@ -2269,12 +2297,7 @@ function step2PrioritiesMarkup() {
     game.priorities.additional = game.priorities.additional.slice(0, maxFocusSlots);
   }
   while (game.priorities.additional.length < maxFocusSlots) {
-    const idx = game.priorities.additional.length;
-    if (idx === 0) game.priorities.additional.push({ type: 'issue', targetId: (game.issuePriorities && game.issuePriorities[0]) || '' });
-    else if (idx === 1) game.priorities.additional.push({ type: 'issue', targetId: (game.issuePriorities && game.issuePriorities[1]) || '' });
-    else if (idx === 2) game.priorities.additional.push({ type: 'issue', targetId: (game.issuePriorities && game.issuePriorities[2]) || '' });
-    else if (idx === 3) game.priorities.additional.push({ type: 'region', targetId: (game.regionalPriorities && game.regionalPriorities[0]) || '' });
-    else game.priorities.additional.push({ type: 'issue', targetId: '' });
+    game.priorities.additional.push({ type: 'issue', targetId: '' });
   }
 
   // Ensure Draft-of-7 offered hand is dealt
@@ -2448,7 +2471,7 @@ function step2PrioritiesMarkup() {
           ${regionDefs.map((r) => `<option value="${safe(r.id)}" ${targetId === r.id ? 'selected' : ''} ${usedTargets.has(r.id) && targetId !== r.id ? 'disabled' : ''}>${safe(r.name || r.id)} (${(r.states || []).length} states)</option>`).join('')}
         </select>
       `;
-      noteHtml = `<span class="additional-note-badge note-region">🌐 +500 registered voters per state in region</span>`;
+      noteHtml = `<span class="additional-note-badge note-region">🌐 +10,000 registered voters split equally across region</span>`;
     }
 
     const isFilled = Boolean(targetId);
@@ -3282,7 +3305,7 @@ function step4WorkMarkup() {
 
         <!-- 3. Court Politician to Caucus / Defect -->
         <div class="action-card" style="border-color:#1abc9c88;background:linear-gradient(145deg,#102624,#111b26)">
-          <div class="action-head"><i style="color:#1abc9c">🤝</i><b>Court Politician to Caucus / Defect</b><span>1 action · $4M</span></div>
+          <div class="action-head"><i style="color:#1abc9c">🤝</i><b>Court Politician to Caucus / Defect</b><span>1 action · Free</span></div>
           <p>Court sitting Senators, Governors, and House members to switch party affiliation. Requires Tier 3 (or Happiness ≤ 10).</p>
           ${(() => {
             const pTier = (typeof getPartyInstitutionalTier === 'function')
@@ -3303,9 +3326,15 @@ function step4WorkMarkup() {
             }
 
             const isMajorParty = V07 ? V07.isMajorParty(game, 'player') : ['people', 'heritage'].includes(identity);
+            const initialTarget = eligibleTargets[0] || null;
+            const eligibleRoleList = (!isMajorParty && initialTarget && window.PartyChairEngine?.getEligibleCourtingRolesForMember)
+              ? window.PartyChairEngine.getEligibleCourtingRolesForMember(game, initialTarget, identity)
+              : [];
             const roleOptions = !isMajorParty ? `
               <select id="court-role-select" style="margin-top:6px">
-                ${(V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || []).map((r) => `<option value="${r.id}">Appoint: ${safe(r.label || r.title)}</option>`).join('')}
+                ${eligibleRoleList.length
+                  ? eligibleRoleList.map((r) => `<option value="${r.id}">Appoint: ${safe(r.label || r.title)}</option>`).join('')
+                  : '<option value="">No Leadership Promise</option>'}
               </select>
             ` : '';
 
@@ -3322,7 +3351,7 @@ function step4WorkMarkup() {
               </select>
               ${roleOptions}
               <div style="font-size:11.5px;color:#7df2da;margin-bottom:4px">ℹ Unhappy caucus courting is now primarily an <b>Off-Cycle Interlude</b> action (so defectors run on your ticket from Day 1).</div>
-              <button type="button" class="button button-small" style="border-color:#1abc9c;color:#7df2da" data-action="persuade-independent-caucus" ${disabled || game.treasury < 4 || !eligibleTargets.length ? 'disabled' : ''}>Court Defection</button>
+              <button type="button" class="button button-small" style="border-color:#1abc9c;color:#7df2da" data-action="persuade-independent-caucus" ${disabled || !eligibleTargets.length ? 'disabled' : ''}>Court Defection</button>
             </div>`;
           })()}
         </div>
@@ -3375,7 +3404,7 @@ function step4WorkMarkup() {
           <p>Deploy an appointed party leader to a specific state (+1–2 state chapters, +3 Fame, +memberships).</p>
           <div class="inline-controls">
             ${partyLeaderPool.length ? `
-              <select id="tour-member-6" data-dup-id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
+              <select id="tour-member-6" data-dup-id="tour-member">${partyLeaderPool.map((m) => `<option value="${m.id}">${safe(m.name)}${safe(formatPoliticianRoleTag(m, game))} (${safe(m.stateId || m.region)})</option>`).join('')}</select>
               <select id="tour-state">${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('tour-state', mapState) ? 'selected' : ''}>${s.id} · ${safe(s.name)}</option>`).join('')}</select>
               <button type="button" class="button button-small" data-action="tour" ${disabled ? 'disabled' : ''}>Deploy</button>
             ` : `
@@ -7794,7 +7823,7 @@ function step1LeadershipAndBylawsMarkup() {
         : `<div class="v07-role-assign">
             <select data-assign-role="${role.id}" aria-label="Assign ${safe(roleDisplayTitle)}">
               <option value="">— ${role.category === 'caucus' && role.representativeName && !holder ? `${safe(role.representativeName)} (Default Rep)` : 'Vacant'} —</option>
-              ${pool.map((c) => `<option value="${c.id}" ${holder && (holder.id === c.id || holder.name === c.name) ? 'selected' : ''}>${safe(c.name)} · Fame ${Math.round(c.fame || 40)} · Q${c.quality || 6}</option>`).join('')}
+              ${pool.map((c) => `<option value="${c.id}" ${holder && (holder.id === c.id || holder.name === c.name) ? 'selected' : ''}>${safe(c.name)}${safe(formatPoliticianRoleTag(c, game))} · Fame ${Math.round(c.fame || 40)} · Q${c.quality || 6}</option>`).join('')}
             </select>
           </div>`}
     </article>`;
@@ -7831,7 +7860,21 @@ function step1LeadershipAndBylawsMarkup() {
         const partyLeaderPool = appointedLeaderIds
           .map((id) => memberById(id))
           .filter((m) => m && (m.party === identity || (identity === 'player' && (!m.party || m.party === 'player'))));
-        const currentKeynote = game.keynoteSpeakerId ? memberById(game.keynoteSpeakerId) : null;
+        const stateLegStandoutsPool = [
+          ...(game.stateLegStandouts?.[identity] || []),
+          ...(identity === 'player' ? (game.stateLegStandouts?.player || []) : []),
+          ...(game.sittingMembers || []).filter((m) => m && !m.vacant && (m.party === identity || (identity === 'player' && m.party === 'player')) && ['stateleg', 'state_leg', 'state-leg', 'statehouse', 'statesenate'].includes(String(m.office || '').toLowerCase())),
+        ].filter(Boolean);
+        const keynoteSeen = new Set();
+        const keynotePool = [];
+        [...partyLeaderPool, ...stateLegStandoutsPool].forEach((m) => {
+          if (!m || !m.id || keynoteSeen.has(m.id)) return;
+          keynoteSeen.add(m.id);
+          keynotePool.push(m);
+        });
+        const currentKeynote = game.keynoteSpeakerId
+          ? (memberById(game.keynoteSpeakerId) || keynotePool.find((m) => m.id === game.keynoteSpeakerId) || null)
+          : null;
         const maxChapters = window.PartyChairEngine?.MAX_STATE_CHAPTERS || 25;
         const firstOpenChapterState = STATES.find((s) => stateChaptersFor(s.id) < maxChapters)?.id || mapState;
         const rawChapterSel = actionStateSelections['chapter-state'];
@@ -7862,9 +7905,9 @@ function step1LeadershipAndBylawsMarkup() {
               ? `Keynote Delivered by <b>${safe(currentKeynote.name)}</b> (+25 Fame, +8 faction confidence, +2.0 turnout in ${(game.keynoteRegions || []).join(', ')}).`
               : `Select 1 appointed Party Leader for +25 Fame, +8 faction confidence, and +2.0 turnout across their home overlapping region.`}</p>
             <div class="inline-controls">
-              ${partyLeaderPool.length ? `
+              ${keynotePool.length ? `
                 <select id="keynote-speaker-2" data-dup-id="keynote-speaker">
-                  ${partyLeaderPool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.region)}</option>`).join('')}
+                  ${keynotePool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)}${safe(formatPoliticianRoleTag(m, game))} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.state || m.region || 'US')}</option>`).join('')}
                 </select>
                 <button type="button" class="button button-small button-gold" id="select-keynote-3" data-dup-id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
               ` : `
@@ -9743,6 +9786,7 @@ function campaignMarkup() {
     { id: 'states', label: 'States', eyebrow: '50-State Directory' },
     { id: 'forecast', label: 'Forecast', eyebrow: 'Election Projections & Forecasts' },
     { id: 'party-info', label: 'Party Information', eyebrow: 'Party Standing & Metrics' },
+    { id: 'politicians', label: 'Politicians', eyebrow: 'Party Rosters & Officeholders' },
     { id: 'finance', label: 'Finance & PACs', eyebrow: 'Outside Spending & Donor Blocs' },
     { id: 'factions', label: 'Factions', eyebrow: `${(game?.factions || []).length || 37} National Factions & State Allocations` },
   ];
@@ -9756,6 +9800,7 @@ function campaignMarkup() {
   else if (tab === 'states') viewportContent = statesTabMarkup();
   else if (tab === 'forecast') viewportContent = forecastTabMarkup();
   else if (tab === 'party-info') viewportContent = partyInfoTabMarkup();
+  else if (tab === 'politicians') viewportContent = window.PoliticiansDirectoryUI ? window.PoliticiansDirectoryUI.renderPoliticiansDirectoryTab(game) : '';
   else if (tab === 'finance') viewportContent = renderFinanceTab(game);
   else if (tab === 'factions') viewportContent = factionsTabMarkup();
   else if (tab === 'diplomacy-hub' && window.CoalitionPoliticsSystem?.isDiplomacyHubUnlocked?.(game)) viewportContent = window.CoalitionPoliticsSystem.renderDiplomacyHubTab(game);
@@ -12111,6 +12156,20 @@ function bind() {
   // Strategic Priorities Lock-In (REQ-69)
 
   // State Subview & Registration Sorting (REQ-66)
+  const indTargetSel = document.getElementById('ind-caucus-target');
+  const courtRoleSel = document.getElementById('court-role-select');
+  if (indTargetSel && courtRoleSel && window.PartyChairEngine?.getEligibleCourtingRolesForMember) {
+    indTargetSel.addEventListener('change', () => {
+      const m = (game?.sittingMembers || []).find((x) => x && (x.id === indTargetSel.value || x.sittingId === indTargetSel.value));
+      const roles = m ? window.PartyChairEngine.getEligibleCourtingRolesForMember(game, m, playerIdentity()) : [];
+      courtRoleSel.innerHTML = roles.length
+        ? roles.map((r) => `<option value="${r.id}">Appoint: ${safe(r.label || r.title)}</option>`).join('')
+        : '<option value="">No Leadership Promise</option>';
+    });
+  }
+  if (window.PoliticiansDirectoryUI?.bindEvents) {
+    window.PoliticiansDirectoryUI.bindEvents(render);
+  }
   document.querySelectorAll('[data-state-subview]').forEach((button) => button.addEventListener('click', () => {
     stateSubview = button.dataset.stateSubview;
     render();

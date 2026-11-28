@@ -3807,6 +3807,101 @@ function transferVotersInModel(voterModel, stateId, voterCount, partyId, options
   return { transferred, donorBreakdown };
 }
 
+
+// Hardcoded per-region Party Focus commands (10,000 voters split equally across each region's states)
+function distributeRegionFocusVoters(voterModel, states, partyId, totalVoters = 10000) {
+  if (!voterModel || !Array.isArray(states) || states.length === 0) return {};
+  const base = Math.floor(totalVoters / states.length);
+  const rem = totalVoters - base * states.length;
+  const allocated = {};
+  states.forEach((stId, i) => {
+    const share = base + (i < rem ? 1 : 0);
+    addVotersToModel(voterModel, stId, share, partyId);
+    allocated[stId] = share;
+  });
+  return allocated;
+}
+
+const REGION_FOCUS_COMMANDS = {
+  'Prairie States': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['ND', 'SD', 'NE', 'KS', 'OK', 'IA', 'MN', 'MT', 'WY'], partyId, 10000),
+  'Pacific Northwest': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['WA', 'OR', 'ID', 'AK'], partyId, 10000),
+  'Deep South': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['AL', 'MS', 'GA', 'SC', 'LA', 'AR', 'FL', 'TX'], partyId, 10000),
+  'Appalachia': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['WV', 'KY', 'TN', 'VA', 'NC', 'OH', 'PA'], partyId, 10000),
+  'New England': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['ME', 'NH', 'VT', 'MA', 'RI', 'CT'], partyId, 10000),
+  'Rust Belt': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['PA', 'OH', 'MI', 'WI', 'IN', 'IL', 'NY', 'WV'], partyId, 10000),
+  'Great Lakes States': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['MI', 'WI', 'MN', 'IL', 'IN', 'OH', 'PA', 'NY'], partyId, 10000),
+  'The Rockies': (voterModel, partyId) => distributeRegionFocusVoters(voterModel, ['CO', 'UT', 'ID', 'MT', 'WY', 'NV', 'NM', 'AZ'], partyId, 10000),
+};
+
+// Politician courting leadership promise eligibility:
+// - If role requires a specific office, target must hold that exact office.
+// - Party can only offer roles it can currently fill, EXCEPT houseLeader (House Minority Leader)
+//   and always-fillable Category B party roles (rhetoricalLeader, policyLeader).
+function getEligibleCourtingRolesForMember(game, targetMember, partyId = 'player') {
+  const V07 = (typeof window !== 'undefined' && window.PartyChairV07) || (typeof globalThis !== 'undefined' && globalThis.PartyChairV07) || null;
+  const rolesSchema = (V07 && Array.isArray(V07.LEADERSHIP_ROLES_SCHEMA))
+    ? V07.LEADERSHIP_ROLES_SCHEMA
+    : ((typeof window !== 'undefined' && window.PartyChairData?.LEADERSHIP_ROLES) || []);
+  if (!targetMember) return [];
+
+  const identityId = (partyId && partyId !== 'player')
+    ? partyId
+    : (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || game?.player?.id || 'people'));
+  const targetOffice = String(targetMember.office || '').toLowerCase();
+  const sitting = game?.sittingMembers || [];
+  const matchesParty = (m) => m && !m.vacant && (m.party === identityId || m.partyId === identityId || m.caucus === identityId || (identityId === 'player' && m.party === 'player'));
+
+  const senateCount = sitting.filter((m) => matchesParty(m) && String(m.office || '').toLowerCase() === 'senate').length;
+  const houseCount = Array.isArray(game?.representatives) && game.representatives.length > 0
+    ? game.representatives.filter((r) => r && (r.partyId === identityId || r.party === identityId || (identityId === 'player' && r.partyId === 'player'))).length
+    : sitting.filter((m) => matchesParty(m) && String(m.office || '').toLowerCase() === 'house').length;
+  const govCount = sitting.filter((m) => matchesParty(m) && String(m.office || '').toLowerCase() === 'governor').length;
+  const stateLegCount = sitting.filter((m) => matchesParty(m) && ['stateleg', 'state_leg', 'state-leg', 'statehouse', 'statesenate'].includes(String(m.office || '').toLowerCase())).length;
+  const totalHouseSeats = Number(game?.federalReforms?.totalHouseSeats || game?.representatives?.length || 435);
+  const houseMajorityThreshold = Math.floor(totalHouseSeats / 2) + 1;
+  const holdsPresidency = (game?.presidentParty === identityId) || (identityId === 'player' && game?.presidentParty === 'player');
+
+  return rolesSchema.filter((role) => {
+    if (!role || !role.id) return false;
+    // Locked constitutional offices (President / VP) cannot be promised
+    if (role.isLocked) return false;
+
+    // Strict office matching when role requires an office
+    if (role.requiredOffice) {
+      const req = String(role.requiredOffice).toLowerCase();
+      if (req === 'stateleg') {
+        if (!['stateleg', 'state_leg', 'state-leg', 'statehouse', 'statesenate'].includes(targetOffice)) return false;
+      } else if (targetOffice !== req) {
+        return false;
+      }
+    }
+
+    // Explicit exception: House Minority Leader (houseLeader) may be promised to a House member even with 0 House seats
+    if (role.id === 'houseLeader') {
+      return targetOffice === 'house';
+    }
+
+    // Always-fillable Category B party roles (no office or seat threshold)
+    if (role.id === 'rhetoricalLeader' || role.id === 'policyLeader') {
+      return true;
+    }
+
+    if (role.requiresPresidency && !holdsPresidency) return false;
+    if (role.requiresMajority && houseCount < houseMajorityThreshold) return false;
+
+    if (role.minSeats) {
+      const req = String(role.requiredOffice || '').toLowerCase();
+      const held = req === 'senate' ? senateCount
+        : req === 'house' ? houseCount
+        : req === 'governor' ? govCount
+        : req === 'stateleg' ? stateLegCount
+        : 0;
+      if (held < role.minSeats) return false;
+    }
+    return true;
+  });
+}
+
 function getStatesInRegion(regionId) {
   if (!regionId) return [];
   const data = window.PartyChairData || {};
@@ -18065,6 +18160,8 @@ function startNextCycleInternal(game) {
     voterModel: voterModel || postAttritionGame.voterModel || game.voterModel,
     factionPowerAudit: postAttritionGame.factionPowerAudit || null,
     focusesLocked: false,
+    issuePriorities: [],
+    regionalPriorities: [],
     priorities: {
       main: [],
       additional: Array.from({ length: maxFocusSlots }, () => ({ type: 'issue', targetId: '' })),
@@ -18072,9 +18169,12 @@ function startNextCycleInternal(game) {
       lockedMainPriorities: [],
       redrawCount: 0,
       handLocked: false,
+      locked: false,
+      focusStates: [],
       lastCycleOffered: game.priorities?.offeredQuestIds || [],
     },
     prioritiesLocked: false,
+    parties: game.parties ? Object.fromEntries(Object.entries(game.parties).map(([k, p]) => [k, { ...p, activeQuests: [], partyFocuses: Array.from({ length: maxFocusSlots }, () => ({ type: 'issue', targetId: '' })), focusLocks: [] }])) : game.parties,
     donorDriveVisits: {},
     commissionedPolls: [],
     electionNight: null,
@@ -22747,7 +22847,7 @@ function takeActionInternal(game, actionId, payload = {}) {
       ? Number(game.offCycle?.actionsRemaining ?? 0)
       : Number(game.actionsLeft ?? game.organizingActionsRemaining ?? 0);
     if (availOrgActions <= 0) return { ...game, lastNote: 'No off-cycle Party Building actions remaining.' };
-    if ((game.treasury || 0) < 4) return { ...game, lastNote: 'Courting a sitting politician requires $4.0M treasury.' };
+    // Courting sitting politicians is free ($0M)
 
     const identityId = (game.player?.custom)
       ? 'player'
@@ -22805,11 +22905,19 @@ function takeActionInternal(game, actionId, payload = {}) {
     let nextLeadership = game.leadershipRoles ? JSON.parse(JSON.stringify(game.leadershipRoles)) : { player: {} };
     if (!nextLeadership.player) nextLeadership.player = { ...(game.player?.leadershipRoles || {}) };
 
-    const rolesSchema = (typeof V07 !== 'undefined' && Array.isArray(V07?.LEADERSHIP_ROLES_SCHEMA))
-      ? V07.LEADERSHIP_ROLES_SCHEMA
-      : (window.PartyChairV07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData?.LEADERSHIP_ROLES || []);
-    const openRole = rolesSchema.find((r) => r?.id && !nextLeadership.player[r.id]);
-    const assignedRoleId = payload.roleId || payload.leadershipRoleId || (!isMajor && openRole ? openRole.id : null);
+    const eligibleRoles = getEligibleCourtingRolesForMember(game, target, identityId);
+    const requestedRoleId = payload.roleId || payload.leadershipRoleId || null;
+    if (requestedRoleId) {
+      const isAllowedRole = eligibleRoles.some((r) => r.id === requestedRoleId);
+      if (!isAllowedRole) {
+        return {
+          ...game,
+          lastNote: `Cannot promise role "${requestedRoleId}" to ${target.name}: party cannot currently fill that role or office does not match.`,
+        };
+      }
+    }
+    const openRole = eligibleRoles.find((r) => r?.id && !nextLeadership.player[r.id]) || eligibleRoles[0] || null;
+    const assignedRoleId = requestedRoleId || (!isMajor && openRole ? openRole.id : null);
 
     if (!isMajor && assignedRoleId) {
       nextLeadership.player[assignedRoleId] = target.id;
@@ -22963,7 +23071,7 @@ function takeActionInternal(game, actionId, payload = {}) {
     const nextActions = game.campaign?.active ? game.actionsLeft : Math.max(0, (game.actionsLeft ?? 1) - 1);
     const updated = {
       ...game,
-      treasury: round(game.treasury - 4, 1),
+      treasury: round(game.treasury - 0, 1),
       actionsLeft: nextActions,
       leadershipRoles: nextLeadership,
       player: {
@@ -22982,8 +23090,8 @@ function takeActionInternal(game, actionId, payload = {}) {
       ...(target.office === 'senate' ? { senateSeats: nextSitting.filter((m) => m.office === 'senate' && (m.party === identityId || m.caucus === identityId)).length } : {}),
       environmentCounterActionsThisTurn: (game.environmentCounterActionsThisTurn || 0) + 1,
       lastNote: !isMajor && assignedRoleId
-        ? `${target.name} (${target.stateId || target.district}) was appointed to party leadership and finalized their defection to ${game.player?.name || 'your party'}${closestFaction?.name ? `, joining the ${closestFaction.name} faction` : ''} (-$4M).`
-        : `${target.name} (${target.stateId || target.district}) defected to ${game.player?.name || 'your party'}${closestFaction?.name ? ` and joined the ${closestFaction.name} faction` : ''} (-$4M).`,
+        ? `${target.name} (${target.stateId || target.district}) was appointed to party leadership and finalized their defection to ${game.player?.name || 'your party'}${closestFaction?.name ? `, joining the ${closestFaction.name} faction` : ''} (Free).`
+        : `${target.name} (${target.stateId || target.district}) defected to ${game.player?.name || 'your party'}${closestFaction?.name ? ` and joined the ${closestFaction.name} faction` : ''} (Free).`,
     };
     if (typeof updated.organizingActionsRemaining === 'number') {
       updated.organizingActionsRemaining = Math.max(0, updated.organizingActionsRemaining - 1);
@@ -23440,13 +23548,16 @@ function takeActionInternal(game, actionId, payload = {}) {
         }
         summaryNotes.push(`+5k voters in ${slot.targetId}`);
       } else if (slot.type === 'region') {
-        const regionalStates = getStatesInRegion(slot.targetId);
-        if (updated.voterModel && regionalStates.length > 0) {
-          regionalStates.forEach((stId) => {
-            addVotersToModel(updated.voterModel, stId, 500, pid);
-          });
+        const regionCmd = REGION_FOCUS_COMMANDS[slot.targetId];
+        if (updated.voterModel && typeof regionCmd === 'function') {
+          regionCmd(updated.voterModel, pid);
+        } else {
+          const regionalStates = getStatesInRegion(slot.targetId);
+          if (updated.voterModel && regionalStates.length > 0) {
+            distributeRegionFocusVoters(updated.voterModel, regionalStates, pid, 10000);
+          }
         }
-        summaryNotes.push(`+500 voters/state in ${slot.targetId}`);
+        summaryNotes.push(`+10,000 voters split across ${slot.targetId}`);
       } else if (slot.type === 'issue') {
         const curSupporters = updated.trust?.supporters ?? 85;
         updated.trust = {
@@ -23808,7 +23919,13 @@ function takeActionInternal(game, actionId, payload = {}) {
     };
   }
   if (actionId === 'select-keynote-speaker') {
-    const member = memberFor(game, payload.memberId);
+    let member = memberFor(game, payload.memberId);
+    if (!member && payload.memberId) {
+      const standoutsAll = Object.values(game.stateLegStandouts || {}).flat().filter(Boolean);
+      member = standoutsAll.find((s) => s.id === payload.memberId || s.name === payload.memberId)
+        || (game.politicians || []).find((p) => p && (p.id === payload.memberId || p.sittingId === payload.memberId || p.name === payload.memberId))
+        || null;
+    }
     if (!member || game.keynoteSpeakerId === member.id) return game;
     const homeRegions = Array.isArray(member.regions) && member.regions.length
       ? member.regions
@@ -23827,6 +23944,12 @@ function takeActionInternal(game, actionId, payload = {}) {
         ? enrichCandidateForV07({ ...m, fame: nextFame, popularity: nextPop, happiness: nextHap })
         : m
     ));
+    const nextStandoutsKeynote = game.stateLegStandouts
+      ? Object.fromEntries(Object.entries(game.stateLegStandouts).map(([pk, list]) => [
+          pk,
+          Array.isArray(list) ? list.map((s) => (s && s.id === member.id ? { ...s, fame: nextFame, popularity: nextPop, happiness: nextHap } : s)) : list,
+        ]))
+      : game.stateLegStandouts;
     const nextOverrides = {
       ...(game.memberStatOverrides || {}),
       [member.id]: { ...(game.memberStatOverrides?.[member.id] || {}), fame: nextFame, popularity: nextPop, happiness: nextHap },
@@ -23840,6 +23963,7 @@ function takeActionInternal(game, actionId, payload = {}) {
       ...game,
       sittingMembers: nextSitting,
       generatedMembers: nextGenerated,
+      ...(nextStandoutsKeynote ? { stateLegStandouts: nextStandoutsKeynote } : {}),
       memberStatOverrides: nextOverrides,
       factionStandings: nextStandings,
       keynoteSpeakerId: member.id,
@@ -25952,6 +26076,8 @@ window.PartyChairEngine = {
   resolveVersion01Primaries,
   resolveVersion01GeneralElection,
   getRaceVoterCount,
+  getEligibleCourtingRolesForMember,
+  REGION_FOCUS_COMMANDS,
   isFundingUnhappinessExempt,
   computeFundingPollingLift,
   commissionRacePoll,

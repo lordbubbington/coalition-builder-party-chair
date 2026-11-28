@@ -2384,7 +2384,7 @@
             return `
               <div class="oc-action-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:8px">
                 <div class="oc-action-card">
-                  <div class="oc-action-head"><b>🤝 Court Unhappy Caucus Member</b><span>1 Act · $4.0M</span></div>
+                  <div class="oc-action-head"><b>🤝 Court Unhappy Caucus Member</b><span>1 Act · Free</span></div>
                   <p>${pTier < 3
                     ? 'Tier 3 required (Happiness &le; 10 targets available at any tier).'
                     : 'Recruit a discontent lawmaker now so they run under your party banner in the upcoming election.'}</p>
@@ -2392,7 +2392,7 @@
                     <select id="oc-court-pol-select" aria-label="Unhappy Lawmaker" ${polLocked ? 'disabled' : ''}>
                       ${unhappyLawmakers.length ? unhappyLawmakers.map((m) => `<option value="${safeHtml(m.id)}">${safeHtml(m.name)} (${safeHtml(m.stateId || m.districtId || '')} · ${safeHtml(m.party)} · H:${Math.round(m.happiness ?? 50)})</option>`).join('') : `<option value="">${polLocked ? 'Tier 3 required (or Happiness <= 10)' : 'No unhappy lawmakers available'}</option>`}
                     </select>
-                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-politician" ${polLocked || noActs || !unhappyLawmakers.length || (working.treasury || 0) < 4 ? 'disabled' : ''}>${polLocked ? 'Court Defection (Tier 3 / H ≤ 10)' : 'Court Defection'}</button>
+                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-politician" ${polLocked || noActs || !unhappyLawmakers.length ? 'disabled' : ''}>${polLocked ? 'Court Defection (Tier 3 / H ≤ 10)' : 'Court Defection'}</button>
                   </div>
                 </div>
                 <div class="oc-action-card">
