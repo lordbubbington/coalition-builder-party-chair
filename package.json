@@ -1,7 +1,7 @@
 {
   "name": "coalition-builder-party-chair",
-  "version": "0.19.2",
-  "description": "Coalition Builder: Party Chair — Version 0.19.2 (50-State Voting Reform Engine, Nationwide Trifecta Reforms & Electoral Map Visualizations)",
+  "version": "0.19.3",
+  "description": "Coalition Builder: Party Chair — Version 0.19.3 (Gameplay Mechanics Overhaul: Candidate Recruitment, Multi-Race Drift, Slate Funding, States Officials Tables & Step 1 Operations)",
   "main": "engine.js",
   "scripts": {
     "test": "node scripts/test-mas01-phase4.cjs",

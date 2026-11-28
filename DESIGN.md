@@ -1,7 +1,7 @@
 # Coalition Builder: Party Chair — Game Design
 
-> **Version 0.18.9.4 is the active implemented game baseline.**  
-> *(Latest Release: Version 0.18.9.4 building on v0.18.9.1; adding registered-voter spoiler comparison with a 5-point deadband and reverse-Duverger defection, State Senate 1,923/1,924 bicameral seat tracking and KPI cards, holdover seat rendering on Senate results maps, and outright-majority Coalition Builder suppression. Full specifications live in `PRIOR_UPDATES.md`; active upcoming features are tracked in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
+> **Version 0.19.3 is the active implemented game baseline.**  
+> *(Latest Release: Version 0.19.3 building on v0.19.2; delivering the Gameplay Mechanics Overhaul across F1–F19: candidate recruitment overhaul & duplicate focus prevention, General Persuasion state boost, multi-race average performance drift & signed post-drift voter migration badges, voter-scaled funding lift, State Legislature slate funding, unhappiness exemptions, Live Polling header, Election Night Senate cycle filtering vs 100-seat tracking, top-2 redistricting battle gating, Tier 3/4 courting rebalances, 5 new States officials/seat matrix subtabs, 0-action Step 1 operations, `$2M` chapters & 2× starting balances, scripted party switching, tier-based fundraising yields, and Universal Senate split coloring. Full release history lives in `PRIOR_UPDATES.md`; active backlog tracking lives in [**DESIGN_BACKLOG.md**](DESIGN_BACKLOG.md) and [**TBD_UPDATES.md**](TBD_UPDATES.md)).*
 
 ---
 

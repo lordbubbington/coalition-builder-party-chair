@@ -6,7 +6,8 @@
 (function (root) {
   'use strict';
 
-  const SAVE_KEY = 'partyChairGame.save.v19.0';
+  const SAVE_KEY = 'partyChairGame.save.v19.3';
+  const PREVIOUS_SAVE_KEY_V192 = 'partyChairGame.save.v19.2';
   const PREVIOUS_SAVE_KEY_V1911 = 'partyChairGame.save.v19.1.1';
   const PREVIOUS_SAVE_KEY_V1894 = 'partyChairGame.save.v18.9.4';
   const PREVIOUS_SAVE_KEY = 'partyChairGame.save.v18.9.1';
@@ -34,6 +35,7 @@
 
   const ALL_AUTOSAVE_KEYS = [
     SAVE_KEY,
+    PREVIOUS_SAVE_KEY_V192,
     PREVIOUS_SAVE_KEY_V1911,
     'partyChairGame.save.v19.0',
     PREVIOUS_SAVE_KEY_V1894,

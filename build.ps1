@@ -80,6 +80,7 @@ try {
         (Join-Path $projectDir 'voting-reform-map-adapter.js'),
         (Join-Path $projectDir 'voting-reforms-ui.js'),
         (Join-Path $projectDir 'engine.js'),
+        (Join-Path $projectDir 'states-officials-tables.js'),
         (Join-Path $projectDir 'app.js'),
         (Join-Path $projectDir 'assets')
     )

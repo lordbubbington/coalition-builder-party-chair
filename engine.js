@@ -10,7 +10,8 @@ function seededUnit(seedStr) {
 (function PartyChairEngineModule() {
 const { BILLS, CONVENTIONS, EVENTS, FACTIONS, MEMBERS, PARTY_ARCHETYPES, REGIONS, STATES, FACTIONS_CATALOG, FACTION_NAME_TO_ID, FACTION_STATE_MATRIX, FACTION_NATIONAL_TOTALS, getFactionCohesion, getFactionCohesionLabel, getFactionGrowthProfile, calculateFactionRegistrationLift } = (window.PartyChairData || {});
 
-const SAVE_KEY = 'partyChairGame.save.v19.2';
+const SAVE_KEY = 'partyChairGame.save.v19.3';
+const PREVIOUS_SAVE_KEY_V192 = 'partyChairGame.save.v19.2';
 const PREVIOUS_SAVE_KEY_V190 = 'partyChairGame.save.v19.0';
 const PREVIOUS_SAVE_KEY_V1911 = 'partyChairGame.save.v19.1.1';
 const PREVIOUS_SAVE_KEY_V1894 = 'partyChairGame.save.v18.9.4';
@@ -5445,7 +5446,7 @@ function createGame(options = {}) {
   }
   let game = {
     schema: 7,
-    version: '0.19.2',
+    version: '0.19.3',
     activeTab: 'actions',
     turnStep: 1,
     stateVoterDeltas: {},
@@ -5646,7 +5647,7 @@ function createGame(options = {}) {
   if (window.PartyChairV07) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
-  game.version = '0.19.2';
+  game.version = '0.19.3';
   // [v0.18.4 MEDIA-SHOCKS]
   const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
   if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
@@ -6017,7 +6018,7 @@ function createGame(options = {}) {
     game = fcsInit.initializeStartingCaucuses(game);
   }
 
-  game.version = '0.19.2';
+  game.version = '0.19.3';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
 
@@ -14203,7 +14204,7 @@ function startCampaignPhase(game) {
     ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
-    version: '0.19.2',
+    version: '0.19.3',
     primariesResolved: true,
     superPacs: isSuperPacsDisabled(_preFundGame) ? [] : evaluateSuperPacDemands(_preFundGame, 1),
   };
@@ -17941,7 +17942,7 @@ function startNextCycleInternal(game) {
 
   let refreshed = {
     ...game,
-    version: '0.19.2',
+    version: '0.19.3',
     federalReforms: game.federalReforms
       ? {
           ...game.federalReforms,
@@ -18877,7 +18878,7 @@ function resolveVersion01GeneralElection(game) {
 
   const resolved = {
     ...questRewardedResult,
-    version: '0.19.2',
+    version: '0.19.3',
     phase: 'complete',
     primariesResolved: true,
     generalElectionResolved: true,
@@ -24540,7 +24541,7 @@ function advanceYear(game) {
     const closed = ready.offCycle ? { ...ready.offCycle, active: false } : null;
     return startNextCycle({ ...ready, offCycle: closed });
   }
-  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7', '0.18.8', '0.18.9', '0.18.9.1', '0.18.9.2', '0.18.9.3', '0.18.9.4', '0.19.0', '0.19.2'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
+  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7', '0.18.8', '0.18.9', '0.18.9.1', '0.18.9.2', '0.18.9.3', '0.18.9.4', '0.19.0', '0.19.2', '0.19.3'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
   const rivalUpdate = advanceRivalOrganizations(game);
@@ -24820,7 +24821,7 @@ function normalizeGame(parsed) {
   const normalized = {
     ...parsed,
     schema: 9,
-    version: '0.19.2',
+    version: '0.19.3',
     activeTab: parsed.activeTab || 'actions',
     turnStep: clamp(Number(parsed.turnStep || 1), 1, 5),
     phase: parsed.phase || (parsed.primariesResolved ? 'general-campaign' : 'organizing'),
@@ -25036,7 +25037,7 @@ function normalizeGame(parsed) {
   // [OFF-CYCLE] Preserve offCycle interlude & pendingBellwetherBonus across save/reload
   if (parsed.offCycle && typeof parsed.offCycle === 'object') ready.offCycle = parsed.offCycle;
   if (parsed.pendingBellwetherBonus && typeof parsed.pendingBellwetherBonus === 'object') ready.pendingBellwetherBonus = parsed.pendingBellwetherBonus;
-  ready.version = '0.19.2';
+  ready.version = '0.19.3';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
     house: false,
@@ -25430,7 +25431,7 @@ function normalizeGame(parsed) {
     window.CampaignOverhaul.initializeDynamicCorruptTrait(ready);
   }
   ready.grassrootsMultiplier = computeGrassrootsMultiplier(ready);
-  ready.version = '0.19.2';
+  ready.version = '0.19.3';
   ready = syncFederalReformsUiAliases(ready);
   if (ready.federalReforms && ready.federalReforms.mandatoryNonpartisanRedistricting) {
     ready.redistrictingCommissions = Object.fromEntries(STATES.filter((s) => s.id !== 'DC').map((s) => [s.id, true]));
@@ -25628,7 +25629,7 @@ function loadGame() {
     return pc.loadGame({ normalizeGame, migrateSave });
   }
   try {
-    const keys = [SAVE_KEY, PREVIOUS_SAVE_KEY_V190, PREVIOUS_SAVE_KEY_V1911, PREVIOUS_SAVE_KEY_V1894, PREVIOUS_SAVE_KEY, PREVIOUS_SAVE_KEY_V188, PREVIOUS_SAVE_KEY_V187, PREVIOUS_SAVE_KEY_V186, PREVIOUS_SAVE_KEY_V185, PREVIOUS_SAVE_KEY_V184, PREVIOUS_SAVE_KEY_V183, PREVIOUS_SAVE_KEY_V182, PREVIOUS_SAVE_KEY_V162, PREVIOUS_SAVE_KEY_V161, PREVIOUS_SAVE_KEY_V160, PREVIOUS_SAVE_KEY_V159, PREVIOUS_SAVE_KEY_V158, PREVIOUS_SAVE_KEY_V157, PREVIOUS_SAVE_KEY_V156, PREVIOUS_SAVE_KEY_V155, PREVIOUS_SAVE_KEY_V154, PREVIOUS_SAVE_KEY_V153, PREVIOUS_SAVE_KEY_V152, PREVIOUS_SAVE_KEY_V151, PREVIOUS_SAVE_KEY_V150, 'partyChairGame.save.v14.6', 'partyChairGame.save.v14.5', 'partyChairGame.save.v14.4', 'partyChairGame.save.v14.3', 'partyChairGame.save.v14.2', 'partyChairGame.save.v14.1', 'partyChairGame.save.v14', 'partyChairGame.save.v13', 'partyChairGame.save.v12', 'partyChairGame.save.v11', 'partyChairGame.save.v10', 'partyChairGame.save.v9', 'partyChairGame.save.v8', 'partyChairGame.save.v7', 'partyChairGame.save.v6', 'partyChairGame.save.v5', 'partyChairGame.save.v4', 'partyChairGame.save.v3', 'partyChairGame.save.v2', LEGACY_SAVE_KEY];
+    const keys = [SAVE_KEY, PREVIOUS_SAVE_KEY_V192, PREVIOUS_SAVE_KEY_V190, PREVIOUS_SAVE_KEY_V1911, PREVIOUS_SAVE_KEY_V1894, PREVIOUS_SAVE_KEY, PREVIOUS_SAVE_KEY_V188, PREVIOUS_SAVE_KEY_V187, PREVIOUS_SAVE_KEY_V186, PREVIOUS_SAVE_KEY_V185, PREVIOUS_SAVE_KEY_V184, PREVIOUS_SAVE_KEY_V183, PREVIOUS_SAVE_KEY_V182, PREVIOUS_SAVE_KEY_V162, PREVIOUS_SAVE_KEY_V161, PREVIOUS_SAVE_KEY_V160, PREVIOUS_SAVE_KEY_V159, PREVIOUS_SAVE_KEY_V158, PREVIOUS_SAVE_KEY_V157, PREVIOUS_SAVE_KEY_V156, PREVIOUS_SAVE_KEY_V155, PREVIOUS_SAVE_KEY_V154, PREVIOUS_SAVE_KEY_V153, PREVIOUS_SAVE_KEY_V152, PREVIOUS_SAVE_KEY_V151, PREVIOUS_SAVE_KEY_V150, 'partyChairGame.save.v14.6', 'partyChairGame.save.v14.5', 'partyChairGame.save.v14.4', 'partyChairGame.save.v14.3', 'partyChairGame.save.v14.2', 'partyChairGame.save.v14.1', 'partyChairGame.save.v14', 'partyChairGame.save.v13', 'partyChairGame.save.v12', 'partyChairGame.save.v11', 'partyChairGame.save.v10', 'partyChairGame.save.v9', 'partyChairGame.save.v8', 'partyChairGame.save.v7', 'partyChairGame.save.v6', 'partyChairGame.save.v5', 'partyChairGame.save.v4', 'partyChairGame.save.v3', 'partyChairGame.save.v2', LEGACY_SAVE_KEY];
     for (let i = 0; i < keys.length; i++) {
       const value = localStorage.getItem(keys[i]);
       if (!value) continue;

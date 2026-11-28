@@ -2426,3 +2426,43 @@ Version 0.19.2 integrates the 50-State Voting Reforms Engine, Nationwide Trifect
 
 ### Small
 - **Build Labeling, Packaging & Save Compatibility (`index.html`, `build.ps1`, `BUILD_EXE.bat`, `package.json`, `engine.js`, `app.js`):** Registered all five new CSS/JS modules, bumped build labeling to `0.19.2` (`SAVE_KEY = 'partyChairGame.save.v19.2'` with backward-compatible `v19.0` and earlier migration), verified strict CRLF on `BUILD_EXE.bat` and `build.ps1`, ran all syntax/unit/E2E integration suites, and rebuilt the Windows executable (`dist/release/Coalition Builder - Party Chair.exe`).
+
+
+---
+
+## VERSION 0.19.3
+
+# Coalition Builder: Party Chair — Version 0.19.3
+
+Version 0.19.3 delivers the Gameplay Mechanics Overhaul (F1–F19) across candidate recruitment, voter-scaled funding & State Legislature slates, multi-race drift & post-drift migration telemetry, Step 1 operational flow, courting tier rebalances, and 5 new States officials & seat matrix subtabs:
+
+### Large (2 Features)
+- **F14 — States Page Sitting Officials & Seat Matrix Subtabs (`states-officials-tables.js`, `app.js`, `index.html`):** Added 5 sortable/interactive subtabs under States: `Statewide Offices` (50-state strip showing Governor & minor statewide officers, traits, quality, and status), `Senate Seats` (50×3 Class I/II/III matrix), `House Seats`, `State House Seats` (`✓` on controlling party + NE Unicameral note), and `State Senate Seats` (`✓` on controlling party + NE Unicameral note).
+- **F15 — Step 1 Action Migration, `$2M` Chapters & `2×` Starting Balances (`app.js`, `engine.js`, `data.js`, `v07-scaffolding.js`, `custom-party-core.js`, `redistricting-ballot-system.js`):** Relocated `National Convention Keynote Speaker`, `Sponsor Ballot Initiative`, `Enact State Trifecta Voting Reform`, and `Open a State Chapter (50 States)` to Step 1 directly below Rules & Bylaws with `0` action cost, reduced `Open a State Chapter` base cost to `$2.0M`, and doubled starting treasuries (`2×`) across canonical, minor, Tier 0, and custom parties.
+
+### Medium (7 Features)
+- **F1 — Candidate Recruitment Overhaul (`scenario-2028.js`, `v07-scaffolding.js`, `engine.js`, `app.js`):** Replaced avg-7 state recruit quality rolls with a deterministic 1000-bucket weighted distribution (mean `5.000`, `80%` in `3–7`, `1%` at `1` or `10`), hid unrecruited prospect quality/ratings (`Quality: ?/10`) until recruited, added `#recruit-faction-select`, and tied starting recruit happiness to `game.factionHappiness[factionId]`.
+- **F3 — General Persuasion State Boost (`campaign-overhaul.js`, `engine.js`, `election-night-engine.js`, `app.js`):** Repurposed `campaign-statehouse-blitz` into `General Persuasion Boost` granting `+0.5%` across all races in the target state (Presidential, Senate, Governor, House, State House/Senate, and Minor Statewide) plus `+1..1,000` direct voters.
+- **F4 — Multi-Race Statewide Average Performance Drift (`election-drift.js`, `engine.js`):** Reworked `calculateCertifiedPerformanceDrift` to average Presidential, Senate, Governor, combined U.S. House, State House, State Senate (excluding unicameral `NE`), and all contested minor statewide races equally per state.
+- **F5 — Voter-Scaled Campaign Funding Lift (`engine.js`, `app.js`):** Added `getRaceVoterCount(game, raceKey)` (floored at `50,000`) and scaled `computeFundingPollingLift(dollarsMillions, raceVoters)` proportionally relative to `1,000,000` voters.
+- **F6 — State Legislature Slate Funding (`engine.js`, `app.js`):** Registered chamber-level `state-leg:ST:lower` and `state-leg:ST:upper` slates (skipping `NE:upper`) in `initializeCandidateFunding`, applied slate funding lifts to State House/Senate shares and reallocations, and added the `State Leg Slates` Candidate Budget Triage filter.
+- **F11 — Post-Drift Voter Migration Numbers (`engine.js`, `app.js`):** Captured exact signed per-party and total `stateDeltas` across drift, migration, and inter-cycle conversion in `startNextCycleInternal`, and updated `formatGainBadge` in the States Voter Registration table to display both `+` and `-` migration deltas.
+- **F16 — Scripted Party-Switching Framework & John Fetterman 2028 PA Arc (`engine.js`, `scenario-2028.js`):** Added `SCRIPTED_PARTY_SWITCHES` and seeded Fetterman's heavy 2028 PA Democratic primary challenge; on primary loss, switches him to `'heritage'` (`R`) and preserves him in `game.politicians` for future PA Republican races.
+
+### Small (8 Features)
+- **F8 — Candidate Funding Unhappiness Exemptions (`engine.js`):** Added `isFundingUnhappinessExempt` exempting Tier `0–1` parties, Tier `2` House races, and safe races (`|margin| >= 12`) from funding pull/refusal/unendorsed unhappiness penalties.
+- **F9 — Election Results Senate Cycle Filter vs 100-Seat Tracker (`app.js`, `election-night-engine.js`):** Shaded non-contested Senate states as neutral on Election Night while initializing `scoreboard.senate` with holdover seats so chamber control sums to `100`.
+- **F10 — Top-2 Redistricting Compromise Gate (`redistricting-ballot-system.js`):** Added `isTopTwoPartyInAnyHouse` to restrict interactive `split` compromise battles to parties ranking top-2 in at least one chamber, auto-resolving `rival_split` states.
+- **F12 — Politician Courting Tier 3 Gate & Reliability (`ballot-access.js`, `engine.js`, `off-cycle-interlude.js`, `app.js`):** Required Tier `3+` unless target `happiness <= 10`, and removed silent no-op traps (ideological bridge abort, happiness `> 40` mismatch, and minor-party `pendingCourtship` block).
+- **F13 — Tier 4 Faction Courting Gate (`engine.js`, `faction-core.js`, `off-cycle-interlude.js`, `app.js`):** Raised faction courting/summit/wedge eligibility from Tier `2` to Tier `4` independently of politician courting.
+- **F17 — Tier-Based Small-Donor Drive Yield (`engine.js`, `app.js`):** Switched `fundraise` to fixed `TIER_FUNDRAISING_YIELD_MILLIONS` (`$0.25M / $0.50M / $1.00M / $2.50M / $10.00M / $25.00M` for Tiers `0..5`) with 2-decimal treasury precision.
+- **F18 — Tier-Based Joint Victory Fund Yield (`engine.js`, `app.js`):** Applied `TIER_FUNDRAISING_YIELD_MILLIONS` directly to Campaign Phase `joint-fundraising` with 2-decimal precision.
+- **F19 — Universal Senate Map Split Fix (`app.js`):** Colored mixed major+third-party Senate delegations (e.g., 1 GOP + 1 Libertarian) purple (`#8654a4`) while coloring dual-third-party delegations in their party's color, and replaced the delegation-control sentence with per-party Senate seat totals summing to `100`.
+
+### Tiny (2 Features)
+- **F2 — Prevent Duplicate Party Focuses (`engine.js`, `app.js`):** Blocked duplicate `(type, targetId)` selections in `SET_PARTY_FOCUS` / `LOCK_PRIORITIES` and disabled already-selected targets across focus dropdowns.
+- **F7 — Live Polling Header Copy (`app.js`):** Updated the Campaign Polling header to `Live Polling` with subtitle `Updates immediately to your actions, although isn't the most reliable source in the world (MoE +/-7)`.
+
+### Packaging & Release Notes
+- **Version Bump & Save Compatibility:** Updated version labels across `package.json`, `index.html`, `engine.js`, `persistence-core.js`, `app.js`, `ui-setup-views.js`, `build.ps1`, `BUILD_EXE.bat`, and `build.js` to `0.19.3` (`SAVE_KEY = 'partyChairGame.save.v19.3'` with `PREVIOUS_SAVE_KEY_V192 = 'partyChairGame.save.v19.2'` backward-compatible migration).
+- **Executable Packaging:** Added `states-officials-tables.js` to `build.ps1` and rebuilt the Windows executable (`dist/release/Coalition Builder - Party Chair.exe` and `dist/Coalition Builder - Party Chair.exe`).
