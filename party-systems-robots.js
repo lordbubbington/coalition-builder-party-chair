@@ -792,21 +792,45 @@
     evaluateRivalChairUltimatumResponse(game, faction, parentPartyId) {
       if (!game || !faction || !parentPartyId) return { action: 'refuse', reason: 'missing_context' };
       const org = game.organizations?.[parentPartyId];
-      const treasury = Number(org?.treasury ?? 0);
+      const partyRec = game.parties?.[parentPartyId];
+      const treasury = Number(partyRec?.treasury ?? org?.treasury ?? 0);
       const curH = Number(game.factionHappiness?.[faction.id] ?? faction.happiness ?? 40);
-      const isAnchor = faction.id === 'dem_liberal_establishment' || faction.id === 'gop_maga' || Boolean(faction.isIroncladAnchor);
-      // AI chair weighs treasury, anchor status, and severity of alienation
-      const appeaseCost = 4.0;
-      const seedVal = Math.abs(
-        String(`${game.seed || 2028}:${game.year || 2028}:ai-ult:${parentPartyId}:${faction.id}`)
-          .split('')
-          .reduce((acc, ch) => ((acc * 31 + ch.charCodeAt(0)) | 0), 7)
-      ) % 100;
-      // Anchor factions are always appeased if affordable; non-anchors appeased ~45% when affordable & H >= 22
+      const isMajor = ['people', 'heritage'].includes(parentPartyId);
+      const appeaseCost = isMajor ? 4.0 : 1.5;
+
+      const partyFactions = (game.factions || []).filter((f) => f && f.partyId === parentPartyId);
+      const isAnchor = faction.id === 'dem_liberal_establishment'
+        || faction.id === 'gop_maga'
+        || Boolean(faction.isIroncladAnchor)
+        || faction.status === 'leading';
+      const lastFactionGuard = partyFactions.length <= 2;
+
+      const getVoters = (f) => Number(game.voterModel?.factions?.[f.id] ?? f.representedVoters ?? f.targetVoters ?? 0);
+      const partyTotalV = partyFactions.reduce((s, f) => s + Math.max(0, getVoters(f)), 0) || 1;
+      const voterShare = Math.max(0, getVoters(faction)) / partyTotalV;
+
+      const partners = faction.caucusId
+        ? partyFactions.filter((f) => f.id !== faction.id && f.caucusId === faction.caucusId).length
+        : 0;
+      const coMod = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
+      const profile = coMod?.getPartyStrategyProfile ? coMod.getPartyStrategyProfile(parentPartyId, game) : { factionRiskAversion: 0.5, ruthlessness: 0.5 };
+      const isElectionSoon = (Number(game.year || 2028) % 2 === 0) && (game.phase === 'general-campaign' || game.primariesResolved || Number(game.chairTurn || 0) >= 2);
+
+      let retentionScore = 0;
+      if (isAnchor) retentionScore += 100;
+      if (lastFactionGuard) retentionScore += 85;
+      retentionScore += Math.max(5, Math.min(45, voterShare * 140));
+      if (partners > 0) retentionScore += partners * 28 + 12;
+      retentionScore += (Number(profile.factionRiskAversion ?? 0.5) * 30) - (Number(profile.ruthlessness ?? 0.5) * 12);
+      if (isElectionSoon) retentionScore += 15;
+      if (curH < 18 && voterShare < 0.08 && !isAnchor && !lastFactionGuard) retentionScore -= 20;
+
       const canAfford = treasury >= appeaseCost;
-      const shouldAppease = canAfford && (isAnchor || (curH >= 22 && seedVal < 45));
+      const shouldAppease = canAfford && (isAnchor || lastFactionGuard || retentionScore >= 42);
       if (shouldAppease) {
-        if (org) org.treasury = Math.max(0, Math.round((treasury - appeaseCost) * 10) / 10);
+        const nextTreas = Math.max(0, Math.round((treasury - appeaseCost) * 10) / 10);
+        if (org) org.treasury = nextTreas;
+        if (partyRec) partyRec.treasury = nextTreas;
         if (!game.factionHappiness) game.factionHappiness = {};
         const nextH = Math.min(100, Math.round(curH + 18));
         game.factionHappiness[faction.id] = nextH;
@@ -814,9 +838,15 @@
         faction.happiness = nextH;
         faction.ultimatumTurnsRemaining = null;
         faction.frictionIndex = Math.min(Number(faction.frictionIndex || 0), 40);
-        return { action: 'appease', cost: appeaseCost, nextHappiness: nextH };
+        if (partners > 0) {
+          const fcs = (typeof window !== 'undefined' && window.FactionCaucusSystem) || (typeof global !== 'undefined' && global.FactionCaucusSystem) || null;
+          if (fcs && typeof fcs.applyCaucusHappinessSplash === 'function') {
+            fcs.applyCaucusHappinessSplash(game, faction.id, 4);
+          }
+        }
+        return { action: 'appease', cost: appeaseCost, nextHappiness: nextH, retentionScore: Math.round(retentionScore) };
       }
-      return { action: 'refuse', cost: 0, nextHappiness: curH };
+      return { action: 'refuse', cost: 0, nextHappiness: curH, retentionScore: Math.round(retentionScore) };
     },
   };
 

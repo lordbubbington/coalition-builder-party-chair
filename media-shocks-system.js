@@ -322,23 +322,84 @@
         upkeepChannels: [...(eco[rid].upkeepChannels || [])],
       };
 
+      const activeShocks = Array.isArray(game.activeMacroShocks) ? game.activeMacroShocks : [];
+      const hasNegShock = activeShocks.some((sh) => sh && sh.polarity === 'negative');
+      const isGovParty = game.governingParty === rid;
+      const coModMs = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
+      const profMs = coModMs?.getPartyStrategyProfile ? coModMs.getPartyStrategyProfile(rid, game) : { ideologicalRigidity: 0.5 };
+      const canPivotCrisis = Number(profMs.ideologicalRigidity ?? 0.5) < 0.80;
+
+      const allChs = ['digital', 'broadcast', 'cable', 'local'].filter((c) => !entry.upkeepChannels.includes(c));
+      const scoredChs = allChs
+        .map((ch) => {
+          const cur = Number(entry[ch] ?? 50);
+          if (cur >= 95) return { ch, score: -999 };
+          let sc = (100 - cur) * 0.65;
+          if (prefs.includes(ch)) sc += 6;
+          if (!isMajor && ch === 'digital' && cur < 45) sc += 28;
+          if (ch === 'cable' && cur >= 68) sc -= 22;
+          if (hasNegShock && canPivotCrisis) {
+            if (isGovParty && (ch === 'local' || ch === 'broadcast')) sc += 14;
+            if (!isGovParty && (ch === 'digital' || ch === 'broadcast')) sc += 14;
+          }
+          return { ch, score: sc };
+        })
+        .filter((x) => x.score > -100)
+        .sort((a, b) => b.score - a.score);
+
       let invested = 0;
-      for (let i = 0; i < prefs.length && invested < slots; i++) {
-        const ch = prefs[i];
-        // Slight deterministic tie-break variation across cycles
-        const pickIdx = (i === 0 && hashFloat(`${seed}:${year}:ai-media:${rid}`) > 0.72 && prefs[1]) ? 1 : i;
-        const targetCh = prefs[pickIdx];
-        if (entry.upkeepChannels.includes(targetCh)) continue;
+      for (let i = 0; i < scoredChs.length && invested < slots; i++) {
+        const targetCh = scoredChs[i].ch;
         if (availCash >= 6) {
-          entry[targetCh] = clamp(round(entry[targetCh] + 8, 1), 0, 100);
+          entry[targetCh] = clamp(round(Number(entry[targetCh] ?? 50) + 8, 1), 0, 100);
           entry.upkeepChannels.push(targetCh);
           availCash = round(availCash - 6, 2);
           invested++;
         } else if (targetCh === 'digital') {
-          // Low-budget minor party organic digital push
-          entry.digital = clamp(round(entry.digital + 3, 1), 0, 100);
+          entry.digital = clamp(round(Number(entry.digital ?? 30) + 3, 1), 0, 100);
           entry.upkeepChannels.push('digital');
           invested++;
+        }
+      }
+
+      // Media Blackout Enforcement Against Rising Minor Parties ($4M counter-narrative strike)
+      if (isMajor && availCash >= 18) {
+        const engMs = (typeof window !== 'undefined' && window.PartyChairEngine) || (typeof global !== 'undefined' && global.PartyChairEngine) || null;
+        const swMinors = rid === 'people' ? ['green', 'socialist'] : ['liberty', 'constitution'];
+        let blackoutTarget = null;
+        if (engMs?.computeMinorPartyThreatScore) {
+          for (const mid of swMinors) {
+            const mEntry = eco[mid];
+            if (!mEntry) continue;
+            const dReach = Number(mEntry.digital ?? 0);
+            if (dReach < 38 || dReach > 55) continue;
+            const th = engMs.computeMinorPartyThreatScore(game, rid, mid);
+            if (th.score >= 35 || (th.score >= 20 && th.totalPrSeatsAtRisk > 0)) {
+              blackoutTarget = mid;
+              break;
+            }
+          }
+        }
+        if (blackoutTarget && eco[blackoutTarget]) {
+          eco[blackoutTarget] = {
+            ...eco[blackoutTarget],
+            digital: clamp(round(Number(eco[blackoutTarget].digital ?? 45) - 10, 1), 0, 100),
+          };
+          availCash = round(availCash - 4, 2);
+        } else {
+          const oppMaj = rid === 'people' ? 'heritage' : 'people';
+          if (eco[oppMaj]) {
+            const topOppCh = ['digital', 'broadcast', 'cable', 'local']
+              .filter((c) => Number(eco[oppMaj][c] ?? 0) >= 55)
+              .sort((a, b) => Number(eco[oppMaj][b] ?? 0) - Number(eco[oppMaj][a] ?? 0))[0];
+            if (topOppCh) {
+              eco[oppMaj] = {
+                ...eco[oppMaj],
+                [topOppCh]: clamp(round(Number(eco[oppMaj][topOppCh] ?? 55) - 6, 1), 0, 100),
+              };
+              availCash = round(availCash - 4, 2);
+            }
+          }
         }
       }
 

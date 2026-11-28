@@ -154,25 +154,86 @@
       }
     }
 
-    // Bug #25: AI Coalition Re-Admission Loop for bolted Unaffiliated factions
+    // AI Coalition Re-Admission Loop: Competitive Multi-Party Courtship Bid Scorer
     const curYr = Number(updatedGame.year || 2028);
     const aiCandidates = ['people', 'heritage', 'green', 'liberty', 'constitution', 'socialist']
       .filter((pid) => pid !== playerPartyId && !(updatedGame.dissolvedParties || []).includes(pid));
+    const fcsReadmit = (typeof window !== 'undefined' && window.FactionCaucusSystem) || (typeof global !== 'undefined' && global.FactionCaucusSystem) || null;
+    const coReadmit = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
+    const engReadmit = (typeof window !== 'undefined' && window.PartyChairEngine) || (typeof global !== 'undefined' && global.PartyChairEngine) || null;
+    const SWING_8 = ['PA', 'MI', 'WI', 'GA', 'AZ', 'NC', 'NV', 'NH'];
+    const SAME_WING_MINORS = { people: ['green', 'socialist'], heritage: ['liberty', 'constitution'] };
+
     for (const bf of (updatedGame.factions || [])) {
-      // [QA-BATCH2-FIX] B2-05: Recognize all unaffiliated/independent/none party IDs for AI coalition re-admission
       if (!bf || !isUnaffiliatedPartyId(bf.partyId)) continue;
       if (bf.boltedYear && (curYr - Number(bf.boltedYear)) < 2) continue;
+      if (fcsReadmit && typeof fcsReadmit.isProtectedByAntiPoachingLock === 'function') {
+        const lock = fcsReadmit.isProtectedByAntiPoachingLock(updatedGame, bf.id);
+        if (lock && lock.locked) continue;
+      }
+
       let bestPid = null;
-      let bestDist = 3.25;
+      let bestBidScore = 0;
+      let bestBidCost = 0;
+
       for (const pid of aiCandidates) {
         if (bf.formerPartyId === pid && ((bf.reunificationCooldownYear && curYr < Number(bf.reunificationCooldownYear)) || (bf.boltedYear && (curYr - Number(bf.boltedYear)) < 6))) continue;
+        // Extremist factions cannot join a party with > 5M members of other factions
+        if (bf.isExtremist) {
+          const otherV = (updatedGame.factions || [])
+            .filter((x) => x && x.id !== bf.id && x.partyId === pid)
+            .reduce((s, x) => s + Number(updatedGame.voterModel?.factions?.[x.id] ?? x.representedVoters ?? x.targetVoters ?? 0), 0);
+          if (otherV > 5_000_000) continue;
+        }
+        const isMaj = ['people', 'heritage'].includes(pid);
+        const bidCost = isMaj ? 3.0 : 1.0;
+        const pTreas = Number(updatedGame.parties?.[pid]?.treasury ?? updatedGame.organizations?.[pid]?.treasury ?? 0);
+        if (pTreas < bidCost) continue;
+
+        const prof = coReadmit?.getPartyStrategyProfile ? coReadmit.getPartyStrategyProfile(pid, updatedGame) : { ideologicalRigidity: 0.5 };
+        const maxDist = Number(prof.ideologicalRigidity ?? 0.5) >= 0.85 ? 2.95 : 3.45;
         const d = computeFactionKeyIssuesDistance(updatedGame, bf, pid);
-        if (d < bestDist) {
-          bestDist = d;
+        if (d > maxDist) continue;
+
+        const ideoScore = Math.max(0, (maxDist - d) * 14);
+        const instAppeal = (isMaj ? 10 : 4) + Math.min(12, pTreas * 0.15);
+        let swingSynergy = 0;
+        if (updatedGame.voterModel && Array.isArray(updatedGame.voterModel.states)) {
+          SWING_8.forEach((sid) => {
+            const st = updatedGame.voterModel.states.find((x) => (x.stateId || x.id) === sid);
+            if (st && Number(st.factions?.[bf.id] || 0) >= 15000) swingSynergy += 2.5;
+          });
+        }
+        let denialBonus = 0;
+        if (isMaj && engReadmit?.computeMinorPartyThreatScore) {
+          const wingMinors = SAME_WING_MINORS[pid] || [];
+          for (const mid of wingMinors) {
+            const dMin = computeFactionKeyIssuesDistance(updatedGame, bf, mid);
+            if (dMin <= 3.0) {
+              const th = engReadmit.computeMinorPartyThreatScore(updatedGame, pid, mid);
+              if (th && th.totalPrSeatsAtRisk > 0) {
+                denialBonus = Math.max(denialBonus, 20);
+              } else if (th && th.score >= 25) {
+                denialBonus = Math.max(denialBonus, 12);
+              }
+            }
+          }
+        }
+
+        const totalBid = ideoScore + instAppeal + swingSynergy + denialBonus;
+        if (totalBid > bestBidScore) {
+          bestBidScore = totalBid;
           bestPid = pid;
+          bestBidCost = bidCost;
         }
       }
+
       if (bestPid) {
+        const curT = Number(updatedGame.parties?.[bestPid]?.treasury ?? updatedGame.organizations?.[bestPid]?.treasury ?? 0);
+        const nextT = Math.max(0, Math.round((curT - bestBidCost) * 10) / 10);
+        if (updatedGame.parties?.[bestPid]) updatedGame.parties[bestPid].treasury = nextT;
+        if (updatedGame.organizations?.[bestPid]) updatedGame.organizations[bestPid].treasury = nextT;
+
         bf.partyId = bestPid;
         bf.activelyCourting = false;
         bf.frictionIndex = 0;
@@ -181,7 +242,7 @@
         bf.accordCooldownUntilYear = curYr + 6;
         if (updatedGame.factionHappiness) updatedGame.factionHappiness[bf.id] = 65;
         if (updatedGame.factionStandings) updatedGame.factionStandings[bf.id] = 65;
-        // Transfer faction voters from independent into adopting AI party
+        // Transfer faction voters from independent into adopting AI party (strict voter conservation)
         const vmAi = updatedGame.voterModel;
         if (vmAi && Array.isArray(vmAi.states)) {
           const _aiDiv = (vmAi.voterScale === '1:1' || Number(vmAi.sampleVoters || 0) >= 10_000_000) ? 1 : 100;

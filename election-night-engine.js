@@ -1269,7 +1269,9 @@
       const rawLift = fundingEntry ? computeStatewideFundingLift(fundingEntry.allocated || 0) : 0;
       const isThirdPartyPlayer = !['people', 'heritage'].includes(playerIdentity);
       const fundSign = (playerIdentity === 'heritage') ? -1 : (playerIdentity === 'people' ? 1 : 0);
-      const treasuryLift = rawLift * fundSign;
+      const coModFund = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
+      const rivalFundLift = coModFund?.getRivalCandidateFundingLift ? Number(coModFund.getRivalCandidateFundingLift(game, raceKey) || 0) : 0;
+      const treasuryLift = rawLift * fundSign + rivalFundLift;
 
       // Organic downballot divergence N(0, 2.0)
       const noise = options.zeroNoise

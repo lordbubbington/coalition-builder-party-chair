@@ -261,7 +261,11 @@
 
     // [MC-BALANCE-TUNE] MC-02: Active State Chapter -35% base discount + -5% per additional chapter (extra discount capped at -40%)
     const isPlayerMatch = partyId === 'player' || partyId === (game?.player?.custom ? 'player' : game?.player?.baseTemplateId);
-    const orgChCount = Number(game?.stateOrganizations?.[stateId]?.[partyId]?.chapters || 0);
+    const resolvedBaPid = partyId === 'player' ? (game?.player?.custom ? 'player' : (game?.player?.baseTemplateId || 'people')) : partyId;
+    const orgChCount = Math.max(
+      Number(game?.stateOrganizations?.[stateId]?.[partyId]?.chapters || 0),
+      Number(game?.stateOrganizations?.[stateId]?.[resolvedBaPid]?.chapters || 0)
+    );
     const playerChCount = Number(game?.stateChapters?.[stateId] || 0);
     const vmChCount = Number(game?.voterModel?.states?.find((s) => s.stateId === stateId)?.chapters || 0);
     const stateChapterCount = Math.max(
@@ -522,7 +526,8 @@
           : (V07Chal && typeof V07Chal.getPartyInstitutionalTier === 'function')
             ? V07Chal.getPartyInstitutionalTier(game, partyId)
             : 1;
-        const auditRiskDelta = Number(challengePartyTier) === 0 ? 0.30 : 0;
+        const aiPressure = (buf < 200) ? Number(game?.aiBallotChallengePressure?.[stId] || 0) : 0;
+        const auditRiskDelta = (Number(challengePartyTier) === 0 ? 0.30 : 0) + aiPressure;
         failRate = Math.min(0.98, Math.round((failRate + auditRiskDelta) * 1000) / 1000);
 
         const rollSeed = options.seed ? `${options.seed}:${stId}:challenge` : `${game.year}:${stId}:${game.chairTurn || 0}`;

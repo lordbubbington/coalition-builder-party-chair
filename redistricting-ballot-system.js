@@ -548,9 +548,15 @@
     if (!['people', 'heritage'].includes(partyId) || persona.includes('reform') || persona.includes('institutional')) {
       return 'fair_compact';
     }
-    // Behind in the House (< 218 seats) or aggressive persona -> aggressive_gerrymander if affordable
+    // Evaluate court-risk-discounted seat gain (0.65x), swing-state backlash penalty (|lean| <= 4.5%), and dummymander avoidance
     const projAgg = computeStateStrategyProjection(stateDistricts, 'aggressive_gerrymander', partyId, game);
-    if ((partySeats < 218 || persona.includes('aggressive') || persona.includes('populist')) && treasury >= 3 && projAgg.seatDelta > 0) {
+    const stCatalog = getStatesCatalog(game) || [];
+    const stObjR = stCatalog.find((s) => s.id === stateId);
+    const stLeanAbs = Math.abs(Number(stObjR?.leanPercent ?? (-Number(stObjR?.lean || 0) * 100)));
+    const expectedGain = Number(projAgg.seatDelta || 0) * 0.65;
+    const swingPenalty = stLeanAbs <= 4.5 ? 0.8 : 0;
+    const isDummymanderRisk = stLeanAbs <= 3.5 && (stateDistricts || []).length >= 6 && Number(projAgg.seatDelta || 0) <= 1;
+    if (!isDummymanderRisk && (expectedGain - swingPenalty) > 0.3 && (partySeats < 218 || persona.includes('aggressive') || persona.includes('populist')) && treasury >= 3) {
       return 'aggressive_gerrymander';
     }
     // Otherwise protect incumbents if affordable
@@ -1336,44 +1342,85 @@
     let nextGame = normalizeRedistrictingBallotState(game);
     const playerId = getPlayerIdentity(nextGame);
     const cycleYear = Number(nextGame.year || 2028);
-    const oppPartyIds = Object.keys(nextGame.parties || {}).filter(
-      (p) => p !== playerId && ['people', 'heritage'].includes(p)
-    );
+    const oppPartyIds = Object.keys(nextGame.parties || {}).filter((p) => p !== playerId);
+    const ANTI_REFORM_ARCHS = new Set(['ranked_choice_voting', 'nonpartisan_top4', 'proportional', 'open_list_proportional', 'stv', 'mmp']);
 
     oppPartyIds.forEach((oppId) => {
       const opp = nextGame.parties?.[oppId];
       if (!opp) return;
+      const isMaj = ['people', 'heritage'].includes(oppId);
 
-      // 1. Counter-fund active initiatives targeting this rival
-      const targets = (nextGame.activeBallotInitiatives || []).filter(
-        (i) => !i.resolved
-          && Number(i.cycleYear) === cycleYear
-          && i.sponsorPartyId !== oppId
-          && !(i.counterFundedBy || []).includes(oppId)
-          && (i.targetRival === oppId || i.category === 'turnout_driver')
-      );
-      if (targets.length > 0 && Number(opp.treasury || 0) >= 6) {
-        nextGame = counterFundBallotInitiative(nextGame, targets[0].id, oppId);
+      // 1. Major-Party Bipartisan Anti-Reform & Turnout Counter-Funding
+      if (isMaj) {
+        const targets = (nextGame.activeBallotInitiatives || [])
+          .filter(
+            (i) => !i.resolved
+              && Number(i.cycleYear) === cycleYear
+              && i.sponsorPartyId !== oppId
+              && !(i.counterFundedBy || []).includes(oppId)
+              && (i.targetRival === oppId || i.category === 'turnout_driver' || ANTI_REFORM_ARCHS.has(String(i.archetypeId || i.type || '').toLowerCase()))
+          )
+          .map((i) => {
+            const aKey = String(i.archetypeId || i.type || '').toLowerCase();
+            let prio = 1.0;
+            if (aKey.includes('proportional') || aKey === 'mmp' || aKey === 'stv') prio = 1.80;
+            else if (ANTI_REFORM_ARCHS.has(aKey)) prio = 1.45;
+            else if (i.targetRival === oppId) prio = 1.25;
+            return { init: i, prio };
+          })
+          .sort((a, b) => b.prio - a.prio);
+
+        const maxCounters = Number(opp.treasury || 0) >= 40 ? 2 : 1;
+        let usedCounters = 0;
+        for (const t of targets) {
+          if (usedCounters >= maxCounters) break;
+          if (Number(nextGame.parties?.[oppId]?.treasury || 0) < 6) break;
+          nextGame = counterFundBallotInitiative(nextGame, t.init.id, oppId);
+          usedCounters += 1;
+        }
       }
 
-      // 2. During organizing phase, sponsor 1 wedge initiative in an eligible battleground state
+      // 2. During organizing phase: Major-Party scored turnout sponsorship OR Minor-Party Domino structural reform sponsorship
       if (String(phaseName || '').toLowerCase() === 'organizing') {
         const oppActive = (nextGame.activeBallotInitiatives || []).filter(
           (i) => i.sponsorPartyId === oppId && Number(i.cycleYear) === cycleYear
         );
-        if (oppActive.length < 1 && Number(opp.treasury || 0) >= 10) {
-          const states = getStatesCatalog(nextGame)
-            .filter((s) => isInitiativeEligibleState(nextGame, s.id))
-            .sort((a, b) => Math.abs(Number(a.leanPercent ?? 0)) - Math.abs(Number(b.leanPercent ?? 0)));
-          const pickIdx = Math.floor(seededUnit(`rival-init-st:${nextGame.seed || 2028}:${cycleYear}:${oppId}`) * Math.min(6, states.length));
-          const targetState = states[pickIdx];
+        if (isMaj && oppActive.length < 1 && Number(nextGame.parties?.[oppId]?.treasury || 0) >= 10) {
+          const states = getStatesCatalog(nextGame).filter((s) => isInitiativeEligibleState(nextGame, s.id));
           const alignedDrivers = BALLOT_INITIATIVE_ARCHETYPES.filter(
             (a) => a.category === 'turnout_driver' && a.alignedParties.includes(oppId)
           );
-          if (targetState && alignedDrivers.length > 0) {
-            const archIdx = Math.floor(seededUnit(`rival-init-arch:${nextGame.seed || 2028}:${cycleYear}:${oppId}`) * alignedDrivers.length);
-            const arch = alignedDrivers[archIdx];
-            nextGame = sponsorBallotInitiative(nextGame, { stateId: targetState.id, archetypeId: arch.id }, oppId);
+          let bestPair = null;
+          let bestScore = -1;
+          states.forEach((st) => {
+            const ev = Math.max(3, Number(st.ev || 3));
+            const leanAbs = Math.abs(Number(st.leanPercent ?? (-Number(st.lean || 0) * 100)));
+            const comp = Math.exp(-0.5 * Math.pow(leanAbs / 7.5, 2));
+            alignedDrivers.forEach((arch) => {
+              const tBoost = Number(arch.turnoutBoost || 5);
+              const passFactor = Number(arch.basePassRate ?? 0.55);
+              const sc = ev * comp * (tBoost / 5) * passFactor;
+              if (sc > bestScore) {
+                bestScore = sc;
+                bestPair = { stateId: st.id, archetypeId: arch.id };
+              }
+            });
+          });
+          if (bestPair) {
+            nextGame = sponsorBallotInitiative(nextGame, bestPair, oppId);
+          }
+        } else if (!isMaj && oppActive.length < 1 && Number(nextGame.parties?.[oppId]?.treasury || 0) >= 8) {
+          const engMod = (typeof window !== 'undefined' && window.PartyChairEngine) || (typeof global !== 'undefined' && global.PartyChairEngine) || null;
+          const domino = engMod?.getMinorPartyDominoState ? engMod.getMinorPartyDominoState(nextGame, oppId) : null;
+          const eligibleDomino = (domino?.activeStates || []).filter((sid) => isInitiativeEligibleState(nextGame, sid));
+          const structArchs = BALLOT_INITIATIVE_ARCHETYPES.filter((a) => a.category === 'structural_reform');
+          if (eligibleDomino.length > 0 && structArchs.length > 0) {
+            const targetStId = eligibleDomino[0];
+            const passed = nextGame.passedStateInitiatives?.[targetStId] || [];
+            const unpassed = structArchs.find((a) => !passed.includes(a.id));
+            if (unpassed) {
+              nextGame = sponsorBallotInitiative(nextGame, { stateId: targetStId, archetypeId: unpassed.id }, oppId);
+            }
           }
         }
       }

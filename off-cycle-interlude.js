@@ -1069,10 +1069,11 @@
     const rivalLogs = [];
     const races = (oc.races || []).map((r) => ({ ...r, aiAdBuys: 0 }));
 
-    // Prioritize races closest to 0 lean
+    // Bellwether-leverage x competitiveness sorting
+    const scoreOcRace = (r) => Math.exp(-0.5 * Math.pow(Math.abs(Number(r.baselineLean || 0)) / 8.0, 2)) * (Number(r.weight || 1.0) * 1.5 + 1.0);
     const sortedRaces = races
       .slice()
-      .sort((a, b) => Math.abs(Number(a.baselineLean || 0)) - Math.abs(Number(b.baselineLean || 0)));
+      .sort((a, b) => scoreOcRace(b) - scoreOcRace(a));
 
     // [v0.18.7 QA-FIX] BUG-04: Cap rival single-race lift at +4.5%
     const MAX_RIVAL_RACE_LIFT = 4.5;
