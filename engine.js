@@ -5641,7 +5641,8 @@ function evaluatePartySplitsAndSwitches(game, turnMarker = 1) {
   return {
     factionBoltThreats: nextThreats,
     activeSplinters: nextSplinters.slice(-10),
-    sittingMembers: updatedSitting,
+    sittingMembers: nextSwitchLog.slice(Array.isArray(game.partySwitchLog) ? game.partySwitchLog.length : 0).reduce((acc, sw) => applyPartyDepartureAntiCascadeRelief(acc, sw.fromParty, sw.memberId, sw.memberName), updatedSitting),
+    politicians: nextSwitchLog.slice(Array.isArray(game.partySwitchLog) ? game.partySwitchLog.length : 0).reduce((acc, sw) => applyPartyDepartureAntiCascadeRelief(acc, sw.fromParty, sw.memberId, sw.memberName), game.politicians),
     partySwitchLog: nextSwitchLog.slice(-24),
   };
 }
@@ -5915,7 +5916,7 @@ function createGame(options = {}) {
   }
   let game = {
     schema: 7,
-    version: '0.19.4',
+    version: '0.19.4.1',
     activeTab: 'actions',
     turnStep: 1,
     stateVoterDeltas: {},
@@ -6117,7 +6118,7 @@ function createGame(options = {}) {
   if (window.PartyChairV07) {
     game = window.PartyChairV07.hydrateV07GameState(game);
   }
-  game.version = '0.19.4';
+  game.version = '0.19.4.1';
   // [v0.18.4 MEDIA-SHOCKS]
   const _msInit = (typeof window !== 'undefined' && window.MediaShocksSystem) || (typeof global !== 'undefined' && global.MediaShocksSystem);
   if (_msInit && typeof _msInit.initializeState === 'function') game = _msInit.initializeState(game);
@@ -6488,7 +6489,7 @@ function createGame(options = {}) {
     game = fcsInit.initializeStartingCaucuses(game);
   }
 
-  game.version = '0.19.4';
+  game.version = '0.19.4.1';
   game = ensurePartyStates(game);
   game = syncPartyStateWithLegacy(game);
 
@@ -8290,12 +8291,16 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
       const distRatio = clamp((revImmunity - effectiveMajorBase) / Math.max(1, revImmunity), 0, 1);
       // Major parties retain some institutional brand floor (0.5x taper if still Tier 5)
       const isNonFedRev = ['governor', 'governors', 'gov', 'statewide', 'minor-statewide', 'statewide_executive'].includes(String(raceKind || '').toLowerCase());
-      // When a major party is genuinely overtaken in the state's voter registration table, it suffers full Reverse-Duverger defection
+      // When a major party is genuinely overtaken in the state's voter registration table, apply Reverse-Duverger defection
+      // Cap transfer at 20% when Democrats or Republicans back Libertarians
+      const thirdResolved = (thirdKey === 'player' && !game?.player?.custom) ? (game?.player?.baseTemplateId || 'people') : thirdKey;
+      const isLibRecipient = thirdResolved === 'liberty';
       let defectionRate = MAX_DEFECTION_RATE * Math.pow(distRatio, 1.35) * (isNonFedRev ? 0.5 : 1.0);
       if (effectiveMajorBase < 25.0) {
         defectionRate = Math.max(defectionRate, (isNonFedRev ? 0.25 : 0.48));
       }
-      defectionRate = round(clamp(defectionRate * eraDefMult, 0, MAX_DEFECTION_RATE), 4);
+      const revCap = isLibRecipient ? 0.20 : MAX_DEFECTION_RATE;
+      defectionRate = round(clamp(defectionRate * eraDefMult, 0, revCap), 4);
 
       const minRetained = round(majorShare / 3, 2);
       const rawDefected = round(majorShare * defectionRate, 2);
@@ -9097,13 +9102,13 @@ function acceptReverseFusionOffer(game, payload = {}) {
       fusionType: 'major-backs-minor',
       candidateName: minorNominee,
       policyPledgeId: 'reverse-fusion-ticket',
-      policyPledgeLabel: `${match.majorPartyLabel} Fusion Endorsement`,
+      policyPledgeLabel: `${match.majorPartyLabel} Endorsement`,
       fusionLift: 0,
-      majorTransferRate: 0.85,
+      majorTransferRate: (playerKey === 'liberty' || game.player?.baseTemplateId === 'liberty') ? 0.20 : 0.85,
       year: game.year || 2028,
     },
   };
-  const note = `Fusion Ticket Accepted in ${match.raceLabel}: ${match.majorPartyLabel} endorsed ${minorNominee}.`;
+  const note = `Endorsement Accepted in ${match.raceLabel}: ${match.majorPartyLabel} endorsed ${minorNominee}.`;
   return {
     ...game,
     fusionEndorsements: nextFusion,
@@ -14768,6 +14773,28 @@ function evaluateRaceRatings(game, raceKey, netMargin, natLean) {
     }
   }
 
+  // Blend ~50% live polling (including 3rd parties and Duverger/Reverse-Duverger) into forecaster shares
+  const stFullObj = STATES.find((s) => s.id === stateId);
+  if (stFullObj && stateId !== 'DC' && typeof supportByState === 'function') {
+    const rawLive = supportByState(game, stFullObj, { raceId: raceKey });
+    const liveMap = {};
+    Object.entries(rawLive || {}).forEach(([k, v]) => {
+      const ck = (k === 'player' && !game?.player?.custom) ? (game?.player?.baseTemplateId || 'people') : k;
+      liveMap[ck] = Number(v || 0);
+    });
+    const stSysEval = getStateElectoralSystem(game, stateId, kind);
+    const livePost = (stSysEval.effectiveSystem === 'plurality' && typeof applyDuvergerDefectionToShares === 'function')
+      ? (applyDuvergerDefectionToShares(game, liveMap, stateId, kind)?.shares || liveMap)
+      : liveMap;
+    ['people', 'heritage', ...candidateParties.map((p) => p.id)].forEach((pid) => {
+      if (pid === 'independent' && sittingInd) return;
+      const liveVal = livePost[pid];
+      if (Number.isFinite(Number(liveVal))) {
+        shares[pid] = round((Number(shares[pid] || 0) * 0.50) + (Number(liveVal) * 0.50), 1);
+      }
+    });
+  }
+
   const contenders = [
     { party: 'people', code: 'Dem', share: shares.people, isThird: false, align: 1 },
     { party: 'heritage', code: 'GOP', share: shares.heritage, isThird: false, align: -1 },
@@ -15303,7 +15330,7 @@ function startCampaignPhase(game) {
     ..._preFundGame,
     ...fundingInit,
     phase: 'general-campaign',
-    version: '0.19.4',
+    version: '0.19.4.1',
     primariesResolved: true,
     superPacs: isSuperPacsDisabled(_preFundGame) ? [] : evaluateSuperPacDemands(_preFundGame, 1),
   };
@@ -19050,7 +19077,7 @@ function startNextCycleInternal(game) {
 
   let refreshed = {
     ...game,
-    version: '0.19.4',
+    version: '0.19.4.1',
     federalReforms: game.federalReforms
       ? {
           ...game.federalReforms,
@@ -20030,7 +20057,7 @@ function resolveVersion01GeneralElection(game) {
 
   const resolved = {
     ...questRewardedResult,
-    version: '0.19.4',
+    version: '0.19.4.1',
     phase: 'complete',
     primariesResolved: true,
     generalElectionResolved: true,
@@ -20980,7 +21007,11 @@ function applyMachineOperation(game, partyId, operationId, payload = {}) {
         curParty.organizingActionsRemaining -= 1;
         const candidates = (nextGame.sittingMembers || []).filter((m) => m.party !== partyId && (m.stateId === targetState.id || !targetState.id) && (m.happiness ?? 50) <= 40);
         if (candidates.length) {
+          const oldP = candidates[0].party || candidates[0].partyId || candidates[0].caucus;
           candidates[0].party = partyId;
+          candidates[0].partyId = partyId;
+          nextGame.sittingMembers = applyPartyDepartureAntiCascadeRelief(nextGame.sittingMembers, oldP, candidates[0].id, candidates[0].name);
+          nextGame.politicians = applyPartyDepartureAntiCascadeRelief(nextGame.politicians, oldP, candidates[0].id, candidates[0].name);
         }
       }
       break;
@@ -24346,8 +24377,8 @@ function takeActionInternal(game, actionId, payload = {}) {
         ...(game.player || {}),
         leadershipRoles: nextLeadership.player,
       },
-      sittingMembers: nextSitting,
-      politicians: nextPoliticians,
+      sittingMembers: applyPartyDepartureAntiCascadeRelief(nextSitting, target.party || target.partyId || target.caucus, target.id, target.name),
+      politicians: applyPartyDepartureAntiCascadeRelief(nextPoliticians, target.party || target.partyId || target.caucus, target.id, target.name),
       roster: nextRoster,
       recruited: nextRecruited,
       partySwitchLog: nextSwitchLog,
@@ -24527,7 +24558,8 @@ function takeActionInternal(game, actionId, payload = {}) {
 
     const updated = {
       ...game,
-      sittingMembers: nextSitting,
+      sittingMembers: switched ? applyPartyDepartureAntiCascadeRelief(nextSitting, rivalId, target.id, target.name) : nextSitting,
+      politicians: switched ? applyPartyDepartureAntiCascadeRelief(game.politicians, rivalId, target.id, target.name) : game.politicians,
       partySwitchLog: nextSwitchLog,
       trust: nextTrust,
       player: { ...game.player, trust: nextTrust },
@@ -25934,7 +25966,7 @@ function advanceYear(game) {
     const closed = ready.offCycle ? { ...ready.offCycle, active: false } : null;
     return startNextCycle({ ...ready, offCycle: closed });
   }
-  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7', '0.18.8', '0.18.9', '0.18.9.1', '0.18.9.2', '0.18.9.3', '0.18.9.4', '0.19.0', '0.19.2', '0.19.4'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
+  if (['0.1', '0.2', '0.2.1', '0.2.2', '0.3', '0.4', '0.4.1', '0.4.2', '0.4.3', '0.5', '0.7', '0.8', '0.9', '0.10', '0.11', '0.12', '0.13', '0.14', '0.14.1', '0.14.2', '0.14.3', '0.14.4', '0.14.5', '0.14.6', '0.15.0', '0.15.1', '0.15.2', '0.15.3', '0.15.4', '0.15.5', '0.15.6', '0.15.7', '0.15.8', '0.15.9', '0.16.0', '0.16.1', '0.16.2', '0.16.3', '0.16.4', '0.16.9', '0.17.0', '0.18.2', '0.18.3', '0.18.4', '0.18.5', '0.18.6', '0.18.7', '0.18.8', '0.18.9', '0.18.9.1', '0.18.9.2', '0.18.9.3', '0.18.9.4', '0.19.0', '0.19.2', '0.19.4.1'].includes(game.version) || game.version?.startsWith('0.') || game.phase || game.campaign?.active) return advanceChairTurn(game);
   const conventionsComplete = game.year % 4 !== 0 || CONVENTIONS.every((convention) => game.conventionResolutions?.[convention.region]);
   if (game.actionsLeft > 0 || !game.eventResolved || !conventionsComplete) return game;
   const rivalUpdate = advanceRivalOrganizations(game);
@@ -26214,7 +26246,7 @@ function normalizeGame(parsed) {
   const normalized = {
     ...parsed,
     schema: 9,
-    version: '0.19.4',
+    version: '0.19.4.1',
     activeTab: parsed.activeTab || 'actions',
     turnStep: clamp(Number(parsed.turnStep || 1), 1, 5),
     phase: parsed.phase || (parsed.primariesResolved ? 'general-campaign' : 'organizing'),
@@ -26430,7 +26462,7 @@ function normalizeGame(parsed) {
   // [OFF-CYCLE] Preserve offCycle interlude & pendingBellwetherBonus across save/reload
   if (parsed.offCycle && typeof parsed.offCycle === 'object') ready.offCycle = parsed.offCycle;
   if (parsed.pendingBellwetherBonus && typeof parsed.pendingBellwetherBonus === 'object') ready.pendingBellwetherBonus = parsed.pendingBellwetherBonus;
-  ready.version = '0.19.4';
+  ready.version = '0.19.4.1';
   ready.focusesLocked = Boolean(parsed.focusesLocked);
   ready.lastCycleControl = parsed.lastCycleControl || {
     house: false,
@@ -26835,7 +26867,7 @@ function normalizeGame(parsed) {
     window.CampaignOverhaul.initializeDynamicCorruptTrait(ready);
   }
   ready.grassrootsMultiplier = computeGrassrootsMultiplier(ready);
-  ready.version = '0.19.4';
+  ready.version = '0.19.4.1';
   ready = syncFederalReformsUiAliases(ready);
   if (ready.federalReforms && ready.federalReforms.mandatoryNonpartisanRedistricting) {
     ready.redistrictingCommissions = Object.fromEntries(STATES.filter((s) => s.id !== 'DC').map((s) => [s.id, true]));
@@ -27001,6 +27033,25 @@ const DEFAULT_PARTY_FACTION_FALLBACK = {
   constitution: 'con_constitutional_purists',
   socialist: 'soc_socialists',
 };
+
+
+function applyPartyDepartureAntiCascadeRelief(membersList, departedPartyId, departedPolId = null, departedPolName = null) {
+  if (!Array.isArray(membersList) || !departedPartyId || ['independent', 'unaffiliated', 'none'].includes(departedPartyId)) {
+    return membersList;
+  }
+  return membersList.map((m) => {
+    if (!m || m.vacant || m.retired) return m;
+    if (departedPolId && (m.id === departedPolId || m.sittingId === departedPolId)) return m;
+    if (departedPolName && m.name === departedPolName) return m;
+    const mp = m.party || m.partyId || m.caucus;
+    if (mp !== departedPartyId) return m;
+    const curH = Number(m.happiness ?? 65);
+    if (curH < 50) {
+      return { ...m, happiness: Math.min(100, round(curH + 3, 1)) };
+    }
+    return m;
+  });
+}
 
 function ensurePoliticianFactionAndTrait(pol, game) {
   if (!pol || typeof pol !== 'object') return pol;
@@ -27540,6 +27591,7 @@ window.PartyChairEngine = {
   selectRivalVicePresident,
   ensurePoliticianFactionAndTrait,
   enforceExtremistPartySizeDeparture,
+  applyPartyDepartureAntiCascadeRelief,
   reallocateStateSenateSeatCounts,
   getStateElectoralSystem,
   reallocateHouseSeats,
