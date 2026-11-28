@@ -8021,28 +8021,52 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
     const nearestMajorId = getNearestMajorParty(game, resolved);
     const majorKey = findMajorKey(nearestMajorId);
     const majorShare = Number(rawShares[majorKey] || 0);
+    const demKey = findMajorKey('people');
+    const repKey = findMajorKey('heritage');
 
-    // [v0.18.9.4] Compare registered voter counts in this state (instead of projected vote %):
-    // - Within 5 points of each other (|thirdVoterPct - majorVoterPct| <= 5.0): NO spoiler effect for either party.
-    // - 3rd party ahead by > 5 points: 0% spoiler for 3rd party, reverse-Duverger onto trailing major party.
-    // - Major party ahead by > 5 points: standard Duverger defection on 3rd party.
     const vmSt = Array.isArray(game?.voterModel?.states)
       ? game.voterModel.states.find((s) => (s.stateId || s.id) === stateId)
       : null;
     const aff = vmSt?.affiliations || null;
     let thirdVoterPct = share;
-    let majorVoterPct = majorShare;
+    let demVoterPct = Number(rawShares[demKey] || 0);
+    let repVoterPct = Number(rawShares[repKey] || 0);
     if (aff) {
       const voterKeys = ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'other', 'player'];
       const totVoters = voterKeys.reduce((sum, k) => sum + Math.max(0, Number(aff[k] || 0)), 0);
       if (totVoters > 0) {
         thirdVoterPct = (Math.max(0, Number(aff[resolved] || 0)) / totVoters) * 100;
-        majorVoterPct = (Math.max(0, Number(aff[nearestMajorId] || 0)) / totVoters) * 100;
+        demVoterPct = (Math.max(0, Number(aff.people || 0)) / totVoters) * 100;
+        repVoterPct = (Math.max(0, Number(aff.heritage || 0)) / totVoters) * 100;
       }
     }
-    const voterGapPts = thirdVoterPct - majorVoterPct;
+    const majorVoterPct = nearestMajorId === 'people' ? demVoterPct : repVoterPct;
+    const weakerMajorId = demVoterPct <= repVoterPct ? 'people' : 'heritage';
+    const weakerMajorKey = findMajorKey(weakerMajorId);
+    const weakerMajorVoterPct = Math.min(demVoterPct, repVoterPct);
+    const weakerMajorShare = Number(rawShares[weakerMajorKey] || 0);
 
-    if (Math.abs(voterGapPts) <= 5.0) {
+    // If this 3rd party has MORE registered voters than the weaker major party in this state (Top-2 contender),
+    // it suffers 0% forward-Duverger spoiler and triggers Reverse-Duverger on the overtaken 3rd-place major party.
+    if (thirdVoterPct > weakerMajorVoterPct) {
+      defections[partyKey] = {
+        defectionRate: 0,
+        defectedShare: 0,
+        retainedShare: round(share, 2),
+        recipientPartyId: null,
+        threshold: 0,
+        regionalRelief: false,
+        bypassed: true,
+        reason: 'outpolls-major-party-top2',
+      };
+      if (!overtakenByThird[weakerMajorKey] || thirdVoterPct > overtakenByThird[weakerMajorKey].thirdVoterPct) {
+        overtakenByThird[weakerMajorKey] = { thirdKey: partyKey, thirdShare: share, thirdVoterPct, majorShare: weakerMajorShare };
+      }
+      return;
+    }
+
+    const voterGapPts = thirdVoterPct - majorVoterPct;
+    if (Math.abs(voterGapPts) <= 5.0 || Math.abs(thirdVoterPct - weakerMajorVoterPct) <= 5.0) {
       defections[partyKey] = {
         defectionRate: 0,
         defectedShare: 0,
@@ -8053,23 +8077,6 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
         bypassed: true,
         reason: 'within-5pt-voter-deadband',
       };
-      return;
-    }
-
-    if (voterGapPts > 5.0) {
-      defections[partyKey] = {
-        defectionRate: 0,
-        defectedShare: 0,
-        retainedShare: round(share, 2),
-        recipientPartyId: null,
-        threshold: 0,
-        regionalRelief: false,
-        bypassed: true,
-        reason: 'outpolls-nearest-major-party',
-      };
-      if (!overtakenByThird[majorKey] || thirdVoterPct > overtakenByThird[majorKey].thirdVoterPct) {
-        overtakenByThird[majorKey] = { thirdKey: partyKey, thirdShare: share, thirdVoterPct, majorShare };
-      }
       return;
     }
 
@@ -8091,7 +8098,7 @@ function applyDuvergerDefectionToShares(game, rawShares, stateId, raceKind = 'pr
   const pseRev = getPartySystemsEngine();
   const edModRev = (typeof window !== 'undefined' && window.ElectionDrift) || (typeof global !== 'undefined' && global.ElectionDrift);
   const surgeRev = edModRev?.evaluateThirdPartyElasticitySurge ? edModRev.evaluateThirdPartyElasticitySurge(game) : null;
-  const revImmunity = (surgeRev && surgeRev.surgeActive) ? 18.0 : 25.0;
+  const revImmunity = (surgeRev && surgeRev.surgeActive) ? 28.0 : 35.0;
 
   if (!isAntiSpoiler && !isGovVentura) {
     Object.entries(overtakenByThird).forEach(([majorKey, info]) => {
@@ -13645,20 +13652,14 @@ function resolveStateLegislatureDistricts(game, stateId, chamber = 'lower', opti
     || Boolean(game?.contestedStateLegSlates?.[stateId])
     || (!isUpper && hasBallotAccess(game, playerIdentity, 'state-leg:' + stateId));
 
-  // Build base statewide vote shares for this chamber
-  const baseShares = computeStateLegislatureVoteShares(game, stateId);
+  // Build base statewide vote shares directly from computeStateLegislatureVoteShares (matches State Leg polling 1-for-1)
+  const baseShares = computeStateLegislatureVoteShares(game, stateId, { chamber: chKey });
   const rawPartyScores = {};
   Object.entries(baseShares).forEach(([pk, val]) => {
     const id = pk === 'player' ? playerIdentity : pk;
     if (id === playerIdentity && !playerContested) return;
-    const chCount = getStateChaptersForParty(game, stateId, id);
-    const chBoost = isUpper
-      ? (chCount >= 3 ? Math.min(8.0, 0.75 * Math.min(10, chCount) + Math.max(0, chCount - 10) * 0.20) : chCount * 0.35)
-      : (chCount >= 3 ? Math.min(10.0, 0.95 * Math.min(10, chCount) + Math.max(0, chCount - 10) * 0.25) : chCount * 0.50);
     const slateLift = id === playerIdentity ? getStateLegSlateFundingLift(game, stateId, chKey) : 0;
-    const genPers = id === playerIdentity ? Number(game?.campaign?.generalPersuasionStateBoosts?.[stateId] || 0) : 0;
-    const slateMult = (id === playerIdentity && !isMajor) ? (0.20 * clamp(playerTier, 1, 5)) : 1.0;
-    rawPartyScores[id] = Math.max(0, (Number(val || 0) + chBoost + slateLift + genPers) * slateMult);
+    rawPartyScores[id] = Math.max(0, Number(val || 0) + slateLift);
   });
 
   // Normalize statewide chamber vote shares to 100%
@@ -13679,34 +13680,27 @@ function resolveStateLegislatureDistricts(game, stateId, chamber = 'lower', opti
   const seatsByParty = {};
   partyIds.forEach((pid) => { seatsByParty[pid] = 0; });
 
-  // Partisan spread across single-member districts (wider in large/diverse states, narrower in small states)
-  const spread = clamp(14 + Math.min(12, Math.sqrt(total) * 0.9), 14, 26);
+  // Uniform, centered per-seat distribution so individual districts closely track state legislative polling
+  const spread = 6.5;
   const seats = [];
   const prefix = isUpper ? 'SD' : 'HD';
 
   for (let i = 1; i <= total; i += 1) {
-    // Deterministic quantile position in [-1, +1] (from most Heritage-leaning to most People-leaning)
     const q = total > 1 ? ((i - 0.5) / total) * 2 - 1 : 0;
-    // Slight smooth S-curve so extremes are realistic while middle districts cluster around state mean
-    const shapedQ = Math.sign(q) * Math.pow(Math.abs(q), 0.92);
-    const partisanShift = shapedQ * spread; // +favors people, -favors heritage
+    const partisanShift = q * spread;
 
     const dRaw = {};
     partyIds.forEach((pid) => {
       const base = normShares[pid] || 0;
       const h1 = stateLegDeterministicHash(`${stateId}:${chKey}:${i}:${pid}`);
-      const h2 = stateLegDeterministicHash(`${stateId}:${chKey}:${i}:${pid}:pocket`);
       let adj = base;
       if (pid === 'people') {
-        adj = base + partisanShift + (h1 - 0.5) * 4.0;
+        adj = base + partisanShift + (h1 - 0.5) * 3.0;
       } else if (pid === 'heritage') {
-        adj = base - partisanShift + (h1 - 0.5) * 4.0;
+        adj = base - partisanShift + (h1 - 0.5) * 3.0;
       } else {
-        // Minor/third parties vary locally with modest geographic concentration pockets
-        const chCount = getStateChaptersForParty(game, stateId, pid);
-        const pocketScale = Math.min(1.65, 0.75 + chCount * 0.08);
-        const localFactor = 0.55 + h1 * 0.75 + (h2 > 0.88 ? (h2 - 0.88) * 4.5 * pocketScale : 0);
-        adj = base * localFactor;
+        // Zero-mean uniform local variation centered cleanly at the party's state legislative share
+        adj = base + (h1 - 0.5) * 5.0;
       }
       dRaw[pid] = Math.max(0.1, adj);
     });
