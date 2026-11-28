@@ -93,6 +93,8 @@
   ];
 
   let selectedStatewideOfficeState = null;
+  let selectedLegInspectorState = { lower: 'PA', upper: 'PA' };
+  let selectedLegInspectorSort = { lower: 'closest', upper: 'closest' };
   const sortStateByView = {
     'senate-seats': { col: 'stateId', dir: 'asc' },
     'house-seats': { col: 'stateId', dir: 'asc' },
@@ -724,7 +726,114 @@
     });
   }
 
-  function renderStateHouseSeats(game) {
+
+  function renderStateLegDistrictInspector(game, chamber, ctx = {}) {
+    const engine = (typeof window !== 'undefined' && window.PartyChairEngine) ? window.PartyChairEngine : null;
+    if (!engine || typeof engine.resolveStateLegislatureDistricts !== 'function') return '';
+    const chKey = chamber === 'upper' ? 'upper' : 'lower';
+    const states = getStatesList().filter((s) => s.id !== 'DC' && s.id !== 'NE');
+    const validIds = new Set(states.map((s) => s.id));
+    if (!validIds.has(selectedLegInspectorState[chKey])) {
+      selectedLegInspectorState[chKey] = validIds.has(ctx?.activeStateId) ? ctx.activeStateId : (states[0]?.id || 'PA');
+    }
+    const stId = selectedLegInspectorState[chKey];
+    const sortMode = selectedLegInspectorSort[chKey] || 'closest';
+    const res = engine.resolveStateLegislatureDistricts(game, stId, chKey);
+    const stObj = states.find((s) => s.id === stId);
+    const chamberLabel = chKey === 'upper' ? 'State Senate' : 'State House';
+    const playerId = res.playerIdentity;
+    const playerMeta = resolvePartyMeta(playerId, game);
+    const playerLabel = playerMeta?.label || playerId;
+
+    const seats = [...(res.seats || [])];
+    if (sortMode === 'closest') {
+      seats.sort((a, b) => {
+        const aTrail = a.status === 'Trailing' ? 0 : (a.status === 'Leading' ? 1 : 2);
+        const bTrail = b.status === 'Trailing' ? 0 : (b.status === 'Leading' ? 1 : 2);
+        if (aTrail !== bTrail) return aTrail - bTrail;
+        if (aTrail === 0) return (a.playerDistance ?? 999) - (b.playerDistance ?? 999);
+        if (aTrail === 1) return (a.playerMargin ?? 999) - (b.playerMargin ?? 999);
+        return a.number - b.number;
+      });
+    } else {
+      seats.sort((a, b) => a.number - b.number);
+    }
+
+    const playerWins = seats.filter((s) => s.status === 'Leading').length;
+    const within5 = seats.filter((s) => s.status === 'Trailing' && s.playerDistance <= 5).length;
+    const within10 = seats.filter((s) => s.status === 'Trailing' && s.playerDistance <= 10).length;
+
+    const optionsHtml = states.map((s) =>
+      `<option value="${esc(s.id)}" ${s.id === stId ? 'selected' : ''}>${esc(s.name)} (${esc(s.id)})</option>`
+    ).join('');
+
+    const rowsHtml = seats.map((seat) => {
+      const topParties = Object.entries(seat.shares || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([pid, pct]) => `${esc(resolvePartyMeta(pid, game)?.label || pid)} ${Number(pct).toFixed(1)}%`)
+        .join(' · ');
+
+      let marginBadge = '<span style="color:var(--muted)">Uncontested</span>';
+      if (seat.status === 'Leading') {
+        marginBadge = `<span style="color:#4ade80;font-weight:700">Leading +${Number(seat.playerMargin || 0).toFixed(1)}%</span>`;
+      } else if (seat.status === 'Trailing') {
+        const dist = Number(seat.playerDistance || 0);
+        const color = dist <= 5 ? '#fbbf24' : (dist <= 10 ? '#f59e0b' : 'var(--muted)');
+        marginBadge = `<span style="color:${color};font-weight:${dist <= 10 ? '700' : '400'}">-${dist.toFixed(1)}% to win</span>`;
+      }
+
+      return `<tr>
+        <td><b>${esc(seat.districtId)}</b></td>
+        <td>${partyPillMarkup(seat.winner, game)}</td>
+        <td style="text-align:right;font-family:Consolas,monospace">${res.playerContested ? `${Number(seat.playerPct || 0).toFixed(1)}%` : '—'}</td>
+        <td style="text-align:right;font-family:Consolas,monospace">${Number(seat.leaderPct || 0).toFixed(1)}%</td>
+        <td style="text-align:right;font-family:Consolas,monospace">${marginBadge}</td>
+        <td style="font-size:11.5px;color:var(--muted)">${topParties}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="sot-district-inspector" style="margin-bottom:16px;padding:12px 14px;background:#101a26;border:1px solid var(--line);border-radius:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="eyebrow" style="font-size:11px;color:var(--gold)">Individual Seat Inspector · ${esc(chamberLabel)}</div>
+            <h4 style="margin:2px 0 0;font-size:15px">${esc(stObj?.name || stId)} ${esc(chamberLabel)} (${res.total} Seats)</h4>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--muted)">State:</label>
+            <select data-sot-leg-state="${chKey}" style="padding:4px 8px;border-radius:6px;background:#0b131c;color:var(--text);border:1px solid var(--line);font-size:12.5px">
+              ${optionsHtml}
+            </select>
+            <button type="button" class="button button-small ${sortMode === 'closest' ? 'button-gold' : ''}" data-sot-leg-sort="${chKey}:closest" style="padding:4px 8px;font-size:11.5px">Closest to Win</button>
+            <button type="button" class="button button-small ${sortMode === 'number' ? 'button-gold' : ''}" data-sot-leg-sort="${chKey}:number" style="padding:4px 8px;font-size:11.5px">Seat #</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;font-family:Consolas,monospace;color:var(--gold);margin-bottom:10px">
+          <span><b>${esc(playerLabel)} Projected:</b> ${playerWins}/${res.total}</span>
+          <span><b>Within 5%:</b> ${within5}</span>
+          <span><b>Within 10%:</b> ${within10}</span>
+          <span><b>System:</b> ${esc(String(res.system || 'plurality').toUpperCase())}</span>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px">
+          <table class="v08-triage-table" style="margin:0;width:100%">
+            <thead>
+              <tr>
+                <th>Seat</th>
+                <th>Projected Winner</th>
+                <th style="text-align:right">${esc(playerLabel)} %</th>
+                <th style="text-align:right">Leader %</th>
+                <th style="text-align:right">Margin / Distance</th>
+                <th>Top Parties</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  function renderStateHouseSeats(game, ctx = {}) {
     const data = getData();
     const states = getStatesList();
     const isCustomPlayer = isCustomPlayerGame(game);
@@ -747,7 +856,7 @@
       };
     });
 
-    return renderSeatMatrixTable({
+    return renderStateLegDistrictInspector(game, 'lower', ctx) + renderSeatMatrixTable({
       subviewId: 'state-house-seats',
       rows,
       showControlCheck: true,
@@ -755,7 +864,7 @@
     });
   }
 
-  function renderStateSenateSeats(game) {
+  function renderStateSenateSeats(game, ctx = {}) {
     const data = getData();
     const states = getStatesList();
     const isCustomPlayer = isCustomPlayerGame(game);
@@ -783,7 +892,7 @@
       };
     });
 
-    return renderSeatMatrixTable({
+    return renderStateLegDistrictInspector(game, 'upper', ctx) + renderSeatMatrixTable({
       subviewId: 'state-senate-seats',
       rows,
       showControlCheck: true,
@@ -800,9 +909,9 @@
       case 'house-seats':
         return renderHouseSeats(game);
       case 'state-house-seats':
-        return renderStateHouseSeats(game);
+        return renderStateHouseSeats(game, ctx);
       case 'state-senate-seats':
-        return renderStateSenateSeats(game);
+        return renderStateSenateSeats(game, ctx);
       default:
         return '';
     }
@@ -822,6 +931,24 @@
         const idx = raw.indexOf(':');
         if (idx > 0) {
           setSort(raw.slice(0, idx), raw.slice(idx + 1));
+          onUpdate();
+        }
+      });
+    });
+    document.querySelectorAll('[data-sot-leg-state]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const ch = sel.dataset.sotLegState === 'upper' ? 'upper' : 'lower';
+        selectedLegInspectorState[ch] = sel.value;
+        onUpdate();
+      });
+    });
+    document.querySelectorAll('[data-sot-leg-sort]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.dataset.sotLegSort || '');
+        const idx = raw.indexOf(':');
+        if (idx > 0) {
+          const ch = raw.slice(0, idx) === 'upper' ? 'upper' : 'lower';
+          selectedLegInspectorSort[ch] = raw.slice(idx + 1);
           onUpdate();
         }
       });

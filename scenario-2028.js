@@ -10424,7 +10424,7 @@ function buildSittingMemberRoster() {
     const targetQuality = 6 + (h % 4); // 6..9
     const ratings = generatePoliticianRatings(seedKey, targetQuality, { isIncumbent: true, lockQuality: true });
     const quality = v07ComputeQuality(ratings);
-    const fame = ELEVATED_FAME_OVERRIDES[seat.incumbent] || (55 + (h % 28)); // 55..82
+    const fame = ELEVATED_FAME_OVERRIDES[seat.incumbent] ? Math.max(25, Math.round(ELEVATED_FAME_OVERRIDES[seat.incumbent] * 0.62)) : (22 + (h % 29)); // avg ~40 with overrides
     const factionId = wFactionId || resolvePoliticianFactionId({ name: seat.incumbent, party: seat.party, office: 'senate', stateId: seat.state, state: seat.state, seedKey });
     const isLeadingOrMajor = ['dem_liberal_establishment', 'gop_faith_and_flag', 'dem_black_voters', 'dem_capital_l_left', 'dem_neo_liberals', 'dem_bernie_bros', 'dem_faith_based_liberals', 'dem_blue_dog', 'gop_maga', 'gop_western_mavericks', 'gop_blood_and_soil', 'gop_suburban_moderates', 'gop_neo_cons', 'gop_paleocons'].includes(factionId);
     const senateSeatId = `senate:${seat.state}:class-${seat.class}`;
@@ -10478,7 +10478,7 @@ function buildSittingMemberRoster() {
     const targetQuality = 6 + (h % 4); // 6..9
     const ratings = generatePoliticianRatings(seedKey, targetQuality, { isIncumbent: true, lockQuality: true });
     const quality = v07ComputeQuality(ratings);
-    const fame = ELEVATED_FAME_OVERRIDES[govInfo.name] || (52 + (h % 30)); // 52..81
+    const fame = ELEVATED_FAME_OVERRIDES[govInfo.name] ? Math.max(22, Math.round(ELEVATED_FAME_OVERRIDES[govInfo.name] * 0.60)) : (20 + (h % 27)); // avg ~35 with overrides
     const factionId = wFactionId || resolvePoliticianFactionId({ name: govInfo.name, party: govInfo.party, office: 'governor', stateId: stateObj.id, state: stateObj.id, seedKey });
     const isLeadingOrMajor = ['dem_liberal_establishment', 'gop_faith_and_flag', 'dem_black_voters', 'dem_capital_l_left', 'dem_neo_liberals', 'dem_bernie_bros', 'dem_faith_based_liberals', 'dem_blue_dog', 'gop_maga', 'gop_western_mavericks', 'gop_blood_and_soil', 'gop_suburban_moderates', 'gop_neo_cons', 'gop_paleocons'].includes(factionId);
     const govSeatId = `governor:${stateObj.id}`;
@@ -10532,7 +10532,7 @@ function buildSittingMemberRoster() {
     const targetQuality = 5 + (h % 5); // 5..9
     const ratings = generatePoliticianRatings(seedKey, targetQuality, { isIncumbent: true, lockQuality: true });
     const quality = v07ComputeQuality(ratings);
-    const fame = ELEVATED_FAME_OVERRIDES[inc.name] || (22 + (h % 39)); // 22..60
+    const fame = ELEVATED_FAME_OVERRIDES[inc.name] ? Math.max(20, Math.round(ELEVATED_FAME_OVERRIDES[inc.name] * 0.60)) : (17 + (h % 26)); // avg ~30 with overrides
     const factionId = wFactionId || resolvePoliticianFactionId({ name: inc.name, party: inc.party, office: 'house', stateId: dist.stateId, districtId: dist.id, state: dist.stateId, seedKey });
     const isLeadingOrMajor = ['dem_liberal_establishment', 'gop_faith_and_flag', 'dem_black_voters', 'dem_capital_l_left', 'dem_neo_liberals', 'dem_bernie_bros', 'dem_faith_based_liberals', 'dem_blue_dog', 'gop_maga', 'gop_western_mavericks', 'gop_blood_and_soil', 'gop_suburban_moderates', 'gop_neo_cons', 'gop_paleocons'].includes(factionId);
     const houseSeatId = `house:${dist.id}`;
@@ -10672,9 +10672,10 @@ function version01PrimaryField(raceId, stateName, partyId, seed = 1) {
       ? { ...sittingIncumbent.ratings }
       : generatePoliticianRatings(`${seed}:${raceId}:${partyId}:${index}`, targetQuality, { lockQuality: true });
     const quality = v07ComputeQuality(ratings);
+    const isRareCelebCand = ((h >>> 12) % 100) < 3; // 3% rare celebrity joining politics
     const fame = isIncumbent
       ? sittingIncumbent.fame
-      : (isPa2028DemPrimary && index === 1 ? 64 : (10 + ((h >>> 4) % 36))); // REQ-10: non-incumbent primary candidates 10..45
+      : (isPa2028DemPrimary && index === 1 ? 42 : (isRareCelebCand ? (18 + ((h >>> 4) % 38)) : (1 + ((h >>> 4) % 9)))); // <10 normally, rare celebrity spike
     const happiness = isIncumbent ? sittingIncumbent.happiness : (65 + ((h >>> 10) % 20));
     let poll = strength[index] !== undefined ? (strength[index] + (h % 7) - 3 + (quality - 5) * 0.8 + (isIncumbent ? 10 : 0)) : (isIncumbent ? 65 : 25);
     let heavyPrimaryChallengerPenaltyApplied = false;
@@ -10750,7 +10751,8 @@ function version01StateRecruit(raceId, stateName, partyId, seed = 1, turn = 0) {
     corruption: 2,
   });
   const quality = v07ComputeQuality(ratings);
-  const fame = 28 + ((h >>> 5) % 25); // 28..52
+  const isRareCelebRecruit = ((h >>> 13) % 100) < 3; // 3% rare celebrity recruit
+  const fame = isRareCelebRecruit ? (18 + ((h >>> 5) % 38)) : (1 + ((h >>> 5) % 9)); // <10 normally, rare celebrity spike
   const raw = {
     id: `recruit:${raceId}:${partyId}`,
     name: `${names.first[(h >>> 3) % names.first.length]} ${names.last[(h >>> 11) % names.last.length]} (${stateName})`,

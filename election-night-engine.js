@@ -714,6 +714,34 @@
     }
 
     // 2. Senate Races
+
+    const playerBaseTpl = safeGame.player?.baseTemplateId || 'people';
+    const isCustomPlayer = Boolean(safeGame.player?.custom);
+    const normalizeMultiPartyShares = (rawShares, fallbackMargin) => {
+      if (rawShares && typeof rawShares === 'object') {
+        const cleaned = {};
+        let total = 0;
+        Object.entries(rawShares).forEach(([k, v]) => {
+          const num = Number(v);
+          if (!Number.isFinite(num) || num <= 0) return;
+          const mappedKey = k === 'player' ? (isCustomPlayer ? 'player' : playerBaseTpl) : k;
+          cleaned[mappedKey] = (cleaned[mappedKey] || 0) + num;
+          total += num;
+        });
+        if (total > 0 && Object.keys(cleaned).length > 0) {
+          const out = {};
+          Object.entries(cleaned).forEach(([k, v]) => {
+            out[k] = Math.round((v / total) * 1000) / 10;
+          });
+          return out;
+        }
+      }
+      return {
+        people: Math.round((50 + fallbackMargin / 2) * 10) / 10,
+        heritage: Math.round((50 - fallbackMargin / 2) * 10) / 10,
+      };
+    };
+
     senateResults.forEach((sen) => {
       const stateId = sen.stateId || sen.state;
       const close = POLL_CLOSE_MINUTES[stateId] !== undefined ? POLL_CLOSE_MINUTES[stateId] : 60;
@@ -722,10 +750,7 @@
       const winner = sen.winner || (margin >= 0 ? 'people' : 'heritage');
       const isRecount = Math.abs(margin) <= 0.50;
       const cast = 40000;
-      const finalShares = {
-        people: Math.round((50 + margin / 2) * 10) / 10,
-        heritage: Math.round((50 - margin / 2) * 10) / 10,
-      };
+      const finalShares = normalizeMultiPartyShares(sen.shares || sen.allShares, margin);
 
       const raceDef = {
         id: `senate:${stateId}`,
@@ -764,10 +789,7 @@
       const winner = gov.winner || (margin >= 0 ? 'people' : 'heritage');
       const isRecount = Math.abs(margin) <= 0.50;
       const cast = 35000;
-      const finalShares = {
-        people: Math.round((50 + margin / 2) * 10) / 10,
-        heritage: Math.round((50 - margin / 2) * 10) / 10,
-      };
+      const finalShares = normalizeMultiPartyShares(gov.shares || gov.allShares, margin);
 
       const raceDef = {
         id: `governor:${stateId}`,
@@ -884,10 +906,7 @@
       }
       const winner = rep.partyId || (margin >= 0 ? 'people' : 'heritage');
       const cast = 10000;
-      const finalShares = {
-        people: Math.round((50 + margin / 2) * 10) / 10,
-        heritage: Math.round((50 - margin / 2) * 10) / 10,
-      };
+      const finalShares = normalizeMultiPartyShares(rep.allShares || rep.shares, margin);
 
       const raceDef = {
         id: `house:${distId}`,
@@ -1292,6 +1311,12 @@
         shares.people = peopleShare;
         shares.heritage = heritageShare;
         shares[playerIdentity] = playerShare;
+        if (typeof window !== 'undefined' && typeof window.PartyChairEngine?.applyDuvergerDefectionToShares === 'function') {
+          const defOut = window.PartyChairEngine.applyDuvergerDefectionToShares(game, shares, office.stateId, 'statewide');
+          if (defOut && defOut.shares) {
+            Object.assign(shares, defOut.shares);
+          }
+        }
         const ranked = Object.entries(shares).sort((a, b) => b[1] - a[1]);
         winner = ranked[0][0];
       }

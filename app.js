@@ -1645,7 +1645,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3.2</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1673,7 +1673,7 @@ function setupMarkup() {
           <!-- [v0.18.4 ATLAS-HOTSEAT] -->
           ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatSetupToggle(isCustomMode ? 'player' : selectedTemplate) : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.19.3 · Voting &amp; Constitutional Reforms · Local autosave</p>
+          <p class="setup-foot">Version 0.19.3.2 · Voting &amp; Constitutional Reforms · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -3116,6 +3116,26 @@ function step3PrimariesMarkup() {
         const isFusionRace = ['senate:', 'governor:', 'house:'].some((prefix) => String(primaryRace).startsWith(prefix));
         if (!isThirdOrCustom || !isFusionRace) return '';
         const tierInfo = getPlayerTierInfo(game);
+        const incomingReverseOffers = typeof Engine.getEligibleReverseFusionOffers === 'function'
+          ? Engine.getEligibleReverseFusionOffers(game)
+          : [];
+        const reverseOffersHtml = incomingReverseOffers.length ? `
+          <div class="v159-fusion-card" style="border-color:var(--gold);margin-bottom:12px">
+            <div class="eyebrow" style="color:var(--gold)">Incoming Fusion Ticket Offer${incomingReverseOffers.length > 1 ? 's' : ''}</div>
+            <h4 style="margin:4px 0 8px">Major-Party Fusion Endorsement${incomingReverseOffers.length > 1 ? 's' : ''} Available</h4>
+            ${incomingReverseOffers.map((off) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;margin-bottom:6px">
+                <div>
+                  <b>${safe(off.majorPartyLabel)}</b> offers to back your candidate in <b>${safe(off.raceLabel)}</b>
+                  <div style="font-size:12px;color:var(--muted)">Voter share in ${safe(off.stateId)}: You ${off.minorVoterPct.toFixed(1)}% vs ${safe(off.majorPartyLabel)} ${off.majorVoterPct.toFixed(1)}%</div>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button type="button" class="button button-small button-gold" data-accept-reverse-fusion="${safe(off.raceId)}" data-major-party="${safe(off.majorPartyId)}">Accept Fusion Ticket</button>
+                  <button type="button" class="button button-small" data-decline-reverse-fusion="${safe(off.raceId)}" data-major-party="${safe(off.majorPartyId)}">Decline</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>` : '';
         const existingFusion = game.fusionEndorsements?.[primaryRace];
         const pledges = window.PartyChairData?.FUSION_POLICY_PLEDGES || [
           { id: 'pledge-electoral-reform', label: 'Ballot Access & Ranked-Choice Pledge', description: 'Commits the cross-endorsed nominee to back open ballot access and anti-spoiler electoral reforms.' },
@@ -3126,7 +3146,7 @@ function step3PrimariesMarkup() {
         const leverage = Number(game.fusionLegislativeLeverage || 0);
 
         if (existingFusion) {
-          return `
+          return `${reverseOffersHtml}
             <div class="v159-fusion-card v159-fusion-active">
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
                 <div>
@@ -3154,7 +3174,7 @@ function step3PrimariesMarkup() {
           `;
         }
 
-        return `
+        return `${reverseOffersHtml}
           <div class="v159-fusion-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
               <div>
@@ -3911,12 +3931,15 @@ function forecastersMarkup() {
         name: `${STATES.find((s) => s.id === st)?.name || st} Senate (Class ${activeSenateRoman})`,
       }));
 
+  const activeGovStates = (Array.isArray(game?.activeGubernatorialStates) && game.activeGubernatorialStates.length)
+    ? game.activeGubernatorialStates
+    : (window.PartyChairData?.VERSION_01_GUBERNATORIAL_ELECTIONS || ['NH', 'NC', 'IN', 'WA', 'UT', 'DE', 'MO', 'MT', 'ND', 'VT', 'WV']);
   const battlegroundStates = ['PA', 'GA', 'NV', 'NC', 'AZ', 'WI', 'MI', 'NH', 'FL', 'TX', 'OH', 'VA', 'ME'];
   const stateLegBattlegrounds = ['PA', 'MI', 'WI', 'AZ', 'GA', 'NV', 'NH', 'MN', 'VA', 'NC', 'AK', 'ME', 'TX', 'FL', 'OH', 'CO'];
   const allCompetitiveKeys = [
     ...(isPresYear ? battlegroundStates.map((st) => ({ key: `presidential:${st}`, office: 'President', name: `${STATES.find((s) => s.id === st)?.name || st} (${STATES.find((s) => s.id === st)?.ev || 3} EV)` })) : []),
     ...senateCompetitiveKeys,
-    ...['NH', 'NC', 'IN', 'WA', 'UT'].map((st) => ({ key: `governor:${st}`, office: 'Governor', name: `${STATES.find((s) => s.id === st)?.name || st} Gubernatorial` })),
+    ...activeGovStates.map((st) => ({ key: `governor:${st}`, office: 'Governor', name: `${STATES.find((s) => s.id === st)?.name || st} Gubernatorial` })),
     ...['PA-1', 'PA-7', 'PA-8', 'AZ-1', 'AZ-6', 'CA-13', 'CA-22', 'CA-27', 'CA-45', 'NY-4', 'NY-17', 'NY-19', 'MI-7', 'MI-8', 'VA-2', 'VA-7'].map((d) => ({ key: `house:${d}`, office: 'U.S. House', name: `${d} Battleground District` })),
     ...stateLegBattlegrounds.map((st) => ({ key: `stateLeg:${st}`, office: 'State Legislature', name: `${STATES.find((s) => s.id === st)?.name || st} State Legislature` })),
   ];
@@ -4093,7 +4116,57 @@ function forecastersMarkup() {
               else oLead += 1;
             });
             chamberMetric = `<b>Class ${activeSenateRoman} Polling:</b> Dem ${dLead} · Close ${close} · Rep ${rLead}${oLead ? ` · 3rd Party ${oLead}` : ''}`;
-          } else if (effectiveForecastChamber === 'house') {
+          } else if (effectiveForecastChamber === 'governors') {
+            chamberHeadline = `Gubernatorial Polling Average (${activeGovStates.length} Races · ${game?.year || 2028})`;
+            let dLead = 0, rLead = 0, close = 0, oLead = 0;
+            activeGovStates.forEach((stId) => {
+              const st = STATES.find((s) => s.id === stId);
+              if (!st) return;
+              const bd = getStatePollingBreakdown(st, null, `governor:${stId}`);
+              if (bd.margin < 3.0) close += 1;
+              else if (bd.leader.canonicalId === 'people') dLead += 1;
+              else if (bd.leader.canonicalId === 'heritage') rLead += 1;
+              else oLead += 1;
+            });
+            chamberMetric = `<b>Governors Polling:</b> Dem ${dLead} · Close ${close} · Rep ${rLead}${oLead ? ` · 3rd Party ${oLead}` : ''}`;
+          } else if (effectiveForecastChamber === 'governors') {
+          const counts = {};
+          TIER_13_ORDER.forEach((t) => { counts[t] = 0; });
+          let demGov = 0, repGov = 0, tossGov = 0, thirdGov = 0;
+          activeGovStates.forEach((stId) => {
+            const k = `governor:${stId}`;
+            const rat = activeOutletData[k] || consensusRating(game.forecasters?.sallow?.[k], game.forecasters?.cooked?.[k], game.forecasters?.inside?.[k]) || 'Toss-Up';
+            counts[rat] = (counts[rat] || 0) + 1;
+            const val = TIER_13_VALUES[rat] || 0;
+            if (rat.includes('LIB') || rat.includes('GRN') || rat.includes('CON') || rat.includes('SOC') || rat.includes('PFP') || rat.includes('IND')) thirdGov += 1;
+            else if (val > 0) demGov += 1;
+            else if (val < 0) repGov += 1;
+            else tossGov += 1;
+          });
+
+          forecastScoreboard = `
+            <div class="presidential-scoreboard v08-qualitative-scoreboard" style="display:flex;flex-direction:column;gap:8px;padding:12px;background:#101a26;border:1px solid var(--line);border-radius:8px;margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                <div>
+                  <span class="eyebrow" style="font-size:11px;color:var(--gold)">${safe(activeOutletName)}</span>
+                  <h4 style="margin:2px 0 0;font-size:16px;font-family:'Iowan Old Style',Palatino,Georgia,serif">Gubernatorial Projections (${activeGovStates.length} Races · ${game?.year || 2028})</h4>
+                </div>
+                <div style="font-family:Consolas,monospace;font-size:13px;color:var(--gold)">
+                  <b>Projected Governors:</b> Dem ${demGov} · Toss-Up ${tossGov} · Rep ${repGov}${thirdGov ? ` · 3rd Party ${thirdGov}` : ''}
+                </div>
+              </div>
+              ${forecasterMapSource === 'consensus' ? `
+                <div class="v08-gradient-continuous-bar">
+                  ${TIER_13_ORDER.map((t) => `<div style="background:${TIER_13_COLORS[t]}" title="${safe(formatRating(t))}: ${counts[t] || 0}"></div>`).join('')}
+                </div>
+              ` : ''}
+              <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:4px">
+                ${TIER_13_ORDER.filter((t) => counts[t] > 0 || (forecasterMapSource !== 'consensus' && !['Very Likely Dem', 'Favored Dem', 'Tilt Dem', 'Tilt GOP', 'Favored GOP', 'Very Likely GOP'].includes(t))).map((t) => `
+                  <span class="v08-rating-chip ${ratingClass(t)}" style="font-size:10px;padding:1px 6px">${safe(formatRating(t))}: ${counts[t] || 0}</span>
+                `).join('')}
+              </div>
+            </div>`;
+        } else if (effectiveForecastChamber === 'house') {
             chamberHeadline = `U.S. House District Polling Average (435 Districts)`;
             const distCatalog = window.PartyChairData?.VERSION_01_HOUSE_DISTRICTS || [];
             let dLead = 0, rLead = 0, close = 0, oLead = 0;
@@ -4295,6 +4368,7 @@ function forecastersMarkup() {
               <div class="v07-filter-tabs" aria-label="Forecast Chamber Selector">
                 <button type="button" data-forecast-map-chamber="presidential" class="${effectiveForecastChamber === 'presidential' ? 'selected' : ''}">Presidential${!isPresYear ? ' (Inactive)' : ''}</button>
                 <button type="button" data-forecast-map-chamber="senate" class="${effectiveForecastChamber === 'senate' ? 'selected' : ''}">U.S. Senate (Class ${activeSenateRoman})</button>
+                <button type="button" data-forecast-map-chamber="governors" class="${effectiveForecastChamber === 'governors' ? 'selected' : ''}">Governors (${activeGovStates.length})</button>
                 <button type="button" data-forecast-map-chamber="house" class="${effectiveForecastChamber === 'house' ? 'selected' : ''}">U.S. House (435 Districts)</button>
                 <button type="button" data-forecast-map-chamber="stateLeg" class="${effectiveForecastChamber === 'stateLeg' ? 'selected' : ''}">State Legislatures (50 States)</button>
               </div>
@@ -6052,6 +6126,30 @@ function autopsyModalMarkup() {
             </div>
           </div>
 
+          <!-- SECTION 3.5: CYCLE PRIORITIES OUTCOMES -->
+          ${(() => {
+            const qOutcomes = election?.questEvaluation?.questOutcomes || election?.questOutcomes || [];
+            if (!qOutcomes.length) return '';
+            return `
+              <div class="autopsy-section">
+                <h3 class="autopsy-section-title">Cycle Priorities Review</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                  ${qOutcomes.map((q) => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;background:#101a26;border:1px solid ${q.completed ? 'rgba(85,191,120,0.45)' : 'var(--line)'};border-radius:8px">
+                      <div>
+                        <b style="font-size:13.5px">${safe(q.questName || q.name || q.questId)}</b>
+                        ${q.rewardText ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${safe(q.rewardText)}</div>` : ''}
+                      </div>
+                      <span style="font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:${q.completed ? 'rgba(85,191,120,0.16)' : 'rgba(232,136,126,0.16)'};color:${q.completed ? '#55bf78' : '#e8887e'}">
+                        ${q.completed ? 'Achieved ✓' : 'Not Achieved ✕'}
+                      </span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          })()}
+
           <!-- SECTION 4: STRATEGIC CHAIR DISPOSITIONS -->
           <div class="autopsy-section autopsy-disposition-section">
             <h3 class="autopsy-section-title">Executive Autopsy Disposition</h3>
@@ -7084,7 +7182,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.19.3 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.19.3.2 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}<button type="button" class="vr-overlay-toggle-btn ${showVotingSystemsOverlay ? 'active' : ''}" data-toggle-voting-overlay aria-pressed="${showVotingSystemsOverlay}">${showVotingSystemsOverlay ? '✓ Show Voting Systems' : '⊞ Show Voting Systems'}</button></div>
@@ -8817,6 +8915,44 @@ function getMorningWireHeadline(game) {
    ========================================================================== */
 
 // Temporary playtest prototype pending TBD-02 State Ballot Initiative / Legislative Reform mechanics
+function chamberReformChoiceModalMarkup() {
+  const ch = game?.pendingChamberReformChoice;
+  if (!ch) return '';
+  const cur = String(ch.currentSystem || 'plurality').toLowerCase();
+  const options = [
+    { id: 'rcv', label: 'Ranked-Choice Voting (RCV)' },
+    { id: 'approval', label: 'Approval Voting' },
+    { id: 'mmp', label: 'Mixed-Member Proportional (MMP)' },
+    { id: 'proportional', label: 'Proportional Representation' },
+    { id: 'open_list_proportional', label: 'Open-List Proportional' },
+    { id: 'stv', label: 'Single Transferable Vote (STV)' },
+    { id: 'plurality', label: 'First-Past-the-Post (FPTP)' },
+  ];
+  const curLabel = options.find((o) => o.id === cur)?.label || cur.toUpperCase();
+  return `
+    <div class="v08-modal-overlay" id="chamber-reform-choice-modal-overlay">
+      <div class="v159-modal-dialog v159-modal-compact" role="dialog" aria-modal="true" aria-labelledby="chamber-reform-title">
+        <div class="eyebrow" style="color:var(--gold)">Priority Reward · Win First State Legislative Chamber</div>
+        <h2 id="chamber-reform-title">Electoral System Reform · ${safe(ch.stateName || ch.stateId)}</h2>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px">
+          Current system in <b>${safe(ch.stateName || ch.stateId)}</b>: <b>${safe(curLabel)}</b>. Select a new electoral system or keep the current system.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:8px;margin-bottom:14px">
+          ${options.map((opt) => {
+            const isCurrent = opt.id === cur;
+            return `<button type="button" class="button ${isCurrent ? '' : 'button-gold'}" data-chamber-reform-choice="${safe(opt.id)}" data-chamber-reform-state="${safe(ch.stateId)}" ${isCurrent ? 'disabled' : ''}>
+              ${safe(opt.label)}${isCurrent ? ' (Current)' : ''}
+            </button>`;
+          }).join('')}
+        </div>
+        <div class="v159-modal-footer">
+          <button type="button" class="button" data-chamber-reform-choice="keep" data-chamber-reform-state="${safe(ch.stateId)}">Keep Current System (${safe(curLabel)})</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function electoralReformModalMarkup() {
   const evt = game?.pendingElectoralReformEvent;
   if (!evt) return '';
@@ -9614,6 +9750,7 @@ function activeV159DecisionModalMarkup() {
   if (game?.identityCrisis?.triggered && !game.identityCrisis.resolved) return identityCrisisModalMarkup();
   if (game?.pendingAscensionGauntletModal) return ascensionGauntletModalMarkup();
   if (game?.pendingDebateStageEvent) return debateStageModalMarkup();
+  if (game?.pendingChamberReformChoice) return chamberReformChoiceModalMarkup();
   if (game?.pendingElectoralReformEvent) return electoralReformModalMarkup();
   return '';
 }
@@ -9828,7 +9965,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.19.3</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.19.3.2</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -9899,7 +10036,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.19.3</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.19.3.2</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
@@ -12696,6 +12833,20 @@ function bind() {
     fusionPledgeSelection = e.target.value;
     render();
   });
+  document.querySelectorAll('[data-accept-reverse-fusion]').forEach((btn) => btn.addEventListener('click', () => {
+    dispatchAction('accept-reverse-fusion-offer', {
+      raceId: btn.dataset.acceptReverseFusion,
+      majorPartyId: btn.dataset.majorParty,
+    });
+    render();
+  }));
+  document.querySelectorAll('[data-decline-reverse-fusion]').forEach((btn) => btn.addEventListener('click', () => {
+    dispatchAction('decline-reverse-fusion-offer', {
+      raceId: btn.dataset.declineReverseFusion,
+      majorPartyId: btn.dataset.majorParty,
+    });
+    render();
+  }));
   document.querySelector('#btn-offer-fusion-endorsement')?.addEventListener('click', (e) => {
     const raceId = e.currentTarget.dataset.race || primaryRace;
     const partnerPartyId = document.querySelector('#fusion-partner-select')?.value || fusionPartnerSelection || 'people';
@@ -12703,6 +12854,14 @@ function bind() {
     dispatchAction('offer-fusion-endorsement', { raceId, partnerPartyId, policyPledgeId });
     render();
   });
+
+  document.querySelectorAll('[data-chamber-reform-choice]').forEach((btn) => btn.addEventListener('click', () => {
+    dispatchAction('apply-chamber-reform-choice', {
+      stateId: btn.dataset.chamberReformState,
+      reformSystem: btn.dataset.chamberReformChoice,
+    });
+    render();
+  }));
 
   // Version 0.15.9: Inter-Cycle Electoral Reform Popup Dismiss
   document.querySelector('#btn-dismiss-electoral-reform')?.addEventListener('click', () => {

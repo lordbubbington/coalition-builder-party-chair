@@ -209,7 +209,7 @@
         stateId: o.stateId || o.state,
         title: o.title || o.office || 'Statewide Office',
         quality: liveHolder?.quality ?? o.quality ?? 6,
-        fame: liveHolder?.fame ?? o.fame ?? 30,
+        fame: liveHolder?.fame ?? o.fame ?? 5,
         happiness: liveHolder?.happiness ?? 65,
         traits: liveHolder?.traits || o.traits || [],
         isIncumbent: true,

@@ -110,11 +110,16 @@
   // REQ-10: Politician Fame Metric (1–100) independent of skill ratings
   function defaultFameForRecord(record = {}, seedKey = '') {
     const h = fnvHash(`${seedKey}:fame:${record.id || record.name || ''}`);
-    if (record.office === 'president' || ['ossoff', 'vance'].includes(record.id)) return Math.round(86 + h * 10);
-    if (record.office === 'senate' || record.office === 'governor') return Math.round(52 + h * 32);
-    if (record.office === 'house') return Math.round(20 + h * 38);
-    if (record.skill) return Math.round(48 + h * 35);
-    return Math.round(12 + h * 33);
+    const off = String(record.office || '').toLowerCase();
+    if (off === 'president' || ['ossoff', 'vance'].includes(record.id)) return Math.round(78 + h * 14);
+    if (off === 'senate') return Math.round(26 + h * 28); // avg 40
+    if (off === 'governor') return Math.round(22 + h * 26); // avg 35
+    if (off === 'house') return Math.round(18 + h * 24); // avg 30
+    if (off === 'statewide' || off === 'minor_statewide') return Math.round(2 + h * 6); // avg 5
+    if (off === 'stateleg' || off === 'state_leg' || off === 'state-leg' || off === 'statehouse' || off === 'statesenate' || record.isStateLegStandout) {
+      return h < 0.01 ? Math.round(15 + (h / 0.01) * 25) : Math.round(1 + h * 7); // 99% <10, 1% rare celebrity
+    }
+    return h < 0.03 ? Math.round(18 + (h / 0.03) * 35) : Math.round(1 + h * 8); // candidates: 97% <10, 3% rare celebrity
   }
 
   // REQ-16: 8 Expanded & Overlapping Cultural/Political Regions

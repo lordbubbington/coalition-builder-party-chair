@@ -551,6 +551,7 @@
   function computeElectoralVotes(game = {}, houseSeatsByState = null, senateSeatsByState = null, statePopulations = null) {
     const reforms = game?.federalReforms || {};
     const hMap = houseSeatsByState
+      || game?.apportionedHouseSeats
       || reforms.apportionedHouseSeats
       || computeHouseApportionment(reforms.houseApportionmentMode || 'standard_435', statePopulations || game).seatsByState;
     const sMap = senateSeatsByState

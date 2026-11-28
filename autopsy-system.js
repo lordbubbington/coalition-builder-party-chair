@@ -871,23 +871,23 @@
     const cards = options.map((opt) => {
       const resolved = opt.resolvedStateIds ? opt : resolveTargetStatesForOption(game, game?.player?.id, opt);
       const stateBadge = (resolved.resolvedStateIds && resolved.resolvedStateIds.length > 0 && resolved.resolvedStateIds.length <= 5 && resolved.resolvedStateNames)
-        ? `<div class="autopsy-option-states">Target: ${esc(resolved.resolvedStateNames)}</div>`
+        ? `<div class="disp-subtitle" style="color:var(--gold);margin-bottom:6px">Target: ${esc(resolved.resolvedStateNames)}</div>`
         : '';
       return `
-        <article class="autopsy-option-card" data-autopsy-card="${esc(resolved.id)}">
-          <div class="autopsy-option-header">
-            <span class="autopsy-option-theme">${esc(resolved.theme || 'Strategic Pivot')}</span>
-            <h4 class="autopsy-option-title">${esc(resolved.name || resolved.title || resolved.id)}</h4>
+        <article class="disposition-card" data-autopsy-card="${esc(resolved.id)}" style="display:flex;flex-direction:column;justify-content:space-between;gap:8px">
+          <div>
+            <div class="eyebrow" style="font-size:11px;color:var(--gold);margin-bottom:4px">${esc(resolved.theme || 'Strategic Pivot')}</div>
+            <div class="disp-title">${esc(resolved.name || resolved.title || resolved.id)}</div>
+            ${stateBadge}
+            <p style="font-size:13px;line-height:1.45;color:var(--muted);margin:6px 0 0">${esc(resolved.summaryText || resolved.description || '')}</p>
           </div>
-          ${stateBadge}
-          <p class="autopsy-option-summary">${esc(resolved.summaryText || resolved.description || '')}</p>
-          <div class="autopsy-option-actions">
-            <button type="button" class="button button-primary autopsy-choose-btn" data-autopsy-option-id="${esc(resolved.id)}">Choose This Path</button>
+          <div style="margin-top:8px">
+            <button type="button" class="button button-gold autopsy-choose-btn" data-autopsy-option-id="${esc(resolved.id)}" style="width:100%">Choose This Path</button>
           </div>
         </article>`;
     }).join('');
 
-    return `<section class="autopsy-options-grid">${cards}</section>`;
+    return `<div class="disposition-cards-grid">${cards}</div>`;
   }
 
   return {

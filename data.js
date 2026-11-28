@@ -2168,7 +2168,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Holding the House',
     difficulty: 'Medium',
     happinessReward: 8,
-    acceptanceBonusText: '+1 Legislative Discipline',
+    acceptanceBonusText: 'Each incumbent up for re-election in the House receives $2M at the start of the campaign phase.',
     rewardText: '+8 Member Happiness; retains Speaker of the House office perks.',
     description: 'Win >= 218 House seats in the general election.',
     eligibilityRequirementText: 'Requires entering the election holding a House majority (>= 218 seats).',
@@ -2188,7 +2188,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Holding the Senate',
     difficulty: 'Medium',
     happinessReward: 8,
-    acceptanceBonusText: '+1 Committee Leadership bonus',
+    acceptanceBonusText: 'Each incumbent up for re-election in the Senate receives $2M at the start of the campaign phase.',
     rewardText: '+8 Member Happiness; retains Senate Majority Leader calendar power.',
     description: 'Retain chamber majority across contested Senate classes (>= 50 seats + VP or >= 51).',
     eligibilityRequirementText: 'Requires entering the election holding a Senate majority (>= 50 seats).',
@@ -2230,7 +2230,7 @@ const OVERALL_PRIORITY_QUESTS = [
     difficulty: 'Hard',
     happinessReward: 8,
     acceptanceBonusText: '+2 Persuasion boost in top 5 Senate battlegrounds',
-    rewardText: '+8 Member Happiness; unlocks Senate Majority Leader role.',
+    rewardText: '+8 Member Happiness; gain 10,000 voters in each state with a Senate seat your party gained.',
     description: 'Flip chamber control by winning majority control (>= 51 seats or 50 + VP).',
     eligibilityRequirementText: 'Requires holding between 30 and 49 Senate seats entering the election.',
     checkEligibility: (game) => {
@@ -2251,7 +2251,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Holding the House and Senate',
     difficulty: 'Hard',
     happinessReward: 12,
-    acceptanceBonusText: '+2 Combined Incumbent Protection budget',
+    acceptanceBonusText: 'Each incumbent up for re-election in the House and Senate receives $1M at the start of the campaign phase.',
     rewardText: '+12 Member Happiness; total legislative branch control.',
     description: 'Defend both chambers and retain majorities in both the House and Senate simultaneously.',
     eligibilityRequirementText: 'Requires holding majorities in both chambers (>= 218 House seats and >= 50 Senate seats).',
@@ -2302,7 +2302,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Win first seat',
     difficulty: 'Hard',
     happinessReward: 10,
-    acceptanceBonusText: '+5 in the polls in the state legislative race in the state with your highest percentage of voters',
+    acceptanceBonusText: '+5 points in your closest State Legislative race (ignores spoiler effect)',
     rewardText: '+10 Member Happiness; 10,000 registered voters in the state the seat was located in (maximum one state).',
     description: 'Win at least 1 state legislative chamber seat anywhere in the nation.',
     eligibilityRequirementText: 'Requires having 0 House seats and holding 0 state legislative chambers.',
@@ -2327,7 +2327,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Win first house seat',
     difficulty: 'Hard',
     happinessReward: 10,
-    acceptanceBonusText: '+5 in the polls in the House race in the state with your highest percentage of voters',
+    acceptanceBonusText: '+5 points in your closest U.S. House race (ignores spoiler effect)',
     rewardText: '+10 Member Happiness; 10,000 registered voters in the state the seat was located in (maximum one state).',
     description: 'Win at least 1 seat in the U.S. House of Representatives.',
     eligibilityRequirementText: 'Requires having 0 House seats and holding at least 1 state legislative chamber.',
@@ -2348,7 +2348,7 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Win first senate seat',
     difficulty: 'Hard',
     happinessReward: 10,
-    acceptanceBonusText: '+5 in the polls in the Senate race in the state with your highest percentage of voters',
+    acceptanceBonusText: '+5 points in your closest U.S. Senate race (ignores spoiler effect)',
     rewardText: '+10 Member Happiness; 25,000 registered voters in the state the seat was located in (maximum one state).',
     description: 'Win at least 1 U.S. Senate election.',
     eligibilityRequirementText: 'Requires having 0 Senate seats and holding at least 1 state legislative chamber.',
@@ -2371,8 +2371,8 @@ const OVERALL_PRIORITY_QUESTS = [
     name: 'Win First Governorship',
     difficulty: 'Hard',
     happinessReward: 10,
-    acceptanceBonusText: '+5 in the polls in the Governor race in the state with your highest percentage of voters',
-    rewardText: '+10 Member Happiness; 10,000 registered voters in the state the seat was located in (maximum one state).',
+    acceptanceBonusText: '+5 points in your closest Governor race (ignores spoiler effect)',
+    rewardText: '+10 Member Happiness; 25,000 registered voters in the state the seat was located in (maximum one state).',
     description: 'Win at least 1 gubernatorial election in any state.',
     eligibilityRequirementText: 'Requires having 0 Governorships and holding at least 1 state legislative chamber.',
     checkEligibility: (game) => {
@@ -2389,11 +2389,11 @@ const OVERALL_PRIORITY_QUESTS = [
   },
   {
     id: 'win-first-state-legislature',
-    name: 'Win first state legislature',
+    name: 'Win first state legislative chamber',
     difficulty: 'Hard',
     happinessReward: 18,
-    acceptanceBonusText: '+2 State legislative recruitment pool',
-    rewardText: '+18 Member Happiness; unlocks state policy bill introduction in that state.',
+    acceptanceBonusText: '+100 registered voters per state per legislative seat in that state',
+    rewardText: '+18 Member Happiness; choose an electoral system reform in that state (RCV, FPTP, MMP, Approval, Proportional, Open-List PR, STV, or keep current system).',
     description: 'Flip and control at least 1 full state legislative chamber.',
     eligibilityRequirementText: 'Requires holding 0 full state legislative chambers and holding at least 1 seat or sitting member.',
     checkEligibility: (game) => {
@@ -2487,7 +2487,7 @@ const OVERALL_PRIORITY_QUESTS = [
     difficulty: 'Medium',
     happinessReward: 6,
     acceptanceBonusText: 'Slightly reduces Tier 1–2 Media Blackout drag for the cycle.',
-    rewardText: '+6 Member Happiness; +$12M FEC Matching Grant; automatic ballot retention in top 15 states.',
+    rewardText: '+6 Member Happiness; +$123.5M FEC Matching Grant; automatic ballot retention in top 15 states.',
     description: 'Finish with >= 5.0% national presidential vote share.',
     eligibilityRequirementText: 'Minor party; prior national presidential vote < 5%; Presidential year.',
     isContextual: true,
@@ -2537,21 +2537,21 @@ const OVERALL_PRIORITY_QUESTS = [
     happinessReward: 6,
     acceptanceBonusText: '-25% petition and chapter organizing cost this cycle.',
     rewardText: '+6 Member Happiness; automatic 50-state ballot retention locked in for next 2 cycles.',
-    description: 'Qualify for or retain the ballot in all 50 states + D.C. by Election Night.',
+    description: 'Qualify for or retain the ballot in all 50 states by Election Night.',
     eligibilityRequirementText: 'Minor party missing ballot retention in >= 15 states.',
     isContextual: true,
     checkEligibility: (game) => {
       const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
       const isMinor = !['people', 'heritage'].includes(pid);
       const pBa = game.ballotAccess?.[pid]?.presidential || game.ballotAccess?.[pid] || {};
-      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && Boolean(v)).length;
-      return isMinor && (51 - qualifiedCount) >= 15;
+      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && k !== 'DC' && Boolean(v)).length;
+      return isMinor && (50 - qualifiedCount) >= 15;
     },
     checkCompletion: (game, outcome) => {
       const pid = game.player?.custom ? 'player' : (game.player?.baseTemplateId || 'people');
       const pBa = game.ballotAccess?.[pid]?.presidential || game.ballotAccess?.[pid] || {};
-      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && Boolean(v)).length;
-      return qualifiedCount >= 51;
+      const qualifiedCount = Object.entries(pBa).filter(([k, v]) => k.length === 2 && k !== 'DC' && Boolean(v)).length;
+      return qualifiedCount >= 50;
     },
   },
   {
