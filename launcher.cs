@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -81,11 +82,11 @@ internal static class Launcher
                 browser.WaitForExit();
                 // If Edge already had a process open for BrowserProfile, the new msedge.exe
                 // hands off the URL and exits immediately; keep the local HTTP server alive
-                // so the opened game window does not hit ERR_CONNECTION_REFUSED.
+                // only while an msedge.exe process for this game's BrowserProfile is running.
                 if (listener != null && (DateTime.UtcNow - launchedAt).TotalSeconds < 10)
                 {
                     DateTime deadline = DateTime.UtcNow.AddHours(12);
-                    while (DateTime.UtcNow < deadline && Process.GetProcessesByName("msedge").Length > 0)
+                    while (DateTime.UtcNow < deadline && IsGameBrowserProfileRunning(profile))
                         Thread.Sleep(2000);
                 }
             }
@@ -219,6 +220,25 @@ internal static class Launcher
                     input.CopyTo(output);
             }
         }
+    }
+
+    private static bool IsGameBrowserProfileRunning(string profileDir)
+    {
+        try
+        {
+            using (var searcher = new ManagementObjectSearcher("SELECT CommandLine FROM Win32_Process WHERE Name = 'msedge.exe'"))
+            using (var results = searcher.Get())
+            {
+                foreach (ManagementObject obj in results)
+                {
+                    string cmd = obj["CommandLine"] as string;
+                    if (!string.IsNullOrEmpty(cmd) && cmd.IndexOf(profileDir, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+                }
+            }
+        }
+        catch { }
+        return false;
     }
 
     private static string FindEdge()

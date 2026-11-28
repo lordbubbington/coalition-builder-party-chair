@@ -91,6 +91,7 @@ try {
         "/resource:${archivePath},CoalitionBuilder.Payload" `
         /reference:System.IO.Compression.dll `
         /reference:System.IO.Compression.FileSystem.dll `
+        /reference:System.Management.dll `
         (Join-Path $projectDir 'launcher.cs')
     
     if ($LASTEXITCODE -ne 0) { throw "Executable build failed with exit code $LASTEXITCODE." }
