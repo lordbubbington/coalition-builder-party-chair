@@ -577,6 +577,21 @@ function getStatePollingBreakdown(stateObj, districtObj = null, raceId = null) {
     }
   }
 
+  // Apply Duverger / Reverse-Duverger strategic voting to live polling for plurality federal & gubernatorial races
+  if (fullState && fullState.id !== 'DC' && typeof window !== 'undefined' && typeof window.PartyChairEngine?.applyDuvergerDefectionToShares === 'function') {
+    const rk = raceId ? String(raceId).split(':')[0] : (districtObj ? 'house' : 'presidential');
+    if (['presidential', 'senate', 'governor', 'house'].includes(rk)) {
+      const shareMap = {};
+      rows.forEach((r) => { shareMap[r.id] = r.share; });
+      const defOut = window.PartyChairEngine.applyDuvergerDefectionToShares(game, shareMap, fullState.id, rk);
+      if (defOut && defOut.shares) {
+        rows.forEach((r) => {
+          if (defOut.shares[r.id] !== undefined) r.share = Number(defOut.shares[r.id]);
+        });
+      }
+    }
+  }
+
   const sorted = rows.slice().sort((a, b) => b.share - a.share);
   const leader = sorted[0] || { canonicalId: 'people', shortName: 'Dem', color: '#3478c8', share: 50 };
   const runnerUp = sorted[1] || { canonicalId: 'heritage', shortName: 'Rep', color: '#c9474e', share: 50 };
@@ -1645,7 +1660,7 @@ function setupMarkup() {
   }
   const isCustomMode = custom || selectedTemplate === 'custom';
   return `
-    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3.2</span></div></header>
+    <header class="topbar"><div class="brand"><img class="brand-icon" src="assets/coalition-builder-icon.svg" alt=""> COALITION BUILDER: <i>PARTY CHAIR</i></div><div class="topbar-actions"><button type="button" class="text-button" id="open-save-slots-1" data-dup-id="open-save-slots">Load Saved Game (5 Slots)</button><span class="top-status">VERSION 0.19.3.3</span></div></header>
     <main class="screen setup-screen">
       <section class="hero panel">
         <div class="eyebrow">Build a party that lasts</div>
@@ -1673,7 +1688,7 @@ function setupMarkup() {
           <!-- [v0.18.4 ATLAS-HOTSEAT] -->
           ${window.AtlasMultiplayerSystem ? window.AtlasMultiplayerSystem.renderHotseatSetupToggle(isCustomMode ? 'player' : selectedTemplate) : ''}
           <button type="button" id="start-game" class="button button-gold start-button" ${isCustomMode && ((customOrigin === 'not_major_movement' && Object.values(custom100kStateAllocations || {}).reduce((s, v) => s + (Number(v) || 0), 0) !== 100000) || (customOrigin !== 'not_major_movement' && (!customSelectedFactionIds || customSelectedFactionIds.length === 0))) ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>Take the chair <span>→</span></button>
-          <p class="setup-foot">Version 0.19.3.2 · Voting &amp; Constitutional Reforms · Local autosave</p>
+          <p class="setup-foot">Version 0.19.3.3 · Voting &amp; Constitutional Reforms · Local autosave</p>
         </section>
         <aside class="panel setup-aside">
           <div class="eyebrow">The ${game?.year || 2028} turn loop</div>
@@ -7182,7 +7197,7 @@ function mapTabMarkup() {
   return `
     <section class="panel section-panel version01-map">
       <div class="section-heading">
-        <div><div class="eyebrow">Version 0.19.3.2 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
+        <div><div class="eyebrow">Version 0.19.3.3 · Fullscreen National Political Map</div><h2>Political Landscape</h2></div>
         <div class="environment-chip">National environment <b>${nationalLabel}</b></div>
       </div>
       <div class="map-tabs">${tabs.map(([id, label]) => `<button type="button" data-map="${id}" class="${(currentMapMode === id || (id === 'senate-class' && activeMap === 'senate')) ? 'selected' : ''}">${label}</button>`).join('')}<button type="button" class="vr-overlay-toggle-btn ${showVotingSystemsOverlay ? 'active' : ''}" data-toggle-voting-overlay aria-pressed="${showVotingSystemsOverlay}">${showVotingSystemsOverlay ? '✓ Show Voting Systems' : '⊞ Show Voting Systems'}</button></div>
@@ -9965,7 +9980,7 @@ function campaignMarkup() {
         <div style="display:flex;align-items:center;gap:16px">
           ${customEmblemSvg ? `<div class="dashboard-custom-emblem" style="width:48px;height:48px;color:${player.color || 'var(--gold)'}">${customEmblemSvg}</div>` : ''}
           <div>
-            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.19.3.2</div>
+            <div class="eyebrow">Coalition Builder: Party Chair · Version 0.19.3.3</div>
             <h1>${safe(player.name)}</h1>
             ${player.custom && player.customMotto ? `<div class="custom-party-motto" style="font-style:italic;color:var(--gold);font-size:13.5px;margin:2px 0 6px">“${safe(player.customMotto)}”</div>` : ''}
             <p>${game?.year || 2028} cycle · ${safe(templateForDisplay(player.baseTemplateId))} · ${game.phase === 'organizing' ? `${game.organizingActionsRemaining ?? 20} recruitment actions remaining before primaries & Campaign Phase` : game.campaign?.active ? `Campaign Month ${game.campaign.week} of 5 · ${5 - game.campaign.week} months to Election Night` : `${game?.year || 2028} general election complete`}</p>
@@ -10036,7 +10051,7 @@ function campaignMarkup() {
       ${window.PartySystemsUI ? (window.PartySystemsUI.renderActivePartySystemsModal ? window.PartySystemsUI.renderActivePartySystemsModal(game) : window.PartySystemsUI.renderRealignmentModal(game)) : ''}
       ${eraDossierModalOpen && window.PartySystemsUI ? window.PartySystemsUI.renderEraDossierModal(game) : ''}
 
-      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.19.3.2</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
+      <footer class="footer"><span>COALITION BUILDER: PARTY CHAIR · V0.19.3.3</span><span>${formatMillions(totalModeledElectorate())}M Represented Voters Model · Local Autosave</span></footer>
     </main>`;
 }
 
