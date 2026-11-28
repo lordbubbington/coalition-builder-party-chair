@@ -502,18 +502,18 @@
       game.priorities.additional = Array.from({ length: startFocusSlots }, () => ({ type: 'issue', targetId: '' }));
     }
 
-    // Bug #19/#20: Preserve advertised origin startingWarChest as floor
-    const majorBaselineBudget = window.PartyChairV07?.STARTING_BUDGETS?.major ?? 150;
+    // Bug #19/#20: Preserve advertised origin startingWarChest as floor (2x starting balances)
+    const majorBaselineBudget = window.PartyChairV07?.STARTING_BUDGETS?.major ?? 300;
     const customTierTreasuryMap = {
       0: startingWarChest,
-      1: Math.max(10.0, startingWarChest),
-      2: Math.max(25.0, startingWarChest),
-      3: Math.max(45.0, startingWarChest),
-      4: Math.max(85.0, startingWarChest),
+      1: Math.max(20.0, startingWarChest),
+      2: Math.max(50.0, startingWarChest),
+      3: Math.max(90.0, startingWarChest),
+      4: Math.max(170.0, startingWarChest),
       5: majorBaselineBudget,
     };
     const tierBaseTreasury = customTierTreasuryMap[startTier] ?? startingWarChest;
-    game.treasury = Math.max(1.0, round(tierBaseTreasury + archetypeTreasuryDelta, 1));
+    game.treasury = Math.max(2.0, round(tierBaseTreasury + archetypeTreasuryDelta, 2));
 
     // Tier-scaled downballot ballot access
     const downballotStateCountByTier = { 0: 0, 1: 3, 2: 10, 3: 20, 4: 35, 5: 50 };

@@ -1,10 +1,10 @@
 const PARTY_ARCHETYPES = [
-  { id: 'people', name: 'Democratic Party', color: '#3478c7', baseShare: 48, economic: -0.35, social: -0.35, climate: 0.1, local: 0.2, isMajor: true, lastPresidentialShare: 48.3, startingBudget: 150, appeal: 'Broad Center-Left Coalition', description: 'A broad center-left party spanning labor, progressive, faith-community, and suburban moderate wings.' },
-  { id: 'heritage', name: 'Republican Party', color: '#d94b4b', baseShare: 48, economic: 0.4, social: 0.4, climate: -0.35, local: 0.35, isMajor: true, lastPresidentialShare: 49.8, startingBudget: 150, appeal: 'Broad Conservative Coalition', description: 'A broad conservative party spanning nationalist populist, traditional faith, free-market, and Western liberty wings.' },
-  { id: 'liberty', name: 'Libertarian Party', color: '#e2bd45', baseShare: 1.8, economic: 0.65, social: -0.5, climate: -0.05, local: -0.6, isMajor: false, lastPresidentialShare: 1.1, startingBudget: 10, counterRivalId: 'green', appeal: 'Civil Liberties & Free Markets', description: 'A small-government party emphasizing individual liberty, deregulation, and free markets.' },
-  { id: 'green', name: 'Green Party', color: '#55bf78', baseShare: 1.8, economic: -0.3, social: -0.65, climate: 0.8, local: -0.15, isMajor: false, lastPresidentialShare: 0.8, startingBudget: 10, counterRivalId: 'liberty', appeal: 'Eco-Socialist & Grassroots Peace', description: 'A grassroots progressive party centered on urgent climate action, public investment, and social justice.' },
-  { id: 'constitution', name: 'Constitution Party', color: '#a84214', baseShare: 0.2, economic: 0.55, social: 0.85, climate: -0.65, local: 0.7, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 10, counterRivalId: 'socialist', appeal: 'MAGA / Faith & Flag Constitutionalism', description: 'A nationalist-traditionalist third party championing Faith & Flag social conservatism, strict border sovereignty, and originalist constitutionalism.' },
-  { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.9, social: -0.65, climate: 0.75, local: -0.25, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 10, counterRivalId: 'constitution', appeal: 'Labor / Progressive Anti-Corporate Populism', description: 'A democratic-socialist workers party advocating union ownership, guaranteed public healthcare, wealth redistribution, and aggressive climate action.' }
+  { id: 'people', name: 'Democratic Party', color: '#3478c7', baseShare: 48, economic: -0.35, social: -0.35, climate: 0.1, local: 0.2, isMajor: true, lastPresidentialShare: 48.3, startingBudget: 300, appeal: 'Broad Center-Left Coalition', description: 'A broad center-left party spanning labor, progressive, faith-community, and suburban moderate wings.' },
+  { id: 'heritage', name: 'Republican Party', color: '#d94b4b', baseShare: 48, economic: 0.4, social: 0.4, climate: -0.35, local: 0.35, isMajor: true, lastPresidentialShare: 49.8, startingBudget: 300, appeal: 'Broad Conservative Coalition', description: 'A broad conservative party spanning nationalist populist, traditional faith, free-market, and Western liberty wings.' },
+  { id: 'liberty', name: 'Libertarian Party', color: '#e2bd45', baseShare: 1.8, economic: 0.65, social: -0.5, climate: -0.05, local: -0.6, isMajor: false, lastPresidentialShare: 1.1, startingBudget: 20, counterRivalId: 'green', appeal: 'Civil Liberties & Free Markets', description: 'A small-government party emphasizing individual liberty, deregulation, and free markets.' },
+  { id: 'green', name: 'Green Party', color: '#55bf78', baseShare: 1.8, economic: -0.3, social: -0.65, climate: 0.8, local: -0.15, isMajor: false, lastPresidentialShare: 0.8, startingBudget: 20, counterRivalId: 'liberty', appeal: 'Eco-Socialist & Grassroots Peace', description: 'A grassroots progressive party centered on urgent climate action, public investment, and social justice.' },
+  { id: 'constitution', name: 'Constitution Party', color: '#a84214', baseShare: 0.2, economic: 0.55, social: 0.85, climate: -0.65, local: 0.7, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 20, counterRivalId: 'socialist', appeal: 'MAGA / Faith & Flag Constitutionalism', description: 'A nationalist-traditionalist third party championing Faith & Flag social conservatism, strict border sovereignty, and originalist constitutionalism.' },
+  { id: 'socialist', name: 'Peace and Freedom Party', color: '#d62828', baseShare: 0.2, economic: -0.9, social: -0.65, climate: 0.75, local: -0.25, isMajor: false, lastPresidentialShare: 0.18, startingBudget: 20, counterRivalId: 'constitution', appeal: 'Labor / Progressive Anti-Corporate Populism', description: 'A democratic-socialist workers party advocating union ownership, guaranteed public healthcare, wealth redistribution, and aggressive climate action.' }
 ];
 
 // Party-Specific Ideological & Rhetorical Factions (5 Democratic, 5 Republican, plus minor-party wings)
@@ -3526,14 +3526,14 @@ const CUSTOM_PARTY_ORIGINS = [
   {
     id: 'not_major_movement',
     name: 'Not a Major Movement',
-    startingBudget: 25,
+    startingBudget: 50,
     upsides: 'Unlocks the Custom 100K Founding Faction Builder. Complete freedom to craft your movement’s identity, platform alignment, and state distribution from scratch.',
     downsides: 'Zero mechanical bonuses. Locks out all 36 catalog factions. Pure ground-up, hard-mode climb.',
   },
   {
     id: 'major_schism',
     name: 'Major-Party Schism',
-    startingBudget: 25,
+    startingBudget: 50,
     requiresParent: true,
     upsides: 'Stronger poaching tolerance (+12 points) and halved recruitment costs against the parent party; +1 defector bench prospect.',
     downsides: 'Blood Rivalry: Zero Fusion Voting deals with the parent party; parent party challenges ballot petitions and counter-mobilizes in shared strongholds.',
@@ -3541,22 +3541,22 @@ const CUSTOM_PARTY_ORIGINS = [
   {
     id: 'civic_reform',
     name: 'Civic Reform / Anti-Duopoly',
-    startingBudget: 25,
+    startingBudget: 50,
     upsides: '+12 starting Independents Trust; +25% electoral reform leverage for Ranked Choice Voting, Approval Voting, and Proportional Representation.',
     downsides: 'Anti-Machine Sensitivity: Softer partisan discipline; base turnout enthusiasm drops if leadership acts like a rigid party machine.',
   },
   {
     id: 'grassroots_viral',
     name: 'Grassroots Viral Movement',
-    startingBudget: 15,
+    startingBudget: 30,
     upsides: '1.5× Small-Donor fundraising yield; 2× Volunteer Drive voter registration efficiency; +12 starting Fame for newly recruited nominees.',
-    downsides: 'Lower starting budget ($15M); volatile media attention cycles and slower corporate or institutional donor scaling.',
+    downsides: 'Lower starting budget ($30M); volatile media attention cycles and slower corporate or institutional donor scaling.',
   },
   {
     id: 'executive_third_way',
     name: 'Executive / Self-Funded Third Way',
-    startingBudget: 50,
-    upsides: 'Massive $50M starting war chest; cuts Tier 1–3 Media Blackout penalties by 50% through high-profile figurehead visibility.',
+    startingBudget: 100,
+    upsides: 'Massive $100M starting war chest; cuts Tier 1–3 Media Blackout penalties by 50% through high-profile figurehead visibility.',
     downsides: 'Grassroots Cynicism: -30% Small-Donor yield; harder persuasion and reduced base enthusiasm among populist and vanguard factions.',
   }
 ];

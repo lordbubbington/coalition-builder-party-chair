@@ -56,7 +56,7 @@
     const originsHtml = origins.map((orig) => `
       <div class="custom-origin-card ${customOrigin === orig.id ? 'selected' : ''}" data-custom-origin="${safe(orig.id)}">
         <b>${safe(orig.name)}</b>
-        <small style="color:var(--gold);font-weight:700;margin-bottom:2px">$${orig.startingBudgetMillions}M Starting War Chest</small>
+        <small style="color:var(--gold);font-weight:700;margin-bottom:2px">$${orig.startingBudgetMillions ?? orig.startingBudget ?? 50}M Starting War Chest</small>
         <small><b>Upside:</b> ${safe(orig.upsides)}</small>
         <small style="color:#f87171"><b>Trade-Off:</b> ${safe(orig.downsides)}</small>
       </div>
@@ -396,7 +396,7 @@
             <h2>Which party will you lead?</h2>
             <div class="archetype-grid">
               ${PARTY_ARCHETYPES.map((party) => {
-                const budget = V07 ? V07.startingBudgetForParty(party.id, false) : (party.startingBudget || 150);
+                const budget = V07 ? V07.startingBudgetForParty(party.id, false) : (party.startingBudget || 300);
                 return `<button type="button" data-template="${party.id}" class="archetype ${selectedTemplate === party.id && !isCustomMode ? 'selected' : ''}" style="--party:${party.color}"><span class="party-dot"></span><b>${party.name}</b><small>${party.description} <span class="setup-budget-pill">$${budget}M starting funds · ${party.isMajor ? 'Major Party' : 'Minor Party'}</span></small></button>`;
               }).join('')}
             </div>

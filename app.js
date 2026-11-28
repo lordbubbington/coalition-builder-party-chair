@@ -347,7 +347,7 @@ function activeEraFeedbackBannerMarkup() {
 let fusionPledgeSelection = 'pledge-electoral-reform';
 const ACTION_STATE_SELECT_IDS = new Set([
   'chapter-state', 'reg-state', 'bill-state', 'tour-state', 'fundraise-state',
-  'petition-state', 'voting-law-state', 'oppo-select', 'volunteer-state-select',
+  'petition-state', 'voting-law-state', 'ballot-init-state', 'oppo-select', 'volunteer-state-select',
   'joint-state-select', 'ballot-state-select',
 ]);
 let bicameralChamberFilter = 'all';
@@ -363,6 +363,9 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
     const el = e && e.target;
     if (el && el.id && ACTION_STATE_SELECT_IDS.has(el.id) && el.value) {
       actionStateSelections[el.id] = el.value;
+      if (el.id === 'chapter-state' || el.id === 'ballot-init-state') {
+        if (typeof render === 'function') render();
+      }
     }
   });
 }
@@ -1627,7 +1630,7 @@ function setupMarkup() {
           <h2>Which party will you lead?</h2>
           <div class="archetype-grid">
             ${PARTY_ARCHETYPES.map((party) => {
-              const budget = V07 ? V07.startingBudgetForParty(party.id, false) : (party.startingBudget || 150);
+              const budget = V07 ? V07.startingBudgetForParty(party.id, false) : (party.startingBudget || 300);
               return `<button type="button" data-template="${party.id}" class="archetype ${selectedTemplate === party.id && !isCustomMode ? 'selected' : ''}" style="--party:${party.color}"><span class="party-dot"></span><b>${party.name}</b><small>${party.description} <span class="setup-budget-pill">$${budget}M starting funds · ${party.isMajor ? 'Major Party' : 'Minor Party'}</span></small></button>`;
             }).join('')}
           </div>
@@ -2416,12 +2419,17 @@ function step2PrioritiesMarkup() {
     let dropdownHtml = '';
     let noteHtml = '';
     const slotDisabled = isDisabled || isFocusesLocked;
+    const usedTargets = new Set(
+      additionalSlots
+        .filter((s, j) => j !== slotIdx && s && s.type === slotType && s.targetId)
+        .map((s) => s.targetId)
+    );
 
     if (slotType === 'issue') {
       dropdownHtml = `
         <select data-additional-target="${slotIdx}" ${slotDisabled ? 'disabled' : ''}>
           <option value="">-- Choose National Issue --</option>
-          ${issues.map((i) => `<option value="${safe(i.id)}" ${targetId === i.id ? 'selected' : ''}>${safe(i.label)} (${safe(i.category)})</option>`).join('')}
+          ${issues.map((i) => `<option value="${safe(i.id)}" ${targetId === i.id ? 'selected' : ''} ${usedTargets.has(i.id) && targetId !== i.id ? 'disabled' : ''}>${safe(i.label)} (${safe(i.category)})</option>`).join('')}
         </select>
       `;
       noteHtml = `<span class="additional-note-badge note-issue">★ Increases party base loyalty (+1.5 Supporter Trust & 2× Weight)</span>`;
@@ -2429,7 +2437,7 @@ function step2PrioritiesMarkup() {
       dropdownHtml = `
         <select data-additional-target="${slotIdx}" ${slotDisabled ? 'disabled' : ''}>
           <option value="">-- Choose State --</option>
-          ${STATES.map((s) => `<option value="${safe(s.id)}" ${targetId === s.id ? 'selected' : ''}>${safe(s.id)} · ${safe(s.name)}</option>`).join('')}
+          ${STATES.map((s) => `<option value="${safe(s.id)}" ${targetId === s.id ? 'selected' : ''} ${usedTargets.has(s.id) && targetId !== s.id ? 'disabled' : ''}>${safe(s.id)} · ${safe(s.name)}</option>`).join('')}
         </select>
       `;
       noteHtml = `<span class="additional-note-badge note-state">✚ +5,000 registered voters in state</span>`;
@@ -2437,7 +2445,7 @@ function step2PrioritiesMarkup() {
       dropdownHtml = `
         <select data-additional-target="${slotIdx}" ${slotDisabled ? 'disabled' : ''}>
           <option value="">-- Choose Region --</option>
-          ${regionDefs.map((r) => `<option value="${safe(r.id)}" ${targetId === r.id ? 'selected' : ''}>${safe(r.name || r.id)} (${(r.states || []).length} states)</option>`).join('')}
+          ${regionDefs.map((r) => `<option value="${safe(r.id)}" ${targetId === r.id ? 'selected' : ''} ${usedTargets.has(r.id) && targetId !== r.id ? 'disabled' : ''}>${safe(r.name || r.id)} (${(r.states || []).length} states)</option>`).join('')}
         </select>
       `;
       noteHtml = `<span class="additional-note-badge note-region">🌐 +500 registered voters per state in region</span>`;
@@ -2856,7 +2864,7 @@ function step3PrimariesMarkup() {
   const sittingIncumbent = field.find((c) => c.isIncumbent || c.incumbent);
   const recruit = field.find((c) => c.recruit) || (() => {
     const r = data.VERSION_01_STATE_RECRUIT(primaryRace, stateObj?.name || stateId, primaryParty, game.seed, game.chairTurn || 0);
-    return V07 ? V07.normalizeCandidateRecord(r, `${game.seed}:${primaryRace}:recruit`, 7) : r;
+    return V07 ? V07.normalizeCandidateRecord(r, `${game.seed}:${primaryRace}:recruit`, r.quality) : r;
   })();
   const stateStandouts = (game.stateLegStandouts?.[primaryParty] || game.stateLegStandouts?.[game.player?.id] || []);
   const matchingStandout = stateStandouts.find((s) => (s.state || s.stateId) === stateId);
@@ -3060,14 +3068,19 @@ function step3PrimariesMarkup() {
 
       <article class="recruit-prospect v07-recruit-card">
         <div class="v07-recruit-info">
-          <div class="eyebrow">${safe(stateObj?.name || stateId)} · ${safe(currentPartyObj?.name || primaryParty)} State Candidate Recruit (Avg Quality 7)</div>
+          <div class="eyebrow">${safe(stateObj?.name || stateId)} · ${safe(currentPartyObj?.name || primaryParty)} State Candidate Recruit (Avg Quality 5)</div>
           <div class="v07-candidate-badges">
             <b>${safe(matchingStandout ? matchingStandout.name : recruit.name)}</b>
             ${isStatehouseStandoutRecruit ? `<span class="v07-mini-badge statehouse-standout-badge">★ SITTING STATE LAWMAKER</span>` : ''}
-            ${memberMetricsBadgesMarkup(matchingStandout || recruit, `<span class="v07-quality-badge">Quality ${(matchingStandout || recruit).quality || 7}/10</span>`)}
+            <span class="v07-quality-badge">Quality: ?/10</span>
           </div>
-          <small>${safe(resolveMemberFactionName(matchingStandout || recruit))} · Projected primary poll ${Math.max(0, Math.round((matchingStandout || recruit).poll || 18))}%</small>
-          ${statBarsMarkup((matchingStandout || recruit).ratings || {}, true)}
+          ${(() => {
+            const activeFactions = (game.factions || []).filter((f) => f && f.partyId === primaryParty);
+            const fallbackFactions = activeFactions.length ? activeFactions : (window.PartyChairData?.FACTIONS_CATALOG || []).filter((f) => f && f.partyId === primaryParty);
+            const defaultFid = matchingStandout?.factionId || recruit.factionId || fallbackFactions[0]?.id || '';
+            if (!fallbackFactions.length) return '';
+            return `<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;"><span>Faction</span><select id="recruit-faction-select" ${field.some((c) => c.recruit) ? 'disabled' : ''}>${fallbackFactions.map((f) => `<option value="${safe(f.id)}" ${f.id === defaultFid ? 'selected' : ''}>${safe(f.name || f.id)}</option>`).join('')}</select></label>`;
+          })()}
         </div>
         <button type="button" class="button button-small" data-action="encourage-state-recruit" data-race="${primaryRace}" data-party="${primaryParty}"
           ${game.phase !== 'organizing' || (game.organizingActionsRemaining ?? game.actionsLeft) <= 0 || (recruitCost > 0 && game.treasury < recruitCost) || field.some((c) => c.recruit) ? 'disabled' : ''}>
@@ -3213,16 +3226,15 @@ function step4WorkMarkup() {
   // REQ-14: State-Targeted Policy Bills (States where player party controls >= 1 legislative chamber)
   const billEligibleStates = STATES.filter((s) => V07 ? V07.canIntroduceBillInState(game, s.id, identity) : true);
 
-  // REQ-15: All 50 States for Chapter Expansion & Tours
-  const selectedChapterState = getSelectedActionState('chapter-state', mapState);
-  const stateChapterOptions = STATES.map((s) => `<option value="${s.id}" ${s.id === selectedChapterState ? 'selected' : ''}>${s.id} · ${safe(s.name)} (${stateChaptersFor(s.id)} chapters)</option>`).join('');
-
-  // REQ-168: Keynote and Tour pools strictly restricted to actively appointed Party Leaders
+  // REQ-168: Tour pool strictly restricted to actively appointed Party Leaders
   const appointedLeaderIds = Object.values(game.leadershipRoles?.player || game.player?.leadershipRoles || {}).filter(Boolean);
   const partyLeaderPool = appointedLeaderIds
     .map((id) => memberById(id))
     .filter((m) => m && (m.party === identity || (identity === 'player' && (!m.party || m.party === 'player'))));
-  const currentKeynote = game.keynoteSpeakerId ? memberById(game.keynoteSpeakerId) : null;
+
+  const smallDonorTier = Math.max(0, Math.min(5, Math.round(Number(window.PartyChairEngine?.getPartyInstitutionalTier?.(game, 'player') ?? getPlayerTierInfo(game).tier ?? 0))));
+  const smallDonorYield = Number(window.PartyChairEngine?.TIER_FUNDRAISING_YIELD_MILLIONS?.[smallDonorTier] ?? [0.25, 0.5, 1.0, 2.5, 10.0, 25.0][smallDonorTier] ?? 0.25);
+  const smallDonorYieldLabel = smallDonorYield < 1 ? `$${Math.round(smallDonorYield * 1000)}K` : `$${smallDonorYield.toFixed(1)}M`;
 
   // Active races for recruit shortcut
   const recruitSenateClass = game.activeSenateClass || 3;
@@ -3250,30 +3262,7 @@ function step4WorkMarkup() {
       ${activeEraFeedbackBannerMarkup()}
 
       <div class="action-grid">
-        <!-- 1. Open a State Chapter -->
-        ${(() => {
-          const pseChUi = window.PartySystemsEngine;
-          const chCostMult = pseChUi ? pseChUi.getChapterCostModifier(game) : 1.0;
-          const chCost = Math.round(6 * chCostMult * 10) / 10;
-          const costBadge = chCost === 0 ? '1 action · Free ($0M)' : `1 action · $${chCost}M`;
-          // [v0.18.7 QA-FIX] BUG-06: Enforce MAX_STATE_CHAPTERS = 25 cap in UI
-          const maxChapters = window.PartyChairEngine?.MAX_STATE_CHAPTERS || 25;
-          const selChapCount = stateChaptersFor(selectedChapterState);
-          const chapterMaxed = selChapCount >= maxChapters;
-          const chapDisabledAttr = (disabled || game.treasury < chCost || chapterMaxed) ? 'disabled' : '';
-          const chapTitleAttr = chapterMaxed ? `title="Max Chapters Reached (${selChapCount}/${maxChapters})"` : '';
-          return `
-        <div class="action-card">
-          <div class="action-head"><i>✳</i><b>Open a State Chapter (50 States)</b><span>${costBadge}</span></div>
-          <p>Expand grassroots field infrastructure in any specific state. Local Youth Chapters operate under each state network.${chapterMaxed ? ` <strong class="neg">Max Chapters Reached (${maxChapters}/${maxChapters})</strong>` : ''}</p>
-          <div class="inline-controls">
-            <select id="chapter-state">${stateChapterOptions}</select>
-            <button type="button" class="button button-small v09-btn-chapter-75" data-action="chapter" ${chapDisabledAttr} ${chapTitleAttr}>${chapterMaxed ? `Max (${maxChapters}/${maxChapters})` : 'Open State Chapter'}</button>
-          </div>
-        </div>`;
-        })()}
-
-        <!-- 2. Statewide Voter Registration & Outreach -->
+        <!-- 1. Statewide Voter Registration & Outreach -->
         ${(() => {
           const regTier = getPlayerTierInfo(game).tier;
           const regSpec = window.PartyChairEngine?.getRegistrationTierSpec
@@ -3291,49 +3280,29 @@ function step4WorkMarkup() {
         </div>`;
         })()}
 
-        <!-- [v0.18.4 MAPS-BALLOT] Sponsor Ballot Initiative -->
-        ${window.RedistrictingBallotSystem?.renderBallotInitiativeActionCard ? window.RedistrictingBallotSystem.renderBallotInitiativeActionCard(game, { disabled, selectedState: mapState }) : ''}
-
         <!-- 3. Court Politician to Caucus / Defect -->
         <div class="action-card" style="border-color:#1abc9c88;background:linear-gradient(145deg,#102624,#111b26)">
           <div class="action-head"><i style="color:#1abc9c">🤝</i><b>Court Politician to Caucus / Defect</b><span>1 action · $4M</span></div>
-          <p>Court sitting Senators, Governors, and House members to switch party affiliation. Discontent (Happiness ≤ 40) and ideological compatibility required.</p>
+          <p>Court sitting Senators, Governors, and House members to switch party affiliation. Requires Tier 3 (or Happiness ≤ 10).</p>
           ${(() => {
-            const isFringe = (typeof getPartyInstitutionalTier === 'function')
-              ? (getPartyInstitutionalTier(game, identity) === 1)
-              : (window.BallotAccess?.isFringeParty ? window.BallotAccess.isFringeParty(game, identity) : false);
+            const pTier = (typeof getPartyInstitutionalTier === 'function')
+              ? getPartyInstitutionalTier(game, identity)
+              : (window.PartyChairEngine?.getPartyInstitutionalTier ? window.PartyChairEngine.getPartyInstitutionalTier(game, identity) : 5);
+            const allNonPlayer = (game.sittingMembers || []).filter((m) => m && !m.vacant && m.party !== identity);
+            const eligibleTargets = pTier < 3
+              ? allNonPlayer.filter((m) => Number(m.happiness ?? 50) <= 10)
+              : allNonPlayer.filter((m) => m.party === 'independent' || Number(m.happiness ?? 50) <= 40);
 
-            if (isFringe) {
+            if (pTier < 3 && eligibleTargets.length === 0) {
               return `<div class="inline-controls" style="flex-direction:column;align-items:stretch;gap:6px">
                 <div class="v07-warn-note" style="margin:4px 0;font-size:12px;color:#f87171;line-height:1.4">
-                  <b>Ballot Access Restricted:</b> Fringe movements lack the statutory ballot standing required to convince sitting lawmakers to switch parties. Qualify for state ballots to ascend beyond Tier 1 before courting sitting politicians.
+                  <b>Tier 3 Required:</b> Courting sitting lawmakers requires Tier 3 (unless lawmaker Happiness ≤ 10).
                 </div>
-                <button type="button" class="button button-small" style="border-color:#1abc9c;color:#7df2da;opacity:0.4;cursor:not-allowed" disabled>Court Defection (Tier 2+ Required)</button>
+                <button type="button" class="button button-small" style="border-color:#1abc9c;color:#7df2da;opacity:0.4;cursor:not-allowed" disabled>Court Defection (Tier 3 / Happiness ≤ 10)</button>
               </div>`;
             }
 
             const isMajorParty = V07 ? V07.isMajorParty(game, 'player') : ['people', 'heritage'].includes(identity);
-            const catalog = (game?.factions && game.factions.length) ? game.factions : (window.PartyChairData?.FACTIONS_CATALOG || []);
-            const factionPartyId = (game?.player?.custom && identity === 'player') ? (game.player.baseTemplateId || 'people') : identity;
-            const isRacial = (f) => f.type === 'racial' || ['dem_black_voters', 'dem_traditional_latin', 'dem_acculturated_latin', 'gop_cubans', 'gop_black_conservatives', 'gop_asian_conservatives', 'dem_asian_pacific'].includes(f.id);
-            const playerNonRacialFactions = catalog.filter((f) => (f.partyId === identity || f.partyId === factionPartyId) && !isRacial(f));
-
-            const eligibleTargets = (game.sittingMembers || []).filter((m) => {
-              if (m.party === identity) return false;
-              if (m.party !== 'independent' && (m.happiness ?? 50) > 40) return false;
-
-              const targetFId = m.factionId || (window.PartyChairData?.resolvePoliticianFactionId ? window.PartyChairData.resolvePoliticianFactionId(m) : null);
-              const targetFaction = catalog.find((f) => f.id === targetFId || f.name === m.faction || f.id === m.faction);
-              const targetEcon = targetFaction?.sliders?.economic ?? targetFaction?.economic ?? 5;
-              const targetSocial = targetFaction?.sliders?.social ?? targetFaction?.social ?? 5;
-
-              return playerNonRacialFactions.some((pf) => {
-                const pEcon = pf.sliders?.economic ?? pf.economic ?? 5;
-                const pSoc = pf.sliders?.social ?? pf.social ?? 5;
-                return Math.abs(pEcon - targetEcon) <= 2.0 && Math.abs(pSoc - targetSocial) <= 2.0;
-              });
-            });
-
             const roleOptions = !isMajorParty ? `
               <select id="court-role-select" style="margin-top:6px">
                 ${(V07?.LEADERSHIP_ROLES_SCHEMA || window.PartyChairData.LEADERSHIP_ROLES || []).map((r) => `<option value="${r.id}">Appoint: ${safe(r.label || r.title)}</option>`).join('')}
@@ -3349,7 +3318,7 @@ function step4WorkMarkup() {
 
             return `<div class="inline-controls" style="flex-direction:column;align-items:stretch;gap:6px">
               <select id="ind-caucus-target">
-                ${optionsHtml || '<option value="" disabled>[ No Discontent Lawmakers Meeting Ideological Bridge ]</option>'}
+                ${optionsHtml || '<option value="" disabled>[ No Eligible Lawmakers Available ]</option>'}
               </select>
               ${roleOptions}
               <div style="font-size:11.5px;color:#7df2da;margin-bottom:4px">ℹ Unhappy caucus courting is now primarily an <b>Off-Cycle Interlude</b> action (so defectors run on your ticket from Day 1).</div>
@@ -3390,31 +3359,10 @@ function step4WorkMarkup() {
               </div>`;
         })()}
 
-        <!-- 5. National Convention Keynote Speaker -->
-        <div class="action-card v07-keynote-card">
-          <div class="action-head"><i>★</i><b>National Convention Keynote Speaker</b><span>Free · 1x Cycle</span></div>
-          <p>${currentKeynote
-            ? `Keynote Delivered by <b>${safe(currentKeynote.name)}</b> (+25 Fame, +8 faction confidence, +2.0 turnout in ${(game.keynoteRegions || []).join(', ')}).`
-            : `Select 1 appointed Party Leader for +25 Fame, +8 faction confidence, and +2.0 turnout across their home overlapping region.`}</p>
-          <div class="inline-controls">
-            ${partyLeaderPool.length ? `
-              <select id="keynote-speaker-2" data-dup-id="keynote-speaker">
-                ${partyLeaderPool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.region)}</option>`).join('')}
-              </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote-3" data-dup-id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
-            ` : `
-              <select id="keynote-speaker-4" data-dup-id="keynote-speaker" disabled>
-                <option>[ Appoint Party Leaders in Leadership Menu to Select Keynote ]</option>
-              </select>
-              <button type="button" class="button button-small button-gold" id="select-keynote-5" data-dup-id="select-keynote" disabled>Name Keynote</button>
-            `}
-          </div>
-        </div>
-
         <!-- 6. Recruit State Candidate -->
         <div class="action-card">
-          <div class="action-head"><i>⚑</i><b>Recruit State Candidate (Avg Qual 7)</b><span>1 action</span></div>
-          <p>Encourages a high-tier (avg 7/10 quality) local candidate into a Senate Class III or Governor primary.</p>
+          <div class="action-head"><i>⚑</i><b>Recruit State Candidate (Avg Qual 5)</b><span>1 action</span></div>
+          <p>Encourages a local candidate (avg 5/10 quality) into a Senate Class III or Governor primary.</p>
           <div class="inline-controls">
             <select id="step4-recruit-race">${recruitRaces.map((r) => `<option value="${r.id}">${safe(r.label)}</option>`).join('')}</select>
             <button type="button" class="button button-small" id="step4-open-recruit">Open in Step 3</button>
@@ -3439,7 +3387,7 @@ function step4WorkMarkup() {
 
         <!-- 8. Small-Donor Drive -->
         <div class="action-card">
-          <div class="action-head"><i>✦</i><b>Run a Small-Donor Drive</b><span>1 action</span></div>
+          <div class="action-head"><i>✦</i><b>Run a Small-Donor Drive</b><span>1 action · +${smallDonorYieldLabel}</span></div>
           <p>State-targeted donor tour (~$5M baseline yield). Success scales with state party membership, faction morale, and campaign finance stance, but is subject to local visit fatigue.</p>
           <div class="inline-controls" style="display:flex;gap:8px;align-items:center">
             <select id="fundraise-state" style="flex:1">
@@ -3483,37 +3431,6 @@ function step4WorkMarkup() {
             <div style="padding:8px;font-size:13px;color:var(--green);background:var(--panel2);border:1px solid var(--line);border-radius:6px">
               ✓ <b>Full 50-State Presidential Ballot Access Certified:</b> Your party's presidential ticket is qualified across all 50 states + DC. (Downballot candidates must qualify per contest).
             </div>
-            `}
-          </div>`;
-        })()}
-
-        <!-- 10. Enact State Trifecta Voting Reform -->
-        ${(() => {
-          const bMod = window.BallotAccess;
-          const trifectaStates = bMod ? bMod.getEligibleTrifectaStates(game, identity) : [];
-          const bills = window.PartyChairData?.STATE_VOTING_LAW_BILLS || [
-            { id: 'strict-photo-id', name: 'Strict Photo Voter ID & Signature Match Mandate' },
-            { id: 'universal-vote-by-mail', name: 'Universal Vote-by-Mail & Automatic Registration' },
-            { id: 'early-voting-expansion', name: 'Early Voting Window & Drop-Box Expansion' },
-          ];
-          return `
-          <div class="action-card v07-trifecta-card">
-            <div class="action-head"><i>🏛</i><b>Enact State Trifecta Voting Reform</b><span>1 action · $2M</span></div>
-            <p>Leverage unified state control (Governor + House + Senate) to enact structural voting and election administration laws that reshape turnout, registration, and petition requirements.</p>
-            ${trifectaStates.length ? `
-            <div class="inline-controls" style="flex-direction:column;align-items:stretch;gap:6px">
-              <div style="display:flex;gap:6px">
-                <select id="voting-law-state" style="flex:1">
-                  ${trifectaStates.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('voting-law-state', trifectaStates[0]?.id) ? 'selected' : ''}>${s.id} · ${safe(s.name)} (Trifecta)</option>`).join('')}
-                </select>
-                <select id="voting-law-bill" style="flex:1.5">
-                  ${bills.map((b) => `<option value="${b.id}">${safe(b.name || b.shortName)}</option>`).join('')}
-                </select>
-              </div>
-              <button type="button" class="button button-small" style="border-color:#c084fc;color:#e9d5ff" data-action="enact-state-voting-law" ${disabled || game.treasury < 2.0 ? 'disabled' : ''}>Enact Voting Reform (-$2M)</button>
-            </div>
-            ` : `
-            <small class="v07-warn-note">Requires holding a unified state trifecta (Governor + both state legislative chambers) to enact structural voting laws.</small>
             `}
           </div>`;
         })()}
@@ -5091,8 +5008,8 @@ function campaignPollingMapMarkup() {
       <div class="section-heading">
         <div>
           <div class="eyebrow">Battleground Intelligence & Polling Consensus</div>
-          <h2>Live Campaign Polling & Consensus Forecasts</h2>
-          <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Synthesized consensus projections across active chambers.</p>
+          <h2>Live Polling</h2>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Updates immediately to your actions, although isn't the most reliable source in the world (MoE +/-7)</p>
         </div>
         <div class="v07-filter-tabs">
           ${isPresYear ? `<button type="button" class="tab-btn ${effectiveTab === 'presidential' ? 'selected' : ''}" data-camp-poll-tab="presidential">Presidential</button>` : ''}
@@ -5473,6 +5390,13 @@ function campaignDashboardMarkup() {
           Manage general election funding across all 480 congressional & gubernatorial races. Pulling funds from close/trailing races triggers fury and Sitting Member Happiness loss; unendorsed primary winners start unhappy (-1.2% general penalty) until pacified.
         </p>
 
+        ${(() => {
+          const isStateLegEntry = (f) => String(f?.raceKey || '').startsWith('state-leg:') || f?.kind === 'State House Slate' || f?.kind === 'State Senate Slate';
+          const stateLegEntries = enrichedFunding.filter(isStateLegEntry);
+          const activeTriageCandidates = campaignTriageFilter === 'state-leg'
+            ? filteredCandidates.filter(isStateLegEntry)
+            : filteredCandidates;
+          return `
         <div class="v08-triage-controls" style="flex-wrap:wrap;gap:8px">
           <div class="v07-filter-tabs" style="flex-wrap:wrap">
             <button type="button" data-triage-filter="close-house" class="${campaignTriageFilter === 'close-house' ? 'selected' : ''}" style="border-color:rgba(226,189,112,0.6)">Close House ≤10pts (${closeHouseEntries.length})</button>
@@ -5482,9 +5406,10 @@ function campaignDashboardMarkup() {
             <button type="button" data-triage-filter="senate" class="${campaignTriageFilter === 'senate' ? 'selected' : ''}">Senate (${fundingEntries.filter((f) => f.kind === 'Senate').length})</button>
             <button type="button" data-triage-filter="governor" class="${campaignTriageFilter === 'governor' ? 'selected' : ''}">Governors (${fundingEntries.filter((f) => f.kind === 'Governor').length})</button>
             <button type="button" data-triage-filter="house" class="${campaignTriageFilter === 'house' ? 'selected' : ''}">House (${fundingEntries.filter((f) => f.kind === 'House').length})</button>
+            <button type="button" data-triage-filter="state-leg" class="${campaignTriageFilter === 'state-leg' ? 'selected' : ''}">State Leg Slates (${stateLegEntries.length})</button>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button type="button" class="button button-small button-gold" id="btn-batch-fund-view" data-batch-race-keys="${safe(filteredCandidates.map((c) => c.raceKey).join(','))}" ${!filteredCandidates.length || game.treasury < 1 ? 'disabled' : ''}>Fund All in View +$1M Each (${filteredCandidates.length} races · $${filteredCandidates.length}M)</button>
+            <button type="button" class="button button-small button-gold" id="btn-batch-fund-view" data-batch-race-keys="${safe(activeTriageCandidates.map((c) => c.raceKey).join(','))}" ${!activeTriageCandidates.length || game.treasury < 1 ? 'disabled' : ''}>Fund All in View +$1M Each (${activeTriageCandidates.length} races · $${activeTriageCandidates.length}M)</button>
             <input type="text" id="triage-search" placeholder="Search candidate or race..." value="${safe(campaignTriageSearch)}" style="padding:6px 12px;background:#101924;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px" />
           </div>
         </div>
@@ -5502,10 +5427,12 @@ function campaignDashboardMarkup() {
               </tr>
             </thead>
             <tbody>
-              ${filteredCandidates.slice(0, 50).map((cand) => {
-                const isHouse = cand.kind === 'House' || cand.raceKey?.startsWith('house:');
-                const unitCost = isHouse ? 1 : 2;
-                const lift = window.PartyChairEngine?.computeFundingPollingLift ? window.PartyChairEngine.computeFundingPollingLift(cand.allocated || 0) : (cand.pollingLift || 0);
+              ${activeTriageCandidates.slice(0, 50).map((cand) => {
+                const isHouseOrSlate = cand.kind === 'House' || cand.raceKey?.startsWith('house:') || isStateLegEntry(cand);
+                const unitCost = isHouseOrSlate ? 1 : 2;
+                const eng = window.PartyChairEngine;
+                const raceVoters = eng?.getRaceVoterCount ? eng.getRaceVoterCount(game, cand.raceKey) : 1000000;
+                const lift = eng?.computeFundingPollingLift ? eng.computeFundingPollingLift(cand.allocated || 0, raceVoters) : (cand.pollingLift || 0);
                 return `
                 <tr>
                   <td><b>${safe(cand.candidateName)}</b> <small style="display:block;color:var(--muted)">${safe(cand.kind)} · ${safe(cand.raceKey)}</small></td>
@@ -5534,7 +5461,9 @@ function campaignDashboardMarkup() {
             </tbody>
           </table>
         </div>
-        ${filteredCandidates.length > 50 ? `<small style="display:block;margin-top:6px;color:var(--muted)">Showing top 50 of ${filteredCandidates.length} nominees matching filter.</small>` : ''}
+        ${activeTriageCandidates.length > 50 ? `<small style="display:block;margin-top:6px;color:var(--muted)">Showing top 50 of ${activeTriageCandidates.length} nominees matching filter.</small>` : ''}
+          `;
+        })()}
       </section>
 
       ${superPacsPanelMarkup()}
@@ -5606,19 +5535,25 @@ function campaignDashboardMarkup() {
             </button>
           </div>
 
+          ${(() => {
+            const jvTier = Math.max(0, Math.min(5, Math.round(Number(window.PartyChairEngine?.getPartyInstitutionalTier?.(game, 'player') ?? getPlayerTierInfo(game).tier ?? 0))));
+            const jvYield = Number(window.PartyChairEngine?.TIER_FUNDRAISING_YIELD_MILLIONS?.[jvTier] ?? [0.25, 0.5, 1.0, 2.5, 10.0, 25.0][jvTier] ?? 0.25);
+            const jvYieldLabel = jvYield < 1 ? `$${Math.round(jvYield * 1000)}K` : `$${jvYield.toFixed(1)}M`;
+            return `
           <div class="v08-action-card">
             <div>
-              <span class="v08-action-cost">COST: $0M · 1 ACTION (FREE FINANCIALLY)</span>
+              <span class="v08-action-cost">COST: $0M · 1 ACTION · +${jvYieldLabel}</span>
               <h3>Joint Victory Fund</h3>
-              <p>Coordinate with state party chapters to execute an emergency joint victory fundraiser directly into your treasury. Yield scales with your party's institutional rank.</p>
+              <p>Coordinate with state party chapters to execute an emergency joint victory fundraiser directly into your treasury. Yield: +${jvYieldLabel} (Tier ${jvTier}).</p>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px">
               <select id="joint-state-select" style="flex-grow:1;padding:6px;background:#101924;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:12px">
                 ${STATES.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('joint-state-select', STATES[0]?.id) ? 'selected' : ''}>${s.name} (${s.id})</option>`).join('')}
               </select>
-              <button type="button" class="button button-small button-gold" id="btn-joint-victory" ${actionsLeft <= 0 ? 'disabled' : ''}>Fundraise</button>
+              <button type="button" class="button button-small button-gold" id="btn-joint-victory" ${actionsLeft <= 0 ? 'disabled' : ''}>Fundraise (+${jvYieldLabel})</button>
             </div>
-          </div>
+          </div>`;
+          })()}
 
           <div class="v08-action-card">
             <div>
@@ -5853,7 +5788,7 @@ function v0180CampaignWarRoomMarkup(embeddedInGrandStrategy = false) {
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
         <button type="button" class="button button-secondary" data-v0180-action="campaign-microtarget-faction">Micro-Target Faction Ads ($1.5M · Regional +Persuasion &amp; Membership)</button>
         <button type="button" class="button button-secondary" data-v0180-action="campaign-town-hall-barnstorm">Town Hall Barnstorm ($0.5M · +Persuasion &amp; Turnout)</button>
-        <button type="button" class="button button-gold" data-v0180-action="campaign-statehouse-blitz">🚪 Statehouse Door-Knock Blitz ($1.5M · +1–3% State Reg)</button>
+        <button type="button" class="button button-gold" data-v0180-action="campaign-statehouse-blitz">General Persuasion Boost ($1.5M · +0.5% all races · +1–1,000 voters)</button>
         <button type="button" class="button button-secondary" data-v0180-action="campaign-coalition-unity-summit" ${c.unitySummitUsedMonth === month ? 'disabled' : ''}>Coalition Unity Summit ($0 · +5 Hap to 2 Factions)</button>
         ${isMajor ? `<button type="button" class="button button-secondary" data-v0180-action="campaign-spoiler-wedge">Spoiler Wedge Blitz ($1.5M · Siphon Rival)</button>` : ''}
         <button type="button" class="button button-secondary" data-v0180-action="campaign-viral-telethon" ${c.telethonUsedMonth === month ? 'disabled' : ''}>Viral Livestream Telethon ($0 · +$2–5M &amp; Membership)</button>
@@ -6722,13 +6657,9 @@ function nationalMapSvg(mode, options = {}) {
         } else if (p1 && p1 === p2 && !['people', 'heritage'].includes(p1)) {
           fillColor = resolveControlPartyColor(p1, game) || '#14b8a6';
           statusLabel = `${resolveControlPartyLabel(p1, game)} Delegation (Both ${resolveControlPartyLabel(p1, game)})`;
-        } else if ((p1 && !['people', 'heritage'].includes(p1)) || (p2 && !['people', 'heritage'].includes(p2))) {
-          const thirdP = !['people', 'heritage'].includes(p1) ? p1 : p2;
-          fillColor = resolveControlPartyColor(thirdP, game) || '#14b8a6';
-          statusLabel = `Split Delegation (${resolveControlPartyLabel(p1, game)} + ${resolveControlPartyLabel(p2, game)})`;
         } else {
           fillColor = '#8654a4'; // Purple
-          statusLabel = 'Split Delegation (1 Dem + 1 GOP)';
+          statusLabel = `Split Delegation (${resolveControlPartyLabel(p1, game)} + ${resolveControlPartyLabel(p2, game)})`;
         }
         const delegationText = pair.map((s) => `Class ${V07 ? V07.normalizeSenateClassRoman(s.classNum) : s.classNum}: ${s.incumbent || s.label} [${s.affiliationLabel}]`).join(' · ');
         const title = `${state.name || state.id} (${state.id}) · ${statusLabel} · ${delegationText} · ${formatMillions(stateVoters?.representedVoters || 0)}M modeled voters`;
@@ -6903,7 +6834,7 @@ function nationalMapSvg(mode, options = {}) {
     const repName = hasInGamePres ? (game.presidentialTicket?.heritage || 'Republican') : 'Donald Trump (Republican · 312 EV)';
     legend = `<div class="map-legend"><span><i class="party-dem"></i>${safe(demName)}</span><span><i class="party-rep"></i>${safe(repName)}</span></div>`;
   } else if (mode === 'senate-combined') {
-    legend = `<div class="map-legend"><span><i class="party-dem"></i>Both Senators Democratic (or caucus Dem)</span><span><i class="party-rep"></i>Both Senators Republican (or caucus GOP)</span><span><i class="party-split"></i>Split Delegation (1 Dem + 1 GOP)</span></div>`;
+    legend = `<div class="map-legend"><span><i class="party-dem"></i>Both Senators Democratic (or caucus Dem)</span><span><i class="party-rep"></i>Both Senators Republican (or caucus GOP)</span><span><i class="party-split"></i>Split Delegation (Purple)</span><span><i class="party-other"></i>Both Third-Party / Independent</span></div>`;
   } else if (mode === 'senate-class' || mode === 'senate') {
     const activeRoman = targetSenateClassNum === 1 ? 'I' : targetSenateClassNum === 2 ? 'II' : 'III';
     legend = `<div class="map-legend"><span><i class="party-dem"></i>Democratic Incumbent</span><span><i class="party-rep"></i>Republican Incumbent</span><span><i class="party-ind-dem"></i>Independent (Caucuses Dem)</span><span><i style="background:#334155"></i>No Class ${activeRoman} seat up</span></div>`;
@@ -7072,18 +7003,22 @@ function mapTabMarkup() {
       <p style="margin:0;font-size:13px;color:var(--muted)">Incumbent seats up for election this cycle: <b>${demC} Democratic</b>${indD ? ` (including ${indD} Independent caucusing Dem)` : ''} · <b>${repC} Republican</b>. Inactive states (${50 - seats.length} states) are shaded in neutral slate (#334155).</p>
     </div>`;
   } else if (currentMapMode === 'senate-combined') {
-    let demStates = 0, repStates = 0, splitStates = 0;
+    const seatTotals = {};
     MAPS.states.filter((s) => s.id !== 'DC').forEach((st) => {
       const pair = (senatePairByState.get(st.id) || []);
-      const isDem = (s) => s && (s.caucus === 'people' || s.party === 'people');
-      const isGop = (s) => s && (s.caucus === 'heritage' || s.party === 'heritage');
-      if (pair.length >= 2 && pair.every(isDem)) demStates++;
-      else if (pair.length >= 2 && pair.every(isGop)) repStates++;
-      else splitStates++;
+      pair.forEach((s) => {
+        const key = (s && (s.party || s.caucus)) || 'people';
+        seatTotals[key] = (seatTotals[key] || 0) + 1;
+      });
     });
+    const orderedKeys = ['people', 'heritage', ...Object.keys(seatTotals).filter((k) => !['people', 'heritage'].includes(k))];
+    const seatSummaryHtml = orderedKeys
+      .filter((k) => (seatTotals[k] || 0) > 0 || k === 'people' || k === 'heritage')
+      .map((k) => `<b style="color:${resolveControlPartyColor(k, game) || '#94a3b8'}">${safe(resolveControlPartyLabel(k, game))}: ${seatTotals[k] || 0}</b>`)
+      .join(' · ');
     detail = `<div class="presidential-scoreboard v08-qualitative-scoreboard" style="padding:12px;background:#101a26;border:1px solid var(--line);border-radius:8px">
-      <h4 style="margin:0 0 4px;font-size:15px;color:var(--gold)">Combined 50-State U.S. Senate Delegations (100 Seats)</h4>
-      <p style="margin:0;font-size:13px;color:var(--muted)">State delegation control: <b style="color:#3478c8">${demStates} Democratic Delegations (Blue)</b> · <b style="color:#c9474e">${repStates} Republican Delegations (Red)</b> · <b style="color:#8654a4">${splitStates} Split Delegations (Purple: 1 Dem + 1 GOP)</b>.</p>
+      <h4 style="margin:0 0 4px;font-size:15px;color:var(--gold)">Combined 50-State U.S. Senate Seats (100 Total)</h4>
+      <p style="margin:0;font-size:13px;color:var(--muted)">${seatSummaryHtml}</p>
     </div>`;
   } else if (currentMapMode === 'governors') {
     detail = `<p class="map-summary">Gubernatorial control across all 50 states. ${(game?.activeGubernatorialStates || window.PartyChairData.VERSION_01_GUBERNATORIAL_ELECTIONS || []).length} governorships are up in ${game?.year || 2028}.</p>`;
@@ -7250,9 +7185,20 @@ function renderStateVoterRegistrationTable(game) {
   const sortArrow = (col) => (regSortCol === col ? (regSortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
   const formatGainBadge = (val) => {
-    if (!val || val <= 0) return '';
-    const txt = val >= 1000000 ? `+${(val / 1000000).toFixed(2)}M` : `+${Math.round(val / 1000)}K`;
-    return `<span class="v15-reg-gain-badge">${txt}</span>`;
+    const num = Number(val || 0);
+    if (!Number.isFinite(num) || Math.round(num) === 0) return '';
+    const abs = Math.abs(num);
+    const sign = num > 0 ? '+' : '-';
+    const mag = abs >= 1000000
+      ? `${(abs / 1000000).toFixed(2)}M`
+      : abs >= 1000
+        ? `${(abs / 1000).toFixed(1)}K`
+        : `${Math.round(abs)}`;
+    const cls = num > 0 ? 'v15-reg-gain-badge v15-reg-gain-pos' : 'v15-reg-gain-badge v15-reg-gain-neg';
+    const negStyle = num < 0
+      ? ' style="background:rgba(239,68,68,0.18);color:#f87171;border-color:rgba(239,68,68,0.45);"'
+      : '';
+    return `<span class="${cls}"${negStyle}>${sign}${mag}</span>`;
   };
 
   const formatMajorCell = (val, total, isLowPop, deltaVal = 0) => {
@@ -7290,7 +7236,12 @@ function renderStateVoterRegistrationTable(game) {
         </thead>
         <tbody>
           ${rowsData.map((row) => {
-            const totalDelta = Object.values(row.deltas).reduce((sum, d) => sum + (Number(d) || 0), 0);
+            const totalDelta = row.deltas.total !== undefined
+              ? Number(row.deltas.total || 0)
+              : row.deltas.netMigration !== undefined
+                ? Number(row.deltas.netMigration || 0)
+                : ['people', 'heritage', 'independent', 'liberty', 'green', 'constitution', 'socialist', 'dem', 'rep', 'ind', 'lib', 'grn', 'con', 'soc', 'player', 'custom']
+                  .reduce((sum, k) => sum + (Number(row.deltas[k]) || 0), 0);
             const totalFormatted = row.isLowPop ? (row.totalRep / 1000000).toFixed(3) : (row.totalRep / 1000000).toFixed(2);
             return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.15)">
@@ -7298,14 +7249,14 @@ function renderStateVoterRegistrationTable(game) {
                 <b>${safe(row.name)}</b> <small style="color:var(--text-muted)">(${safe(row.stateId)} · ${row.ev} EV)</small>
               </td>
               <td style="padding:8px 12px;font-weight:600">${totalFormatted}M${formatGainBadge(totalDelta)}</td>
-              <td style="padding:8px 12px;color:#9bc7f2">${formatMajorCell(row.dem, row.totalRep, row.isLowPop, row.deltas.people || row.deltas.dem)}</td>
-              <td style="padding:8px 12px;color:#f0989e">${formatMajorCell(row.rep, row.totalRep, row.isLowPop, row.deltas.heritage || row.deltas.rep)}</td>
-              <td style="padding:8px 12px;color:#c8d1db">${formatMajorCell(row.ind, row.totalRep, row.isLowPop, row.deltas.independent || row.deltas.ind)}</td>
-              <td style="padding:8px 12px;color:#ebd178">${formatMinorCell(row.lib, row.totalRep, row.deltas.liberty || row.deltas.lib)}</td>
-              <td style="padding:8px 12px;color:#8ce4be">${formatMinorCell(row.grn, row.totalRep, row.deltas.green || row.deltas.grn)}</td>
-              <td style="padding:8px 12px;color:#c9714b">${formatMinorCell(row.con, row.totalRep, row.deltas.constitution || row.deltas.con)}</td>
-              <td style="padding:8px 12px;color:#e86464">${formatMinorCell(row.soc, row.totalRep, row.deltas.socialist || row.deltas.soc)}</td>
-              ${isCustomPlayer ? `<td style="padding:8px 12px;color:${game.player.color || '#8b5cf6'}">${formatMinorCell(row.cust, row.totalRep, row.deltas[game.player?.id] || row.deltas.custom || row.deltas.cust)}</td>` : ''}
+              <td style="padding:8px 12px;color:#9bc7f2">${formatMajorCell(row.dem, row.totalRep, row.isLowPop, row.deltas.people ?? row.deltas.dem ?? 0)}</td>
+              <td style="padding:8px 12px;color:#f0989e">${formatMajorCell(row.rep, row.totalRep, row.isLowPop, row.deltas.heritage ?? row.deltas.rep ?? 0)}</td>
+              <td style="padding:8px 12px;color:#c8d1db">${formatMajorCell(row.ind, row.totalRep, row.isLowPop, row.deltas.independent ?? row.deltas.ind ?? 0)}</td>
+              <td style="padding:8px 12px;color:#ebd178">${formatMinorCell(row.lib, row.totalRep, row.deltas.liberty ?? row.deltas.lib ?? 0)}</td>
+              <td style="padding:8px 12px;color:#8ce4be">${formatMinorCell(row.grn, row.totalRep, row.deltas.green ?? row.deltas.grn ?? 0)}</td>
+              <td style="padding:8px 12px;color:#c9714b">${formatMinorCell(row.con, row.totalRep, row.deltas.constitution ?? row.deltas.con ?? 0)}</td>
+              <td style="padding:8px 12px;color:#e86464">${formatMinorCell(row.soc, row.totalRep, row.deltas.socialist ?? row.deltas.soc ?? 0)}</td>
+              ${isCustomPlayer ? `<td style="padding:8px 12px;color:${game.player.color || '#8b5cf6'}">${formatMinorCell(row.cust, row.totalRep, row.deltas[game.player?.id] ?? row.deltas.player ?? row.deltas.custom ?? row.deltas.cust ?? 0)}</td>` : ''}
             </tr>`;
           }).join('')}
         </tbody>
@@ -7453,12 +7404,21 @@ ${Object.values(game?.chapters || {}).reduce((a, b) => a + (Number(b) || 0), 0) 
         <span class="turnout-chip">${totalPlayerStateChapters().toLocaleString()} Total Player Chapters</span>
       </div>
 
-      <div class="v07-subview-toggle" style="display:flex;gap:10px;margin:12px 0 16px">
+      <div class="v07-subview-toggle" style="display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 16px">
         <button type="button" class="button button-small ${stateSubview === 'directory' ? 'button-gold' : ''}" data-state-subview="directory">50-State Directory & Dossiers</button>
         <button type="button" class="button button-small ${stateSubview === 'registration' ? 'button-gold' : ''}" data-state-subview="registration">State Voter Registration Table (Disaggregated)</button>
+        <button type="button" class="button button-small ${stateSubview === 'statewide-offices' ? 'button-gold' : ''}" data-state-subview="statewide-offices">Statewide Offices</button>
+        <button type="button" class="button button-small ${stateSubview === 'senate-seats' ? 'button-gold' : ''}" data-state-subview="senate-seats">Senate Seats</button>
+        <button type="button" class="button button-small ${stateSubview === 'house-seats' ? 'button-gold' : ''}" data-state-subview="house-seats">House Seats</button>
+        <button type="button" class="button button-small ${stateSubview === 'state-house-seats' ? 'button-gold' : ''}" data-state-subview="state-house-seats">State House Seats</button>
+        <button type="button" class="button button-small ${stateSubview === 'state-senate-seats' ? 'button-gold' : ''}" data-state-subview="state-senate-seats">State Senate Seats</button>
       </div>
 
-      ${stateSubview === 'registration' ? renderStateVoterRegistrationTable(game) : `
+      ${stateSubview === 'registration'
+        ? renderStateVoterRegistrationTable(game)
+        : (['statewide-offices', 'senate-seats', 'house-seats', 'state-house-seats', 'state-senate-seats'].includes(stateSubview) && window.StatesOfficialsTables?.renderSubview)
+          ? window.StatesOfficialsTables.renderSubview(stateSubview, game, { activeStateId: activeState.id, senators: allUniversalSenateSeats() })
+          : `
       <div class="v07-filter-tabs">
         ${filterRegions.map((reg) => `<button type="button" data-state-region="${safe(reg)}" class="${stateRegionFilter === reg ? 'selected' : ''}">${safe(reg)}</button>`).join('')}
       </div>
@@ -7863,6 +7823,95 @@ function step1LeadershipAndBylawsMarkup() {
 
       <!-- Rules & Bylaws Committee directly below Party Leaders -->
       ${window.CoalitionPoliticsSystem ? window.CoalitionPoliticsSystem.renderPrimaryRulesPanel(game) : '<section class="panel section-panel"><div class="eyebrow">Rules &amp; Bylaws Committee</div><h3>Primary Calendar &amp; Party Rules</h3><p style="font-size:13px;color:var(--muted)">Rules &amp; Bylaws module active when Coalition Politics system is loaded.</p></section>'}
+
+      <!-- Relocated 0-Action Step 1 Operations -->
+      ${(() => {
+        const step1Disabled = game.phase === 'complete' ? 'disabled' : '';
+        const appointedLeaderIds = Object.values(game.leadershipRoles?.player || game.player?.leadershipRoles || {}).filter(Boolean);
+        const partyLeaderPool = appointedLeaderIds
+          .map((id) => memberById(id))
+          .filter((m) => m && (m.party === identity || (identity === 'player' && (!m.party || m.party === 'player'))));
+        const currentKeynote = game.keynoteSpeakerId ? memberById(game.keynoteSpeakerId) : null;
+        const maxChapters = window.PartyChairEngine?.MAX_STATE_CHAPTERS || 25;
+        const firstOpenChapterState = STATES.find((s) => stateChaptersFor(s.id) < maxChapters)?.id || mapState;
+        const rawChapterSel = actionStateSelections['chapter-state'];
+        const selectedChapterState = rawChapterSel || (stateChaptersFor(mapState) >= maxChapters ? firstOpenChapterState : mapState);
+        const stateChapterOptions = STATES.map((s) => `<option value="${s.id}" ${s.id === selectedChapterState ? 'selected' : ''}>${s.id} · ${safe(s.name)} (${stateChaptersFor(s.id)} chapters)</option>`).join('');
+        const pseChUi = window.PartySystemsEngine;
+        const chCostMult = pseChUi ? pseChUi.getChapterCostModifier(game) : 1.0;
+        const chCost = Math.round(2 * chCostMult * 10) / 10;
+        const costBadge = chCost === 0 ? 'Free ($0M)' : `$${chCost}M`;
+        const selChapCount = stateChaptersFor(selectedChapterState);
+        const chapterMaxed = selChapCount >= maxChapters;
+        const chapDisabledAttr = (step1Disabled || game.treasury < chCost || chapterMaxed) ? 'disabled' : '';
+        const chapTitleAttr = chapterMaxed ? `title="Max Chapters Reached (${selChapCount}/${maxChapters})"` : '';
+        const bMod = window.BallotAccess;
+        const trifectaStates = bMod ? bMod.getEligibleTrifectaStates(game, identity) : [];
+        const votingBills = window.PartyChairData?.STATE_VOTING_LAW_BILLS || [
+          { id: 'strict-photo-id', name: 'Strict Photo Voter ID & Signature Match Mandate' },
+          { id: 'universal-vote-by-mail', name: 'Universal Vote-by-Mail & Automatic Registration' },
+          { id: 'early-voting-expansion', name: 'Early Voting Window & Drop-Box Expansion' },
+        ];
+        return `
+      <section class="panel action-panel">
+        <div class="action-grid">
+          <!-- 1. National Convention Keynote Speaker -->
+          <div class="action-card v07-keynote-card">
+            <div class="action-head"><i>★</i><b>National Convention Keynote Speaker</b><span>Free · 1x Cycle</span></div>
+            <p>${currentKeynote
+              ? `Keynote Delivered by <b>${safe(currentKeynote.name)}</b> (+25 Fame, +8 faction confidence, +2.0 turnout in ${(game.keynoteRegions || []).join(', ')}).`
+              : `Select 1 appointed Party Leader for +25 Fame, +8 faction confidence, and +2.0 turnout across their home overlapping region.`}</p>
+            <div class="inline-controls">
+              ${partyLeaderPool.length ? `
+                <select id="keynote-speaker-2" data-dup-id="keynote-speaker">
+                  ${partyLeaderPool.map((m) => `<option value="${m.id}" ${game.keynoteSpeakerId === m.id ? 'selected' : ''}>${safe(m.name)} · Fame ${Math.round(m.fame || 40)} · ${safe(m.stateId || m.region)}</option>`).join('')}
+                </select>
+                <button type="button" class="button button-small button-gold" id="select-keynote-3" data-dup-id="select-keynote" ${game.phase === 'complete' || currentKeynote ? 'disabled' : ''}>${currentKeynote ? 'Selected ✓' : 'Name Keynote'}</button>
+              ` : `
+                <select id="keynote-speaker-4" data-dup-id="keynote-speaker" disabled>
+                  <option>[ Appoint Party Leaders in Leadership Menu to Select Keynote ]</option>
+                </select>
+                <button type="button" class="button button-small button-gold" id="select-keynote-5" data-dup-id="select-keynote" disabled>Name Keynote</button>
+              `}
+            </div>
+          </div>
+
+          <!-- 2. Sponsor Ballot Initiative -->
+          ${window.RedistrictingBallotSystem?.renderBallotInitiativeActionCard ? window.RedistrictingBallotSystem.renderBallotInitiativeActionCard(game, { disabled: game.phase === 'complete', selectedState: getSelectedActionState('ballot-init-state', mapState) }) : ''}
+
+          <!-- 3. Enact State Trifecta Voting Reform -->
+          <div class="action-card v07-trifecta-card">
+            <div class="action-head"><i>🏛</i><b>Enact State Trifecta Voting Reform</b><span>$2M</span></div>
+            <p>Leverage unified state control (Governor + House + Senate) to enact structural voting and election administration laws that reshape turnout, registration, and petition requirements.</p>
+            ${trifectaStates.length ? `
+            <div class="inline-controls" style="flex-direction:column;align-items:stretch;gap:6px">
+              <div style="display:flex;gap:6px">
+                <select id="voting-law-state" style="flex:1">
+                  ${trifectaStates.map((s) => `<option value="${s.id}" ${s.id === getSelectedActionState('voting-law-state', trifectaStates[0]?.id) ? 'selected' : ''}>${s.id} · ${safe(s.name)} (Trifecta)</option>`).join('')}
+                </select>
+                <select id="voting-law-bill" style="flex:1.5">
+                  ${votingBills.map((b) => `<option value="${b.id}">${safe(b.name || b.shortName)}</option>`).join('')}
+                </select>
+              </div>
+              <button type="button" class="button button-small" style="border-color:#c084fc;color:#e9d5ff" data-action="enact-state-voting-law" ${step1Disabled || game.treasury < 2.0 ? 'disabled' : ''}>Enact Voting Reform (-$2M)</button>
+            </div>
+            ` : `
+            <small class="v07-warn-note">Requires holding a unified state trifecta (Governor + both state legislative chambers) to enact structural voting laws.</small>
+            `}
+          </div>
+
+          <!-- 4. Open a State Chapter (50 States) -->
+          <div class="action-card">
+            <div class="action-head"><i>✳</i><b>Open a State Chapter (50 States)</b><span>${costBadge}</span></div>
+            <p>Expand grassroots field infrastructure in any specific state. Local Youth Chapters operate under each state network.${chapterMaxed ? ` <strong class="neg">Max Chapters Reached (${maxChapters}/${maxChapters})</strong>` : ''}</p>
+            <div class="inline-controls">
+              <select id="chapter-state">${stateChapterOptions}</select>
+              <button type="button" class="button button-small v09-btn-chapter-75" data-action="chapter" ${chapDisabledAttr} ${chapTitleAttr}>${chapterMaxed ? `Max (${maxChapters}/${maxChapters})` : 'Open State Chapter'}</button>
+            </div>
+          </div>
+        </div>
+      </section>`;
+      })()}
     </div>
   `;
 }
@@ -8196,10 +8245,10 @@ function factionsTabMarkup() {
         ${courtshipGoodwill > 0 ? `<div style="margin-top:6px;font-size:11.5px;color:#75c89a">Coalition Goodwill: <b>${courtshipGoodwill} / 100</b></div>` : ''}
         ${(() => {
           const pTier = window.PartyChairEngine?.getPartyInstitutionalTier ? window.PartyChairEngine.getPartyInstitutionalTier(game, 'player') : 5;
-          const recruitLocked = pTier < 2;
+          const recruitLocked = pTier < 4;
           if (canConveneSummit) {
             const elig = recruitLocked
-              ? { eligible: false, reason: `Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor). Your party is currently Tier ${pTier}.` }
+              ? { eligible: false, reason: `Faction recruitment unlocks at Tier 4. Your party is currently Tier ${pTier}.` }
               : (window.PartyChairEngine?.checkSummitEligibility ? window.PartyChairEngine.checkSummitEligibility(game, f.id) : { eligible: true });
             return `
             <div style="margin-top:8px;font-size:11.5px;color:${elig.eligible ? '#75c89a' : '#fbbf24'}">
@@ -8209,21 +8258,21 @@ function factionsTabMarkup() {
               <button type="button" class="v15-summit-btn" data-summit-faction="${f.id}" ${elig.eligible ? '' : 'disabled'} title="${safe(elig.eligible ? 'Open Coalition Summit to sign an accord and bring this faction into your party' : (elig.reason || 'Not yet eligible'))}" style="flex:1;padding:8px 10px;background:rgba(226,189,112,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;font-weight:700;cursor:${elig.eligible ? 'pointer' : 'not-allowed'};opacity:${elig.eligible ? '1' : '0.45'}">
                 🏛️ Convene Coalition Summit (1 Action)
               </button>
-              <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" ${recruitLocked ? 'disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)."' : ''} style="padding:8px 10px;${recruitLocked ? 'opacity:0.45;cursor:not-allowed' : ''}">
-                ${recruitLocked ? '🔒 Court Independent (Tier 2+)' : '🤝 Court Independent ($1.5M · +15 Goodwill)'}
+              <button type="button" class="button button-small" data-faction-op="court-independent-faction" data-faction-id="${f.id}" ${recruitLocked ? 'disabled title="Faction recruitment unlocks at Tier 4."' : ''} style="padding:8px 10px;${recruitLocked ? 'opacity:0.45;cursor:not-allowed' : ''}">
+                ${recruitLocked ? '🔒 Court Independent (Tier 4+)' : '🤝 Court Independent ($1.5M · +15 Goodwill)'}
               </button>
             </div>`;
           }
           if (isInOtherParty && isOrganizing) {
             if (recruitLocked) {
               return `
-              <div style="margin-top:8px;font-size:11.5px;color:#fbbf24">🔒 Faction recruitment &amp; poaching unlock at Tier 2 (Ballot-Qualified Minor). Your party is currently Tier ${pTier}.</div>
+              <div style="margin-top:8px;font-size:11.5px;color:#fbbf24">🔒 Faction recruitment &amp; poaching unlock at Tier 4. Your party is currently Tier ${pTier}.</div>
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                <button type="button" class="v15-summit-btn" disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
-                  🔒 Open Courtship Dialogue (Tier 2+)
+                <button type="button" class="v15-summit-btn" disabled title="Faction recruitment unlocks at Tier 4." style="flex:1;padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                  🔒 Open Courtship Dialogue (Tier 4+)
                 </button>
-                <button type="button" class="button button-small" disabled title="Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor)." style="padding:8px 10px;opacity:0.45;cursor:not-allowed">
-                  🔒 Drive Wedge (Tier 2+)
+                <button type="button" class="button button-small" disabled title="Faction recruitment unlocks at Tier 4." style="padding:8px 10px;opacity:0.45;cursor:not-allowed">
+                  🔒 Drive Wedge (Tier 4+)
                 </button>
               </div>`;
             }
@@ -10325,33 +10374,12 @@ function renderElectionNightScreen() {
           title = `${_enStName} (${state.id}) · ${race.ev ? `${race.ev} EV · ` : ''}Leading: ${getElectionPartyShort(leader)} +${lead.toFixed(1)}% · ${Math.round(pct)}% counted`;
         }
       }
-    } else if (activeTab === 'senate') {
-      // [v0.18.9.3] Show existing (holdover) Senate seats for states without a Senate race this cycle
-      const holdoverSens = (typeof allUniversalSenateSeats === 'function' ? allUniversalSenateSeats() : (game.sittingMembers || []).filter((m) => m && m.office === 'senate'))
-        .filter((s) => (s.stateId || s.state) === state.id);
-      if (holdoverSens.length > 0) {
-        const parties = holdoverSens.map((s) => s.party || s.partyId || s.caucus || 'people');
-        const uniqueParties = [...new Set(parties)];
-        if (uniqueParties.length === 1) {
-          fillColor = getElectionPartyColor(uniqueParties[0]);
-          fillOpacity = 0.48;
-          const names = holdoverSens.map((s) => s.incumbent || s.name).filter(Boolean).join(' & ');
-          title = `${_enStName} (${state.id}) · Holdover Senate Seats (Not up): ${holdoverSens.length} ${getElectionPartyShort(uniqueParties[0])}${names ? ` (${names})` : ''}`;
-        } else {
-          fillColor = '#8654a4';
-          fillOpacity = 0.48;
-          const desc = holdoverSens.map((s) => `${s.incumbent || s.name || 'Senator'} (${getElectionPartyShort(s.party || s.partyId || 'people')})`).join(' · ');
-          title = `${_enStName} (${state.id}) · Split Holdover Senate Delegation (Not up): ${desc}`;
-        }
-      } else {
-        fillColor = '#1a2432';
-        fillOpacity = 0.35;
-        title = `${_enStName} (${state.id}) · No contest in this chamber`;
-      }
     } else {
       fillColor = '#1a2432';
       fillOpacity = 0.35;
-      title = `${_enStName} (${state.id}) · No contest in this chamber`;
+      title = activeTab === 'senate'
+        ? `${_enStName} (${state.id}) · No Senate contest this cycle`
+        : `${_enStName} (${state.id}) · No contest in this chamber`;
     }
 
     return `<path style="fill:${fillColor};fill-opacity:${fillOpacity}" class="map-state-shape" d="${state.q.split('!').map(decodePath).join('')}" data-desk-state="${state.id}" tabindex="0"><title>${safe(title)}</title></path>`;
@@ -11525,6 +11553,10 @@ function bind() {
     }
 
     const currentType = game.priorities.additional[slotIdx]?.type || 'issue';
+    if (targetId && game.priorities.additional.some((s, j) => j !== slotIdx && s && s.type === currentType && s.targetId === targetId)) {
+      render();
+      return;
+    }
     game.priorities.additional[slotIdx] = { type: currentType, targetId };
 
     dispatchAction('set-additional-priority', { slotIndex: slotIdx, type: currentType, targetId });
@@ -11670,6 +11702,9 @@ function bind() {
       payload.raceId = button.dataset.race;
       payload.partyId = button.dataset.party;
       payload.candidateId = button.dataset.candidate;
+      if (action === 'encourage-state-recruit') {
+        payload.factionId = document.querySelector('#recruit-faction-select')?.value || '';
+      }
     }
     if (action === 'chapter') {
       payload.stateId = document.querySelector('#chapter-state')?.value || mapState;
@@ -11695,9 +11730,11 @@ function bind() {
     if (action === 'persuade-independent-caucus' || action === 'court-politician') {
       const targetId = button.dataset.targetId || document.querySelector('#ind-caucus-target')?.value || '';
       if (!targetId) return;
+      const roleVal = document.querySelector('#court-role-select')?.value;
       payload.memberId = targetId;
       payload.targetId = targetId;
-      payload.leadershipRoleId = document.querySelector('#court-role-select')?.value;
+      payload.leadershipRoleId = roleVal;
+      payload.roleId = roleVal;
       payload.concessionType = 'committee';
     }
     if (action === 'fundraise') {
@@ -11775,6 +11812,15 @@ function bind() {
       game.lastNote = `Conducted Voter Registration & Outreach in ${payload.stateId} (+${voterGain.toLocaleString()} registered voters).`;
     }
     if ((actionId === 'persuade-independent-caucus' || actionId === 'court-politician') && game && game.actionsLeft === prevActionsLeft && prevActionsLeft > 0 && prevTreasury >= 4 && payload.targetId) {
+      const targetObj = (game.sittingMembers || []).find((m) => m.id === payload.targetId || m.name === payload.targetId || m.sittingId === payload.targetId);
+      const canCourt = window.BallotAccess?.canCourtPoliticians
+        ? window.BallotAccess.canCourtPoliticians(game, playerIdentity(), targetObj)
+        : ((window.PartyChairEngine?.getPartyInstitutionalTier?.(game, playerIdentity()) ?? 5) >= 3 || (targetObj && Number(targetObj.happiness ?? 50) <= 10));
+      if (!canCourt) {
+        game.lastNote = 'Courting sitting lawmakers requires Tier 3 (unless lawmaker Happiness <= 10).';
+        render();
+        return;
+      }
       const targetParty = playerIdentity();
       const rawPartyTag = targetParty === 'people' ? 'D' : targetParty === 'heritage' ? 'R' : targetParty === 'player' ? (game.player?.partyCode || 'P') : targetParty.toUpperCase().slice(0, 3);
       game.treasury -= 4;
@@ -12069,6 +12115,7 @@ function bind() {
     stateSubview = button.dataset.stateSubview;
     render();
   }));
+  window.StatesOfficialsTables?.attachListeners?.(render);
   document.querySelectorAll('[data-reg-sort]').forEach((th) => th.addEventListener('click', () => {
     const col = th.dataset.regSort;
     if (regSortCol === col) {

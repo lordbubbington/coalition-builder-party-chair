@@ -793,11 +793,14 @@
   }
 
   /**
-   * REQ-206: Sitting Politician Courting Guard for Tier 1 Fringe parties.
+   * REQ-206: Sitting Politician Courting Guard (Tier 3+, or Happiness <= 10 at any tier).
    */
-  function canCourtPoliticians(game, partyId = 'player') {
+  function canCourtPoliticians(game, partyId = 'player', targetMember = null) {
+    if (targetMember && targetMember.happiness !== undefined && targetMember.happiness !== null && Number(targetMember.happiness) <= 10) {
+      return true;
+    }
     const tier = getPartyInstitutionalTier(game, partyId);
-    return tier >= 2;
+    return tier >= 3;
   }
 
   /**

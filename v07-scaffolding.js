@@ -62,9 +62,23 @@
     return ratings;
   }
 
-  // REQ-25: State recruits have an average quality rating of 7
+  // Weighted recruit quality distribution (mean = 5.000, 80% in 3..7, 0.5% at 1 or 10)
+  function rollRecruitQuality(seedKey) {
+    const bucket = Math.min(999, Math.floor(fnvHash(`${seedKey}:recruit-qual`) * 1000));
+    if (bucket <= 4) return 1;
+    if (bucket <= 94) return 2;
+    if (bucket <= 204) return 3;
+    if (bucket <= 399) return 4;
+    if (bucket <= 639) return 5;
+    if (bucket <= 799) return 6;
+    if (bucket <= 894) return 7;
+    if (bucket <= 964) return 8;
+    if (bucket <= 994) return 9;
+    return 10;
+  }
+
   function generateRecruitRatings(seedKey) {
-    return generateCandidateRatings(`${seedKey}:recruit-v07`, 7.0);
+    return generateCandidateRatings(`${seedKey}:recruit`, rollRecruitQuality(seedKey));
   }
 
   function normalizeCandidateRecord(record, seedKey = 'default', targetAverage = null) {
@@ -306,9 +320,9 @@
 
   // REQ-21: Starting National Committee Budgets ($M)
   const STARTING_BUDGETS = {
-    major: 150,
-    minor: 10,
-    custom: 25,
+    major: 300,
+    minor: 20,
+    custom: 50,
   };
 
   // REQ-176: 5-Stage Institutional Ascent Ladder (1: Fringe, 2: Ballot-Qualified, 3: Recognized, 4: Contender, 5: Major)
@@ -696,7 +710,7 @@
   }
 
   function startingBudgetForParty(baseTemplateId, isCustom = false) {
-    if (isCustom || ['constitution', 'socialist'].includes(baseTemplateId)) return 1.0;
+    if (isCustom || ['constitution', 'socialist'].includes(baseTemplateId)) return 2.0;
     if (['people', 'heritage'].includes(baseTemplateId)) return STARTING_BUDGETS.major;
     return STARTING_BUDGETS.minor;
   }
@@ -1285,6 +1299,7 @@
     customTabRenderers,
     customStepRenderers,
     computeCandidateQuality,
+    rollRecruitQuality,
     generateCandidateRatings,
     generateRecruitRatings,
     normalizeCandidateRecord,

@@ -1704,18 +1704,21 @@
   // --------------------------------------------------------------------------
 
   function handleAction(game, actionId, payload = {}) {
-    // [v0.18.9 STAGE 3] Off-Cycle Unhappy Caucus Member Courting & Faction Recruitment
+    // Off-Cycle Unhappy Caucus Member Courting & Faction Recruitment
     if (actionId === 'oc-court-politician') {
       const eng = getEngine();
       if (!eng?.takeAction) return game;
       const tier = getPartyTier(game, 'player');
-      if (tier < 2) {
-        return { ...game, lastNote: 'Courting sitting lawmakers unlocks at Tier 2 (Ballot-Qualified Minor).' };
+      const targetId = payload?.memberId || payload?.targetId;
+      const target = (game.sittingMembers || []).find((m) => m && (m.id === targetId || m.sittingId === targetId || m.name === targetId));
+      const targetHappy = Number(target?.happiness ?? 50);
+      if (tier < 3 && (!target || targetHappy > 10)) {
+        return { ...game, lastNote: 'Courting sitting lawmakers requires Tier 3 (unless lawmaker Happiness <= 10).' };
       }
       if ((game.offCycle?.actionsRemaining ?? 0) < 1) {
         return { ...game, lastNote: 'No Off-Cycle actions remaining.' };
       }
-      const res = eng.takeAction(game, 'court-politician', { memberId: payload?.memberId || payload?.targetId, roleId: payload?.roleId });
+      const res = eng.takeAction(game, 'court-politician', { memberId: targetId, roleId: payload?.roleId });
       if (res && res !== game && res.sittingMembers !== game.sittingMembers) {
         const nextRem = Math.max(0, Number(game.offCycle?.actionsRemaining ?? 1) - 1);
         return {
@@ -1733,8 +1736,8 @@
       const eng = getEngine();
       if (!eng?.takeAction) return game;
       const tier = getPartyTier(game, 'player');
-      if (tier < 2) {
-        return { ...game, lastNote: 'Faction recruitment unlocks at Tier 2 (Ballot-Qualified Minor).' };
+      if (tier < 4) {
+        return { ...game, lastNote: 'Faction recruitment unlocks at Tier 4.' };
       }
       if ((game.offCycle?.actionsRemaining ?? 0) < 1) {
         return { ...game, lastNote: 'No Off-Cycle actions remaining.' };
@@ -2353,22 +2356,28 @@
 
         <div class="oc-track-divider"></div>
 
-        <!-- [v0.18.9 STAGE 3] Track C: Off-Cycle Caucus Courting & Faction Recruitment -->
+        <!-- Track C: Off-Cycle Caucus Courting & Faction Recruitment -->
         <div class="oc-track-block" id="oc-faction-recruitment">
           <div class="oc-track-head">
             <div>
               <div class="eyebrow">Track C · Off-Cycle Coalitions &amp; Defections</div>
               <h3>Unhappy Caucus Recruitment &amp; Faction Recruitment</h3>
             </div>
-            <span class="oc-bonus-tag">${getPartyTier(working, 'player') >= 2 ? 'Tier 2+ Unlocked' : 'Unlocks at Tier 2'}</span>
+            <span class="oc-bonus-tag">${(() => {
+              const t = getPartyTier(working, 'player');
+              return `Lawmakers: ${t >= 3 ? 'Tier 3+' : 'Tier 3 (or Happiness <= 10)'} · Factions: ${t >= 4 ? 'Tier 4+' : 'Tier 4'}`;
+            })()}</span>
           </div>
           ${(() => {
             const pTier = getPartyTier(working, 'player');
             const pPid = resolvePlayerPartyId(working);
-            if (pTier < 2) {
-              return '<p style="font-size:12.5px;color:#fbbf24;margin:6px 0">Reach <b>Tier 2 (Ballot-Qualified Minor)</b> to court unhappy caucus lawmakers and recruit factions during off-cycle years.</p>';
-            }
-            const unhappyLawmakers = (working.sittingMembers || []).filter((m) => m && !m.vacant && m.party !== pPid && (m.party === 'independent' || Number(m.happiness ?? 50) <= 40)).slice(0, 25);
+            const allNonPlayer = (working.sittingMembers || []).filter((m) => m && !m.vacant && m.party !== pPid);
+            const unhappyLawmakers = (pTier < 3
+              ? allNonPlayer.filter((m) => Number(m.happiness ?? 50) <= 10)
+              : allNonPlayer.filter((m) => m.party === 'independent' || Number(m.happiness ?? 50) <= 40)
+            ).slice(0, 25);
+            const polLocked = pTier < 3 && unhappyLawmakers.length === 0;
+            const facLocked = pTier < 4;
             const indFactions = (working.factions || []).filter((f) => f && ['independent', 'none', 'unaffiliated'].includes(f.partyId));
             const rivalFactions = (working.factions || []).filter((f) => f && f.partyId !== pPid && !['independent', 'none', 'unaffiliated'].includes(f.partyId) && Number(working.factionHappiness?.[f.id] ?? f.happiness ?? 50) < 60).slice(0, 12);
             const noActs = (working.offCycle?.actionsRemaining ?? 0) < 1;
@@ -2376,32 +2385,34 @@
               <div class="oc-action-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:8px">
                 <div class="oc-action-card">
                   <div class="oc-action-head"><b>🤝 Court Unhappy Caucus Member</b><span>1 Act · $4.0M</span></div>
-                  <p>Recruit a discontent lawmaker now so they run under your party banner in the upcoming election.</p>
+                  <p>${pTier < 3
+                    ? 'Tier 3 required (Happiness &le; 10 targets available at any tier).'
+                    : 'Recruit a discontent lawmaker now so they run under your party banner in the upcoming election.'}</p>
                   <div class="oc-action-controls">
-                    <select id="oc-court-pol-select" aria-label="Unhappy Lawmaker">
-                      ${unhappyLawmakers.length ? unhappyLawmakers.map((m) => `<option value="${safeHtml(m.id)}">${safeHtml(m.name)} (${safeHtml(m.stateId || m.districtId || '')} · ${safeHtml(m.party)})</option>`).join('') : '<option value="">No unhappy lawmakers available</option>'}
+                    <select id="oc-court-pol-select" aria-label="Unhappy Lawmaker" ${polLocked ? 'disabled' : ''}>
+                      ${unhappyLawmakers.length ? unhappyLawmakers.map((m) => `<option value="${safeHtml(m.id)}">${safeHtml(m.name)} (${safeHtml(m.stateId || m.districtId || '')} · ${safeHtml(m.party)} · H:${Math.round(m.happiness ?? 50)})</option>`).join('') : `<option value="">${polLocked ? 'Tier 3 required (or Happiness <= 10)' : 'No unhappy lawmakers available'}</option>`}
                     </select>
-                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-politician" ${noActs || !unhappyLawmakers.length || (working.treasury || 0) < 4 ? 'disabled' : ''}>Court Defection</button>
+                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-politician" ${polLocked || noActs || !unhappyLawmakers.length || (working.treasury || 0) < 4 ? 'disabled' : ''}>${polLocked ? 'Court Defection (Tier 3 / H ≤ 10)' : 'Court Defection'}</button>
                   </div>
                 </div>
                 <div class="oc-action-card">
                   <div class="oc-action-head"><b>🏛️ Faction Recruitment (Independent)</b><span>1 Act · $1.5M</span></div>
-                  <p>Build +15 Coalition Goodwill with Independent/Unaffiliated factions during off-cycle realignments.</p>
+                  <p>${facLocked ? 'Faction recruitment requires Tier 4.' : 'Build +15 Coalition Goodwill with Independent/Unaffiliated factions during off-cycle realignments.'}</p>
                   <div class="oc-action-controls">
-                    <select id="oc-court-fac-select" aria-label="Independent Faction">
+                    <select id="oc-court-fac-select" aria-label="Independent Faction" ${facLocked ? 'disabled' : ''}>
                       ${indFactions.length ? indFactions.map((f) => `<option value="${safeHtml(f.id)}">${safeHtml(f.name)} (Goodwill ${Math.round(working.factionCourtship?.[f.id]?.[pPid] || 0)})</option>`).join('') : '<option value="">No independent factions</option>'}
                     </select>
-                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-independent" ${noActs || !indFactions.length || (working.treasury || 0) < 1.5 ? 'disabled' : ''}>Court Faction</button>
+                    <button type="button" class="button button-small button-gold" data-oc-action="oc-court-independent" ${facLocked || noActs || !indFactions.length || (working.treasury || 0) < 1.5 ? 'disabled' : ''}>${facLocked ? 'Court Faction (Tier 4)' : 'Court Faction'}</button>
                   </div>
                 </div>
                 <div class="oc-action-card">
                   <div class="oc-action-head"><b>🪓 Drive Off-Cycle Wedge</b><span>1 Act · $2.0M</span></div>
-                  <p>Destabilize restless rival-party factions during off-cycle years to trigger secessions.</p>
+                  <p>${facLocked ? 'Faction courting requires Tier 4.' : 'Destabilize restless rival-party factions during off-cycle years to trigger secessions.'}</p>
                   <div class="oc-action-controls">
-                    <select id="oc-wedge-fac-select" aria-label="Rival Faction">
+                    <select id="oc-wedge-fac-select" aria-label="Rival Faction" ${facLocked ? 'disabled' : ''}>
                       ${rivalFactions.length ? rivalFactions.map((f) => `<option value="${safeHtml(f.id)}">${safeHtml(f.name)} (${safeHtml(f.partyId)})</option>`).join('') : '<option value="">No restless rival factions</option>'}
                     </select>
-                    <button type="button" class="button button-small" data-oc-action="oc-drive-wedge" ${noActs || !rivalFactions.length || (working.treasury || 0) < 2 ? 'disabled' : ''}>Drive Wedge</button>
+                    <button type="button" class="button button-small" data-oc-action="oc-drive-wedge" ${facLocked || noActs || !rivalFactions.length || (working.treasury || 0) < 2 ? 'disabled' : ''}>${facLocked ? 'Drive Wedge (Tier 4)' : 'Drive Wedge'}</button>
                   </div>
                 </div>
               </div>

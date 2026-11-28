@@ -43,6 +43,7 @@
   }
 
   function getStatesList(game) {
+    if (Array.isArray(game?.states) && game.states.length > 0) return game.states;
     const data = getData();
     return (data.STATES || (typeof STATES !== 'undefined' ? STATES : []));
   }
@@ -55,50 +56,170 @@
     return vm.states[stateId] || null;
   }
 
+  // Convert any race record or numeric margin to consistent GOP-positive / Dem-negative margin pts
+  function extractGopMinusDemMargin(entry) {
+    if (entry === null || entry === undefined) return null;
+    if (typeof entry === 'number') {
+      return Number.isFinite(entry) ? entry : null;
+    }
+    if (typeof entry !== 'object') return null;
+
+    if (Number.isFinite(entry.gopMinusDemMargin)) {
+      return Number(entry.gopMinusDemMargin);
+    }
+
+    const shareMap = entry.shares || entry.allShares || entry.slateShares || null;
+    if (shareMap && typeof shareMap === 'object') {
+      const dem = Number(shareMap.people ?? shareMap.dem ?? shareMap.democrat ?? 0);
+      const rep = Number(shareMap.heritage ?? shareMap.rep ?? shareMap.republican ?? 0);
+      const sum = dem + rep;
+      if (sum > 0) return ((rep - dem) / sum) * 100;
+    }
+
+    if (entry.people !== undefined && entry.heritage !== undefined) {
+      const dem = Number(entry.people || 0);
+      const rep = Number(entry.heritage || 0);
+      const sum = dem + rep;
+      if (sum > 0) return ((rep - dem) / sum) * 100;
+    }
+    if (entry.dem !== undefined && entry.rep !== undefined) {
+      const dem = Number(entry.dem || 0);
+      const rep = Number(entry.rep || 0);
+      const sum = dem + rep;
+      if (sum > 0) return ((rep - dem) / sum) * 100;
+    }
+
+    if (Number.isFinite(entry.margin)) {
+      const rawM = Number(entry.margin);
+      if (entry.winner === 'people' && rawM > 0) return -rawM;
+      if (entry.winner === 'heritage' && rawM < 0) return -rawM;
+      // Engine race records default positive = Dem/People, negative = GOP/Heritage
+      if (entry.raceKey || entry.officeId || entry.winner !== undefined) return -rawM;
+      return rawM;
+    }
+    return null;
+  }
+
   // --------------------------------------------------------------------------
   // REQ-214: Post-Election Certified Performance Drift
   // --------------------------------------------------------------------------
 
   /**
-   * Compares certified actual popular vote margin in a state with expected baseline lean.
+   * Compares representative multi-race popular vote margin in a state with expected baseline lean.
+   * Collects: Presidential (1), Senate (1), Governor (1), U.S. House avg (1),
+   * State House (1), State Senate (1, skipped for NE), and Minor Statewide Offices (1 each).
    * Multi-cycle outperformance permanently shifts that state's baseline lean:
    *   deltaLean = clamp((actualMargin - expectedMargin) * 0.08, -1.5, +1.5)
-   * Also supports clamping to [-0.75, +0.75] when divided by 8.
    */
   function calculateCertifiedPerformanceDrift(game, electionOutcome = null) {
     if (!game) return { game, records: [] };
-    const lastElection = electionOutcome || (game.elections && game.elections.length > 0 ? game.elections[game.elections.length - 1] : null);
+    const lastElection = electionOutcome || (game.elections && game.elections.length > 0 ? game.elections[game.elections.length - 1] : game.lastElection);
     if (!lastElection) return { game, records: [] };
 
     const records = [];
     game.statePartisanDrift = game.statePartisanDrift || {};
     const states = getStatesList(game);
 
-    states.forEach((st) => {
-      const stateId = st.id;
-      // Obtain actual margin in state (presidential, senate, or composite)
-      // Positive margin = GOP / Heritage overperformance; Negative = Dem / People overperformance
-      let actualMargin = 0;
-      let hasData = false;
+    const isPresCycle = Boolean(
+      lastElection.type === 'presidential'
+      || lastElection.cycleType === 'presidential'
+      || (lastElection.year && Number(lastElection.year) % 4 === 0)
+      || (!lastElection.type && (lastElection.presidentialResults || lastElection.presidentialMargins || lastElection.presidential?.byState))
+    );
 
-      if (lastElection.results && lastElection.results[stateId]) {
-        const res = lastElection.results[stateId];
-        const demVotes = Number(res.people ?? res.dem ?? res.democrat ?? 0);
-        const repVotes = Number(res.heritage ?? res.rep ?? res.republican ?? 0);
-        const total = demVotes + repVotes || 1;
-        actualMargin = ((repVotes - demVotes) / total) * 100;
-        hasData = true;
-      } else if (lastElection.presidentialMargins && lastElection.presidentialMargins[stateId] !== undefined) {
-        actualMargin = Number(lastElection.presidentialMargins[stateId]);
-        hasData = true;
-      } else if (lastElection.stateMargins && lastElection.stateMargins[stateId] !== undefined) {
-        actualMargin = Number(lastElection.stateMargins[stateId]);
-        hasData = true;
+    states.forEach((st) => {
+      const stateId = st.id || st.stateId;
+      if (!stateId) return;
+      // Collect representative margins per race type (positive = GOP/Heritage, negative = Dem/People)
+      const raceMargins = [];
+
+      // 1. Presidential (1 entry if presidential cycle & state data exists)
+      if (isPresCycle) {
+        const presRaw = lastElection.presidentialMargins?.[stateId]
+          ?? lastElection.presidentialResults?.[stateId]
+          ?? lastElection.presidential?.byState?.[stateId]
+          ?? (Array.isArray(lastElection.presidential?.states)
+            ? lastElection.presidential.states.find((x) => (x.stateId || x.id) === stateId)
+            : null);
+        const presM = extractGopMinusDemMargin(presRaw);
+        if (presM !== null) raceMargins.push(presM);
       }
 
-      if (!hasData) return;
+      // 2. U.S. Senate (1 entry if contested in stateId this cycle)
+      const senRaw = Array.isArray(lastElection.senate)
+        ? lastElection.senate.find((r) => (r.stateId || r.state) === stateId)
+        : (lastElection.senate?.[stateId] ?? lastElection.senateMargins?.[stateId]);
+      const senM = extractGopMinusDemMargin(senRaw);
+      if (senM !== null) raceMargins.push(senM);
 
-      // Expected margin based on state baseline lean and national environment
+      // 3. Governor (1 entry if contested in stateId this cycle)
+      const govRaw = Array.isArray(lastElection.governors)
+        ? lastElection.governors.find((r) => (r.stateId || r.state) === stateId)
+        : (lastElection.governors?.[stateId] ?? lastElection.governorMargins?.[stateId]);
+      const govM = extractGopMinusDemMargin(govRaw);
+      if (govM !== null) raceMargins.push(govM);
+
+      // 4. U.S. House (average all districts in stateId into 1 single federal House entry)
+      const distList = lastElection.house?.districts
+        || lastElection.houseDistricts
+        || lastElection.legislature?.districts
+        || lastElection.districts
+        || null;
+      if (Array.isArray(distList)) {
+        const stDists = distList.filter((d) => (d.stateId || d.state) === stateId);
+        const distMargins = stDists.map((d) => extractGopMinusDemMargin(d)).filter((m) => m !== null);
+        if (distMargins.length > 0) {
+          const avgHouse = distMargins.reduce((s, v) => s + v, 0) / distMargins.length;
+          raceMargins.push(avgHouse);
+        }
+      } else {
+        const houseRaw = lastElection.houseMargins?.[stateId] ?? lastElection.house?.byState?.[stateId];
+        const houseM = extractGopMinusDemMargin(houseRaw);
+        if (houseM !== null) raceMargins.push(houseM);
+      }
+
+      // 5. State House (1 entry)
+      if (stateId !== 'DC') {
+        const shRaw = lastElection.stateHouseMargins?.[stateId]
+          ?? lastElection.stateHouse?.[stateId]
+          ?? lastElection.stateHouseSeatCounts?.[stateId]
+          ?? lastElection.stateLegislatureShares?.[stateId];
+        const shM = extractGopMinusDemMargin(shRaw);
+        if (shM !== null) raceMargins.push(shM);
+      }
+
+      // 6. State Senate (1 entry; skip for unicameral NE)
+      if (stateId !== 'DC' && stateId !== 'NE') {
+        const ssRaw = lastElection.stateSenateMargins?.[stateId]
+          ?? lastElection.stateSenate?.[stateId]
+          ?? lastElection.stateSenateSeatCounts?.[stateId];
+        const ssM = extractGopMinusDemMargin(ssRaw);
+        if (ssM !== null) raceMargins.push(ssM);
+      }
+
+      // 7. Minor Statewide Offices (1 entry per contested minor statewide race in stateId)
+      const swList = Array.isArray(lastElection.statewideByState?.[stateId])
+        ? lastElection.statewideByState[stateId]
+        : Array.isArray(lastElection.statewide?.[stateId])
+          ? lastElection.statewide[stateId]
+          : Array.isArray(lastElection.statewideResults)
+            ? lastElection.statewideResults.filter((r) => (r.stateId || r.state) === stateId)
+            : [];
+      swList.forEach((sw) => {
+        const swM = extractGopMinusDemMargin(sw);
+        if (swM !== null) raceMargins.push(swM);
+      });
+
+      // Fallback for legacy single-result mocks
+      if (raceMargins.length === 0) {
+        const fallbackRaw = lastElection.results?.[stateId] ?? lastElection.stateMargins?.[stateId];
+        const fallbackM = extractGopMinusDemMargin(fallbackRaw);
+        if (fallbackM !== null) raceMargins.push(fallbackM);
+      }
+
+      if (raceMargins.length === 0) return;
+
+      const actualMargin = raceMargins.reduce((a, b) => a + b, 0) / raceMargins.length;
       const currentLean = Number(st.lean ?? 0);
       const expectedMargin = currentLean * 25.0; // Baseline lean scale to margin pts
 
@@ -112,16 +233,17 @@
         const vmSt = getStateObjectFromModel(game.voterModel, stateId);
         if (vmSt) vmSt.lean = st.lean;
         game.statePartisanDrift[stateId] = round((game.statePartisanDrift[stateId] || 0) + deltaLean, 3);
-
-        records.push({
-          stateId,
-          actualMargin: round(actualMargin, 2),
-          expectedMargin: round(expectedMargin, 2),
-          marginDiff: round(marginDiff, 2),
-          deltaLean,
-          newLean: st.lean,
-        });
       }
+
+      records.push({
+        stateId,
+        actualMargin: round(actualMargin, 4),
+        expectedMargin: round(expectedMargin, 2),
+        marginDiff: round(marginDiff, 2),
+        deltaLean,
+        newLean: st.lean,
+        raceCount: raceMargins.length,
+      });
     });
 
     return { game, records };

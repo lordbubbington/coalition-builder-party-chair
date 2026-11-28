@@ -10657,6 +10657,8 @@ function version01PrimaryField(raceId, stateName, partyId, seed = 1) {
 
   const candidateWings = isMajorParty ? wings : [sittingIncumbent?.wing || wings[0]];
 
+  const isPa2028DemPrimary = raceId === 'senate:PA' && partyId === 'people' && sittingIncumbent?.name === 'John Fetterman';
+
   return candidateWings.map((wing, index) => {
     const h = version01Hash(`${fieldHash}:${index}`);
     const first = names.first[h % names.first.length];
@@ -10665,15 +10667,27 @@ function version01PrimaryField(raceId, stateName, partyId, seed = 1) {
     const candName = isIncumbent ? sittingIncumbent.name : `${first} ${last} (${raceId})`;
     const targetQuality = isIncumbent
       ? sittingIncumbent.quality
-      : (index < 2 ? 6 + (h % 5) : 1 + (h % 8));
+      : (isPa2028DemPrimary && index === 1 ? 8 : (isPa2028DemPrimary && index === 2 ? 7 : (index < 2 ? 6 + (h % 5) : 1 + (h % 8))));
     const ratings = isIncumbent
       ? { ...sittingIncumbent.ratings }
       : generatePoliticianRatings(`${seed}:${raceId}:${partyId}:${index}`, targetQuality, { lockQuality: true });
     const quality = v07ComputeQuality(ratings);
     const fame = isIncumbent
       ? sittingIncumbent.fame
-      : (10 + ((h >>> 4) % 36)); // REQ-10: non-incumbent primary candidates 10..45
+      : (isPa2028DemPrimary && index === 1 ? 64 : (10 + ((h >>> 4) % 36))); // REQ-10: non-incumbent primary candidates 10..45
     const happiness = isIncumbent ? sittingIncumbent.happiness : (65 + ((h >>> 10) % 20));
+    let poll = strength[index] !== undefined ? (strength[index] + (h % 7) - 3 + (quality - 5) * 0.8 + (isIncumbent ? 10 : 0)) : (isIncumbent ? 65 : 25);
+    let heavyPrimaryChallengerPenaltyApplied = false;
+    if (isPa2028DemPrimary) {
+      if (isIncumbent) {
+        poll = Math.max(4, Math.round((poll - 18) * 10) / 10);
+        heavyPrimaryChallengerPenaltyApplied = true;
+      } else if (index === 1) {
+        poll = Math.max(41, Math.round((41 + (h % 4)) * 10) / 10);
+      } else if (index === 2) {
+        poll = Math.max(24, Math.round((24 + (h % 4)) * 10) / 10);
+      }
+    }
     const raw = {
       id: `${raceId}:${partyId}:${index}`,
       sittingMemberId: isIncumbent ? sittingIncumbent.id : null,
@@ -10688,10 +10702,11 @@ function version01PrimaryField(raceId, stateName, partyId, seed = 1) {
       skill: Math.max(1, Math.min(5, Math.round(quality / 2))),
       fame,
       happiness,
-      poll: strength[index] !== undefined ? (strength[index] + (h % 7) - 3 + (quality - 5) * 0.8 + (isIncumbent ? 10 : 0)) : (isIncumbent ? 65 : 25),
+      poll,
       endorsed: false,
       recruit: false,
       isIncumbent,
+      ...(heavyPrimaryChallengerPenaltyApplied ? { heavyPrimaryChallengerPenaltyApplied: true } : {}),
     };
     return (typeof window !== 'undefined' && window.PartyChairV07 && typeof window.PartyChairV07.normalizeCandidateRecord === 'function')
       ? window.PartyChairV07.normalizeCandidateRecord(raw, `${seed}:${raceId}:${partyId}:${index}`, quality)
@@ -10699,7 +10714,20 @@ function version01PrimaryField(raceId, stateName, partyId, seed = 1) {
   });
 }
 
-// REQ-25: State recruits have an average quality rating of 7 across their 10-stat ratings
+function rollStateRecruitQuality(hashVal) {
+  const bucket = (Number(hashVal) >>> 0) % 1000;
+  if (bucket <= 4) return 1;
+  if (bucket <= 94) return 2;
+  if (bucket <= 204) return 3;
+  if (bucket <= 399) return 4;
+  if (bucket <= 639) return 5;
+  if (bucket <= 799) return 6;
+  if (bucket <= 894) return 7;
+  if (bucket <= 964) return 8;
+  if (bucket <= 994) return 9;
+  return 10;
+}
+
 function version01StateRecruit(raceId, stateName, partyId, seed = 1, turn = 0) {
   const h = version01Hash(`${seed}:${raceId}:${partyId}:state-recruit`);
   const wingsByParty = {
@@ -10715,7 +10743,7 @@ function version01StateRecruit(raceId, stateName, partyId, seed = 1, turn = 0) {
   const stateCode = String(raceId || '').split(':')[1]?.split('-')[0] || '';
   const stateObj = STATE_BY_ID[stateCode] || VERSION_01_STATES.find((s) => s.name === stateName) || null;
   const stateRegions = stateObj?.regions || (stateObj?.region ? [stateObj.region] : ['South']);
-  const targetQuality = 7; // REQ-25: Average quality 7 for state recruits
+  const targetQuality = rollStateRecruitQuality(h);
   const ratings = generatePoliticianRatings(`${seed}:${raceId}:${partyId}:recruit`, targetQuality, {
     isRecruit: true,
     lockQuality: true,
@@ -10735,7 +10763,7 @@ function version01StateRecruit(raceId, stateName, partyId, seed = 1, turn = 0) {
     quality,
     skill: Math.max(1, Math.min(5, Math.round(quality / 2))),
     fame,
-    happiness: 78,
+    happiness: 50,
     poll: Math.max(2, quality * 2.4 + (h % 5)),
     endorsed: false,
     recruit: true,
@@ -10743,7 +10771,7 @@ function version01StateRecruit(raceId, stateName, partyId, seed = 1, turn = 0) {
     recruitedTurn: turn,
   };
   return (typeof window !== 'undefined' && window.PartyChairV07 && typeof window.PartyChairV07.normalizeCandidateRecord === 'function')
-    ? window.PartyChairV07.normalizeCandidateRecord(raw, `${seed}:${raceId}:${partyId}:recruit`, 7)
+    ? window.PartyChairV07.normalizeCandidateRecord(raw, `${seed}:${raceId}:${partyId}:recruit`, quality)
     : raw;
 }
 

@@ -560,6 +560,39 @@
     return 'fair_compact';
   }
 
+  function isTopTwoPartyInAnyHouse(game, stateId, partyId) {
+    if (!game || !stateId || !partyId) return false;
+    const META_KEYS = new Set(['total', 'vacant', 'unallocated', 'otherTotal', 'chamber', 'sourceStatus']);
+    const checkChamberCounts = (countsObj) => {
+      if (!countsObj || typeof countsObj !== 'object') return null;
+      const entries = Object.entries(countsObj)
+        .filter(([k, v]) => !META_KEYS.has(k) && Number(v) > 0)
+        .map(([k, v]) => [k, Number(v)])
+        .sort((a, b) => b[1] - a[1]);
+      if (entries.length === 0) return null;
+      const secondSeats = entries[1]?.[1] ?? 0;
+      const mySeats = Number(countsObj[partyId] || 0);
+      return mySeats > 0 && (entries[0][0] === partyId || entries[1]?.[0] === partyId || (entries.length >= 2 && mySeats >= secondSeats));
+    };
+
+    const houseRes = checkChamberCounts(game.stateHouseSeatCounts?.[stateId]);
+    const senateRes = checkChamberCounts(game.stateSenateSeatCounts?.[stateId]);
+    if (houseRes === true || senateRes === true) return true;
+    if (houseRes !== null || senateRes !== null) return false;
+
+    // Fallback to state's U.S. House delegation if state legislative counts are absent
+    const reps = (game.representatives || []).filter((d) => d && d.stateId === stateId);
+    if (reps.length > 0) {
+      const repCounts = {};
+      reps.forEach((d) => {
+        const p = d.party || d.partyId;
+        if (p) repCounts[p] = (repCounts[p] || 0) + 1;
+      });
+      return Boolean(checkChamberCounts(repCounts));
+    }
+    return false;
+  }
+
   /**
    * Called right after runDecennialRedistricting on decennial years (year % 10 === 0).
    * Evaluates all states with >= 2 seats, runs rival AI selections, and opens the War Room modal.
@@ -610,7 +643,7 @@
           defaultStrategy = selectRivalRedistrictingStrategy(nextGame, controllingParty, stateId, stDistricts);
         }
       } else {
-        controlType = 'split';
+        controlType = isTopTwoPartyInAnyHouse(nextGame, stateId, playerId) ? 'split' : 'rival_split';
         defaultStrategy = 'incumbent_protection';
       }
 
@@ -634,11 +667,15 @@
       });
     });
 
+    const hasInteractiveStates = controlledStates.some(
+      (s) => s.controlType === 'player_trifecta' || s.controlType === 'split'
+    );
+
     nextGame = {
       ...nextGame,
       redistrictingWarRoom: {
         ...nextGame.redistrictingWarRoom,
-        active: true,
+        active: hasInteractiveStates,
         year,
         controlledStates,
         selections,
@@ -667,8 +704,8 @@
     const entry = wr.controlledStates.find((s) => s.stateId === stateId);
     if (!entry) return nextGame;
 
-    // Commission and rival_trifecta states cannot be overridden by player
-    if (entry.controlType === 'commission' || entry.controlType === 'rival_trifecta') {
+    // Only player_trifecta and eligible split states can be edited by player
+    if (entry.controlType !== 'player_trifecta' && entry.controlType !== 'split') {
       return nextGame;
     }
     // Split-control states only allow incumbent_protection or special_master
@@ -1157,10 +1194,6 @@
 
     const cost = getBallotInitiativeCost(nextGame, stateId);
     if (isPlayer) {
-      const actionsAvail = Number(nextGame.actionsLeft ?? nextGame.organizingActionsRemaining ?? 0);
-      if (actionsAvail < 1) {
-        return { ...nextGame, lastNote: 'No actions remaining to sponsor a ballot initiative.' };
-      }
       if (Number(nextGame.treasury ?? 0) < cost) {
         return { ...nextGame, lastNote: `Insufficient treasury: sponsoring in ${stateId} costs $${cost}M.` };
       }
@@ -1243,11 +1276,7 @@
 
     if (isPlayer) {
       updated.treasury = round2(Number(nextGame.treasury ?? 0) - cost);
-      updated.actionsLeft = Math.max(0, Number(nextGame.actionsLeft ?? 1) - 1);
-      if (typeof nextGame.organizingActionsRemaining === 'number') {
-        updated.organizingActionsRemaining = Math.max(0, nextGame.organizingActionsRemaining - 1);
-      }
-      updated.lastNote = `Sponsored "${arch.name}" in ${stateId} ($${cost}M, 1 action). +${arch.turnoutBoost}% aligned turnout on Election Night.`;
+      updated.lastNote = `Sponsored "${arch.name}" in ${stateId} ($${cost}M). +${arch.turnoutBoost}% aligned turnout on Election Night.`;
     }
     return updated;
   }
@@ -1554,7 +1583,7 @@
 
     return `
       <div class="action-card" id="v0184-ballot-initiative-card" style="border-color:rgba(245,158,11,0.45);background:linear-gradient(145deg,#1d1912,#111b26)">
-        <div class="action-head"><i style="color:#f59e0b">🗳</i><b>Sponsor Ballot Initiative (${activeByPlayer.length}/3 Active)</b><span>1 action · $3–6M</span></div>
+        <div class="action-head"><i style="color:#f59e0b">🗳</i><b>Sponsor Ballot Initiative (${activeByPlayer.length}/3 Active)</b><span>$3–6M</span></div>
         <p>Engineer down-ballot coattails in ${eligibleStates.length} initiative-eligible states. Turnout Drivers boost aligned turnout (+4–7%) and wedge rival nominees; Structural Reforms permanently reshape state election rules if passed (&gt;50%).</p>
         <div class="inline-controls" style="flex-wrap:wrap;gap:6px">
           <select id="ballot-init-state">${stateOpts}</select>
@@ -1611,7 +1640,8 @@
 
     const playerStates = (wr.controlledStates || []).filter((s) => s.controlType === 'player_trifecta');
     const splitStates = (wr.controlledStates || []).filter((s) => s.controlType === 'split');
-    const rivalStates = (wr.controlledStates || []).filter((s) => s.controlType === 'rival_trifecta');
+    if (playerStates.length === 0 && splitStates.length === 0) return '';
+    const rivalStates = (wr.controlledStates || []).filter((s) => s.controlType === 'rival_trifecta' || s.controlType === 'rival_split');
     const commStates = (wr.controlledStates || []).filter((s) => s.controlType === 'commission');
 
     let totalCost = 0;

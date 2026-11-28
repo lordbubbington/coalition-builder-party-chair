@@ -966,6 +966,35 @@
     const totalSenateCount = Number(fedRef.totalSenateSeats || safeGame.totalSenateSeats || 100);
     const totalHouseCount = Number(safeElection?.house?.totalSeats || safeElection?.legislature?.totalSeats || fedRef.totalHouseSeats || safeGame.totalHouseSeats || representatives.length || 435);
 
+    // Tally non-contested holdover Senate seats so scoreboard.senate tracks full 100-seat chamber control
+    const senateHoldovers = { people: 0, heritage: 0, third: 0 };
+    if (safeElection?.senateHoldovers && typeof safeElection.senateHoldovers === 'object') {
+      senateHoldovers.people = Number(safeElection.senateHoldovers.people || 0);
+      senateHoldovers.heritage = Number(safeElection.senateHoldovers.heritage || 0);
+      senateHoldovers.third = Number(safeElection.senateHoldovers.third || 0);
+    } else if (Array.isArray(safeGame?.sittingMembers)) {
+      const senateMembers = safeGame.sittingMembers.filter((m) => m && m.office === 'senate');
+      if (senateMembers.length > 0) {
+        const contestedStatePool = new Set(senateResults.map((s) => s.stateId || s.state).filter(Boolean));
+        const activeClassNum = Number(safeGame.activeSenateClass || 0);
+        const consumedContested = new Set();
+        senateMembers.forEach((m) => {
+          const stId = m.stateId || m.state;
+          const mCls = Number(m.senateClass || m.class || 0);
+          const isContested = contestedStatePool.has(stId) && (
+            activeClassNum > 0
+              ? mCls === activeClassNum
+              : (!consumedContested.has(stId) && (consumedContested.add(stId), true))
+          );
+          if (isContested) return;
+          const pKey = m.caucus || m.party || m.partyId || 'people';
+          if (pKey === 'people') senateHoldovers.people += 1;
+          else if (pKey === 'heritage') senateHoldovers.heritage += 1;
+          else senateHoldovers.third += 1;
+        });
+      }
+    }
+
     return {
       year,
       seed: game.seed || 'pc',
@@ -974,6 +1003,7 @@
       totalEv: totalEvCount,
       evMajorityThreshold,
       totalSenateSeats: totalSenateCount,
+      senateHoldovers,
       totalHouseSeats: totalHouseCount,
       startMinute: 0,
       end: TIMELINE_END,
@@ -1003,9 +1033,10 @@
     const houseMajThresh = Math.floor(totalHouseCap / 2) + 1;
 
     // Scoreboard seat/EV accumulators by tab and party
+    const holdSen = timeline.senateHoldovers || { people: 0, heritage: 0, third: 0 };
     const scoreboard = {
       president: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalEv: totalEvCap, majorityThreshold: evMajThresh },
-      senate: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: totalSenCap, majorityThreshold: senMajThresh },
+      senate: { people: Number(holdSen.people || 0), heritage: Number(holdSen.heritage || 0), third: Number(holdSen.third || 0), totalCalled: 0, totalSeats: totalSenCap, majorityThreshold: senMajThresh },
       house: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: totalHouseCap, majorityThreshold: houseMajThresh },
       governors: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalSeats: 0 },
       state_leg: { people: 0, heritage: 0, third: 0, totalCalled: 0, totalChambers: 0 },
@@ -1228,10 +1259,12 @@
 
       const coMod = (typeof window !== 'undefined' && window.CampaignOverhaul) || (typeof global !== 'undefined' && global.CampaignOverhaul) || null;
       const coStateLift = coMod?.getCampaignStateLift ? Number(coMod.getCampaignStateLift(game, office.stateId) || 0) : 0;
+      const genPersSeo = Number(game.campaign?.generalPersuasionStateBoosts?.[office.stateId] || 0);
+      const nonGenCoLift = coStateLift - genPersSeo;
       const playerSignSeo = (game.player?.baseTemplateId === 'heritage') ? -1 : 1;
       const pollErrSeo = Number(game.pollingMissReport?.stateErrors?.[office.stateId] ?? game.lastElection?.pollingMissReport?.stateErrors?.[office.stateId] ?? 0);
       const downballotSeo = Number(game.campaign?.debateDownballotBoost || 0) * playerSignSeo;
-      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + (coStateLift * 0.55 * playerSignSeo) + downballotSeo + pollErrSeo + noise).toFixed(2));
+      const margin = Number((stateLean + dampedCoattail + qualityDelta + treasuryLift + (nonGenCoLift * 0.55 * playerSignSeo) + (genPersSeo * playerSignSeo) + downballotSeo + pollErrSeo + noise).toFixed(2));
       let peopleShare = Number(Math.max(5, Math.min(95, 50 + margin / 2)).toFixed(2));
       let heritageShare = Number((100 - peopleShare).toFixed(2));
       const shares = { people: peopleShare, heritage: heritageShare };
@@ -1252,7 +1285,7 @@
         const basePlayerShare = options.playerBaseShares?.[office.stateId] ?? ((pAffV / totV) * 100);
         const endorsementBonus = (game.primaryEndorsements?.[raceKey] || game.raceEndorsements?.[raceKey]) ? 1.5 : 0;
         const incBonus = prevParty === playerIdentity ? 2.5 : 0;
-        const playerShare = Number(Math.max(0.5, Math.min(80, basePlayerShare + rawLift + endorsementBonus + incBonus)).toFixed(2));
+        const playerShare = Number(Math.max(0.5, Math.min(80, basePlayerShare + rawLift + endorsementBonus + incBonus + genPersSeo)).toFixed(2));
         const rem = Math.max(20, 100 - playerShare);
         peopleShare = Number(((peopleShare / 100) * rem).toFixed(2));
         heritageShare = Number((100 - playerShare - peopleShare).toFixed(2));
